@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Driiva" />
+    <meta name="theme-color" content="#0F172A" />
+    
+    <!-- SEO Meta Tags -->
+    <title>Driiva - AI-Powered Telematics Insurance | Earn Your Drive</title>
+    <meta name="description" content="Drive well and get rewarded with Driiva's AI-powered telematics insurance. Up to 15% annual refunds for safe driving with dynamic risk pooling and community-driven rewards." />
+    <meta name="keywords" content="telematics insurance, safe driving rewards, AI insurance, dynamic risk pooling, driving score, premium refunds" />
+    
+    <!-- Open Graph Tags -->
+    <meta property="og:title" content="Driiva - AI-Powered Telematics Insurance" />
+    <meta property="og:description" content="Earn up to 15% annual refunds for safe driving with AI-powered telematics and community risk pooling." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://driiva.app" />
+    <meta property="og:image" content="/icons/og-image.png" />
+    
+    <!-- Twitter Card Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Driiva - AI-Powered Telematics Insurance" />
+    <meta name="twitter:description" content="Drive well and get rewarded. Up to 15% annual refunds for safe driving." />
+    <meta name="twitter:image" content="/icons/twitter-image.png" />
+    
+    <!-- PWA Icons -->
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="mask-icon" href="/icons/safari-pinned-tab.svg" color="#06B6D4" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Feather Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/feather-icons@4.29.0/dist/feather.min.css">
+    
+    <style>
+      /* Critical CSS for loading state */
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+        background: radial-gradient(circle at center, hsl(215, 25%, 27%) 0%, hsl(222, 47%, 11%) 100%);
+        color: white;
+        margin: 0;
+        padding: 0;
+        overscroll-behavior: none;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      /* Loading state */
+      .app-loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        background: radial-gradient(circle at center, hsl(215, 25%, 27%) 0%, hsl(222, 47%, 11%) 100%);
+      }
+      
+      .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(6, 182, 212, 0.3);
+        border-top: 3px solid hsl(188, 94%, 43%);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      /* Safe area support for iOS */
+      .safe-area {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+      }
+      
+      /* Disable zoom on input focus (iOS) */
+      input, select, textarea {
+        font-size: 16px !important;
+      }
+      
+      /* PWA splash screen styles */
+      @media (display-mode: standalone) {
+        body {
+          -webkit-user-select: none;
+          -webkit-touch-callout: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <div class="app-loading">
+        <div class="loading-spinner"></div>
+      </div>
+    </div>
+    
+    <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- PWA Install Prompt -->
+    <script>
+      // PWA install prompt
+      let deferredPrompt;
+      
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        
+        // Show install button/banner
+        const installButton = document.getElementById('install-button');
+        if (installButton) {
+          installButton.style.display = 'block';
+          installButton.addEventListener('click', () => {
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+              if (choiceResult.outcome === 'accepted') {
+                console.log('User accepted the install prompt');
+              }
+              deferredPrompt = null;
+            });
+          });
+        }
+      });
+      
+      // Service Worker Registration
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('SW registered: ', registration);
+            })
+            .catch((registrationError) => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+      
+      // Request notification permission
+      if ('Notification' in window && navigator.serviceWorker) {
+        Notification.requestPermission();
+      }
+    </script>
+    
+    <!-- Replit Dev Banner (only in development) -->
+    <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>
+  </body>
+</html>
