@@ -7,6 +7,11 @@ Driiva is a mobile-first telematics insurance application that rewards safe driv
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
+Visual preferences: 
+- iOS-native design with enhanced glassmorphism effects
+- Muted gradient color scheme (darker orange/brown tones to dark blue)
+- Clean white Driiva logo with capital D, no outline box, italic Inter font
+- Fully legible text for iOS accessibility standards
 
 ## System Architecture
 

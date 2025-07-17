@@ -26,12 +26,12 @@ export default function BottomNavigation({ activeTab }: BottomNavigationProps) {
           >
             <tab.icon 
               className={`w-5 h-5 mb-1 ${
-                activeTab === tab.id ? 'text-[#FF5733]' : 'text-gray-400'
+                activeTab === tab.id ? 'text-[#8B4513]' : 'text-gray-400'
               }`} 
             />
             <span 
               className={`text-xs font-medium ${
-                activeTab === tab.id ? 'text-[#FF5733]' : 'text-gray-400'
+                activeTab === tab.id ? 'text-[#8B4513]' : 'text-gray-400'
               }`}
             >
               {tab.label}

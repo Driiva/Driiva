@@ -109,7 +109,7 @@ export default function Dashboard() {
       </main>
 
       {/* Floating Action Button */}
-      <FloatingActionButton onClick={() => setBottomSheetOpen(true)} />
+      <FloatingActionButton />
 
       {/* Bottom Sheet */}
       <BottomSheet 

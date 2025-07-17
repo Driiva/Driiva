@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -24,10 +26,10 @@
   --ring: hsl(240, 4.9%, 83.9%);
   --radius: 0.5rem;
   
-  /* Driiva Gradient Colors - Light Red to Dark Blue */
-  --driiva-light-red: hsl(14, 60%, 55%);
-  --driiva-orange: hsl(25, 70%, 50%);
-  --driiva-purple: hsl(270, 80%, 40%);
+  /* Driiva Gradient Colors - Muted Red to Dark Blue */
+  --driiva-light-red: hsl(14, 45%, 45%);
+  --driiva-orange: hsl(25, 50%, 40%);
+  --driiva-purple: hsl(270, 70%, 35%);
   --driiva-dark-blue: hsl(240, 80%, 25%);
   --driiva-deep-blue: hsl(235, 75%, 15%);
   
@@ -46,9 +48,9 @@
     @apply font-sans antialiased text-foreground;
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
     background: linear-gradient(135deg, 
-      hsl(14, 60%, 55%) 0%,
-      hsl(25, 70%, 50%) 25%, 
-      hsl(270, 80%, 40%) 75%,
+      hsl(14, 45%, 45%) 0%,
+      hsl(25, 50%, 40%) 25%, 
+      hsl(270, 70%, 35%) 75%,
       hsl(240, 80%, 25%) 100%);
     min-height: 100vh;
     position: relative;
@@ -62,10 +64,10 @@
     right: 0;
     bottom: 0;
     background: linear-gradient(135deg, 
-      rgba(255, 87, 51, 0.1) 0%,
-      rgba(255, 154, 0, 0.05) 25%,
-      rgba(138, 43, 226, 0.08) 75%,
-      rgba(30, 64, 175, 0.12) 100%);
+      rgba(139, 69, 19, 0.08) 0%,
+      rgba(184, 115, 51, 0.04) 25%,
+      rgba(123, 31, 162, 0.06) 75%,
+      rgba(30, 64, 175, 0.10) 100%);
     pointer-events: none;
     z-index: -1;
   }
@@ -73,32 +75,32 @@
 
 @layer components {
   .glass-morphism {
-    background: var(--glass-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
     box-shadow: 
-      inset 0 1px 0 rgba(255, 255, 255, 0.1),
-      0 8px 32px var(--glass-shadow),
-      0 0 0 1px rgba(255, 255, 255, 0.05);
+      inset 0 1px 0 rgba(255, 255, 255, 0.15),
+      0 8px 32px rgba(0, 0, 0, 0.35),
+      0 0 0 1px rgba(255, 255, 255, 0.08);
     position: relative;
   }
   
   .glass-card {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 
-      0 8px 32px rgba(0, 0, 0, 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      0 8px 32px rgba(0, 0, 0, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
   }
   
   .glass-border {
     position: relative;
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
   }
   
   .glass-border::before {
@@ -107,25 +109,14 @@
     inset: 0;
     padding: 1px;
     background: linear-gradient(135deg, 
-      rgba(255, 87, 51, 0.4) 0%,
-      rgba(255, 154, 0, 0.4) 25%,
-      rgba(138, 43, 226, 0.4) 75%,
-      rgba(30, 64, 175, 0.4) 100%);
+      rgba(139, 69, 19, 0.3) 0%,
+      rgba(184, 115, 51, 0.3) 25%,
+      rgba(123, 31, 162, 0.3) 75%,
+      rgba(30, 64, 175, 0.3) 100%);
     border-radius: inherit;
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask-composite: xor;
     -webkit-mask-composite: xor;
-  }
-  
-  .driiva-gradient {
-    background: linear-gradient(135deg, 
-      hsl(14, 60%, 55%) 0%,
-      hsl(25, 70%, 50%) 25%, 
-      hsl(270, 80%, 40%) 75%,
-      hsl(240, 80%, 25%) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
   }
   
   .haptic-button:active {

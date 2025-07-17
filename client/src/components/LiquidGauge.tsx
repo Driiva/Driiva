@@ -34,9 +34,9 @@ export default function LiquidGauge({ score, projectedRefund, premiumAmount }: L
           />
           <defs>
             <linearGradient id="gradientStroke" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style={{ stopColor: '#FF5733', stopOpacity: 1 }} />
-              <stop offset="25%" style={{ stopColor: '#FF9A00', stopOpacity: 1 }} />
-              <stop offset="75%" style={{ stopColor: '#8A2BE2', stopOpacity: 1 }} />
+              <stop offset="0%" style={{ stopColor: '#8B4513', stopOpacity: 1 }} />
+              <stop offset="25%" style={{ stopColor: '#B87333', stopOpacity: 1 }} />
+              <stop offset="75%" style={{ stopColor: '#7B1FA2', stopOpacity: 1 }} />
               <stop offset="100%" style={{ stopColor: '#1E40AF', stopOpacity: 1 }} />
             </linearGradient>
           </defs>

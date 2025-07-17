@@ -15,27 +15,27 @@ interface RecentTripsProps {
 
 export default function RecentTrips({ trips }: RecentTripsProps) {
   const getScoreColor = (score: number) => {
-    if (score >= 90) return 'text-[#10B981]';
-    if (score >= 70) return 'text-[#F59E0B]';
-    return 'text-[#EF4444]';
+    if (score >= 90) return 'text-white';
+    if (score >= 70) return 'text-gray-300';
+    return 'text-gray-400';
   };
 
   return (
     <section className="mb-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold">Recent Trips</h3>
-        <button className="text-[#FF5733] text-sm font-medium haptic-button">
+        <button className="text-[#8B4513] text-sm font-medium haptic-button">
           View All
         </button>
       </div>
 
       <div className="space-y-3">
         {trips.map((trip) => (
-          <div key={trip.id} className="glass-morphism rounded-2xl p-4">
+          <div key={trip.id} className="glass-card rounded-2xl p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 bg-[#FF5733] bg-opacity-20 rounded-xl flex items-center justify-center">
-                  <Map className="w-6 h-6 text-[#FF5733]" />
+                <div className="w-12 h-12 bg-[#8B4513] bg-opacity-20 rounded-xl flex items-center justify-center">
+                  <Map className="w-6 h-6 text-[#8B4513]" />
                 </div>
                 <div>
                   <div className="font-medium text-white">

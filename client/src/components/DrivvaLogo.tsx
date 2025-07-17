@@ -3,16 +3,16 @@ export default function DriivaLogo({ className = "", size = "default" }: {
   size?: "small" | "default" | "large" 
 }) {
   const sizeClasses = {
-    small: "text-2xl tracking-wider",
-    default: "text-4xl tracking-wider",
-    large: "text-6xl tracking-wider"
+    small: "text-2xl tracking-wide",
+    default: "text-4xl tracking-wide",
+    large: "text-6xl tracking-wide"
   };
 
   return (
-    <div className={`font-bold ${sizeClasses[size]} ${className}`}>
-      <span className="driiva-gradient relative">
-        driiva
-        <span className="absolute -top-1 -right-1 text-xs opacity-70">®</span>
+    <div className={`font-bold ${sizeClasses[size]} ${className}`} style={{ fontFamily: 'Inter, sans-serif' }}>
+      <span className="text-white relative italic">
+        Driiva
+        <span className="absolute -top-1 -right-1 text-xs opacity-70 not-italic">®</span>
       </span>
     </div>
   );

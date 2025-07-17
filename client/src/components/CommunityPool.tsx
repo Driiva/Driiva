@@ -29,11 +29,11 @@ export default function CommunityPool({ pool }: CommunityPoolProps) {
         <div className="mb-6">
           <div className="flex justify-between items-center mb-2">
             <span className="text-sm text-gray-400">Pool Safety Factor</span>
-            <span className="text-sm font-semibold text-[#06B6D4]">{safetyPercentage}%</span>
+            <span className="text-sm font-semibold text-white">{safetyPercentage}%</span>
           </div>
           <div className="w-full bg-gray-700/30 rounded-full h-2">
             <div 
-              className="bg-gradient-to-r from-[#FF5733] via-[#FF9A00] to-[#8A2BE2] h-2 rounded-full transition-all duration-500" 
+              className="bg-gradient-to-r from-[#8B4513] via-[#B87333] to-[#7B1FA2] h-2 rounded-full transition-all duration-500" 
               style={{ width: `${safetyPercentage}%` }}
             />
           </div>

@@ -30,7 +30,7 @@ export default function Gamification({ achievements, leaderboard, currentUser }:
       
       <div className="grid grid-cols-3 gap-3 mb-6">
         {unlockedAchievements.map((achievement, index) => (
-          <div key={index} className="glass-morphism rounded-2xl p-4 text-center">
+          <div key={index} className="glass-card rounded-2xl p-4 text-center">
             <div className={`w-12 h-12 bg-gradient-to-r ${achievement.color} rounded-full flex items-center justify-center mx-auto mb-2`}>
               <achievement.icon className="w-6 h-6 text-white" />
             </div>
@@ -40,7 +40,7 @@ export default function Gamification({ achievements, leaderboard, currentUser }:
         ))}
         
         {lockedAchievements.map((achievement, index) => (
-          <div key={index} className="glass-morphism rounded-2xl p-4 text-center opacity-50">
+          <div key={index} className="glass-card rounded-2xl p-4 text-center opacity-50">
             <div className={`w-12 h-12 ${achievement.color} rounded-full flex items-center justify-center mx-auto mb-2`}>
               <achievement.icon className="w-6 h-6 text-gray-400" />
             </div>
@@ -50,7 +50,7 @@ export default function Gamification({ achievements, leaderboard, currentUser }:
         ))}
       </div>
 
-      <div className="glass-border rounded-2xl p-4">
+      <div className="glass-morphism rounded-2xl p-4">
         <div className="flex items-center justify-between mb-3">
           <h4 className="font-medium">Community Leaderboard</h4>
           <div className="text-xs text-gray-400">This Week</div>
@@ -69,7 +69,7 @@ export default function Gamification({ achievements, leaderboard, currentUser }:
                 </div>
                 <span className="text-sm font-medium">{entry.name}</span>
               </div>
-              <span className="text-sm text-[#10B981]">{entry.score}</span>
+              <span className="text-sm text-white">{entry.score}</span>
             </div>
           ))}
           

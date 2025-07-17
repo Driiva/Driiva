@@ -7,6 +7,7 @@ import Dashboard from "@/pages/dashboard";
 import Trips from "@/pages/trips";
 import Rewards from "@/pages/rewards";
 import Profile from "@/pages/profile";
+import TripRecording from "@/pages/trip-recording";
 import NotFound from "@/pages/not-found";
 import DriivaLogo from "@/components/DrivvaLogo";
 import "./styles/glass.css";
@@ -18,6 +19,7 @@ function Router() {
       <Route path="/trips" component={Trips} />
       <Route path="/rewards" component={Rewards} />
       <Route path="/profile" component={Profile} />
+      <Route path="/trip-recording" component={TripRecording} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -31,9 +33,7 @@ function App() {
           {/* Logo Header */}
           <div className="fixed top-0 left-0 right-0 z-50 safe-area">
             <div className="flex justify-center pt-4 pb-2">
-              <div className="glass-morphism rounded-2xl px-6 py-3">
-                <DriivaLogo />
-              </div>
+              <DriivaLogo />
             </div>
           </div>
           

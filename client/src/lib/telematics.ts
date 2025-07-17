@@ -52,8 +52,7 @@ export class TelematicsCollector {
   private isCollecting = false;
   
   constructor() {
-    this.handleDeviceMotion = this.handleDeviceMotion.bind(this);
-    this.handleDeviceOrientation = this.handleDeviceOrientation.bind(this);
+    // Bind methods will be done when they're defined
   }
 
   async requestPermissions(): Promise<DeviceMotionPermission> {

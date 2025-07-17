@@ -49,7 +49,7 @@ export default function QuickActions({ onReportIncident }: QuickActionsProps) {
           <button
             key={index}
             onClick={action.onClick}
-            className="glass-morphism rounded-2xl p-4 text-left haptic-button spring-transition hover:scale-105"
+            className="glass-card rounded-2xl p-4 text-left haptic-button spring-transition hover:scale-105"
           >
             <div className="flex items-center space-x-3">
               <div className={`w-10 h-10 ${action.color} rounded-xl flex items-center justify-center`}>

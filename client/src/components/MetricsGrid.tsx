@@ -11,15 +11,7 @@ interface MetricsGridProps {
 
 export default function MetricsGrid({ profile }: MetricsGridProps) {
   const getScoreColor = (score: number, isInverse: boolean = false) => {
-    if (isInverse) {
-      if (score <= 2) return 'text-[#10B981]';
-      if (score <= 5) return 'text-[#F59E0B]';
-      return 'text-[#EF4444]';
-    } else {
-      if (score >= 90) return 'text-[#10B981]';
-      if (score >= 70) return 'text-[#F59E0B]';
-      return 'text-[#EF4444]';
-    }
+    return 'text-white'; // Simplified to white for all scores
   };
 
   const metrics = [

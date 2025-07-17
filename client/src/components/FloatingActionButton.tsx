@@ -1,17 +1,28 @@
-import { Plus } from "lucide-react";
+import { Navigation } from "lucide-react";
+import { useLocation } from "wouter";
 
 interface FloatingActionButtonProps {
-  onClick: () => void;
+  onClick?: () => void;
 }
 
 export default function FloatingActionButton({ onClick }: FloatingActionButtonProps) {
+  const [, setLocation] = useLocation();
+  
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    } else {
+      setLocation('/trip-recording');
+    }
+  };
+
   return (
     <div className="floating-action">
       <button
-        onClick={onClick}
-        className="w-14 h-14 bg-gradient-to-r from-[#06B6D4] to-[#3B82F6] rounded-full flex items-center justify-center shadow-2xl haptic-button spring-transition hover:scale-110 animate-float"
+        onClick={handleClick}
+        className="w-14 h-14 bg-gradient-to-r from-[#8B4513] to-[#B87333] rounded-full flex items-center justify-center shadow-2xl haptic-button spring-transition hover:scale-110 animate-float glass-morphism"
       >
-        <Plus className="w-6 h-6 text-white" />
+        <Navigation className="w-6 h-6 text-white" />
       </button>
     </div>
   );
