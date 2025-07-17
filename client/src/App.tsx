@@ -10,6 +10,7 @@ import Profile from "@/pages/profile";
 import TripRecording from "@/pages/trip-recording";
 import NotFound from "@/pages/not-found";
 import DriivaLogo from "@/components/DrivvaLogo";
+import FloatingStardust from "@/components/FloatingStardust";
 import "./styles/glass.css";
 
 function Router() {
@@ -30,6 +31,9 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <div className="min-h-screen text-white relative">
+          {/* Floating Stardust Background */}
+          <FloatingStardust />
+          
           {/* Logo Header */}
           <div className="fixed top-0 left-0 right-0 z-50 safe-area">
             <div className="flex justify-center pt-4 pb-2">

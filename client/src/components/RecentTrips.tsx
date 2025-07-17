@@ -50,7 +50,7 @@ export default function RecentTrips({ trips }: RecentTripsProps) {
                 </div>
               </div>
               <div className="text-right">
-                <div className={`text-lg font-bold ${getScoreColor(trip.score)}`}>
+                <div className={`text-lg font-bold ${getScoreColor(trip.score)} drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]`} style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.6)' }}>
                   {trip.score}
                 </div>
                 <div className="text-xs text-gray-400">Score</div>

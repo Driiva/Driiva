@@ -71,7 +71,7 @@ export default function MetricsGrid({ profile }: MetricsGridProps) {
               </div>
             </div>
             <div className="text-right">
-              <div className={`text-xl font-bold ${getScoreColor(metric.value, metric.isInverse)}`}>
+              <div className={`text-xl font-bold ${getScoreColor(metric.value, metric.isInverse)} drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]`} style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.8)' }}>
                 {metric.value}
               </div>
               <div className="text-xs text-gray-400">{metric.unit}</div>
