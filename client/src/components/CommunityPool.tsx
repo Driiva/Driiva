@@ -29,7 +29,11 @@ export default function CommunityPool({ pool }: CommunityPoolProps) {
         <div className="mb-6">
           <div className="flex justify-between items-center mb-2">
             <span className="text-sm text-gray-400">Pool Safety Factor</span>
-            <span className="text-sm font-semibold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.6)' }}>{safetyPercentage}%</span>
+            <span className="text-sm font-semibold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]" style={{ 
+              textShadow: '2px 2px 4px rgba(0,0,0,0.9), -1px -1px 2px rgba(0,0,0,0.7)',
+              fontFamily: 'Inter, sans-serif',
+              fontWeight: '600'
+            }}>{safetyPercentage}%</span>
           </div>
           <div className="w-full bg-gray-700/30 rounded-full h-2">
             <div 

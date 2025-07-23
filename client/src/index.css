@@ -46,7 +46,7 @@
 
   body {
     @apply font-sans antialiased text-foreground;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
     background: linear-gradient(135deg, 
       hsl(14, 45%, 45%) 0%,
       hsl(25, 50%, 40%) 25%, 
@@ -160,6 +160,14 @@
 }
 
 @layer utilities {
+  .font-inter {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .text-contrast {
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.9), -1px -1px 2px rgba(0,0,0,0.7);
+  }
+  
   .animate-spin-slow {
     animation: spin 8s linear infinite;
   }

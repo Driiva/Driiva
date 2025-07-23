@@ -57,7 +57,7 @@ export default function MetricsGrid({ profile }: MetricsGridProps) {
     <section className="mb-6">
       <div className="grid grid-cols-2 gap-4">
         {metrics.map((metric, index) => (
-          <div key={index} className="glass-card rounded-2xl p-4">
+          <div key={index} className="glass-card rounded-2xl p-4 transition-transform duration-200 hover:scale-105 hover:shadow-lg cursor-pointer">
             <div className="flex items-center space-x-3 mb-2">
               <div 
                 className="w-8 h-8 rounded-lg flex items-center justify-center"
@@ -66,15 +66,29 @@ export default function MetricsGrid({ profile }: MetricsGridProps) {
                 <metric.icon className="w-4 h-4" style={{ color: metric.color }} />
               </div>
               <div>
-                <div className="text-sm font-medium text-gray-200">{metric.label}</div>
-                <div className="text-xs text-gray-400">{metric.weight}</div>
+                <div className="text-sm font-medium text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]" style={{ 
+                  textShadow: '1px 1px 2px rgba(0,0,0,0.6)',
+                  fontFamily: 'Inter, sans-serif',
+                  fontWeight: '500'
+                }}>{metric.label}</div>
+                <div className="text-xs text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]" style={{ 
+                  textShadow: '1px 1px 1px rgba(0,0,0,0.5)',
+                  fontFamily: 'Inter, sans-serif'
+                }}>{metric.weight}</div>
               </div>
             </div>
             <div className="text-right">
-              <div className={`text-xl font-bold ${getScoreColor(metric.value, metric.isInverse)} drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]`} style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.8)' }}>
+              <div className={`text-xl font-bold ${getScoreColor(metric.value, metric.isInverse)} drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]`} style={{ 
+                textShadow: '2px 2px 4px rgba(0,0,0,0.9), -1px -1px 2px rgba(0,0,0,0.7)',
+                fontFamily: 'Inter, sans-serif',
+                fontWeight: '700'
+              }}>
                 {metric.value}
               </div>
-              <div className="text-xs text-gray-400">{metric.unit}</div>
+              <div className="text-xs text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]" style={{ 
+                textShadow: '1px 1px 1px rgba(0,0,0,0.5)',
+                fontFamily: 'Inter, sans-serif'
+              }}>{metric.unit}</div>
             </div>
           </div>
         ))}

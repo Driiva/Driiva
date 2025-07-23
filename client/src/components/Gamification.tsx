@@ -69,7 +69,11 @@ export default function Gamification({ achievements, leaderboard, currentUser }:
                 </div>
                 <span className="text-sm font-medium">{entry.name}</span>
               </div>
-              <span className="text-sm text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.6)' }}>{entry.score}</span>
+              <span className="text-sm text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]" style={{ 
+                textShadow: '2px 2px 4px rgba(0,0,0,0.9), -1px -1px 2px rgba(0,0,0,0.7)',
+                fontFamily: 'Inter, sans-serif',
+                fontWeight: '600'
+              }}>{entry.score}</span>
             </div>
           ))}
           
