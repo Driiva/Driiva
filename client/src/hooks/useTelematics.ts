@@ -144,9 +144,12 @@ export function useTelematics(): TelematicsState & TelematicsActions {
         summary: null
       }));
 
+      const riskCategory = metrics.aiRiskProfile?.riskCategory;
+      const riskMessage = riskCategory ? ` Risk level: ${riskCategory}.` : '';
+      
       toast({
         title: "Trip Completed",
-        description: `Trip score: ${metrics.score}/100. Distance: ${metrics.distance.toFixed(1)} miles.`,
+        description: `Trip score: ${metrics.score}/100. Distance: ${metrics.distance.toFixed(1)} miles.${riskMessage}`,
       });
 
       // Simulate haptic feedback

@@ -1,4 +1,5 @@
 import { InsertTrip, InsertDrivingProfile } from "@shared/schema";
+import { aiRiskScoringEngine, RiskProfile } from './aiRiskScoring';
 
 export interface TelematicsData {
   gpsPoints: GPSPoint[];
@@ -44,6 +45,7 @@ export interface DrivingMetrics {
   score: number;
   distance: number;
   duration: number;
+  aiRiskProfile?: RiskProfile;
 }
 
 export class TelematicsProcessor {
@@ -84,6 +86,18 @@ export class TelematicsProcessor {
 
     // Calculate overall score
     metrics.score = this.calculateScore(metrics);
+
+    // Calculate AI risk profile
+    try {
+      metrics.aiRiskProfile = aiRiskScoringEngine.calculateAIRiskScore(
+        telematicsData,
+        metrics
+        // TODO: Pass historical data when available
+      );
+    } catch (error) {
+      console.error('AI risk scoring failed:', error);
+      // Continue without AI scoring if it fails
+    }
 
     return metrics;
   }

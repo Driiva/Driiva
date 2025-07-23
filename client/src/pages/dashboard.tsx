@@ -12,13 +12,14 @@ import FloatingActionButton from "@/components/FloatingActionButton";
 import BottomNavigation from "@/components/BottomNavigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
+import AIRiskInsights from "@/components/AIRiskInsights";
 
 export default function Dashboard() {
   const [bottomSheetOpen, setBottomSheetOpen] = useState(false);
-  
+
   // Mock user ID - in real app this would come from auth context
   const userId = 2;
-  
+
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: ['/api/dashboard', userId],
     refetchInterval: 30000, // Real-time updates every 30 seconds
@@ -63,7 +64,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen text-white safe-area">
       <DashboardHeader user={dashboardData.user} />
-      
+
       <main className="px-4 pb-20">
         {/* Hero Section - Driving Score */}
         <section className="py-6">
@@ -76,7 +77,7 @@ export default function Dashboard() {
               <h2 className="text-2xl font-bold mb-2">Your Driving Score</h2>
               <p className="text-gray-300 text-sm">Based on last 30 days of driving</p>
             </div>
-            
+
             <LiquidGauge 
               score={dashboardData.profile.currentScore} 
               projectedRefund={dashboardData.profile.projectedRefund}
@@ -98,8 +99,13 @@ export default function Dashboard() {
           poolSafetyFactor={dashboardData.communityPool?.safetyFactor || 0.80}
         />
 
-        {/* Recent Trips */}
-        <RecentTrips trips={dashboardData.recentTrips} />
+        {/* AI Risk Insights */}
+        {dashboardData.profile?.lastTripMetrics?.aiRiskProfile && (
+          <AIRiskInsights 
+            riskProfile={dashboardData.profile.lastTripMetrics.aiRiskProfile}
+            className="mb-6"
+          />
+        )}
 
         {/* Gamification */}
         <Gamification 
@@ -107,6 +113,9 @@ export default function Dashboard() {
           leaderboard={dashboardData.leaderboard}
           currentUser={dashboardData.user}
         />
+
+        {/* Recent Trips */}
+        <RecentTrips trips={dashboardData.recentTrips} />
 
         {/* Quick Actions */}
         <QuickActions onReportIncident={() => setBottomSheetOpen(true)} />

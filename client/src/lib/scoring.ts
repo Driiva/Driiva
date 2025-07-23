@@ -1,5 +1,21 @@
 import { TelematicsData, GPSPoint, AccelerometerReading, GyroscopeReading, SpeedReading } from './telematics';
 
+export interface RiskProfile {
+  riskScore: number;
+  riskCategory: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  predictedClaimProbability: number;
+  confidenceScore: number;
+  riskFactors: RiskFactor[];
+  recommendations: string[];
+}
+
+export interface RiskFactor {
+  factor: string;
+  impact: number;
+  severity: 'LOW' | 'MEDIUM' | 'HIGH';
+  description: string;
+}
+
 export interface DrivingMetrics {
   hardBrakingEvents: number;
   harshAccelerationEvents: number;
@@ -13,6 +29,7 @@ export interface DrivingMetrics {
   avgSpeed: number;
   maxSpeed: number;
   ecoScore: number;
+  aiRiskProfile?: RiskProfile;
 }
 
 export interface ScoreBreakdown {
