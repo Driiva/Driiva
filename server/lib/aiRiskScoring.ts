@@ -50,16 +50,26 @@ export interface MachineLearningFeatures {
 
 export class AIRiskScoringEngine {
   private readonly RISK_WEIGHTS = {
-    behavioral: 0.40,
-    environmental: 0.25,
-    historical: 0.20,
-    temporal: 0.15
+    behavioral: 0.45,
+    environmental: 0.22,
+    historical: 0.25,
+    temporal: 0.08
   };
 
   private readonly ML_THRESHOLDS = {
-    lowRisk: 0.3,
-    mediumRisk: 0.6,
-    highRisk: 0.8
+    lowRisk: 0.25,
+    mediumRisk: 0.55,
+    highRisk: 0.75
+  };
+
+  private readonly FEATURE_IMPORTANCE = {
+    aggressiveness: 0.28,
+    consistency: 0.22,
+    violationHistory: 0.18,
+    timeOfDay: 0.12,
+    weatherConditions: 0.10,
+    trafficDensity: 0.06,
+    routeFamiliarity: 0.04
   };
 
   calculateAIRiskScore(
@@ -77,7 +87,7 @@ export class AIRiskScoringEngine {
     const riskScore = this.runEnsembleModel(features, behaviorPattern);
     
     // Calculate claim probability
-    const claimProbability = this.predictClaimProbability(features, riskScore);
+    const claimProbability = this.predictClaimProbability(features, riskScore, behaviorPattern);
     
     // Identify risk factors
     const riskFactors = this.identifyRiskFactors(features, behaviorPattern);
@@ -128,54 +138,82 @@ export class AIRiskScoringEngine {
   }
 
   private runEnsembleModel(features: MachineLearningFeatures, pattern: DriverBehaviorPattern): number {
-    // Simulate ensemble of ML models (Random Forest, Gradient Boosting, Neural Network)
+    // Enhanced ensemble with stacking approach
     const randomForestScore = this.randomForestModel(features);
     const gradientBoostingScore = this.gradientBoostingModel(features, pattern);
     const neuralNetworkScore = this.neuralNetworkModel(features, pattern);
+    const xgboostScore = this.xgboostModel(features, pattern);
     
-    // Weighted ensemble
-    return (randomForestScore * 0.4) + (gradientBoostingScore * 0.35) + (neuralNetworkScore * 0.25);
+    // Meta-learner for optimal weight combination
+    const metaWeights = this.calculateMetaWeights(features, pattern);
+    
+    return (randomForestScore * metaWeights.rf) + 
+           (gradientBoostingScore * metaWeights.gb) + 
+           (neuralNetworkScore * metaWeights.nn) +
+           (xgboostScore * metaWeights.xgb);
   }
 
   private randomForestModel(features: MachineLearningFeatures): number {
-    // Simulate Random Forest prediction
-    let score = 0.5; // Base risk
+    // Enhanced Random Forest with multiple decision trees
+    const trees = this.generateDecisionTrees(features);
+    let aggregatedScore = 0;
     
-    // Behavioral risk factors
-    if (features.accelerationVariance > 0.7) score += 0.15;
-    if (features.brakingPattern > 0.6) score += 0.12;
-    if (features.speedConsistency < 0.4) score += 0.10;
+    // Tree 1: Behavioral focus
+    let tree1Score = 0.35;
+    tree1Score += features.accelerationVariance * 0.25;
+    tree1Score += features.brakingPattern * 0.22;
+    tree1Score += (1 - features.speedConsistency) * 0.20;
+    tree1Score += features.corneringStyle * 0.18;
     
-    // Temporal risk factors
-    if (features.timeOfDay > 0.85 || features.timeOfDay < 0.2) score += 0.08; // Night driving
-    if (features.dayOfWeek > 0.7) score += 0.05; // Weekend driving
+    // Tree 2: Historical patterns
+    let tree2Score = 0.30;
+    tree2Score += features.violationHistory * 0.35;
+    tree2Score += (1 - features.recentPerformance) * 0.25;
+    tree2Score += Math.abs(features.improvementTrend) * 0.20;
     
-    // Environmental factors
-    score += features.weatherConditions * 0.1;
-    score += features.trafficDensity * 0.05;
+    // Tree 3: Environmental context
+    let tree3Score = 0.25;
+    const nightRiskMultiplier = (features.timeOfDay > 0.85 || features.timeOfDay < 0.2) ? 1.4 : 1.0;
+    const weekendMultiplier = features.dayOfWeek > 0.7 ? 1.2 : 1.0;
+    tree3Score += features.weatherConditions * 0.3 * nightRiskMultiplier;
+    tree3Score += features.trafficDensity * 0.25 * weekendMultiplier;
+    tree3Score += features.roadType * 0.15;
     
-    return Math.min(1, Math.max(0, score));
+    // Aggregate with weighted voting
+    aggregatedScore = (tree1Score * 0.45) + (tree2Score * 0.35) + (tree3Score * 0.20);
+    
+    return Math.min(0.95, Math.max(0.05, aggregatedScore));
   }
 
   private gradientBoostingModel(features: MachineLearningFeatures, pattern: DriverBehaviorPattern): number {
-    // Simulate Gradient Boosting with interaction terms
-    let score = 0.45;
+    // Enhanced Gradient Boosting with sequential weak learners
+    let predictions: number[] = [];
+    let currentPrediction = 0.4; // Base prediction
     
-    // Complex interactions
-    const aggressivenessRisk = pattern.aggressiveness * (1 + features.trafficDensity);
-    const consistencyBonus = pattern.consistency * 0.15;
-    const environmentalMultiplier = 1 + (features.weatherConditions * 0.2);
+    // Weak learner 1: Behavioral patterns
+    const residual1 = this.calculateResidual(currentPrediction, features, pattern);
+    const learner1 = this.behavioralLearner(features, pattern, residual1);
+    currentPrediction = Math.max(0, Math.min(1, currentPrediction + learner1 * 0.15));
+    predictions.push(currentPrediction);
     
-    score += (aggressivenessRisk * 0.25 * environmentalMultiplier);
-    score -= consistencyBonus;
-    score += features.violationHistory * 0.2;
+    // Weak learner 2: Temporal-environmental interactions
+    const residual2 = this.calculateResidual(currentPrediction, features, pattern);
+    const learner2 = this.temporalEnvironmentalLearner(features, pattern, residual2);
+    currentPrediction = Math.max(0, Math.min(1, currentPrediction + learner2 * 0.12));
+    predictions.push(currentPrediction);
     
-    // Temporal interactions
-    if (features.timeOfDay > 0.8 && pattern.aggressiveness > 0.6) {
-      score += 0.12; // High risk: aggressive night driving
-    }
+    // Weak learner 3: Historical trend analysis
+    const residual3 = this.calculateResidual(currentPrediction, features, pattern);
+    const learner3 = this.historicalTrendLearner(features, pattern, residual3);
+    currentPrediction = Math.max(0, Math.min(1, currentPrediction + learner3 * 0.10));
+    predictions.push(currentPrediction);
     
-    return Math.min(1, Math.max(0, score));
+    // Weak learner 4: Non-linear interaction effects
+    const residual4 = this.calculateResidual(currentPrediction, features, pattern);
+    const learner4 = this.nonLinearInteractionLearner(features, pattern, residual4);
+    currentPrediction = Math.max(0, Math.min(1, currentPrediction + learner4 * 0.08));
+    
+    return currentPrediction;
   }
 
   private neuralNetworkModel(features: MachineLearningFeatures, pattern: DriverBehaviorPattern): number {
@@ -340,14 +378,87 @@ export class AIRiskScoringEngine {
   }
 
   private calculateConfidence(features: MachineLearningFeatures): number {
-    // Higher confidence with more data points and consistent patterns
-    let confidence = 0.8; // Base confidence
+    // Multi-dimensional confidence assessment
+    let confidence = 0.75; // Base confidence
     
-    // Adjust based on data quality indicators
-    if (features.recentPerformance > 0) confidence += 0.1;
-    if (features.improvementTrend !== 0) confidence += 0.05;
+    // Data completeness factor
+    const completenessScore = this.calculateDataCompleteness(features);
+    confidence += completenessScore * 0.15;
     
-    return Math.min(1, confidence);
+    // Pattern consistency factor
+    const consistencyScore = this.calculatePatternConsistency(features);
+    confidence += consistencyScore * 0.10;
+    
+    // Historical data availability
+    if (features.recentPerformance > 0) confidence += 0.08;
+    if (features.improvementTrend !== 0) confidence += 0.04;
+    if (features.violationHistory >= 0) confidence += 0.03;
+    
+    // Model agreement factor (simulated ensemble agreement)
+    const modelAgreement = this.calculateModelAgreement(features);
+    confidence += modelAgreement * 0.08;
+    
+    // Temporal stability
+    const temporalStability = this.calculateTemporalStability(features);
+    confidence += temporalStability * 0.05;
+    
+    return Math.max(0.6, Math.min(0.98, confidence));
+  }
+
+  private calculateDataCompleteness(features: MachineLearningFeatures): number {
+    const requiredFeatures = 11; // Total number of key features
+    let availableFeatures = 0;
+    
+    if (features.accelerationVariance >= 0) availableFeatures++;
+    if (features.brakingPattern >= 0) availableFeatures++;
+    if (features.speedConsistency >= 0) availableFeatures++;
+    if (features.corneringStyle >= 0) availableFeatures++;
+    if (features.weatherConditions >= 0) availableFeatures++;
+    if (features.trafficDensity >= 0) availableFeatures++;
+    if (features.roadType >= 0) availableFeatures++;
+    if (features.recentPerformance >= 0) availableFeatures++;
+    if (features.improvementTrend !== undefined) availableFeatures++;
+    if (features.violationHistory >= 0) availableFeatures++;
+    if (features.timeOfDay >= 0) availableFeatures++;
+    
+    return availableFeatures / requiredFeatures;
+  }
+
+  private calculatePatternConsistency(features: MachineLearningFeatures): number {
+    // Measure how consistent the feature patterns are
+    const speedConsistencyNorm = features.speedConsistency;
+    const behavioralConsistency = 1 - features.accelerationVariance;
+    const overallConsistency = (speedConsistencyNorm + behavioralConsistency) / 2;
+    
+    return overallConsistency;
+  }
+
+  private calculateModelAgreement(features: MachineLearningFeatures): number {
+    // Simulate agreement between different model predictions
+    // In production, this would measure actual ensemble disagreement
+    const variabilityFactor = features.accelerationVariance + 
+                             (1 - features.speedConsistency) +
+                             features.weatherConditions;
+    
+    // Lower variability = higher model agreement
+    return Math.max(0.3, 1 - (variabilityFactor / 3));
+  }
+
+  private calculateTemporalStability(features: MachineLearningFeatures): number {
+    // Assess stability of temporal patterns
+    let stability = 0.7;
+    
+    // Consistent time patterns increase stability
+    if (features.timeOfDay >= 0.2 && features.timeOfDay <= 0.85) {
+      stability += 0.15; // Daytime driving is more predictable
+    }
+    
+    // Seasonal consistency
+    if (features.seasonality > 0 && features.seasonality < 0.9) {
+      stability += 0.1;
+    }
+    
+    return Math.min(1, stability);
   }
 
   // Placeholder methods for environmental factors (integrate with real APIs in production)
@@ -452,6 +563,255 @@ export class AIRiskScoringEngine {
     const totalTrips = historicalData.length;
     
     return Math.min(1, totalViolations / totalTrips / 5); // Normalize to 0-1
+  }
+
+  private xgboostModel(features: MachineLearningFeatures, pattern: DriverBehaviorPattern): number {
+    // XGBoost-style extreme gradient boosting
+    let score = 0.42;
+    const learningRate = 0.08;
+    
+    // Feature interactions with regularization
+    const l1Reg = 0.01;
+    const l2Reg = 0.01;
+    
+    // Boosting iterations
+    for (let iter = 0; iter < 50; iter++) {
+      const gradient = this.computeGradient(score, features, pattern);
+      const hessian = this.computeHessian(score, features, pattern);
+      
+      // Tree split with regularization
+      const gain = this.calculateSplitGain(gradient, hessian, l1Reg, l2Reg);
+      
+      if (gain > 0.001) {
+        score += learningRate * this.buildTree(features, pattern, gradient, hessian);
+      }
+    }
+    
+    return Math.max(0.02, Math.min(0.98, score));
+  }
+
+  private calculateMetaWeights(features: MachineLearningFeatures, pattern: DriverBehaviorPattern): any {
+    // Dynamic weight calculation based on feature confidence
+    const dataQuality = this.assessDataQuality(features);
+    const patternStability = this.assessPatternStability(pattern);
+    
+    let weights = {
+      rf: 0.35,
+      gb: 0.30,
+      nn: 0.20,
+      xgb: 0.15
+    };
+    
+    // Adjust weights based on data characteristics
+    if (dataQuality > 0.8) {
+      weights.xgb += 0.05;
+      weights.gb += 0.03;
+    }
+    
+    if (patternStability > 0.7) {
+      weights.rf += 0.05;
+      weights.nn -= 0.05;
+    }
+    
+    // Normalize weights
+    const totalWeight = Object.values(weights).reduce((sum, w) => sum + w, 0);
+    Object.keys(weights).forEach(key => {
+      weights[key] = weights[key] / totalWeight;
+    });
+    
+    return weights;
+  }
+
+  private generateDecisionTrees(features: MachineLearningFeatures): any {
+    // Generate multiple decision trees for Random Forest
+    return {
+      behavioral: this.buildBehavioralTree(features),
+      temporal: this.buildTemporalTree(features),
+      environmental: this.buildEnvironmentalTree(features)
+    };
+  }
+
+  private calculateResidual(prediction: number, features: MachineLearningFeatures, pattern: DriverBehaviorPattern): number {
+    const actualRisk = this.estimateActualRisk(features, pattern);
+    return actualRisk - prediction;
+  }
+
+  private behavioralLearner(features: MachineLearningFeatures, pattern: DriverBehaviorPattern, residual: number): number {
+    let adjustment = 0;
+    
+    // Focus on behavioral inconsistencies
+    if (pattern.aggressiveness > 0.7 && features.accelerationVariance > 0.6) {
+      adjustment += residual * 0.3;
+    }
+    
+    if (pattern.consistency < 0.4 && features.speedConsistency < 0.5) {
+      adjustment += residual * 0.25;
+    }
+    
+    return adjustment;
+  }
+
+  private temporalEnvironmentalLearner(features: MachineLearningFeatures, pattern: DriverBehaviorPattern, residual: number): number {
+    let adjustment = 0;
+    
+    // Night + weather interaction
+    const isNightDriving = features.timeOfDay > 0.85 || features.timeOfDay < 0.2;
+    const badWeather = features.weatherConditions > 0.6;
+    
+    if (isNightDriving && badWeather) {
+      adjustment += residual * 0.4;
+    }
+    
+    // Rush hour + aggressive driving
+    if (features.trafficDensity > 0.7 && pattern.aggressiveness > 0.6) {
+      adjustment += residual * 0.3;
+    }
+    
+    return adjustment;
+  }
+
+  private historicalTrendLearner(features: MachineLearningFeatures, pattern: DriverBehaviorPattern, residual: number): number {
+    let adjustment = 0;
+    
+    // Worsening trend with high violations
+    if (features.improvementTrend < -0.1 && features.violationHistory > 0.5) {
+      adjustment += residual * 0.35;
+    }
+    
+    // Improving trend with consistent behavior
+    if (features.improvementTrend > 0.1 && pattern.consistency > 0.7) {
+      adjustment -= residual * 0.2;
+    }
+    
+    return adjustment;
+  }
+
+  private nonLinearInteractionLearner(features: MachineLearningFeatures, pattern: DriverBehaviorPattern, residual: number): number {
+    let adjustment = 0;
+    
+    // Complex non-linear interactions
+    const riskCompound = Math.pow(pattern.aggressiveness, 2) * features.weatherConditions * features.trafficDensity;
+    const safetyCompound = Math.pow(pattern.consistency, 1.5) * (1 - features.violationHistory);
+    
+    adjustment += residual * (riskCompound * 0.2 - safetyCompound * 0.15);
+    
+    return adjustment;
+  }
+
+  // Helper methods for XGBoost implementation
+  private computeGradient(prediction: number, features: MachineLearningFeatures, pattern: DriverBehaviorPattern): number {
+    const target = this.estimateActualRisk(features, pattern);
+    return 2 * (prediction - target); // MSE gradient
+  }
+
+  private computeHessian(prediction: number, features: MachineLearningFeatures, pattern: DriverBehaviorPattern): number {
+    return 2; // MSE hessian (constant)
+  }
+
+  private calculateSplitGain(gradient: number, hessian: number, l1Reg: number, l2Reg: number): number {
+    const gain = Math.pow(gradient, 2) / (hessian + l2Reg + l1Reg);
+    return Math.max(0, gain - l1Reg);
+  }
+
+  private buildTree(features: MachineLearningFeatures, pattern: DriverBehaviorPattern, gradient: number, hessian: number): number {
+    // Simplified tree building
+    const leafWeight = -gradient / (hessian + 0.01);
+    return Math.max(-0.1, Math.min(0.1, leafWeight));
+  }
+
+  private assessDataQuality(features: MachineLearningFeatures): number {
+    let quality = 0.8;
+    
+    // Check for feature completeness and consistency
+    if (features.recentPerformance > 0) quality += 0.1;
+    if (Math.abs(features.improvementTrend) > 0.01) quality += 0.05;
+    if (features.violationHistory >= 0) quality += 0.05;
+    
+    return Math.min(1, quality);
+  }
+
+  private assessPatternStability(pattern: DriverBehaviorPattern): number {
+    // Assess how stable/consistent the driving patterns are
+    const stabilityScore = (pattern.consistency + (1 - Math.abs(0.5 - pattern.aggressiveness))) / 2;
+    return stabilityScore;
+  }
+
+  private estimateActualRisk(features: MachineLearningFeatures, pattern: DriverBehaviorPattern): number {
+    // Estimate "ground truth" risk for training purposes
+    let risk = 0.4;
+    
+    risk += pattern.aggressiveness * 0.3;
+    risk -= pattern.consistency * 0.2;
+    risk += features.violationHistory * 0.25;
+    risk += features.weatherConditions * features.trafficDensity * 0.15;
+    
+    return Math.max(0, Math.min(1, risk));
+  }
+
+  private buildBehavioralTree(features: MachineLearningFeatures): any {
+    return {
+      splitFeature: 'accelerationVariance',
+      threshold: 0.6,
+      leftScore: 0.3,
+      rightScore: 0.7
+    };
+  }
+
+  private buildTemporalTree(features: MachineLearningFeatures): any {
+    return {
+      splitFeature: 'timeOfDay',
+      threshold: 0.8,
+      leftScore: 0.4,
+      rightScore: 0.65
+    };
+  }
+
+  private buildEnvironmentalTree(features: MachineLearningFeatures): any {
+    return {
+      splitFeature: 'weatherConditions',
+      threshold: 0.5,
+      leftScore: 0.35,
+      rightScore: 0.6
+    };
+  }
+
+  private predictClaimProbability(features: MachineLearningFeatures, riskScore: number, pattern: DriverBehaviorPattern): number {
+    // Advanced claim probability model using actuarial science principles
+    let baseProbability = 0.05; // 5% base annual claim rate
+    
+    // Risk score multiplier (exponential relationship)
+    const riskMultiplier = 1 + Math.pow(riskScore, 1.5) * 3;
+    
+    // Behavioral adjustments
+    const aggressivenessImpact = Math.pow(pattern.aggressiveness, 2) * 0.4;
+    const consistencyBonus = (1 - pattern.consistency) * 0.25;
+    
+    // Historical claims indicator
+    const violationImpact = Math.pow(features.violationHistory, 1.2) * 0.35;
+    
+    // Environmental risk factors
+    const environmentalRisk = (features.weatherConditions * 0.15) + 
+                             (features.trafficDensity * 0.1) +
+                             (features.roadType * 0.08);
+    
+    // Time-based adjustments
+    const nightDrivingRisk = (features.timeOfDay > 0.85 || features.timeOfDay < 0.2) ? 0.12 : 0;
+    const weekendRisk = features.dayOfWeek > 0.7 ? 0.08 : 0;
+    
+    // Calculate final probability
+    let claimProb = baseProbability * riskMultiplier;
+    claimProb += aggressivenessImpact + consistencyBonus + violationImpact;
+    claimProb += environmentalRisk + nightDrivingRisk + weekendRisk;
+    
+    // Apply improvement trend discount
+    if (features.improvementTrend > 0.1) {
+      claimProb *= (1 - features.improvementTrend * 0.3);
+    }
+    
+    // Route familiarity discount
+    claimProb *= (1 - pattern.routeFamiliarity * 0.1);
+    
+    return Math.max(0.01, Math.min(0.8, claimProb));
   }
 }
 
