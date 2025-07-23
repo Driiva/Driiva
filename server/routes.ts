@@ -110,11 +110,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Report incident
   app.post("/api/incidents", async (req, res) => {
     try {
-      const incidentData = insertIncidentSchema.parse(req.body);
-      const incident = await storage.createIncident(incidentData);
+      console.log("Received incident data:", req.body);
+      
+      // Prepare the data with proper timestamp
+      const incidentData = {
+        ...req.body,
+        reportedAt: new Date(),
+        timestamp: req.body.timestamp || new Date().toISOString()
+      };
+      
+      const validatedData = insertIncidentSchema.parse(incidentData);
+      const incident = await storage.createIncident(validatedData);
       res.json(incident);
     } catch (error: any) {
-      res.status(500).json({ message: "Error reporting incident: " + error.message });
+      console.error("Incident submission error:", error);
+      if (error.name === 'ZodError') {
+        res.status(400).json({ 
+          message: "Validation error", 
+          errors: error.errors 
+        });
+      } else {
+        res.status(500).json({ message: "Error reporting incident: " + error.message });
+      }
     }
   });
 

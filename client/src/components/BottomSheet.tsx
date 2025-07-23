@@ -26,6 +26,10 @@ export default function BottomSheet({ isOpen, onClose }: BottomSheetProps) {
   const reportIncidentMutation = useMutation({
     mutationFn: async (incidentData: any) => {
       const response = await apiRequest("POST", "/api/incidents", incidentData);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to submit incident');
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -37,10 +41,11 @@ export default function BottomSheet({ isOpen, onClose }: BottomSheetProps) {
       resetForm();
       queryClient.invalidateQueries({ queryKey: ['/api/incidents'] });
     },
-    onError: () => {
+    onError: (error: Error) => {
+      console.error("Incident submission error:", error);
       toast({
         title: "Error",
-        description: "Failed to submit incident report",
+        description: error.message || "Failed to submit incident report",
         variant: "destructive",
       });
     }
@@ -65,15 +70,17 @@ export default function BottomSheet({ isOpen, onClose }: BottomSheetProps) {
       return;
     }
 
-    reportIncidentMutation.mutate({
+    const incidentData = {
       userId: 2, // Mock user ID
       type: incidentType,
-      description,
-      location: location || "Not specified",
+      description: description.trim(),
+      location: location.trim() || undefined,
       severity,
-      status: "pending",
-      timestamp: new Date().toISOString()
-    });
+      status: "pending"
+    };
+
+    console.log("Submitting incident:", incidentData);
+    reportIncidentMutation.mutate(incidentData);
   };
 
   if (!isOpen) return null;
