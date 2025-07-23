@@ -67,7 +67,11 @@ export default function Dashboard() {
       <main className="px-4 pb-20">
         {/* Hero Section - Driving Score */}
         <section className="py-6">
-          <div className="glass-morphism rounded-3xl p-6 mb-6">
+          <div className="rounded-3xl p-6 mb-6" style={{
+            background: 'rgba(255, 255, 255, 0.04)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            backdropFilter: 'blur(12px)',
+          }}>
             <div className="text-center mb-6">
               <h2 className="text-2xl font-bold mb-2">Your Driving Score</h2>
               <p className="text-gray-300 text-sm">Based on last 30 days of driving</p>

@@ -13,7 +13,13 @@ export default function LiquidGauge({ score, projectedRefund, premiumAmount }: L
     <>
       {/* Liquid Fill Gauge for Driving Score */}
       <div className="relative w-48 h-48 mx-auto mb-6">
-        <svg className="w-full h-full progress-ring" viewBox="0 0 100 100">
+        <svg 
+          className="w-full h-full progress-ring" 
+          viewBox="0 0 100 100"
+          style={{
+            filter: 'drop-shadow(0 0 16px rgba(139, 69, 19, 0.4)) drop-shadow(0 0 32px rgba(184, 115, 51, 0.3))',
+          }}
+        >
           <circle 
             cx="50" 
             cy="50" 
@@ -30,7 +36,10 @@ export default function LiquidGauge({ score, projectedRefund, premiumAmount }: L
             strokeWidth="8" 
             fill="none" 
             className="progress-ring-circle" 
-            style={{ strokeDashoffset: strokeOffset }}
+            style={{ 
+              strokeDashoffset: strokeOffset,
+              filter: 'drop-shadow(0 0 8px rgba(139, 69, 19, 0.6))'
+            }}
           />
           <defs>
             <linearGradient id="gradientStroke" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -83,7 +92,11 @@ export default function LiquidGauge({ score, projectedRefund, premiumAmount }: L
       </div>
 
       {/* Projected Refund */}
-      <div className="text-center p-4 glass-morphism rounded-2xl">
+      <div className="text-center p-4 rounded-2xl" style={{
+        background: 'rgba(255, 255, 255, 0.04)',
+        border: '1px solid rgba(255, 255, 255, 0.08)',
+        backdropFilter: 'blur(12px)',
+      }}>
         <div className="text-xs text-white mb-1 drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]" style={{ 
           textShadow: '1px 1px 2px rgba(0,0,0,0.6)',
           fontFamily: 'Inter, sans-serif'

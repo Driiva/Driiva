@@ -30,7 +30,11 @@ export default function Gamification({ achievements, leaderboard, currentUser }:
       
       <div className="grid grid-cols-3 gap-3 mb-6">
         {unlockedAchievements.map((achievement, index) => (
-          <div key={index} className="glass-card rounded-2xl p-4 text-center">
+          <div key={index} className="rounded-2xl p-4 text-center" style={{
+            background: 'rgba(255, 255, 255, 0.04)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            backdropFilter: 'blur(12px)',
+          }}>
             <div className={`w-12 h-12 bg-gradient-to-r ${achievement.color} rounded-full flex items-center justify-center mx-auto mb-2`}>
               <achievement.icon className="w-6 h-6 text-white" />
             </div>
@@ -40,7 +44,11 @@ export default function Gamification({ achievements, leaderboard, currentUser }:
         ))}
         
         {lockedAchievements.map((achievement, index) => (
-          <div key={index} className="glass-card rounded-2xl p-4 text-center opacity-50">
+          <div key={index} className="rounded-2xl p-4 text-center opacity-50" style={{
+            background: 'rgba(255, 255, 255, 0.04)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            backdropFilter: 'blur(12px)',
+          }}>
             <div className={`w-12 h-12 ${achievement.color} rounded-full flex items-center justify-center mx-auto mb-2`}>
               <achievement.icon className="w-6 h-6 text-gray-400" />
             </div>
@@ -50,7 +58,11 @@ export default function Gamification({ achievements, leaderboard, currentUser }:
         ))}
       </div>
 
-      <div className="glass-morphism rounded-2xl p-4">
+      <div className="rounded-2xl p-4" style={{
+        background: 'rgba(255, 255, 255, 0.04)',
+        border: '1px solid rgba(255, 255, 255, 0.08)',
+        backdropFilter: 'blur(12px)',
+      }}>
         <div className="flex items-center justify-between mb-3">
           <h4 className="font-medium">Community Leaderboard</h4>
           <div className="text-xs text-gray-400">This Week</div>

@@ -57,7 +57,11 @@ export default function MetricsGrid({ profile }: MetricsGridProps) {
     <section className="mb-6">
       <div className="grid grid-cols-2 gap-4">
         {metrics.map((metric, index) => (
-          <div key={index} className="glass-card rounded-2xl p-4 transition-transform duration-200 hover:scale-105 hover:shadow-lg cursor-pointer">
+          <div key={index} className="rounded-2xl p-4 transition-transform duration-200 hover:scale-105 hover:shadow-lg cursor-pointer" style={{
+            background: 'rgba(255, 255, 255, 0.04)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            backdropFilter: 'blur(12px)',
+          }}>
             <div className="flex items-center space-x-3 mb-2">
               <div 
                 className="w-8 h-8 rounded-lg flex items-center justify-center"

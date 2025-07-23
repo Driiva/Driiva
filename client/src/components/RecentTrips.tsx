@@ -31,7 +31,11 @@ export default function RecentTrips({ trips }: RecentTripsProps) {
 
       <div className="space-y-3">
         {trips.map((trip) => (
-          <div key={trip.id} className="glass-card rounded-2xl p-4">
+          <div key={trip.id} className="rounded-2xl p-4" style={{
+            background: 'rgba(255, 255, 255, 0.04)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            backdropFilter: 'blur(12px)',
+          }}>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div className="w-12 h-12 bg-[#8B4513] bg-opacity-20 rounded-xl flex items-center justify-center">

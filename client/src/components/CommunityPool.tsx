@@ -17,7 +17,11 @@ export default function CommunityPool({ pool }: CommunityPoolProps) {
 
   return (
     <section className="mb-6">
-      <div className="glass-morphism rounded-3xl p-6">
+      <div className="rounded-3xl p-6" style={{
+        background: 'rgba(255, 255, 255, 0.04)',
+        border: '1px solid rgba(255, 255, 255, 0.08)',
+        backdropFilter: 'blur(12px)',
+      }}>
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold">Community Pool</h3>
           <div className="flex items-center space-x-2">
@@ -35,10 +39,14 @@ export default function CommunityPool({ pool }: CommunityPoolProps) {
               fontWeight: '600'
             }}>{safetyPercentage}%</span>
           </div>
-          <div className="w-full bg-gray-700/30 rounded-full h-2">
+          <div className="w-full bg-gray-700/30 rounded-full h-2 relative">
             <div 
               className="bg-gradient-to-r from-[#8B4513] via-[#B87333] to-[#7B1FA2] h-2 rounded-full transition-all duration-500" 
-              style={{ width: `${safetyPercentage}%` }}
+              style={{ 
+                width: `${safetyPercentage}%`,
+                boxShadow: '0 0 12px rgba(139, 69, 19, 0.6), 0 0 24px rgba(184, 115, 51, 0.4), 0 0 36px rgba(123, 31, 162, 0.3)',
+                filter: 'drop-shadow(0 0 8px rgba(139, 69, 19, 0.5))'
+              }}
             />
           </div>
           <div className="text-xs text-gray-400 mt-1">
