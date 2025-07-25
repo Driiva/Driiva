@@ -56,7 +56,7 @@ export class TelematicsProcessor {
   private readonly NIGHT_HOURS = { start: 22, end: 5 }; // 10 PM to 5 AM
 
   processTrip(telematicsData: TelematicsData): DrivingMetrics {
-    const metrics = {
+    const metrics: DrivingMetrics = {
       hardBrakingEvents: 0,
       harshAccelerationEvents: 0,
       speedViolations: 0,
@@ -64,7 +64,8 @@ export class TelematicsProcessor {
       sharpCorners: 0,
       score: 0,
       distance: 0,
-      duration: 0
+      duration: 0,
+      aiRiskProfile: undefined
     };
 
     // Calculate distance and duration

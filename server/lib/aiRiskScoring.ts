@@ -46,6 +46,9 @@ export interface MachineLearningFeatures {
   recentPerformance: number;
   improvementTrend: number;
   violationHistory: number;
+  
+  // Route features
+  routeFamiliarity: number;
 }
 
 export class AIRiskScoringEngine {
@@ -133,7 +136,10 @@ export class AIRiskScoringEngine {
       // Historical features
       recentPerformance: this.calculateRecentPerformance(historicalData),
       improvementTrend: this.calculateImprovementTrend(historicalData),
-      violationHistory: this.calculateViolationHistory(historicalData)
+      violationHistory: this.calculateViolationHistory(historicalData),
+      
+      // Route features
+      routeFamiliarity: this.calculateRouteFamiliarity(telematicsData.gpsPoints)
     };
   }
 
@@ -590,7 +596,7 @@ export class AIRiskScoringEngine {
     return Math.max(0.02, Math.min(0.98, score));
   }
 
-  private calculateMetaWeights(features: MachineLearningFeatures, pattern: DriverBehaviorPattern): any {
+  private calculateMetaWeights(features: MachineLearningFeatures, pattern: DriverBehaviorPattern): { rf: number; gb: number; nn: number; xgb: number } {
     // Dynamic weight calculation based on feature confidence
     const dataQuality = this.assessDataQuality(features);
     const patternStability = this.assessPatternStability(pattern);
@@ -615,7 +621,7 @@ export class AIRiskScoringEngine {
     
     // Normalize weights
     const totalWeight = Object.values(weights).reduce((sum, w) => sum + w, 0);
-    Object.keys(weights).forEach(key => {
+    (Object.keys(weights) as Array<keyof typeof weights>).forEach(key => {
       weights[key] = weights[key] / totalWeight;
     });
     
