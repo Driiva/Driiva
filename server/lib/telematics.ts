@@ -55,7 +55,7 @@ export class TelematicsProcessor {
   private readonly SPEED_VIOLATION_THRESHOLD = 5; // mph over limit
   private readonly NIGHT_HOURS = { start: 22, end: 5 }; // 10 PM to 5 AM
 
-  processTrip(telematicsData: TelematicsData): DrivingMetrics {
+  async processTrip(telematicsData: TelematicsData, userId?: number): Promise<DrivingMetrics> {
     const metrics: DrivingMetrics = {
       hardBrakingEvents: 0,
       harshAccelerationEvents: 0,
@@ -88,19 +88,61 @@ export class TelematicsProcessor {
     // Calculate overall score
     metrics.score = this.calculateScore(metrics);
 
-    // Calculate AI risk profile
+    // Get historical data for better AI predictions
+    let historicalData: DrivingMetrics[] = [];
+    if (userId) {
+      try {
+        historicalData = await this.getHistoricalMetrics(userId);
+      } catch (error) {
+        console.warn('Could not fetch historical data for AI scoring:', error);
+      }
+    }
+
+    // Calculate AI risk profile with historical context
     try {
       metrics.aiRiskProfile = aiRiskScoringEngine.calculateAIRiskScore(
         telematicsData,
-        metrics
-        // TODO: Pass historical data when available
+        metrics,
+        historicalData
       );
+      
+      console.log(`AI Risk Profile calculated: ${metrics.aiRiskProfile.riskCategory} risk, score: ${metrics.aiRiskProfile.riskScore.toFixed(3)}`);
     } catch (error) {
       console.error('AI risk scoring failed:', error);
-      // Continue without AI scoring if it fails
+      // Create a fallback basic risk profile
+      metrics.aiRiskProfile = this.createFallbackRiskProfile(metrics);
     }
 
     return metrics;
+  }
+
+  private async getHistoricalMetrics(userId: number): Promise<DrivingMetrics[]> {
+    // This would typically fetch from database
+    // For now, return empty array - implement database integration as needed
+    return [];
+  }
+
+  private createFallbackRiskProfile(metrics: DrivingMetrics): RiskProfile {
+    // Create a basic risk profile when AI scoring fails
+    const totalEvents = metrics.hardBrakingEvents + metrics.harshAccelerationEvents + 
+                       metrics.speedViolations + metrics.sharpCorners;
+    
+    let riskScore = 0.3; // Base risk
+    riskScore += Math.min(0.4, totalEvents * 0.05); // Event-based risk
+    riskScore += metrics.nightDriving ? 0.1 : 0; // Night driving risk
+    
+    const riskCategory = riskScore < 0.3 ? 'LOW' : 
+                        riskScore < 0.6 ? 'MEDIUM' : 
+                        riskScore < 0.8 ? 'HIGH' : 'CRITICAL';
+
+    return {
+      riskScore,
+      riskCategory,
+      predictedClaimProbability: riskScore * 15, // Basic claim probability
+      confidenceScore: 0.7, // Lower confidence for fallback
+      riskFactors: [],
+      recommendations: ['Enable AI scoring for detailed insights']
+    };
   }
 
   private calculateDistance(gpsPoints: GPSPoint[]): number {

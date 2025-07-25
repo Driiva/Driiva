@@ -7,28 +7,28 @@ import { insertTripSchema, insertIncidentSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  
+
   // Get user dashboard data
   app.get("/api/dashboard/:userId", async (req, res) => {
     try {
       const userId = parseInt(req.params.userId);
       console.log(`Fetching dashboard data for user ${userId}`);
-      
+
       const user = await storage.getUser(userId);
       console.log(`User found:`, !!user);
-      
+
       const profile = await storage.getDrivingProfile(userId);
       console.log(`Profile found:`, !!profile);
-      
+
       const recentTrips = await storage.getUserTrips(userId, 5);
       console.log(`Recent trips count:`, recentTrips?.length || 0);
-      
+
       const pool = await storage.getCommunityPool();
       console.log(`Community pool found:`, !!pool);
-      
+
       const achievements = await storage.getUserAchievements(userId);
       console.log(`Achievements count:`, achievements?.length || 0);
-      
+
       const leaderboard = await storage.getLeaderboard('weekly', 10);
       console.log(`Leaderboard count:`, leaderboard?.length || 0);
 
@@ -65,10 +65,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const tripData = insertTripSchema.parse(req.body);
       const telematicsData: TelematicsData = req.body.telematicsData;
-      
-      // Process telematics data
-      const metrics = telematicsProcessor.processTrip(telematicsData);
-      
+      const userId = tripData.userId;
+
+      // Process telematics data with AI models
+      const metrics = await telematicsProcessor.processTrip(telematicsData, userId);
+
       // Create trip with processed metrics
       const trip = await storage.createTrip({
         ...tripData,
@@ -89,7 +90,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const currentScore = profile.currentScore || 0;
         const totalTrips = profile.totalTrips || 0;
         const newCurrentScore = Math.round((currentScore * totalTrips + metrics.score) / (totalTrips + 1));
-        
+
         const updatedProfile = await storage.updateDrivingProfile(tripData.userId, {
           currentScore: newCurrentScore,
           hardBrakingScore: (profile.hardBrakingScore || 0) + metrics.hardBrakingEvents,
@@ -127,14 +128,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/incidents", async (req, res) => {
     try {
       console.log("Received incident data:", req.body);
-      
+
       // Prepare the data with proper timestamp
       const incidentData = {
         ...req.body,
         reportedAt: new Date(),
         timestamp: req.body.timestamp || new Date().toISOString()
       };
-      
+
       const validatedData = insertIncidentSchema.parse(incidentData);
       const incident = await storage.createIncident(validatedData);
       res.json(incident);
@@ -221,7 +222,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = parseInt(req.params.userId);
       const userData = await storage.exportUserData(userId);
-      
+
       res.setHeader('Content-Type', 'application/json');
       res.setHeader('Content-Disposition', `attachment; filename=driiva-data-${userId}.json`);
       res.json(userData);

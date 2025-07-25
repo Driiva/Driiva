@@ -80,32 +80,73 @@ export class AIRiskScoringEngine {
     drivingMetrics: DrivingMetrics,
     historicalData?: DrivingMetrics[]
   ): RiskProfile {
-    // Extract ML features
-    const features = this.extractFeatures(telematicsData, drivingMetrics, historicalData);
-    
-    // Calculate behavioral patterns
-    const behaviorPattern = this.analyzeBehaviorPattern(telematicsData, drivingMetrics);
-    
-    // Run ensemble models
-    const riskScore = this.runEnsembleModel(features, behaviorPattern);
-    
-    // Calculate claim probability
-    const claimProbability = this.predictClaimProbability(features, riskScore, behaviorPattern);
-    
-    // Identify risk factors
-    const riskFactors = this.identifyRiskFactors(features, behaviorPattern);
-    
-    // Generate recommendations
-    const recommendations = this.generateRecommendations(riskFactors, behaviorPattern);
-    
-    return {
-      riskScore: Math.round(riskScore * 100) / 100,
-      riskCategory: this.categorizeRisk(riskScore),
-      predictedClaimProbability: Math.round(claimProbability * 10000) / 100,
-      confidenceScore: this.calculateConfidence(features),
-      riskFactors,
-      recommendations
-    };
+    // Validate input data
+    if (!this.validateInputData(telematicsData, drivingMetrics)) {
+      throw new Error('Invalid telematics data provided to AI model');
+    }
+
+    try {
+      // Extract ML features
+      const features = this.extractFeatures(telematicsData, drivingMetrics, historicalData);
+      
+      // Calculate behavioral patterns
+      const behaviorPattern = this.analyzeBehaviorPattern(telematicsData, drivingMetrics);
+      
+      // Run ensemble models
+      const riskScore = this.runEnsembleModel(features, behaviorPattern);
+      
+      // Calculate claim probability
+      const claimProbability = this.predictClaimProbability(features, riskScore, behaviorPattern);
+      
+      // Identify risk factors
+      const riskFactors = this.identifyRiskFactors(features, behaviorPattern);
+      
+      // Generate recommendations
+      const recommendations = this.generateRecommendations(riskFactors, behaviorPattern);
+      
+      const result = {
+        riskScore: Math.round(riskScore * 1000) / 1000, // 3 decimal precision
+        riskCategory: this.categorizeRisk(riskScore),
+        predictedClaimProbability: Math.round(claimProbability * 10000) / 100,
+        confidenceScore: Math.round(this.calculateConfidence(features) * 1000) / 1000,
+        riskFactors,
+        recommendations
+      };
+
+      // Log successful AI processing
+      console.log(`AI Model Results: Risk=${result.riskCategory}(${result.riskScore}), Claim Prob=${result.predictedClaimProbability}%, Confidence=${(result.confidenceScore*100).toFixed(1)}%`);
+      
+      return result;
+    } catch (error) {
+      console.error('AI Risk Scoring Engine Error:', error);
+      throw new Error(`AI model calculation failed: ${error.message}`);
+    }
+  }
+
+  private validateInputData(telematicsData: TelematicsData, drivingMetrics: DrivingMetrics): boolean {
+    // Validate telematics data
+    if (!telematicsData.gpsPoints || telematicsData.gpsPoints.length < 2) {
+      console.warn('Insufficient GPS data for AI analysis');
+      return false;
+    }
+
+    if (!telematicsData.accelerometerData || telematicsData.accelerometerData.length < 10) {
+      console.warn('Insufficient accelerometer data for AI analysis');
+      return false;
+    }
+
+    if (!telematicsData.speedData || telematicsData.speedData.length < 5) {
+      console.warn('Insufficient speed data for AI analysis');
+      return false;
+    }
+
+    // Validate driving metrics
+    if (drivingMetrics.distance <= 0 || drivingMetrics.duration <= 0) {
+      console.warn('Invalid trip distance or duration for AI analysis');
+      return false;
+    }
+
+    return true;
   }
 
   private extractFeatures(

@@ -9,6 +9,28 @@ interface AIRiskInsightsProps {
 }
 
 export default function AIRiskInsights({ riskProfile, className = '' }: AIRiskInsightsProps) {
+  // Handle missing or invalid risk profile
+  if (!riskProfile) {
+    return (
+      <section className={`${className}`}>
+        <div className="glass-morphism rounded-3xl p-6">
+          <div className="flex items-center space-x-3 mb-6">
+            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+              <Brain className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="text-lg font-semibold text-white">AI Risk Analysis</h3>
+              <p className="text-sm text-gray-400">Processing trip data...</p>
+            </div>
+          </div>
+          <div className="text-center py-8">
+            <div className="animate-pulse bg-white/10 rounded-xl h-24 mb-4"></div>
+            <p className="text-gray-400">AI models are analyzing your driving data</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
   const getRiskCategoryColor = (category: string) => {
     switch (category) {
       case 'LOW': return 'bg-green-500/20 text-green-400 border-green-500/30';
