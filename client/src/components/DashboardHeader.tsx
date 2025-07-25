@@ -1,9 +1,13 @@
 import { Bell, Zap } from "lucide-react";
+import ProfileDropdown from "./ProfileDropdown";
 
 interface DashboardHeaderProps {
   user?: {
     firstName?: string;
+    lastName?: string;
     username: string;
+    email: string;
+    premiumAmount: string;
   };
 }
 
@@ -33,13 +37,7 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
           <button className="w-10 h-10 glass-morphism rounded-full flex items-center justify-center haptic-button">
             <Bell className="w-5 h-5 text-gray-300" />
           </button>
-          <button className="w-10 h-10 glass-morphism rounded-full flex items-center justify-center haptic-button">
-            <div className="w-8 h-8 bg-gradient-to-r from-[#06B6D4] to-[#3B82F6] rounded-full flex items-center justify-center">
-              <span className="text-xs font-bold text-white">
-                {(user?.firstName || user?.username || 'U').charAt(0).toUpperCase()}
-              </span>
-            </div>
-          </button>
+          {user && <ProfileDropdown user={user} />}
         </div>
       </div>
     </header>

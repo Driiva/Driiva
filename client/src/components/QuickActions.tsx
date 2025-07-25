@@ -1,4 +1,5 @@
 import { AlertTriangle, FileText, MessageCircle, Download } from "lucide-react";
+import { Link } from "wouter";
 
 interface QuickActionsProps {
   onReportIncident: () => void;
@@ -20,7 +21,8 @@ export default function QuickActions({ onReportIncident }: QuickActionsProps) {
       description: "Policy & Certificates",
       color: "bg-[#3B82F6] bg-opacity-20",
       iconColor: "text-[#3B82F6]",
-      onClick: () => console.log("View documents")
+      onClick: () => window.open('/documents', '_blank'),
+      href: "/profile"
     },
     {
       icon: MessageCircle,
@@ -28,7 +30,8 @@ export default function QuickActions({ onReportIncident }: QuickActionsProps) {
       description: "Chat & Help",
       color: "bg-[#A855F7] bg-opacity-20",
       iconColor: "text-[#A855F7]",
-      onClick: () => console.log("Contact support")
+      onClick: () => window.open('mailto:support@driiva.com', '_blank'),
+      href: "/profile"
     },
     {
       icon: Download,
@@ -36,7 +39,8 @@ export default function QuickActions({ onReportIncident }: QuickActionsProps) {
       description: "GDPR Compliance",
       color: "bg-[#06B6D4] bg-opacity-20",
       iconColor: "text-[#06B6D4]",
-      onClick: () => console.log("Export data")
+      onClick: () => window.location.href = '/api/gdpr/export/2',
+      href: "/profile"
     }
   ];
 
@@ -49,7 +53,7 @@ export default function QuickActions({ onReportIncident }: QuickActionsProps) {
           <button
             key={index}
             onClick={action.onClick}
-            className="glass-card rounded-2xl p-4 text-left haptic-button spring-transition hover:scale-105"
+            className="glass-morphism rounded-2xl p-4 text-left haptic-button spring-transition hover:scale-105 active:scale-95 transition-all duration-200"
           >
             <div className="flex items-center space-x-3">
               <div className={`w-10 h-10 ${action.color} rounded-xl flex items-center justify-center`}>
