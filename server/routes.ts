@@ -12,14 +12,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/dashboard/:userId", async (req, res) => {
     try {
       const userId = parseInt(req.params.userId);
+      console.log(`Fetching dashboard data for user ${userId}`);
+      
       const user = await storage.getUser(userId);
+      console.log(`User found:`, !!user);
+      
       const profile = await storage.getDrivingProfile(userId);
+      console.log(`Profile found:`, !!profile);
+      
       const recentTrips = await storage.getUserTrips(userId, 5);
+      console.log(`Recent trips count:`, recentTrips?.length || 0);
+      
       const pool = await storage.getCommunityPool();
+      console.log(`Community pool found:`, !!pool);
+      
       const achievements = await storage.getUserAchievements(userId);
+      console.log(`Achievements count:`, achievements?.length || 0);
+      
       const leaderboard = await storage.getLeaderboard('weekly', 10);
+      console.log(`Leaderboard count:`, leaderboard?.length || 0);
 
       if (!user || !profile) {
+        console.log(`Missing data - User: ${!!user}, Profile: ${!!profile}`);
         return res.status(404).json({ message: "User not found" });
       }
 
@@ -31,6 +45,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         Number(user.premiumAmount)
       );
 
+      console.log(`Dashboard data compiled successfully for user ${userId}`);
       res.json({
         user,
         profile: { ...profile, projectedRefund },
@@ -40,6 +55,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         leaderboard
       });
     } catch (error: any) {
+      console.error("Dashboard error details:", error);
       res.status(500).json({ message: "Error fetching dashboard data: " + error.message });
     }
   });
