@@ -10,12 +10,16 @@ import QuickActions from "@/components/QuickActions";
 import BottomSheet from "@/components/BottomSheet";
 import FloatingActionButton from "@/components/FloatingActionButton";
 import BottomNavigation from "@/components/BottomNavigation";
+import PolicyStatusWidget from "@/components/PolicyStatusWidget";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import AIRiskInsights from "@/components/AIRiskInsights";
 
 export default function Dashboard() {
   const [bottomSheetOpen, setBottomSheetOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const [allTrips, setAllTrips] = useState<any[]>([]);
+  const [hasMore, setHasMore] = useState(true);
 
   // Mock user ID - in real app this would come from auth context
   const userId = 2;
@@ -24,6 +28,37 @@ export default function Dashboard() {
     queryKey: ['/api/dashboard', userId],
     refetchInterval: 30000, // Real-time updates every 30 seconds
   });
+
+  // Infinite scroll for trips
+  const { data: tripsData } = useQuery({
+    queryKey: ['/api/trips', userId, page],
+    enabled: page > 1, // Only fetch additional pages after first load
+  });
+
+  useEffect(() => {
+    if (dashboardData?.recentTrips && page === 1) {
+      setAllTrips(dashboardData.recentTrips);
+    }
+  }, [dashboardData?.recentTrips, page]);
+
+  useEffect(() => {
+    if (tripsData && page > 1) {
+      setAllTrips(prev => [...prev, ...tripsData]);
+      setHasMore(Array.isArray(tripsData) ? tripsData.length === 20 : false); // Assuming 20 trips per page
+    }
+  }, [tripsData, page]);
+
+  const handleScroll = useCallback(() => {
+    if (window.innerHeight + document.documentElement.scrollTop >= 
+        document.documentElement.offsetHeight - 1000 && hasMore) {
+      setPage(prev => prev + 1);
+    }
+  }, [hasMore]);
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
 
   if (isLoading) {
     return (
@@ -63,44 +98,47 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen text-white safe-area">
-      <DashboardHeader user={dashboardData.user} />
+      <DashboardHeader user={dashboardData?.user} />
 
       <main className="px-4 pb-20">
+        {/* Policy Status Widget */}
+        {dashboardData?.user && <PolicyStatusWidget user={dashboardData.user} />}
+
         {/* Hero Section - Driving Score */}
         <section className="py-6">
-          <div className="rounded-3xl p-6 mb-6" style={{
-            background: 'rgba(255, 255, 255, 0.04)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            backdropFilter: 'blur(12px)',
-          }}>
+          <div className="glass-morphism rounded-3xl p-6 mb-6">
             <div className="text-center mb-6">
               <h2 className="text-2xl font-bold mb-2">Your Driving Score</h2>
               <p className="text-gray-300 text-sm">Based on last 30 days of driving</p>
             </div>
 
-            <LiquidGauge 
-              score={dashboardData.profile.currentScore} 
-              projectedRefund={dashboardData.profile.projectedRefund}
-              premiumAmount={dashboardData.user.premiumAmount}
-            />
+            {dashboardData?.profile && (
+              <LiquidGauge 
+                score={dashboardData.profile.currentScore} 
+                projectedRefund={dashboardData.profile.projectedRefund}
+                premiumAmount={dashboardData.user?.premiumAmount || 0}
+              />
+            )}
           </div>
         </section>
 
         {/* Metrics Grid */}
-        <MetricsGrid profile={dashboardData.profile} />
+        {dashboardData?.profile && <MetricsGrid profile={dashboardData.profile} />}
 
         {/* Community Pool */}
-        <CommunityPool pool={dashboardData.communityPool} />
+        {dashboardData?.communityPool && <CommunityPool pool={dashboardData.communityPool} />}
 
         {/* Refund Simulator */}
-        <RefundSimulator 
-          currentScore={dashboardData.profile.currentScore}
-          premiumAmount={dashboardData.user.premiumAmount}
-          poolSafetyFactor={dashboardData.communityPool?.safetyFactor || 0.80}
-        />
+        {dashboardData?.profile && dashboardData?.user && (
+          <RefundSimulator 
+            currentScore={dashboardData.profile.currentScore}
+            premiumAmount={dashboardData.user.premiumAmount}
+            poolSafetyFactor={dashboardData.communityPool?.safetyFactor || 0.80}
+          />
+        )}
 
         {/* AI Risk Insights */}
-        {dashboardData.profile?.lastTripMetrics?.aiRiskProfile && (
+        {dashboardData?.profile?.lastTripMetrics?.aiRiskProfile && (
           <AIRiskInsights 
             riskProfile={dashboardData.profile.lastTripMetrics.aiRiskProfile}
             className="mb-6"
@@ -108,14 +146,22 @@ export default function Dashboard() {
         )}
 
         {/* Gamification */}
-        <Gamification 
-          achievements={dashboardData.achievements}
-          leaderboard={dashboardData.leaderboard}
-          currentUser={dashboardData.user}
-        />
+        {dashboardData?.achievements && dashboardData?.leaderboard && dashboardData?.user && (
+          <Gamification 
+            achievements={dashboardData.achievements}
+            leaderboard={dashboardData.leaderboard}
+            currentUser={dashboardData.user}
+          />
+        )}
 
-        {/* Recent Trips */}
-        <RecentTrips trips={dashboardData.recentTrips} />
+        {/* Recent Trips with Infinite Scroll */}
+        <RecentTrips trips={allTrips} />
+        
+        {hasMore && page > 1 && (
+          <div className="flex justify-center py-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+          </div>
+        )}
 
         {/* Quick Actions */}
         <QuickActions onReportIncident={() => setBottomSheetOpen(true)} />

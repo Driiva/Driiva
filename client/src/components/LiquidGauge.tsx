@@ -52,8 +52,8 @@ export default function LiquidGauge({ score, projectedRefund, premiumAmount }: L
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center">
-            <div className="text-4xl font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]" style={{ 
-              textShadow: '2px 2px 6px rgba(0,0,0,0.9), -2px -2px 4px rgba(0,0,0,0.7), 0 0 8px rgba(0,0,0,0.5)',
+            <div className="text-4xl font-bold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)]" style={{ 
+              textShadow: '1px 1px 2px rgba(0,0,0,0.4)',
               fontFamily: 'Inter, sans-serif',
               fontWeight: '700'
             }}>{score}</div>
@@ -68,8 +68,8 @@ export default function LiquidGauge({ score, projectedRefund, premiumAmount }: L
       {/* Score Breakdown */}
       <div className="grid grid-cols-2 gap-4 mb-6">
         <div className="text-center">
-          <div className="text-lg font-semibold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]" style={{ 
-            textShadow: '2px 2px 4px rgba(0,0,0,0.9), -1px -1px 2px rgba(0,0,0,0.7)',
+          <div className="text-lg font-semibold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)]" style={{ 
+            textShadow: '1px 1px 2px rgba(0,0,0,0.4)',
             fontFamily: 'Inter, sans-serif',
             fontWeight: '600'
           }}>{personalScore}%</div>
@@ -79,8 +79,8 @@ export default function LiquidGauge({ score, projectedRefund, premiumAmount }: L
           }}>Personal Score</div>
         </div>
         <div className="text-center">
-          <div className="text-lg font-semibold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]" style={{ 
-            textShadow: '2px 2px 4px rgba(0,0,0,0.9), -1px -1px 2px rgba(0,0,0,0.7)',
+          <div className="text-lg font-semibold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)]" style={{ 
+            textShadow: '1px 1px 2px rgba(0,0,0,0.4)',
             fontFamily: 'Inter, sans-serif',
             fontWeight: '600'
           }}>{poolScore}%</div>

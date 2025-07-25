@@ -78,15 +78,15 @@ export default function MetricsGrid({ profile }: MetricsGridProps) {
               </div>
             </div>
             <div className="text-right">
-              <div className={`text-xl font-bold ${getScoreColor(metric.value, metric.isInverse)} drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]`} style={{ 
-                textShadow: '2px 2px 4px rgba(0,0,0,0.9), -1px -1px 2px rgba(0,0,0,0.7)',
+              <div className={`text-xl font-bold ${getScoreColor(metric.value, metric.isInverse)} drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)]`} style={{ 
+                textShadow: '1px 1px 2px rgba(0,0,0,0.4)',
                 fontFamily: 'Inter, sans-serif',
                 fontWeight: '700'
               }}>
                 {metric.value}
               </div>
-              <div className="text-xs text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]" style={{ 
-                textShadow: '1px 1px 1px rgba(0,0,0,0.5)',
+              <div className="text-xs text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.3)]" style={{ 
+                textShadow: '1px 1px 1px rgba(0,0,0,0.3)',
                 fontFamily: 'Inter, sans-serif'
               }}>{metric.unit}</div>
             </div>
