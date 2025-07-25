@@ -34,12 +34,10 @@ async function seedDatabase() {
 
     // Create community pool
     const [pool] = await db.insert(communityPool).values({
-      poolAmount: 125000.00,
-      safetyFactor: 0.82,
+      poolAmount: '125000.00',
+      safetyFactor: '0.82',
       participantCount: 2500,
-      safeDriverCount: 2050,
-      averageScore: 83.5,
-      lastUpdated: new Date()
+      safeDriverCount: 2050
     }).returning();
 
     console.log('Created community pool:', pool);
@@ -50,22 +48,25 @@ async function seedDatabase() {
         name: 'First Trip',
         description: 'Complete your first trip with Driiva',
         icon: '🛣️',
+        criteria: { trips: 1 },
         badgeColor: '#10B981',
-        isUnlocked: true
+        isActive: true
       },
       {
         name: 'Safe Driver',
         description: 'Maintain a score above 80 for 30 days',
         icon: '🛡️',
+        criteria: { minScore: 80, days: 30 },
         badgeColor: '#3B82F6',
-        isUnlocked: true
+        isActive: true
       },
       {
         name: 'Weekly Warrior',
         description: 'Complete 7 trips in one week',
         icon: '🏆',
+        criteria: { tripsPerWeek: 7 },
         badgeColor: '#F59E0B',
-        isUnlocked: false
+        isActive: true
       }
     ];
 
