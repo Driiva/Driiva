@@ -16,8 +16,8 @@ export default function CommunityPool({ pool }: CommunityPoolProps) {
   const safeDriverCount = pool?.safeDriverCount || 800;
 
   return (
-    <section className="mb-6">
-      <div className="rounded-3xl p-6" style={{
+    <section className="mb-4">
+      <div className="glass-morphism-subtle rounded-2xl p-4" style={{
         background: 'rgba(255, 255, 255, 0.04)',
         border: '1px solid rgba(255, 255, 255, 0.08)',
         backdropFilter: 'blur(12px)',

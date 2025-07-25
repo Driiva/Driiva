@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { User, Car, FileText, Settings, LogOut, ChevronDown } from "lucide-react";
+import { User, Car, FileText, Settings, LogOut, ChevronDown, Download, HelpCircle } from "lucide-react";
 
 interface ProfileDropdownProps {
   user: {
@@ -9,6 +9,23 @@ interface ProfileDropdownProps {
     email: string;
     premiumAmount: string;
   };
+}
+
+interface DropdownMenuItemProps {
+  children: React.ReactNode;
+  onClick: () => void;
+  className?: string;
+}
+
+function DropdownMenuItem({ children, onClick, className }: DropdownMenuItemProps) {
+  return (
+    <div
+      className={`flex items-center space-x-2 cursor-pointer hover:bg-white/10 p-2 rounded ${className}`}
+      onClick={onClick}
+    >
+      {children}
+    </div>
+  );
 }
 
 export default function ProfileDropdown({ user }: ProfileDropdownProps) {
@@ -34,14 +51,6 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  const menuItems = [
-    { icon: User, label: "View Profile", onClick: () => console.log("View profile") },
-    { icon: Car, label: "Vehicle Details", onClick: () => console.log("Vehicle details") },
-    { icon: FileText, label: "Policy Documents", onClick: () => console.log("Policy documents") },
-    { icon: Settings, label: "Settings", onClick: () => console.log("Settings") },
-    { icon: LogOut, label: "Sign Out", onClick: () => console.log("Sign out"), danger: true }
-  ];
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -72,7 +81,7 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
                 <div className="text-sm text-gray-400">{profileData.email}</div>
               </div>
             </div>
-            
+
             {/* Profile Info */}
             <div className="mt-4 space-y-2">
               <div className="flex items-center justify-between">
@@ -92,21 +101,36 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
 
           {/* Menu Items */}
           <div className="p-2">
-            {menuItems.map((item, index) => (
-              <button
-                key={index}
-                onClick={() => {
-                  item.onClick();
-                  setIsOpen(false);
-                }}
-                className={`w-full flex items-center space-x-3 p-3 rounded-xl transition-all duration-200 hover:bg-white/10 ${
-                  item.danger ? 'text-red-400 hover:bg-red-500/10' : 'text-white'
-                }`}
+              <DropdownMenuItem 
+                className="flex items-center space-x-2 cursor-pointer hover:bg-white/10"
+                onClick={() => window.location.href = '/documents'}
               >
-                <item.icon className="w-4 h-4" />
-                <span className="text-sm font-medium">{item.label}</span>
-              </button>
-            ))}
+                <FileText className="w-4 h-4" />
+                <span>Documents</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                className="flex items-center space-x-2 cursor-pointer hover:bg-white/10"
+                onClick={() => window.location.href = '/profile'}
+              >
+                <Download className="w-4 h-4" />
+                <span>Export Data</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                className="flex items-center space-x-2 cursor-pointer hover:bg-white/10"
+                onClick={() => window.location.href = '/support'}
+              >
+                <HelpCircle className="w-4 h-4" />
+                <span>Support</span>
+              </DropdownMenuItem>
+            <DropdownMenuItem
+              className="flex items-center space-x-2 cursor-pointer hover:bg-white/10"
+              onClick={() => {
+                console.log("Sign out");
+              }}
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Sign Out</span>
+            </DropdownMenuItem>
           </div>
         </div>
       )}

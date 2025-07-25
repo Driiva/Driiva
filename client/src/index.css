@@ -4,6 +4,22 @@
 @tailwind components;
 @tailwind utilities;
 
+* {
+  -webkit-overflow-scrolling: touch;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  overscroll-behavior: contain;
+}
+
+.hover\:scale-102:hover {
+  transform: scale(1.02);
+}
+
 :root {
   --background: hsl(240, 10%, 3.9%);
   --foreground: hsl(0, 0%, 98%);

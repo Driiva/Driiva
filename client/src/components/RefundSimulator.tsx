@@ -22,8 +22,8 @@ export default function RefundSimulator({ currentScore, premiumAmount, poolSafet
   const improvement = Number(simulatedRefund) - Number(currentRefund);
 
   return (
-    <section className="mb-6">
-      <div className="glass-morphism rounded-3xl p-6">
+    <section className="mb-4">
+      <div className="glass-morphism-subtle rounded-2xl p-4">
         <h3 className="text-lg font-semibold mb-4">Refund Simulator</h3>
         <p className="text-sm text-gray-400 mb-6">See how improvements could boost your refund</p>
 

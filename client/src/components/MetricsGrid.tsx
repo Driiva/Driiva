@@ -55,15 +55,15 @@ export default function MetricsGrid({ profile }: MetricsGridProps) {
 
   return (
     <section className="mb-6">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3">
         {metrics.map((metric, index) => (
-          <div key={index} className="glass-morphism rounded-2xl p-4 transition-transform duration-200 hover:scale-105 hover:shadow-lg cursor-pointer">
-            <div className="flex items-center space-x-3 mb-2">
+          <div key={index} className="glass-morphism-subtle rounded-xl p-3 transition-all duration-300 hover:scale-102 hover:shadow-lg cursor-pointer">
+            <div className="flex items-center space-x-2 mb-2">
               <div 
-                className="w-8 h-8 rounded-lg flex items-center justify-center"
+                className="w-6 h-6 rounded-lg flex items-center justify-center"
                 style={{ backgroundColor: `${metric.color}20` }}
               >
-                <metric.icon className="w-4 h-4" style={{ color: metric.color }} />
+                <metric.icon className="w-3 h-3" style={{ color: metric.color }} />
               </div>
               <div>
                 <div className="text-sm font-medium text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]" style={{ 
@@ -78,8 +78,8 @@ export default function MetricsGrid({ profile }: MetricsGridProps) {
               </div>
             </div>
             <div className="text-right">
-              <div className={`text-xl font-bold ${getScoreColor(metric.value, metric.isInverse)} drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)]`} style={{ 
-                textShadow: '1px 1px 2px rgba(0,0,0,0.4)',
+              <div className={`text-lg font-bold ${getScoreColor(metric.value, metric.isInverse)} drop-shadow-[0_1px_1px_rgba(0,0,0,0.3)]`} style={{ 
+                textShadow: '1px 1px 1px rgba(0,0,0,0.3)',
                 fontFamily: 'Inter, sans-serif',
                 fontWeight: '700'
               }}>

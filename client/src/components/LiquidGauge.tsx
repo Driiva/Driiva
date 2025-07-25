@@ -53,7 +53,7 @@ export default function LiquidGauge({ score, projectedRefund, premiumAmount }: L
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center">
             <div className="text-4xl font-bold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)]" style={{ 
-              textShadow: '1px 1px 2px rgba(0,0,0,0.4)',
+              textShadow: '1px 1px 3px rgba(0,0,0,0.4)',
               fontFamily: 'Inter, sans-serif',
               fontWeight: '700'
             }}>{score}</div>

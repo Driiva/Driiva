@@ -27,7 +27,7 @@ export default function Gamification({ achievements, leaderboard, currentUser }:
   return (
     <section className="mb-6">
       <h3 className="text-lg font-semibold mb-4">Achievements</h3>
-      
+
       <div className="grid grid-cols-3 gap-3 mb-6">
         {unlockedAchievements.map((achievement, index) => (
           <div key={index} className="rounded-2xl p-4 text-center" style={{
@@ -42,7 +42,7 @@ export default function Gamification({ achievements, leaderboard, currentUser }:
             <div className="text-xs text-gray-400">{achievement.description}</div>
           </div>
         ))}
-        
+
         {lockedAchievements.map((achievement, index) => (
           <div key={index} className="rounded-2xl p-4 text-center opacity-50" style={{
             background: 'rgba(255, 255, 255, 0.04)',
@@ -67,7 +67,7 @@ export default function Gamification({ achievements, leaderboard, currentUser }:
           <h4 className="font-medium">Community Leaderboard</h4>
           <div className="text-xs text-gray-400">This Week</div>
         </div>
-        
+
         <div className="space-y-3">
           {topLeaderboard.map((entry, index) => (
             <div key={index} className="flex items-center justify-between">
@@ -88,7 +88,7 @@ export default function Gamification({ achievements, leaderboard, currentUser }:
               }}>{entry.score}</span>
             </div>
           ))}
-          
+
           <div className="flex items-center justify-between border-t border-gray-600 pt-3">
             <div className="flex items-center space-x-3">
               <div className="w-6 h-6 bg-[#3B82F6] rounded-full flex items-center justify-center text-xs font-bold text-white">
