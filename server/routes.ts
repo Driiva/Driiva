@@ -112,14 +112,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       console.log("Received incident data:", req.body);
       
-      // Map frontend 'type' to database 'incidentType'
+      // Prepare the data with proper timestamp
       const incidentData = {
-        userId: req.body.userId,
-        incidentType: req.body.type, // Map 'type' to 'incidentType'
-        description: req.body.description,
-        location: req.body.location,
-        severity: req.body.severity,
-        status: req.body.status || "pending"
+        ...req.body,
+        reportedAt: new Date(),
+        timestamp: req.body.timestamp || new Date().toISOString()
       };
       
       const validatedData = insertIncidentSchema.parse(incidentData);

@@ -175,11 +175,12 @@ export const insertTripSchema = createInsertSchema(trips).omit({
 
 export const insertIncidentSchema = z.object({
   userId: z.number(),
-  incidentType: z.string().min(1, "Incident type is required"),
+  type: z.string().min(1, "Incident type is required"),
   description: z.string().min(1, "Description is required"),
   location: z.string().optional(),
   severity: z.enum(["minor", "moderate", "major", "critical"]),
-  status: z.string().default("pending")
+  status: z.string().default("pending"),
+  timestamp: z.string().optional()
 });
 
 export const insertAchievementSchema = createInsertSchema(achievements).omit({
