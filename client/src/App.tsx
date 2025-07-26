@@ -8,7 +8,7 @@ import Dashboard from "@/pages/dashboard";
 import Trips from "@/pages/trips";
 import Rewards from "@/pages/rewards";
 import Profile from "@/pages/profile";
-import TripRecording from "@/pages/trip-recording";
+
 import Documents from "@/pages/documents";
 import Support from "@/pages/support";
 import NotFound from "@/pages/not-found";
@@ -86,7 +86,7 @@ function Router() {
             </PageTransition>
           ) : <SignIn />}
         </Route>
-        <Route path="/trip-recording" component={TripRecording} />
+
         <Route path="/documents" component={Documents} />
         <Route path="/support" component={Support} />
         <Route component={NotFound} />

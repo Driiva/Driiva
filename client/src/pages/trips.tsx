@@ -1,4 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
+import { useEffect } from "react";
 import DashboardHeader from "@/components/DashboardHeader";
 import BottomNavigation from "@/components/BottomNavigation";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -26,7 +28,16 @@ interface DashboardData {
 }
 
 export default function Trips() {
-  const { userId, user } = useAuth();
+  const { userId, user, isAuthenticated } = useAuth();
+  const [, setLocation] = useLocation();
+
+  // Redirect to signin if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setLocation('/signin');
+      return;
+    }
+  }, [isAuthenticated, setLocation]);
   
   const { data: dashboardData } = useQuery<DashboardData>({
     queryKey: ['/api/dashboard', userId],
@@ -35,7 +46,7 @@ export default function Trips() {
   
   const { data: trips, isLoading } = useQuery<Trip[]>({
     queryKey: ['/api/trips', userId],
-    enabled: !!userId,
+    enabled: !!userId && isAuthenticated,
   });
 
   if (isLoading) {

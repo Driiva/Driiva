@@ -16,19 +16,30 @@ import { useState, useEffect, useCallback } from "react";
 import AIRiskInsights from "@/components/AIRiskInsights";
 import AIInsights from "@/components/AIInsights";
 import { useParallax } from "@/hooks/useParallax";
+import { useAuth } from "@/hooks/useAuth";
+import { useLocation } from "wouter";
 
 export default function Dashboard() {
   const [bottomSheetOpen, setBottomSheetOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [allTrips, setAllTrips] = useState<any[]>([]);
   const [hasMore, setHasMore] = useState(true);
+  const [, setLocation] = useLocation();
 
   // Get user ID from authenticated user
-  const user = localStorage.getItem("driiva_user");
-  const userId = user ? JSON.parse(user).id : null;
+  const { userId, user, isAuthenticated } = useAuth();
+
+  // Redirect to signin if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setLocation('/signin');
+      return;
+    }
+  }, [isAuthenticated, setLocation]);
 
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: ['/api/dashboard', userId],
+    enabled: !!userId && isAuthenticated, // Only run query if user is authenticated
     refetchInterval: 30000, // Real-time updates every 30 seconds
   });
 
@@ -43,7 +54,7 @@ export default function Dashboard() {
       return fetch(`/api/trips/${userId}?limit=20&offset=${(page - 1) * 20}`)
         .then(res => res.json());
     },
-    enabled: page > 1, // Only fetch additional pages after first load
+    enabled: page > 1 && !!userId && isAuthenticated, // Only fetch additional pages after first load and if authenticated
   });
 
   useEffect(() => {

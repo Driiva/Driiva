@@ -6,14 +6,11 @@ interface FloatingActionButtonProps {
 }
 
 export default function FloatingActionButton({ onClick }: FloatingActionButtonProps) {
-  const [, setLocation] = useLocation();
-  
   const handleClick = () => {
     if (onClick) {
       onClick();
-    } else {
-      setLocation('/trip-recording');
     }
+    // Trip recording functionality removed
   };
 
   return (
