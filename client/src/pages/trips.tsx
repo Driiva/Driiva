@@ -5,10 +5,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Map, Clock, Navigation, Trophy } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Trips() {
-  const user = localStorage.getItem("driiva_user");
-  const userId = user ? JSON.parse(user).id : null;
+  const { userId, user } = useAuth();
   
   const { data: dashboardData } = useQuery({
     queryKey: ['/api/dashboard', userId],
@@ -36,10 +36,10 @@ export default function Trips() {
   }
 
   return (
-    <div className="min-h-screen text-white safe-area">
+    <div className="min-h-screen text-white safe-area relative">
       <DashboardHeader user={dashboardData?.user} />
       
-      <main className="px-4 pb-20">
+      <main className="px-4 pb-20 relative z-10">
         <div className="py-4">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-xl font-bold">Your Trips</h1>
@@ -48,9 +48,10 @@ export default function Trips() {
             </Badge>
           </div>
 
-          <div className="space-y-4">
-            {trips?.map((trip: any) => (
-              <Card key={trip.id} className="glass-morphism border-gray-700">
+          {trips && trips.length > 0 ? (
+            <div className="space-y-4 relative z-20">
+              {trips.map((trip: any) => (
+              <Card key={trip.id} className="glass-morphism border-gray-700 relative z-30">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
@@ -65,7 +66,7 @@ export default function Trips() {
                           <Clock className="w-4 h-4" />
                           <span>{trip.duration} min</span>
                           <Navigation className="w-4 h-4" />
-                          <span>{Number(trip.distance).toFixed(1)} miles</span>
+                          <span>{Number(trip.distance || 0).toFixed(1)} miles</span>
                         </div>
                       </div>
                     </div>
@@ -73,7 +74,7 @@ export default function Trips() {
                       <div className="flex items-center space-x-1">
                         <Trophy className="w-4 h-4 text-[#10B981]" />
                         <span className="text-lg font-bold text-[#10B981]">
-                          {trip.score}
+                          {trip.score || 0}
                         </span>
                       </div>
                       <div className="text-xs text-gray-400">Score</div>
@@ -103,11 +104,9 @@ export default function Trips() {
                   ) : null}
                 </CardContent>
               </Card>
-            ))}
-          </div>
-
-          {(!trips || trips.length === 0) && (
-            <div className="text-center py-12">
+            ))}</div>
+          ) : (
+            <div className="text-center py-12 relative z-20">
               <Map className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">No trips yet</h3>
               <p className="text-gray-400">Start driving to see your trips here</p>
