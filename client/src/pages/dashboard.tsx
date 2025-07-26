@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useEffect, useCallback } from "react";
 import AIRiskInsights from "@/components/AIRiskInsights";
 import AIInsights from "@/components/AIInsights";
+import { useParallax } from "@/hooks/useParallax";
 
 export default function Dashboard() {
   const [bottomSheetOpen, setBottomSheetOpen] = useState(false);

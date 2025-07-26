@@ -7,10 +7,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Map, Clock, Navigation, Trophy } from "lucide-react";
 
 export default function Trips() {
-  const userId = 1;
+  const user = localStorage.getItem("driiva_user");
+  const userId = user ? JSON.parse(user).id : null;
+  
+  const { data: dashboardData } = useQuery({
+    queryKey: ['/api/dashboard', userId],
+    enabled: !!userId,
+  });
   
   const { data: trips, isLoading } = useQuery({
     queryKey: ['/api/trips', userId],
+    enabled: !!userId,
   });
 
   if (isLoading) {
@@ -30,7 +37,7 @@ export default function Trips() {
 
   return (
     <div className="min-h-screen text-white safe-area">
-      <DashboardHeader />
+      <DashboardHeader user={dashboardData?.user} />
       
       <main className="px-4 pb-20">
         <div className="py-4">

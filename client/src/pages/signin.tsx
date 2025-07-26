@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import DriivaLogo from "@/components/DrivvaLogo";
 import FloatingStardust from "@/components/FloatingStardust";
 import { apiRequest } from "@/lib/queryClient";
+import { useParallax } from "@/hooks/useParallax";
 
 export default function SignIn() {
   const [, setLocation] = useLocation();
@@ -17,6 +18,7 @@ export default function SignIn() {
   const [password, setPassword] = useState("driiva1");
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
+  const { ref: cardRef, style: cardParallaxStyle } = useParallax({ speed: 0.3 });
 
   const loginMutation = useMutation({
     mutationFn: async ({ username, password }: { username: string; password: string }) => {
@@ -87,12 +89,16 @@ export default function SignIn() {
             delay: 0.2,
           }}
         >
-          <Card className="w-full max-w-md mx-auto" style={{
-            background: 'rgba(255, 255, 255, 0.08)',
-            border: '1px solid rgba(255, 255, 255, 0.15)',
-            backdropFilter: 'blur(20px)',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)',
-          }}>
+          <Card 
+            ref={cardRef}
+            className="w-full max-w-md mx-auto parallax-content" 
+            style={{
+              background: 'rgba(255, 255, 255, 0.08)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              backdropFilter: 'blur(20px)',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)',
+              ...cardParallaxStyle,
+            }}>
             <CardContent className="p-4">
               {/* Logo */}
               <div className="flex justify-center mb-4">

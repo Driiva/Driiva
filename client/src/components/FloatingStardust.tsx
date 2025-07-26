@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useParallaxBackground } from '@/hooks/useParallax';
 import { motion } from 'framer-motion';
 
 interface StardustParticle {
@@ -17,10 +18,11 @@ interface FloatingStardustProps {
   density?: number;
 }
 
-export default function FloatingStardust({ density = 100 }: FloatingStardustProps) {
+export default function FloatingStardust({ density = 50 }: FloatingStardustProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const particlesRef = useRef<StardustParticle[]>([]);
   const animationRef = useRef<number>();
+  const parallaxStyle = useParallaxBackground();
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -82,11 +84,11 @@ export default function FloatingStardust({ density = 100 }: FloatingStardustProp
   return (
     <div 
       ref={containerRef}
-      className="fixed inset-0 pointer-events-none overflow-hidden"
-      style={{ zIndex: 1 }}
+      className="fixed inset-0 pointer-events-none overflow-hidden parallax-container"
+      style={{ zIndex: 1, ...parallaxStyle.style }}
     >
-      {/* Gradient background */}
-      <div className="absolute inset-0" style={{
+      {/* Gradient background with parallax */}
+      <div className="absolute inset-0 parallax-layer parallax-slow" style={{
         background: `
           radial-gradient(circle at 20% 30%, rgba(139, 69, 19, 0.15) 0%, transparent 50%),
           radial-gradient(circle at 80% 70%, rgba(123, 31, 162, 0.1) 0%, transparent 50%),
@@ -94,50 +96,71 @@ export default function FloatingStardust({ density = 100 }: FloatingStardustProp
         `,
       }} />
 
-      {/* Stardust particles */}
-      {Array.from({ length: density }, (_, i) => (
-        <div
-          key={i}
-          className="stardust-particle absolute"
-          style={{
-            width: `${particlesRef.current[i]?.size || 2}px`,
-            height: `${particlesRef.current[i]?.size || 2}px`,
-            opacity: particlesRef.current[i]?.opacity || 0.5,
-            background: 'radial-gradient(circle, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 70%)',
-            borderRadius: '50%',
-            boxShadow: '0 0 4px rgba(255, 255, 255, 0.5)',
-          }}
-        />
-      ))}
+      {/* Stardust particles with parallax layers */}
+      <div className="parallax-layer parallax-medium">
+        {Array.from({ length: Math.floor(density / 2) }, (_, i) => (
+          <div
+            key={i}
+            className="stardust-particle absolute"
+            style={{
+              width: `${particlesRef.current[i]?.size || 2}px`,
+              height: `${particlesRef.current[i]?.size || 2}px`,
+              opacity: particlesRef.current[i]?.opacity || 0.5,
+              background: 'radial-gradient(circle, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 70%)',
+              borderRadius: '50%',
+              boxShadow: '0 0 4px rgba(255, 255, 255, 0.5)',
+            }}
+          />
+        ))}
+      </div>
+      
+      <div className="parallax-layer parallax-fast">
+        {Array.from({ length: Math.floor(density / 2) }, (_, i) => (
+          <div
+            key={`fast-${i}`}
+            className="stardust-particle absolute"
+            style={{
+              width: `${particlesRef.current[i + Math.floor(density / 2)]?.size || 2}px`,
+              height: `${particlesRef.current[i + Math.floor(density / 2)]?.size || 2}px`,
+              opacity: particlesRef.current[i + Math.floor(density / 2)]?.opacity || 0.5,
+              background: 'radial-gradient(circle, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 70%)',
+              borderRadius: '50%',
+              boxShadow: '0 0 4px rgba(255, 255, 255, 0.5)',
+            }}
+          />
+        ))}
+      </div>
 
-      {/* Animated larger glowing orbs */}
-      {[...Array(5)].map((_, i) => (
-        <motion.div
-          key={`orb-${i}`}
-          className="absolute"
-          style={{
-            width: '150px',
-            height: '150px',
-            background: `radial-gradient(circle, rgba(${i % 2 === 0 ? '139, 69, 19' : '123, 31, 162'}, 0.1) 0%, transparent 70%)`,
-            borderRadius: '50%',
-            filter: 'blur(40px)',
-          }}
-          animate={{
-            x: [0, 100, -50, 0],
-            y: [0, -100, 50, 0],
-            scale: [1, 1.2, 0.8, 1],
-          }}
-          transition={{
-            duration: 20 + i * 5,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-          initial={{
-            left: `${20 + i * 20}%`,
-            top: `${10 + i * 15}%`,
-          }}
-        />
-      ))}
+      {/* Animated larger glowing orbs with reduced count for performance */}
+      <div className="parallax-layer parallax-slow">
+        {[...Array(3)].map((_, i) => (
+          <motion.div
+            key={`orb-${i}`}
+            className="absolute parallax-float"
+            style={{
+              width: '120px',
+              height: '120px',
+              background: `radial-gradient(circle, rgba(${i % 2 === 0 ? '139, 69, 19' : '123, 31, 162'}, 0.08) 0%, transparent 70%)`,
+              borderRadius: '50%',
+              filter: 'blur(30px)',
+              willChange: 'transform',
+            }}
+            animate={{
+              x: [0, 50, -25, 0],
+              y: [0, -50, 25, 0],
+            }}
+            transition={{
+              duration: 25 + i * 5,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            initial={{
+              left: `${20 + i * 30}%`,
+              top: `${10 + i * 20}%`,
+            }}
+          />
+        ))}
+      </div>
     </div>
   );
 }

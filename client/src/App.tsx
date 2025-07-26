@@ -21,6 +21,7 @@ import ScrollIndicatorDots from "@/components/ScrollIndicatorDots";
 import SwipeHint from "@/components/SwipeHint";
 import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import "./styles/glass.css";
+import "./styles/parallax.css";
 
 const pages = [
   { path: '/', component: Dashboard, name: 'Dashboard' },
@@ -41,11 +42,11 @@ function Router() {
     setIsAuthenticated(!!user);
     setIsChecking(false);
     
-    // Redirect to sign-in if not authenticated and not already on sign-in page
+    // Redirect to sign-in if not authenticated
     if (!user && location !== "/signin") {
       setLocation("/signin");
     }
-  }, [location, setLocation]);
+  }, []);
 
   if (isChecking) {
     return <div className="min-h-screen flex items-center justify-center">

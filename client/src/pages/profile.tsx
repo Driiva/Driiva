@@ -10,10 +10,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { User, Car, Shield, Settings, Download, Trash2 } from "lucide-react";
 
 export default function Profile() {
-  const userId = 1;
+  const user = localStorage.getItem("driiva_user");
+  const userId = user ? JSON.parse(user).id : null;
   
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: ['/api/dashboard', userId],
+    enabled: !!userId,
   });
 
   if (isLoading) {
