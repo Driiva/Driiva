@@ -15,13 +15,21 @@ export default function BottomNavigation({ activeTab }: BottomNavigationProps) {
     { id: "profile", icon: User, label: "Profile", path: "/profile" }
   ];
 
+  const handleNavigation = (path: string) => {
+    // Add haptic feedback for navigation
+    if (navigator.vibrate) {
+      navigator.vibrate(10);
+    }
+    setLocation(path);
+  };
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 glass-morphism safe-area">
       <div className="flex items-center justify-around py-2">
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setLocation(tab.path)}
+            onClick={() => handleNavigation(tab.path)}
             className="flex flex-col items-center py-2 px-4 haptic-button"
           >
             <tab.icon 

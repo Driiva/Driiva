@@ -32,13 +32,13 @@ export default function Rewards() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1E293B] to-[#0F172A] text-white safe-area">
+    <div className="min-h-screen text-white safe-area">
       <DashboardHeader />
       
       <main className="px-4 pb-20">
-        <div className="py-6">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-bold">Rewards & Refunds</h1>
+        <div className="py-4">
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-xl font-bold">Rewards & Refunds</h1>
             <Badge variant="outline" className="glass-morphism border-[#10B981]">
               Active
             </Badge>

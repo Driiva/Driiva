@@ -29,13 +29,13 @@ export default function Trips() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1E293B] to-[#0F172A] text-white safe-area">
+    <div className="min-h-screen text-white safe-area">
       <DashboardHeader />
       
       <main className="px-4 pb-20">
-        <div className="py-6">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-bold">Your Trips</h1>
+        <div className="py-4">
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-xl font-bold">Your Trips</h1>
             <Badge variant="outline" className="glass-morphism border-[#06B6D4]">
               {trips?.length || 0} trips
             </Badge>

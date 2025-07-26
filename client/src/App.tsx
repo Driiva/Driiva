@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -13,20 +13,61 @@ import Support from "@/pages/support";
 import NotFound from "@/pages/not-found";
 import DriivaLogo from "@/components/DrivvaLogo";
 import FloatingStardust from "@/components/FloatingStardust";
+import PageTransition from "@/components/PageTransition";
+import InfiniteScrollIndicator from "@/components/InfiniteScrollIndicator";
+import ScrollIndicatorDots from "@/components/ScrollIndicatorDots";
+import SwipeHint from "@/components/SwipeHint";
+import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import "./styles/glass.css";
 
+const pages = [
+  { path: '/', component: Dashboard, name: 'Dashboard' },
+  { path: '/trips', component: Trips, name: 'Trips' },
+  { path: '/rewards', component: Rewards, name: 'Rewards' },
+  { path: '/profile', component: Profile, name: 'Profile' },
+];
+
 function Router() {
+  const [location] = useLocation();
+  const { direction, currentPageIndex } = useInfiniteScroll(pages);
+
   return (
-    <Switch>
-      <Route path="/" component={Dashboard} />
-      <Route path="/trips" component={Trips} />
-      <Route path="/rewards" component={Rewards} />
-      <Route path="/profile" component={Profile} />
-      <Route path="/trip-recording" component={TripRecording} />
-      <Route path="/documents" component={Documents} />
-      <Route path="/support" component={Support} />
-      <Route component={NotFound} />
-    </Switch>
+    <div className="relative w-full h-full overflow-hidden">
+      <Switch>
+        <Route path="/">
+          {() => (
+            <PageTransition pageKey="dashboard" direction={direction}>
+              <Dashboard />
+            </PageTransition>
+          )}
+        </Route>
+        <Route path="/trips">
+          {() => (
+            <PageTransition pageKey="trips" direction={direction}>
+              <Trips />
+            </PageTransition>
+          )}
+        </Route>
+        <Route path="/rewards">
+          {() => (
+            <PageTransition pageKey="rewards" direction={direction}>
+              <Rewards />
+            </PageTransition>
+          )}
+        </Route>
+        <Route path="/profile">
+          {() => (
+            <PageTransition pageKey="profile" direction={direction}>
+              <Profile />
+            </PageTransition>
+          )}
+        </Route>
+        <Route path="/trip-recording" component={TripRecording} />
+        <Route path="/documents" component={Documents} />
+        <Route path="/support" component={Support} />
+        <Route component={NotFound} />
+      </Switch>
+    </div>
   );
 }
 
@@ -45,6 +86,15 @@ function App() {
             </div>
           </div>
 
+          {/* Infinite Scroll Indicator */}
+          <InfiniteScrollIndicatorWrapper />
+
+          {/* Scroll Indicator Dots */}
+          <ScrollIndicatorDotsWrapper />
+
+          {/* Swipe Hint */}
+          <SwipeHint />
+
           {/* Main Content */}
           <div className="pt-20">
             <Router />
@@ -53,6 +103,44 @@ function App() {
         </div>
       </TooltipProvider>
     </QueryClientProvider>
+  );
+}
+
+function InfiniteScrollIndicatorWrapper() {
+  const pageConfig = [
+    { path: '/', component: Dashboard, name: 'Dashboard' },
+    { path: '/trips', component: Trips, name: 'Trips' },
+    { path: '/rewards', component: Rewards, name: 'Rewards' },
+    { path: '/profile', component: Profile, name: 'Profile' },
+  ];
+  
+  const { currentPageIndex } = useInfiniteScroll(pageConfig);
+  
+  return (
+    <InfiniteScrollIndicator 
+      currentPage={currentPageIndex}
+      totalPages={pageConfig.length}
+      pageNames={pageConfig.map(p => p.name)}
+    />
+  );
+}
+
+function ScrollIndicatorDotsWrapper() {
+  const pageConfig = [
+    { path: '/', component: Dashboard, name: 'Dashboard' },
+    { path: '/trips', component: Trips, name: 'Trips' },
+    { path: '/rewards', component: Rewards, name: 'Rewards' },
+    { path: '/profile', component: Profile, name: 'Profile' },
+  ];
+  
+  const { currentPageIndex, goToPage } = useInfiniteScroll(pageConfig);
+  
+  return (
+    <ScrollIndicatorDots 
+      currentPage={currentPageIndex}
+      totalPages={pageConfig.length}
+      onPageSelect={goToPage}
+    />
   );
 }
 
