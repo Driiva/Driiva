@@ -1,100 +1,227 @@
-import { useState } from "react";
-import { askAI } from "@/lib/aiClient";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Brain, Send, Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { TrendingUp, TrendingDown, Minus, Brain, Leaf, Users, Award } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { motion } from "framer-motion";
+import type { AIInsight } from "@shared/types/aiInsights";
 
 interface AIInsightsProps {
-  className?: string;
+  userId: number;
 }
 
-export default function AIInsights({ className = "" }: AIInsightsProps) {
-  const [prompt, setPrompt] = useState("");
-  const [response, setResponse] = useState("");
-  const [loading, setLoading] = useState(false);
+export default function AIInsights({ userId }: AIInsightsProps) {
+  const { data: insights, isLoading } = useQuery<AIInsight>({
+    queryKey: ['/api/insights', userId],
+    enabled: !!userId,
+    refetchInterval: 60000, // Refresh every minute
+  });
 
-  const handleAsk = async () => {
-    if (!prompt.trim()) return;
-    
-    setLoading(true);
-    try {
-      const result = await askAI(prompt);
-      setResponse(result.answer);
-    } catch (error) {
-      setResponse("Sorry, I couldn't process your request. Please try again.");
-    } finally {
-      setLoading(false);
+  if (isLoading) {
+    return (
+      <Card className="glass-morphism border-0">
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Brain className="w-5 h-5 text-[#A855F7]" />
+            <span>AI-Powered Insights</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <Skeleton className="h-20 w-full rounded-lg skeleton-pulse" />
+            <Skeleton className="h-32 w-full rounded-lg skeleton-pulse" />
+            <Skeleton className="h-24 w-full rounded-lg skeleton-pulse" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!insights) return null;
+
+  const getTrendIcon = (trend: string) => {
+    switch (trend) {
+      case 'increasing':
+        return <TrendingUp className="w-4 h-4 text-[#10B981]" />;
+      case 'decreasing':
+        return <TrendingDown className="w-4 h-4 text-[#EF4444]" />;
+      default:
+        return <Minus className="w-4 h-4 text-[#6B7280]" />;
     }
   };
 
-  const suggestedQuestions = [
-    "Why might my EV premium drop if my drive score hits 90?",
-    "How does night driving affect my insurance premium?",
-    "What are the best practices for improving my driving score?",
-    "How does telematics insurance work?"
-  ];
+  const getTrendColor = (trend: string) => {
+    switch (trend) {
+      case 'increasing':
+        return 'text-[#10B981]';
+      case 'decreasing':
+        return 'text-[#EF4444]';
+      default:
+        return 'text-[#6B7280]';
+    }
+  };
 
   return (
-    <section className={`mb-4 ${className}`}>
-      <div className="glass-morphism rounded-xl p-4">
-        <div className="flex items-center space-x-2 mb-3">
-          <div className="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center">
-            <Brain className="w-4 h-4 text-purple-400" />
-          </div>
-          <div>
-            <h3 className="text-base font-semibold text-white">AI Driving Insights</h3>
-            <p className="text-sm text-gray-400">Ask questions about your driving and insurance</p>
-          </div>
-        </div>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <Card className="glass-morphism border-0 overflow-hidden">
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Brain className="w-5 h-5 text-[#A855F7]" />
+              <span>AI-Powered Insights</span>
+            </div>
+            <Badge variant="outline" className="glass-card border-[#A855F7] text-[#A855F7]">
+              Live Analysis
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Risk Trend */}
+          <motion.div 
+            className="glass-card rounded-xl p-4"
+            whileHover={{ scale: 1.02 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-sm">Risk Trajectory</h3>
+              {getTrendIcon(insights.riskTrend)}
+            </div>
+            <p className={`text-lg font-bold ${getTrendColor(insights.riskTrend)}`}>
+              Risk {insights.riskTrend === 'increasing' ? 'Rising' : 
+                    insights.riskTrend === 'decreasing' ? 'Improving' : 'Stable'}
+            </p>
+            <p className="text-xs text-gray-400 mt-1">
+              Based on your last 5 trips
+            </p>
+          </motion.div>
 
-        <div className="space-y-4">
-          <div className="relative">
-            <Textarea
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Ask me anything about driving, insurance, or safety..."
-              className="min-h-[100px] bg-white/5 border-white/10 text-white placeholder:text-gray-400 resize-none"
-            />
-            <Button
-              onClick={handleAsk}
-              disabled={loading || !prompt.trim()}
-              className="absolute bottom-3 right-3 bg-purple-500 hover:bg-purple-600 text-white"
-              size="sm"
-            >
-              {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Send className="w-4 h-4" />
-              )}
-            </Button>
-          </div>
+          {/* Refund Prediction */}
+          <motion.div 
+            className="glass-card rounded-xl p-4"
+            whileHover={{ scale: 1.02 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-sm">Refund Forecast</h3>
+              <div className="text-right">
+                <div className="text-2xl font-bold text-[#10B981]">
+                  £{insights.refundPrediction.amount}
+                </div>
+                <div className="text-xs text-gray-400">
+                  {(insights.refundPrediction.confidence * 100).toFixed(0)}% confidence
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center justify-between text-xs text-gray-400">
+              <span>Projected in {insights.refundPrediction.timeline}</span>
+              <Badge variant="outline" className="text-xs">
+                {insights.riskTrend === 'increasing' ? 'At Risk' : 'On Track'}
+              </Badge>
+            </div>
+          </motion.div>
 
-          {/* Suggested Questions */}
-          <div className="grid grid-cols-1 gap-2">
-            <p className="text-xs text-gray-400 mb-2">Try these questions:</p>
-            {suggestedQuestions.map((question, index) => (
-              <button
+          {/* Recommendations */}
+          <div className="space-y-3">
+            <h3 className="font-semibold text-sm flex items-center space-x-2">
+              <Award className="w-4 h-4 text-[#F59E0B]" />
+              <span>Personalized Recommendations</span>
+            </h3>
+            {insights.recommendations.map((rec, index) => (
+              <motion.div
                 key={index}
-                onClick={() => setPrompt(question)}
-                className="text-left text-sm text-gray-300 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg p-2 transition-colors"
+                className="glass-card rounded-lg p-3 text-sm"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.1 }}
+                whileHover={{ x: 5 }}
               >
-                {question}
-              </button>
+                <p className="text-gray-200">{rec}</p>
+              </motion.div>
             ))}
           </div>
 
-          {/* Response */}
-          {response && (
-            <div className="bg-white/5 rounded-xl p-4 border border-white/10">
-              <div className="flex items-center space-x-2 mb-2">
-                <Brain className="w-4 h-4 text-purple-400" />
-                <span className="text-sm font-medium text-purple-400">AI Response</span>
+          {/* Sustainability Score */}
+          <motion.div 
+            className="glass-card rounded-xl p-4"
+            whileHover={{ scale: 1.02 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          >
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-[#10B981] bg-opacity-20 rounded-full flex items-center justify-center">
+                <Leaf className="w-6 h-6 text-[#10B981]" />
               </div>
-              <div className="text-sm text-white whitespace-pre-wrap">{response}</div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-sm">Eco Impact</h3>
+                <p className="text-xs text-gray-400">
+                  {insights.sustainabilityScore.co2Saved}kg CO₂ saved
+                </p>
+              </div>
+              <Badge 
+                variant="outline" 
+                className={`
+                  ${insights.sustainabilityScore.monthlyTrend === 'improving' ? 'border-[#10B981] text-[#10B981]' :
+                    insights.sustainabilityScore.monthlyTrend === 'declining' ? 'border-[#EF4444] text-[#EF4444]' :
+                    'border-gray-400 text-gray-400'}
+                `}
+              >
+                {insights.sustainabilityScore.monthlyTrend}
+              </Badge>
             </div>
-          )}
-        </div>
-      </div>
-    </section>
+          </motion.div>
+
+          {/* Community Comparison */}
+          <motion.div 
+            className="glass-card rounded-xl p-4"
+            whileHover={{ scale: 1.02 }}
+            transition={{ type: "spring", stiffness: 300 }}
+          >
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-[#06B6D4] bg-opacity-20 rounded-full flex items-center justify-center">
+                <Users className="w-6 h-6 text-[#06B6D4]" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-sm">Community Standing</h3>
+                <p className="text-xs text-gray-400">
+                  Better than {insights.communityComparison.betterThan}% of drivers
+                </p>
+              </div>
+              {insights.communityComparison.topPercentile && (
+                <Badge variant="outline" className="border-[#F59E0B] text-[#F59E0B]">
+                  Top 15%
+                </Badge>
+              )}
+            </div>
+            {insights.communityComparison.potentialRefundBoost > 0 && (
+              <p className="text-xs text-gray-400 mt-3">
+                Match top performers to boost refund by £{insights.communityComparison.potentialRefundBoost}
+              </p>
+            )}
+          </motion.div>
+
+          {/* Behavior Patterns */}
+          <div className="space-y-3">
+            <h3 className="font-semibold text-sm">Driving Patterns</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="glass-card rounded-lg p-3">
+                <p className="text-xs text-gray-400 mb-1">Best Performance</p>
+                <p className="text-sm font-medium">
+                  {insights.behaviorPatterns.bestDays.join(', ')}
+                </p>
+              </div>
+              <div className="glass-card rounded-lg p-3">
+                <p className="text-xs text-gray-400 mb-1">Needs Attention</p>
+                <p className="text-sm font-medium">
+                  {insights.behaviorPatterns.riskiestTimes.join(', ')}
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }

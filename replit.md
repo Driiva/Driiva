@@ -33,8 +33,9 @@ Visual preferences:
 ### Mobile-First Design
 - **PWA Support**: Full Progressive Web App with manifest, service worker ready
 - **iOS Integration**: Apple-specific meta tags and safe area handling
-- **Glass Morphism UI**: Custom CSS with 60% blur, gradient borders, haptic feedback
+- **Glass Morphism UI**: Premium design system with multi-layer blur effects and transparency
 - **Motion Design**: Framer Motion for 120Hz animations and micro-interactions
+- **Parallax Effects**: Dynamic background with GPU-accelerated animations
 
 ## Key Components
 
@@ -47,6 +48,7 @@ Visual preferences:
 - **Multi-factor Scoring**: Hard braking (25%), acceleration (20%), speed adherence (20%), night driving (15%), cornering (10%), consistency (10%)
 - **Community Pooling**: Dynamic risk assessment based on collective safety factors
 - **Refund Calculation**: Up to 15% annual premium refunds for safe drivers
+- **AI Insights Engine**: Predictive analytics for risk trends, refund forecasting, and behavioral recommendations
 
 ### Gamification Layer
 - **Achievement System**: Unlockable badges for driving milestones
@@ -120,6 +122,18 @@ Key architectural decisions favor real-time user experience, data privacy, and s
   - Unlocked 2 achievements (Long Distance, Consistent Driver)
   - Added to weekly leaderboard with rank #1
   - Calculated projected refund: £50.06 based on 89% performance score
+- ✅ Implemented premium glassmorphism UI with enhanced blur effects
+  - Primary glass containers: rgba(255,255,255,0.15) with 20px blur
+  - Secondary glass elements: rgba(255,255,255,0.12) with 15px blur
+  - Interactive hover states with smooth transitions
+- ✅ Added parallax scrolling background with animated gradient layers
+- ✅ Created AI-powered insights with predictive analytics:
+  - Risk trend analysis based on recent driving patterns
+  - Refund prediction with confidence scoring
+  - Personalized driving recommendations
+  - Sustainability scoring with CO2 impact tracking
+  - Community comparison and leaderboard insights
+  - Behavioral pattern analysis (best days/times)
 
 ### Test User Data
 **Username:** driiva1  

@@ -15,7 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useEffect, useCallback } from "react";
 import AIRiskInsights from "@/components/AIRiskInsights";
 import AIInsights from "@/components/AIInsights";
-import { useParallax } from "@/hooks/useParallax";
+import ParallaxBackground from "@/components/ParallaxBackground";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
 
@@ -120,6 +120,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen text-white safe-area">
+      <ParallaxBackground />
       <DashboardHeader user={data?.user} />
 
       <main className="px-4 pb-20">
@@ -160,7 +161,7 @@ export default function Dashboard() {
         )}
 
         {/* AI Insights */}
-        <AIInsights className="mb-6" />
+        {userId && <AIInsights userId={userId} />}
 
         {/* Gamification */}
         {data?.achievements && data?.leaderboard && data?.user && (

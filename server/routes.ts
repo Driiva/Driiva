@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { crypto } from "./lib/crypto";
 import { telematicsProcessor, TelematicsData } from "./lib/telematics";
+import { aiInsightsEngine } from "./lib/aiInsights";
 import { insertTripSchema, insertIncidentSchema } from "@shared/schema";
 import { z } from "zod";
 import { authService } from "./auth";
@@ -279,6 +280,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ refund });
     } catch (error: any) {
       res.status(500).json({ message: "Error simulating refund: " + error.message });
+    }
+  });
+
+  // AI insights endpoint
+  app.get("/api/insights/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      
+      // Get user profile and recent trips
+      const profile = await storage.getDrivingProfile(userId);
+      if (!profile) {
+        return res.status(404).json({ message: "Driving profile not found" });
+      }
+      
+      const trips = await storage.getTrips(userId, 20, 0);
+      const communityPool = await storage.getCommunityPool(1);
+      
+      // Generate AI insights
+      const insights = aiInsightsEngine.generateInsights(
+        profile,
+        trips,
+        communityPool?.averageScore || 75
+      );
+      
+      res.json(insights);
+    } catch (error: any) {
+      res.status(500).json({ message: "Error generating insights: " + error.message });
     }
   });
 

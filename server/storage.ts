@@ -40,10 +40,11 @@ export interface IStorage {
   // Trip operations
   createTrip(trip: InsertTrip): Promise<Trip>;
   getUserTrips(userId: number, limit?: number, offset?: number): Promise<Trip[]>;
+  getTrips(userId: number, limit?: number, offset?: number): Promise<Trip[]>;
   getTripById(id: number): Promise<Trip | undefined>;
   
   // Community pool operations
-  getCommunityPool(): Promise<CommunityPool | undefined>;
+  getCommunityPool(id?: number): Promise<CommunityPool | undefined>;
   updateCommunityPool(updates: Partial<CommunityPool>): Promise<CommunityPool>;
   
   // Achievement operations
@@ -128,7 +129,15 @@ export class DatabaseStorage implements IStorage {
     return trip || undefined;
   }
 
-  async getCommunityPool(): Promise<CommunityPool | undefined> {
+  async getTrips(userId: number, limit: number = 10, offset: number = 0): Promise<Trip[]> {
+    return this.getUserTrips(userId, limit, offset);
+  }
+
+  async getCommunityPool(id?: number): Promise<CommunityPool | undefined> {
+    if (id) {
+      const [pool] = await db.select().from(communityPool).where(eq(communityPool.id, id));
+      return pool || undefined;
+    }
     const [pool] = await db.select().from(communityPool).orderBy(desc(communityPool.lastUpdated)).limit(1);
     return pool || undefined;
   }
