@@ -94,41 +94,47 @@ function Router() {
   );
 }
 
-function App() {
+function AppContent() {
   const [location] = useLocation();
   const isSignInPage = location === "/signin";
   
   return (
+    <div className="min-h-screen text-white relative">
+      {/* Floating Stardust Background */}
+      <FloatingStardust />
+
+      {/* Logo Header - Only show on authenticated pages */}
+      {!isSignInPage && (
+        <div className="fixed top-0 left-0 right-0 z-50 safe-area">
+          <div className="flex justify-center pt-4 pb-2">
+            <DriivaLogo />
+          </div>
+        </div>
+      )}
+
+      {/* Infinite Scroll Indicator - Only show on authenticated pages */}
+      {!isSignInPage && <InfiniteScrollIndicatorWrapper />}
+
+      {/* Scroll Indicator Dots - Only show on authenticated pages */}
+      {!isSignInPage && <ScrollIndicatorDotsWrapper />}
+
+      {/* Swipe Hint - Only show on authenticated pages */}
+      {!isSignInPage && <SwipeHint />}
+
+      {/* Main Content */}
+      <div className={!isSignInPage ? "pt-20" : ""}>
+        <Router />
+      </div>
+      <Toaster />
+    </div>
+  );
+}
+
+function App() {
+  return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <div className="min-h-screen text-white relative">
-          {/* Floating Stardust Background */}
-          <FloatingStardust />
-
-          {/* Logo Header - Only show on authenticated pages */}
-          {!isSignInPage && (
-            <div className="fixed top-0 left-0 right-0 z-50 safe-area">
-              <div className="flex justify-center pt-4 pb-2">
-                <DriivaLogo />
-              </div>
-            </div>
-          )}
-
-          {/* Infinite Scroll Indicator - Only show on authenticated pages */}
-          {!isSignInPage && <InfiniteScrollIndicatorWrapper />}
-
-          {/* Scroll Indicator Dots - Only show on authenticated pages */}
-          {!isSignInPage && <ScrollIndicatorDotsWrapper />}
-
-          {/* Swipe Hint - Only show on authenticated pages */}
-          {!isSignInPage && <SwipeHint />}
-
-          {/* Main Content */}
-          <div className={!isSignInPage ? "pt-20" : ""}>
-            <Router />
-          </div>
-          <Toaster />
-        </div>
+        <AppContent />
       </TooltipProvider>
     </QueryClientProvider>
   );

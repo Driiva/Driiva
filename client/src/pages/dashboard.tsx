@@ -47,9 +47,9 @@ export default function Dashboard() {
   }, [data, page]);
 
   useEffect(() => {
-    if (tripsData && page > 1) {
+    if (tripsData && Array.isArray(tripsData) && page > 1) {
       setAllTrips(prev => [...prev, ...tripsData]);
-      setHasMore(Array.isArray(tripsData) ? tripsData.length === 20 : false); // Assuming 20 trips per page
+      setHasMore(tripsData.length === 20); // Assuming 20 trips per page
     }
   }, [tripsData, page]);
 
