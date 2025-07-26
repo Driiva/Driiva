@@ -32,7 +32,7 @@ export default function SignIn() {
         title: "Welcome back!",
         description: `Signed in as ${user.firstName || user.username}`,
       });
-      setLocation("/");
+      window.location.href = "/"; // Force page reload to update auth state
     },
     onError: (error) => {
       toast({

@@ -13,6 +13,17 @@ async function seedDatabase() {
       premiumAmount: '690.00', // £690 annual premium from document
       phoneNumber: '+1234567890'
     }).returning();
+    
+    // Create driiva1 test user for sign-in
+    const [testUser] = await db.insert(users).values({
+      username: 'driiva1',
+      email: 'driiva1@driiva.com',
+      password: 'driiva1', // In real app this would be hashed
+      firstName: 'Test',
+      lastName: 'Driver',
+      premiumAmount: '500.00',
+      phoneNumber: '+442071234567'
+    }).returning();
 
     console.log('Created user:', user);
 
@@ -32,6 +43,23 @@ async function seedDatabase() {
     }).returning();
 
     console.log('Created driving profile:', profile);
+    
+    // Create driving profile for test user
+    const [testProfile] = await db.insert(drivingProfiles).values({
+      userId: testUser.id,
+      currentScore: 85,
+      hardBrakingScore: 5,
+      accelerationScore: 3,
+      speedAdherenceScore: 2,
+      nightDrivingScore: 2,
+      corneringScore: 3,
+      consistencyScore: 90,
+      totalTrips: 50,
+      totalMiles: '1500.0',
+      projectedRefund: 75
+    }).returning();
+    
+    console.log('Created test user profile:', testProfile);
 
     // Create community pool (from document: 280 drivers, 140 low-risk eligible)
     const [pool] = await db.insert(communityPool).values({

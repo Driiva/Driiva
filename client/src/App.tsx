@@ -3,6 +3,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { useState, useEffect } from "react";
 import Dashboard from "@/pages/dashboard";
 import Trips from "@/pages/trips";
 import Rewards from "@/pages/rewards";
@@ -94,6 +95,9 @@ function Router() {
 }
 
 function App() {
+  const [location] = useLocation();
+  const isSignInPage = location === "/signin";
+  
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -101,24 +105,26 @@ function App() {
           {/* Floating Stardust Background */}
           <FloatingStardust />
 
-          {/* Logo Header */}
-          <div className="fixed top-0 left-0 right-0 z-50 safe-area">
-            <div className="flex justify-center pt-4 pb-2">
-              <DriivaLogo />
+          {/* Logo Header - Only show on authenticated pages */}
+          {!isSignInPage && (
+            <div className="fixed top-0 left-0 right-0 z-50 safe-area">
+              <div className="flex justify-center pt-4 pb-2">
+                <DriivaLogo />
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Infinite Scroll Indicator */}
-          <InfiniteScrollIndicatorWrapper />
+          {/* Infinite Scroll Indicator - Only show on authenticated pages */}
+          {!isSignInPage && <InfiniteScrollIndicatorWrapper />}
 
-          {/* Scroll Indicator Dots */}
-          <ScrollIndicatorDotsWrapper />
+          {/* Scroll Indicator Dots - Only show on authenticated pages */}
+          {!isSignInPage && <ScrollIndicatorDotsWrapper />}
 
-          {/* Swipe Hint */}
-          <SwipeHint />
+          {/* Swipe Hint - Only show on authenticated pages */}
+          {!isSignInPage && <SwipeHint />}
 
           {/* Main Content */}
-          <div className="pt-20">
+          <div className={!isSignInPage ? "pt-20" : ""}>
             <Router />
           </div>
           <Toaster />
