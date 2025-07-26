@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Gift, DollarSign, Trophy, Users } from "lucide-react";
+import { Gift, PoundSterling, Trophy, Users } from "lucide-react";
 
 export default function Rewards() {
   const user = localStorage.getItem("driiva_user");
@@ -51,7 +51,7 @@ export default function Rewards() {
             <CardContent className="p-6">
               <div className="text-center mb-6">
                 <div className="w-16 h-16 bg-[#10B981] bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <DollarSign className="w-8 h-8 text-[#10B981]" />
+                  <PoundSterling className="w-8 h-8 text-[#10B981]" />
                 </div>
                 <h2 className="text-xl font-bold mb-2">Current Refund Status</h2>
                 <p className="text-gray-400 text-sm">Annual refund projection</p>

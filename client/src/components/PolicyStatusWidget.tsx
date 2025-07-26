@@ -89,7 +89,7 @@ export default function PolicyStatusWidget({ user }: PolicyStatusWidgetProps) {
             </div>
             <div>
               <div className="text-sm font-medium text-white">Annual Premium</div>
-              <div className="text-xs text-gray-400">${policyData.premiumAmount}</div>
+              <div className="text-xs text-gray-400">£{policyData.premiumAmount}</div>
             </div>
           </div>
         </div>

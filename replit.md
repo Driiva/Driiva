@@ -119,13 +119,13 @@ Key architectural decisions favor real-time user experience, data privacy, and s
   - 1,107.70 total miles driven
   - Unlocked 2 achievements (Long Distance, Consistent Driver)
   - Added to weekly leaderboard with rank #1
-  - Calculated projected refund: $50.06 based on 89% performance score
+  - Calculated projected refund: £50.06 based on 89% performance score
 
 ### Test User Data
 **Username:** driiva1  
 **Password:** driiva1  
-**Premium:** $500/year  
+**Premium:** £500/year  
 **Current Score:** 89/100  
-**Projected Annual Refund:** $50.06 (10% of premium)  
+**Projected Annual Refund:** £50.06 (10% of premium)  
 **Total Miles:** 1,107.70  
 **Achievements:** Long Distance Driver, Consistent Driver
