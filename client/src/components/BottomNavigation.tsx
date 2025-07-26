@@ -16,10 +16,6 @@ export default function BottomNavigation({ activeTab }: BottomNavigationProps) {
   ];
 
   const handleNavigation = (path: string) => {
-    // Add haptic feedback for navigation
-    if (navigator.vibrate) {
-      navigator.vibrate(10);
-    }
     setLocation(path);
   };
 
@@ -30,7 +26,7 @@ export default function BottomNavigation({ activeTab }: BottomNavigationProps) {
           <button
             key={tab.id}
             onClick={() => handleNavigation(tab.path)}
-            className="flex flex-col items-center py-2 px-4 haptic-button"
+            className="flex flex-col items-center py-2 px-4"
           >
             <tab.icon 
               className={`w-5 h-5 mb-1 ${

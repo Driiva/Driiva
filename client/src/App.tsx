@@ -8,31 +8,14 @@ import Dashboard from "@/pages/dashboard";
 import Trips from "@/pages/trips";
 import Rewards from "@/pages/rewards";
 import Profile from "@/pages/profile";
-
 import Documents from "@/pages/documents";
 import Support from "@/pages/support";
 import NotFound from "@/pages/not-found";
 import SignIn from "@/pages/signin";
-import DriivaLogo from "@/components/DrivvaLogo";
-import FloatingStardust from "@/components/FloatingStardust";
-import PageTransition from "@/components/PageTransition";
-import InfiniteScrollIndicator from "@/components/InfiniteScrollIndicator";
-import ScrollIndicatorDots from "@/components/ScrollIndicatorDots";
-import SwipeHint from "@/components/SwipeHint";
-import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
 import "./styles/glass.css";
-import "./styles/parallax.css";
-
-const pages = [
-  { path: '/', component: Dashboard, name: 'Dashboard' },
-  { path: '/trips', component: Trips, name: 'Trips' },
-  { path: '/rewards', component: Rewards, name: 'Rewards' },
-  { path: '/profile', component: Profile, name: 'Profile' },
-];
 
 function Router() {
   const [location, setLocation] = useLocation();
-  const { direction, currentPageIndex } = useInfiniteScroll(pages);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
   
@@ -49,44 +32,29 @@ function Router() {
   }, []);
 
   if (isChecking) {
-    return <div className="min-h-screen flex items-center justify-center">
-      <div className="text-white">Loading...</div>
-    </div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-white">Loading...</div>
+      </div>
+    );
   }
 
   return (
-    <div className="relative w-full h-full overflow-hidden">
+    <div className="min-h-screen">
       <Switch>
         <Route path="/signin" component={SignIn} />
         <Route path="/">
-          {() => isAuthenticated ? (
-            <PageTransition pageKey="dashboard" direction={direction}>
-              <Dashboard />
-            </PageTransition>
-          ) : <SignIn />}
+          {() => isAuthenticated ? <Dashboard /> : <SignIn />}
         </Route>
         <Route path="/trips">
-          {() => isAuthenticated ? (
-            <PageTransition pageKey="trips" direction={direction}>
-              <Trips />
-            </PageTransition>
-          ) : <SignIn />}
+          {() => isAuthenticated ? <Trips /> : <SignIn />}
         </Route>
         <Route path="/rewards">
-          {() => isAuthenticated ? (
-            <PageTransition pageKey="rewards" direction={direction}>
-              <Rewards />
-            </PageTransition>
-          ) : <SignIn />}
+          {() => isAuthenticated ? <Rewards /> : <SignIn />}
         </Route>
         <Route path="/profile">
-          {() => isAuthenticated ? (
-            <PageTransition pageKey="profile" direction={direction}>
-              <Profile />
-            </PageTransition>
-          ) : <SignIn />}
+          {() => isAuthenticated ? <Profile /> : <SignIn />}
         </Route>
-
         <Route path="/documents" component={Documents} />
         <Route path="/support" component={Support} />
         <Route component={NotFound} />
@@ -95,87 +63,16 @@ function Router() {
   );
 }
 
-function AppContent() {
-  const [location] = useLocation();
-  const isSignInPage = location === "/signin";
-  
-  return (
-    <div className="min-h-screen text-white relative">
-      {/* Floating Stardust Background */}
-      <FloatingStardust />
-
-      {/* Logo Header - Only show on authenticated pages */}
-      {!isSignInPage && (
-        <div className="fixed top-0 left-0 right-0 z-50 safe-area">
-          <div className="flex justify-center pt-4 pb-2">
-            <DriivaLogo />
-          </div>
-        </div>
-      )}
-
-      {/* Infinite Scroll Indicator - Only show on authenticated pages */}
-      {!isSignInPage && <InfiniteScrollIndicatorWrapper />}
-
-      {/* Scroll Indicator Dots - Only show on authenticated pages */}
-      {!isSignInPage && <ScrollIndicatorDotsWrapper />}
-
-      {/* Swipe Hint - Only show on authenticated pages */}
-      {!isSignInPage && <SwipeHint />}
-
-      {/* Main Content */}
-      <div className={!isSignInPage ? "pt-20" : ""}>
-        <Router />
-      </div>
-      <Toaster />
-    </div>
-  );
-}
-
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <AppContent />
+        <div className="min-h-screen bg-gradient-to-br from-[#1E293B] to-[#0F172A] text-white">
+          <Router />
+          <Toaster />
+        </div>
       </TooltipProvider>
     </QueryClientProvider>
-  );
-}
-
-function InfiniteScrollIndicatorWrapper() {
-  const pageConfig = [
-    { path: '/', component: Dashboard, name: 'Dashboard' },
-    { path: '/trips', component: Trips, name: 'Trips' },
-    { path: '/rewards', component: Rewards, name: 'Rewards' },
-    { path: '/profile', component: Profile, name: 'Profile' },
-  ];
-  
-  const { currentPageIndex } = useInfiniteScroll(pageConfig);
-  
-  return (
-    <InfiniteScrollIndicator 
-      currentPage={currentPageIndex}
-      totalPages={pageConfig.length}
-      pageNames={pageConfig.map(p => p.name)}
-    />
-  );
-}
-
-function ScrollIndicatorDotsWrapper() {
-  const pageConfig = [
-    { path: '/', component: Dashboard, name: 'Dashboard' },
-    { path: '/trips', component: Trips, name: 'Trips' },
-    { path: '/rewards', component: Rewards, name: 'Rewards' },
-    { path: '/profile', component: Profile, name: 'Profile' },
-  ];
-  
-  const { currentPageIndex, goToPage } = useInfiniteScroll(pageConfig);
-  
-  return (
-    <ScrollIndicatorDots 
-      currentPage={currentPageIndex}
-      totalPages={pageConfig.length}
-      onPageSelect={goToPage}
-    />
   );
 }
 

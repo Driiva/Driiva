@@ -71,53 +71,66 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen text-white safe-area">
+    <div className="min-h-screen bg-gradient-to-br from-[#1E293B] to-[#0F172A] text-white">
       <DashboardHeader user={data?.user} />
 
-      <main className="px-4 pb-20">
+      <main className="px-4 pb-20 pt-4">
         {/* Policy Status Widget */}
-        {data?.user && <PolicyStatusWidget user={data.user} />}
-
-        {/* Hero Section - Driving Score */}
-        <section className="py-2">
-          <div className="glass-morphism rounded-xl p-3 mb-3">
-            <div className="text-center mb-3">
-              <h2 className="text-lg font-semibold mb-1">Your Driving Score</h2>
-              <p className="text-gray-300 text-xs">Based on last 30 days of driving</p>
-            </div>
-
-            {data?.profile && (
-              <LiquidGauge 
-                score={data.profile.currentScore} 
-                projectedRefund={data.profile.projectedRefund}
-                premiumAmount={data.user?.premiumAmount || 0}
-              />
-            )}
+        {data?.user && (
+          <div className="mb-4">
+            <PolicyStatusWidget user={data.user} />
           </div>
-        </section>
-
-        {/* Metrics Grid */}
-        {data?.profile && <MetricsGrid profile={data.profile} />}
-
-        {/* Community Pool */}
-        {data?.communityPool && <CommunityPool pool={data.communityPool} />}
-
-        {/* Refund Simulator */}
-        {data?.profile && data?.user && (
-          <RefundSimulator 
-            currentScore={data.profile.currentScore}
-            premiumAmount={data.user.premiumAmount}
-            poolSafetyFactor={data.communityPool?.safetyFactor || 0.80}
-          />
         )}
 
-        {/* Gamification */}
+        {/* Driving Score Box */}
+        <div className="glass-morphism rounded-xl p-4 mb-4">
+          <div className="text-center mb-4">
+            <h2 className="text-lg font-semibold mb-1">Your Driving Score</h2>
+            <p className="text-gray-300 text-sm">Based on last 30 days of driving</p>
+          </div>
+          {data?.profile && (
+            <LiquidGauge 
+              score={data.profile.currentScore} 
+              projectedRefund={data.profile.projectedRefund}
+              premiumAmount={data.user?.premiumAmount || 0}
+            />
+          )}
+        </div>
+
+        {/* Metrics Grid Box */}
+        {data?.profile && (
+          <div className="mb-4">
+            <MetricsGrid profile={data.profile} />
+          </div>
+        )}
+
+        {/* Community Pool Box */}
+        {data?.communityPool && (
+          <div className="mb-4">
+            <CommunityPool pool={data.communityPool} />
+          </div>
+        )}
+
+        {/* Refund Simulator Box */}
+        {data?.profile && data?.user && (
+          <div className="mb-4">
+            <RefundSimulator 
+              currentScore={data.profile.currentScore}
+              premiumAmount={data.user.premiumAmount}
+              poolSafetyFactor={data.communityPool?.safetyFactor || 0.80}
+            />
+          </div>
+        )}
+
+        {/* Gamification Box */}
         {data?.achievements && data?.leaderboard && data?.user && (
-          <Gamification 
-            achievements={data.achievements}
-            leaderboard={data.leaderboard}
-            currentUser={data.user}
-          />
+          <div className="mb-4">
+            <Gamification 
+              achievements={data.achievements}
+              leaderboard={data.leaderboard}
+              currentUser={data.user}
+            />
+          </div>
         )}
       </main>
 
