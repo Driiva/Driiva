@@ -93,9 +93,9 @@ export default function SignIn() {
             backdropFilter: 'blur(20px)',
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)',
           }}>
-            <CardContent className="p-8">
+            <CardContent className="p-4">
               {/* Logo */}
-              <div className="flex justify-center mb-8">
+              <div className="flex justify-center mb-4">
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -115,7 +115,7 @@ export default function SignIn() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6 }}
-                className="text-center mb-8"
+                className="text-center mb-4"
               >
                 <h1 className="text-2xl font-bold mb-2" style={{ 
                   fontFamily: 'Inter, sans-serif',
@@ -137,7 +137,7 @@ export default function SignIn() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.8 }}
                 onSubmit={handleSubmit}
-                className="space-y-6"
+                className="space-y-3"
               >
                 {/* Username Field */}
                 <div className="space-y-2">
@@ -164,7 +164,7 @@ export default function SignIn() {
                 </div>
 
                 {/* Password Field */}
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <label className="text-sm font-medium text-white/90" style={{ 
                     fontFamily: 'Inter, sans-serif'
                   }}>
@@ -199,7 +199,7 @@ export default function SignIn() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 1.0 }}
-                  className="text-center p-3 rounded-lg"
+                  className="text-center p-2 rounded-lg"
                   style={{
                     background: 'rgba(255, 255, 255, 0.05)',
                     border: '1px solid rgba(255, 255, 255, 0.1)',

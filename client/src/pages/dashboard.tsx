@@ -31,6 +31,9 @@ export default function Dashboard() {
     refetchInterval: 30000, // Real-time updates every 30 seconds
   });
 
+  // Type assertion to avoid TypeScript errors
+  const data = dashboardData as any;
+
   // Infinite scroll for trips
   const { data: tripsData } = useQuery({
     queryKey: ['/api/trips', userId, page],
@@ -38,10 +41,10 @@ export default function Dashboard() {
   });
 
   useEffect(() => {
-    if (dashboardData?.recentTrips && page === 1) {
-      setAllTrips(dashboardData.recentTrips);
+    if (data?.recentTrips && page === 1) {
+      setAllTrips(data.recentTrips);
     }
-  }, [dashboardData?.recentTrips, page]);
+  }, [data, page]);
 
   useEffect(() => {
     if (tripsData && page > 1) {
@@ -62,7 +65,7 @@ export default function Dashboard() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
 
-  if (isLoading) {
+  if (isLoading || !data) {
     return (
       <div className="min-h-screen text-white">
         <DashboardHeader />
@@ -87,7 +90,7 @@ export default function Dashboard() {
     );
   }
 
-  if (!dashboardData) {
+  if (!data) {
     return (
       <div className="min-h-screen text-white flex items-center justify-center">
         <div className="text-center glass-morphism rounded-3xl p-8">
@@ -100,11 +103,11 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen text-white safe-area">
-      <DashboardHeader user={dashboardData?.user} />
+      <DashboardHeader user={data?.user} />
 
       <main className="px-4 pb-20">
         {/* Policy Status Widget */}
-        {dashboardData?.user && <PolicyStatusWidget user={dashboardData.user} />}
+        {data?.user && <PolicyStatusWidget user={data.user} />}
 
         {/* Hero Section - Driving Score */}
         <section className="py-2">
@@ -114,28 +117,28 @@ export default function Dashboard() {
               <p className="text-gray-300 text-xs">Based on last 30 days of driving</p>
             </div>
 
-            {dashboardData?.profile && (
+            {data?.profile && (
               <LiquidGauge 
-                score={dashboardData.profile.currentScore} 
-                projectedRefund={dashboardData.profile.projectedRefund}
-                premiumAmount={dashboardData.user?.premiumAmount || 0}
+                score={data.profile.currentScore} 
+                projectedRefund={data.profile.projectedRefund}
+                premiumAmount={data.user?.premiumAmount || 0}
               />
             )}
           </div>
         </section>
 
         {/* Metrics Grid */}
-        {dashboardData?.profile && <MetricsGrid profile={dashboardData.profile} />}
+        {data?.profile && <MetricsGrid profile={data.profile} />}
 
         {/* Community Pool */}
-        {dashboardData?.communityPool && <CommunityPool pool={dashboardData.communityPool} />}
+        {data?.communityPool && <CommunityPool pool={data.communityPool} />}
 
         {/* Refund Simulator */}
-        {dashboardData?.profile && dashboardData?.user && (
+        {data?.profile && data?.user && (
           <RefundSimulator 
-            currentScore={dashboardData.profile.currentScore}
-            premiumAmount={dashboardData.user.premiumAmount}
-            poolSafetyFactor={dashboardData.communityPool?.safetyFactor || 0.80}
+            currentScore={data.profile.currentScore}
+            premiumAmount={data.user.premiumAmount}
+            poolSafetyFactor={data.communityPool?.safetyFactor || 0.80}
           />
         )}
 
@@ -143,11 +146,11 @@ export default function Dashboard() {
         <AIInsights className="mb-6" />
 
         {/* Gamification */}
-        {dashboardData?.achievements && dashboardData?.leaderboard && dashboardData?.user && (
+        {data?.achievements && data?.leaderboard && data?.user && (
           <Gamification 
-            achievements={dashboardData.achievements}
-            leaderboard={dashboardData.leaderboard}
-            currentUser={dashboardData.user}
+            achievements={data.achievements}
+            leaderboard={data.leaderboard}
+            currentUser={data.user}
           />
         )}
 
