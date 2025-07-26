@@ -1,37 +1,64 @@
+
 import { users, type User, type InsertUser } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
+import admin from 'firebase-admin';
+
+// Initialize Firebase Admin (only once)
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    }),
+  });
+}
 
 export interface AuthService {
+  verifyFirebaseToken(token: string): Promise<admin.auth.DecodedIdToken>;
+  findOrCreateUser(firebaseUser: admin.auth.DecodedIdToken): Promise<User>;
   login(username: string, password: string): Promise<User | null>;
   createUser(user: InsertUser): Promise<User>;
-  verifyPassword(password: string, hashedPassword: string): Promise<boolean>;
-  hashPassword(password: string): Promise<string>;
 }
 
-// Simple password hashing (in production, use bcrypt)
-async function hashPassword(password: string): Promise<string> {
-  // For demo purposes, we'll just store plain text
-  // In production, use bcrypt or similar
-  return password;
-}
+export class FirebaseAuthService implements AuthService {
+  async verifyFirebaseToken(token: string): Promise<admin.auth.DecodedIdToken> {
+    return await admin.auth().verifyIdToken(token);
+  }
 
-async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
-  // For demo purposes, direct comparison
-  // In production, use bcrypt.compare()
-  return password === hashedPassword;
-}
+  async findOrCreateUser(firebaseUser: admin.auth.DecodedIdToken): Promise<User> {
+    // Try to find existing user by Firebase UID
+    const [existingUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.firebaseUid, firebaseUser.uid));
 
-export class DatabaseAuthService implements AuthService {
+    if (existingUser) {
+      return existingUser;
+    }
+
+    // Create new user if doesn't exist
+    const [newUser] = await db
+      .insert(users)
+      .values({
+        firebaseUid: firebaseUser.uid,
+        email: firebaseUser.email || '',
+        username: firebaseUser.email?.split('@')[0] || `user_${firebaseUser.uid.slice(0, 8)}`,
+        firstName: firebaseUser.name?.split(' ')[0] || '',
+        lastName: firebaseUser.name?.split(' ').slice(1).join(' ') || '',
+        password: '', // Not needed for Firebase users
+      })
+      .returning();
+
+    return newUser;
+  }
+
+  // Keep existing methods for demo user compatibility
   async login(username: string, password: string): Promise<User | null> {
     const [user] = await db.select().from(users).where(eq(users.username, username));
     
-    if (!user) {
-      return null;
-    }
-
-    const isValidPassword = await this.verifyPassword(password, user.password);
-    if (!isValidPassword) {
+    if (!user || user.password !== password) {
       return null;
     }
 
@@ -39,26 +66,13 @@ export class DatabaseAuthService implements AuthService {
   }
 
   async createUser(userData: InsertUser): Promise<User> {
-    const hashedPassword = await this.hashPassword(userData.password);
-    
     const [user] = await db
       .insert(users)
-      .values({
-        ...userData,
-        password: hashedPassword,
-      })
+      .values(userData)
       .returning();
     
     return user;
   }
-
-  async verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
-    return verifyPassword(password, hashedPassword);
-  }
-
-  async hashPassword(password: string): Promise<string> {
-    return hashPassword(password);
-  }
 }
 
-export const authService = new DatabaseAuthService();
+export const authService = new FirebaseAuthService();

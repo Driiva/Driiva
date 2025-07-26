@@ -48,6 +48,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ authenticated: true, user: userWithoutPassword });
   });
 
+
+  // Firebase Authentication
+  app.post("/api/auth/firebase", async (req, res) => {
+    try {
+      const { token } = req.body;
+      
+      if (!token) {
+        return res.status(400).json({ message: "Token is required" });
+      }
+
+      // Verify the Firebase token
+      const decodedToken = await authService.verifyFirebaseToken(token);
+      
+      // Find or create user in database
+      const user = await authService.findOrCreateUser(decodedToken);
+      
+      res.json(user);
+    } catch (error) {
+      console.error("Firebase auth error:", error);
+      res.status(401).json({ message: "Invalid token" });
+    }
+  });
+
+
   // Get user dashboard data
   app.get("/api/dashboard/:userId", async (req, res) => {
     try {
