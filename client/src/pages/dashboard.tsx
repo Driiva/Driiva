@@ -14,6 +14,7 @@ import PolicyStatusWidget from "@/components/PolicyStatusWidget";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useEffect, useCallback } from "react";
 import AIRiskInsights from "@/components/AIRiskInsights";
+import AIInsights from "@/components/AIInsights";
 
 export default function Dashboard() {
   const [bottomSheetOpen, setBottomSheetOpen] = useState(false);
@@ -137,13 +138,8 @@ export default function Dashboard() {
           />
         )}
 
-        {/* AI Risk Insights */}
-        {dashboardData?.profile?.lastTripMetrics?.aiRiskProfile && (
-          <AIRiskInsights 
-            riskProfile={dashboardData.profile.lastTripMetrics.aiRiskProfile}
-            className="mb-6"
-          />
-        )}
+        {/* AI Insights */}
+        <AIInsights className="mb-6" />
 
         {/* Gamification */}
         {dashboardData?.achievements && dashboardData?.leaderboard && dashboardData?.user && (

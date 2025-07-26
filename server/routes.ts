@@ -242,6 +242,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Perplexity AI endpoint
+  app.post("/api/ask", async (req, res) => {
+    try {
+      const { prompt } = req.body;
+      
+      if (!prompt) {
+        return res.status(400).json({ message: "Prompt is required" });
+      }
+
+      const response = await fetch("https://api.perplexity.ai/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.PERPLEXITY_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: "sonar-pro",
+          stream: false,
+          messages: [{ role: "user", content: prompt }],
+          temperature: 0.2,
+          return_images: false,
+          return_related_questions: false
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error("Perplexity API error:", response.status, errorData);
+        throw new Error(`Perplexity API error: ${response.status} - ${errorData}`);
+      }
+
+      const data = await response.json();
+      
+      res.json({
+        answer: data.choices[0].message.content,
+        citations: data.citations || []
+      });
+    } catch (error: any) {
+      console.error("AI backend error:", error);
+      res.status(500).json({ message: "AI backend error: " + error.message });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
