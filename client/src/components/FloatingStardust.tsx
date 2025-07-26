@@ -1,70 +1,55 @@
 import { useEffect, useState } from 'react';
 
-interface StardustParticle {
+interface IlluminatedDot {
   id: number;
   x: number;
   y: number;
   size: number;
-  opacity: number;
+  glowSize: number;
   animationDelay: number;
   animationDuration: number;
 }
 
 export default function FloatingStardust() {
-  const [particles, setParticles] = useState<StardustParticle[]>([]);
+  const [dots, setDots] = useState<IlluminatedDot[]>([]);
 
   useEffect(() => {
-    const generateParticles = () => {
-      const newParticles: StardustParticle[] = [];
+    const generateDots = () => {
+      const newDots: IlluminatedDot[] = [];
       
-      for (let i = 0; i < 25; i++) {
-        newParticles.push({
+      for (let i = 0; i < 8; i++) {
+        newDots.push({
           id: i,
           x: Math.random() * 100,
           y: Math.random() * 100,
-          size: Math.random() * 3 + 1,
-          opacity: Math.random() * 0.6 + 0.2,
-          animationDelay: Math.random() * 8,
-          animationDuration: Math.random() * 4 + 6
+          size: Math.random() * 4 + 2,
+          glowSize: Math.random() * 15 + 10,
+          animationDelay: Math.random() * 10,
+          animationDuration: Math.random() * 15 + 20
         });
       }
       
-      setParticles(newParticles);
+      setDots(newDots);
     };
 
-    generateParticles();
+    generateDots();
   }, []);
 
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-      {particles.map((particle) => (
+      {dots.map((dot) => (
         <div
-          key={particle.id}
-          className="absolute w-1 h-1 bg-white rounded-full"
+          key={dot.id}
+          className="absolute rounded-full"
           style={{
-            left: `${particle.x}%`,
-            top: `${particle.y}%`,
-            width: `${particle.size}px`,
-            height: `${particle.size}px`,
-            opacity: particle.opacity,
-            animation: `float-stardust ${particle.animationDuration}s ease-in-out infinite`,
-            animationDelay: `${particle.animationDelay}s`,
-            boxShadow: '0 0 6px rgba(255, 255, 255, 0.6)'
-          }}
-        />
-      ))}
-      
-      {/* Additional twinkling stars */}
-      {particles.slice(0, 12).map((particle) => (
-        <div
-          key={`twinkle-${particle.id}`}
-          className="absolute w-0.5 h-0.5 bg-white rounded-full"
-          style={{
-            left: `${(particle.x + 20) % 100}%`,
-            top: `${(particle.y + 30) % 100}%`,
-            animation: `twinkle ${particle.animationDuration * 0.8}s ease-in-out infinite`,
-            animationDelay: `${particle.animationDelay * 1.5}s`,
-            boxShadow: '0 0 4px rgba(255, 255, 255, 0.8)'
+            left: `${dot.x}%`,
+            top: `${dot.y}%`,
+            width: `${dot.size}px`,
+            height: `${dot.size}px`,
+            background: 'radial-gradient(circle, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.6) 40%, transparent 70%)',
+            boxShadow: `0 0 ${dot.glowSize}px rgba(255, 255, 255, 0.8), 0 0 ${dot.glowSize * 2}px rgba(255, 255, 255, 0.4)`,
+            animation: `floatIlluminated ${dot.animationDuration}s ease-in-out infinite`,
+            animationDelay: `${dot.animationDelay}s`
           }}
         />
       ))}

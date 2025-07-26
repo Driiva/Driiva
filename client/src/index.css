@@ -91,14 +91,14 @@ body {
 
 @layer components {
   .glass-morphism {
-    background: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(27px);
-    -webkit-backdrop-filter: blur(27px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 
-      inset 0 1px 0 rgba(255, 255, 255, 0.1),
-      0 8px 32px rgba(0, 0, 0, 0.3),
-      0 0 0 1px rgba(255, 255, 255, 0.06);
+      inset 0 2px 4px rgba(255, 255, 255, 0.05),
+      0 12px 48px rgba(0, 0, 0, 0.4),
+      0 0 0 1px rgba(255, 255, 255, 0.04);
     position: relative;
   }
   
@@ -237,4 +237,33 @@ body {
 @keyframes spin-slow {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+@keyframes floatIlluminated {
+  0%, 100% { 
+    transform: translate(0, 0) scale(1);
+    opacity: 0.4;
+  }
+  25% { 
+    transform: translate(30px, -50px) scale(1.2);
+    opacity: 0.8;
+  }
+  50% { 
+    transform: translate(-20px, -80px) scale(0.9);
+    opacity: 0.6;
+  }
+  75% { 
+    transform: translate(40px, -30px) scale(1.1);
+    opacity: 0.9;
+  }
+}
+
+@keyframes float-stardust {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 1; }
 }

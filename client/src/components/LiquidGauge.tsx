@@ -66,33 +66,29 @@ export default function LiquidGauge({ score, projectedRefund, premiumAmount }: L
       </div>
 
       {/* Score Breakdown */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
+      <div className="grid grid-cols-2 gap-2 mb-3">
         <div className="text-center">
-          <div className="text-lg font-semibold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)]" style={{ 
-            textShadow: '1px 1px 2px rgba(0,0,0,0.4)',
+          <div className="text-base font-semibold text-white" style={{ 
             fontFamily: 'Inter, sans-serif',
             fontWeight: '600'
           }}>{personalScore}%</div>
-          <div className="text-xs text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]" style={{ 
-            textShadow: '1px 1px 2px rgba(0,0,0,0.6)',
+          <div className="text-xs text-white/80" style={{ 
             fontFamily: 'Inter, sans-serif'
           }}>Personal Score</div>
         </div>
         <div className="text-center">
-          <div className="text-lg font-semibold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)]" style={{ 
-            textShadow: '1px 1px 2px rgba(0,0,0,0.4)',
+          <div className="text-base font-semibold text-white" style={{ 
             fontFamily: 'Inter, sans-serif',
             fontWeight: '600'
           }}>{poolScore}%</div>
-          <div className="text-xs text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]" style={{ 
-            textShadow: '1px 1px 2px rgba(0,0,0,0.6)',
+          <div className="text-xs text-white/80" style={{ 
             fontFamily: 'Inter, sans-serif'
           }}>Pool Score</div>
         </div>
       </div>
 
       {/* Projected Refund */}
-      <div className="text-center p-4 rounded-2xl" style={{
+      <div className="text-center p-3 rounded-xl" style={{
         background: 'rgba(255, 255, 255, 0.04)',
         border: '1px solid rgba(255, 255, 255, 0.08)',
         backdropFilter: 'blur(12px)',
@@ -101,8 +97,7 @@ export default function LiquidGauge({ score, projectedRefund, premiumAmount }: L
           textShadow: '1px 1px 2px rgba(0,0,0,0.6)',
           fontFamily: 'Inter, sans-serif'
         }}>Projected Annual Refund</div>
-        <div className="text-2xl font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]" style={{ 
-          textShadow: '2px 2px 6px rgba(0,0,0,0.9), -2px -2px 4px rgba(0,0,0,0.7), 0 0 8px rgba(0,0,0,0.5)',
+        <div className="text-2xl font-bold text-white" style={{ 
           fontFamily: 'Inter, sans-serif',
           fontWeight: '700'
         }}>£{projectedRefund}</div>

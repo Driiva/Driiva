@@ -106,11 +106,11 @@ export default function Dashboard() {
         {dashboardData?.user && <PolicyStatusWidget user={dashboardData.user} />}
 
         {/* Hero Section - Driving Score */}
-        <section className="py-4">
-          <div className="glass-morphism rounded-2xl p-4 mb-4">
-            <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold mb-2">Your Driving Score</h2>
-              <p className="text-gray-300 text-sm">Based on last 30 days of driving</p>
+        <section className="py-2">
+          <div className="glass-morphism rounded-xl p-3 mb-3">
+            <div className="text-center mb-3">
+              <h2 className="text-lg font-semibold mb-1">Your Driving Score</h2>
+              <p className="text-gray-300 text-xs">Based on last 30 days of driving</p>
             </div>
 
             {dashboardData?.profile && (

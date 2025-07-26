@@ -3,16 +3,15 @@ export default function DriivaLogo({ className = "", size = "default" }: {
   size?: "small" | "default" | "large" 
 }) {
   const sizeClasses = {
-    small: "text-2xl tracking-wide",
-    default: "text-4xl tracking-wide",
-    large: "text-6xl tracking-wide"
+    small: "text-xl tracking-tight",
+    default: "text-2xl tracking-tight",
+    large: "text-4xl tracking-tight"
   };
 
   return (
-    <div className={`font-bold ${sizeClasses[size]} ${className}`} style={{ fontFamily: 'Inter, sans-serif' }}>
-      <span className="text-white relative italic">
-        Driiva
-        <span className="absolute -top-1 -right-1 text-xs opacity-70 not-italic">®</span>
+    <div className={`font-semibold ${sizeClasses[size]} ${className}`} style={{ fontFamily: 'Inter, sans-serif' }}>
+      <span className="text-white relative" style={{ fontStyle: 'italic' }}>
+        <span style={{ textTransform: 'uppercase', letterSpacing: '-0.02em' }}>D</span>riiva
       </span>
     </div>
   );

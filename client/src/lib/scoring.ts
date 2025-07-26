@@ -139,10 +139,15 @@ export class DrivingScorer {
     poolSafetyFactor: number,
     premiumAmount: number
   ): number {
-    const maxRefundPercentage = 0.15; // 15% max refund
-    const weightedScore = (personalScore * 0.8) + (poolSafetyFactor * 100 * 0.2);
-    const refundPercentage = (weightedScore / 100) * maxRefundPercentage;
-    return Number((premiumAmount * refundPercentage).toFixed(2));
+    // Only drivers with personal score >= 80 are eligible for refunds
+    if (personalScore < 80) {
+      return 0;
+    }
+    
+    // For eligible drivers, refund is capped at 15% of premium
+    const refundAmount = premiumAmount * 0.15;
+    
+    return Number(refundAmount.toFixed(2));
   }
 
   private calculateDistance(gpsPoints: GPSPoint[]): number {

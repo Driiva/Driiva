@@ -16,22 +16,22 @@ export default function CommunityPool({ pool }: CommunityPoolProps) {
   const safeDriverCount = pool?.safeDriverCount || 800;
 
   return (
-    <section className="mb-4">
-      <div className="glass-morphism-subtle rounded-2xl p-4" style={{
+    <section className="mb-3">
+      <div className="glass-morphism-subtle rounded-xl p-3" style={{
         background: 'rgba(255, 255, 255, 0.04)',
         border: '1px solid rgba(255, 255, 255, 0.08)',
         backdropFilter: 'blur(12px)',
       }}>
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Community Pool</h3>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-base font-semibold">Community Pool</h3>
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 bg-[#10B981] rounded-full animate-pulse"></div>
             <span className="text-xs text-gray-400">Live</span>
           </div>
         </div>
 
-        <div className="mb-6">
-          <div className="flex justify-between items-center mb-2">
+        <div className="mb-3">
+          <div className="flex justify-between items-center mb-1">
             <span className="text-sm text-gray-400">Pool Safety Factor</span>
             <span className="text-sm font-semibold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]" style={{ 
               textShadow: '2px 2px 4px rgba(0,0,0,0.9), -1px -1px 2px rgba(0,0,0,0.7)',

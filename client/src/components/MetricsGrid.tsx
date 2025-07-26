@@ -54,8 +54,8 @@ export default function MetricsGrid({ profile }: MetricsGridProps) {
   ];
 
   return (
-    <section className="mb-6">
-      <div className="grid grid-cols-2 gap-3">
+    <section className="mb-4">
+      <div className="grid grid-cols-2 gap-2">
         {metrics.map((metric, index) => (
           <div key={index} className="glass-morphism-subtle rounded-xl p-3 transition-all duration-300 hover:scale-102 hover:shadow-lg cursor-pointer">
             <div className="flex items-center space-x-2 mb-2">

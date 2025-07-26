@@ -21,10 +21,10 @@ export default function PolicyStatusWidget({ user }: PolicyStatusWidgetProps) {
   };
 
   return (
-    <section className="mb-6">
-      <div className="glass-morphism rounded-3xl p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-white">Policy Status</h3>
+    <section className="mb-3">
+      <div className="glass-morphism rounded-xl p-3">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-base font-semibold text-white">Policy Status</h3>
           <div className="flex items-center space-x-2">
             <div
               className={`w-3 h-3 rounded-full ${
@@ -32,7 +32,7 @@ export default function PolicyStatusWidget({ user }: PolicyStatusWidgetProps) {
               } animate-pulse`}
             />
             <button
-              className={`px-4 py-2 rounded-xl font-medium text-sm transition-all duration-300 ${
+              className={`px-3 py-1.5 rounded-lg font-medium text-xs transition-all duration-300 ${
                 isActive
                   ? 'bg-gradient-to-r from-green-400 to-emerald-500 text-white shadow-lg shadow-green-400/30'
                   : 'bg-gradient-to-r from-red-400 to-red-500 text-white shadow-lg shadow-red-400/30'
@@ -47,11 +47,11 @@ export default function PolicyStatusWidget({ user }: PolicyStatusWidgetProps) {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 gap-2">
           {/* Policy Type */}
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-blue-500/20 rounded-xl flex items-center justify-center">
-              <Shield className="w-5 h-5 text-blue-400" />
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
+              <Shield className="w-4 h-4 text-blue-400" />
             </div>
             <div>
               <div className="text-sm font-medium text-white">{policyData.policyType}</div>
@@ -60,7 +60,7 @@ export default function PolicyStatusWidget({ user }: PolicyStatusWidgetProps) {
           </div>
 
           {/* Dates */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-2">
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center">
                 <Calendar className="w-4 h-4 text-purple-400" />

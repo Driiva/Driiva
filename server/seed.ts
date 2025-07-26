@@ -3,41 +3,42 @@ import { users, drivingProfiles, communityPool, achievements } from '@shared/sch
 
 async function seedDatabase() {
   try {
-    // Create a test user
+    // Create a test user - Sebastian Thomas (Low risk driver from document)
     const [user] = await db.insert(users).values({
-      username: 'demo_user',
-      email: 'demo@driiva.com',
+      username: 'sebastian_thomas',
+      email: 'sebastian@driiva.com',
       password: 'demo_password', // In real app this would be hashed
-      firstName: 'Demo',
-      lastName: 'Driver',
-      premiumAmount: '2400.00', // $2400 annual premium
+      firstName: 'Sebastian',
+      lastName: 'Thomas',
+      premiumAmount: '690.00', // £690 annual premium from document
       phoneNumber: '+1234567890'
     }).returning();
 
     console.log('Created user:', user);
 
-    // Create driving profile
+    // Create driving profile for Sebastian (low risk, score 92.1 from document)
     const [profile] = await db.insert(drivingProfiles).values({
       userId: user.id,
-      currentScore: 85,
-      hardBrakingScore: 5,
-      accelerationScore: 3,
-      speedAdherenceScore: 2,
-      nightDrivingScore: 1,
-      corneringScore: 4,
-      consistencyScore: 90,
-      totalTrips: 45,
-      totalMiles: '1250.5'
+      currentScore: 92,
+      hardBrakingScore: 2,
+      accelerationScore: 1,
+      speedAdherenceScore: 1,
+      nightDrivingScore: 0,
+      corneringScore: 2,
+      consistencyScore: 95,
+      totalTrips: 85,
+      totalMiles: '2350.5',
+      projectedRefund: 104 // £104 refund from document
     }).returning();
 
     console.log('Created driving profile:', profile);
 
-    // Create community pool
+    // Create community pool (from document: 280 drivers, 140 low-risk eligible)
     const [pool] = await db.insert(communityPool).values({
-      poolAmount: '125000.00',
-      safetyFactor: '0.82',
-      participantCount: 2500,
-      safeDriverCount: 2050
+      poolAmount: '43522.00', // £43,522 refund pool from document
+      safetyFactor: '0.75', // Community average score 75 from document
+      participantCount: 280,
+      safeDriverCount: 140 // 50% low-risk drivers eligible for refunds
     }).returning();
 
     console.log('Created community pool:', pool);
