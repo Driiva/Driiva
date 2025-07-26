@@ -11,6 +11,7 @@ import TripRecording from "@/pages/trip-recording";
 import Documents from "@/pages/documents";
 import Support from "@/pages/support";
 import NotFound from "@/pages/not-found";
+import SignIn from "@/pages/signin";
 import DriivaLogo from "@/components/DrivvaLogo";
 import FloatingStardust from "@/components/FloatingStardust";
 import PageTransition from "@/components/PageTransition";
@@ -28,39 +29,60 @@ const pages = [
 ];
 
 function Router() {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const { direction, currentPageIndex } = useInfiniteScroll(pages);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
+  
+  useEffect(() => {
+    // Check if user is authenticated
+    const user = localStorage.getItem("driiva_user");
+    setIsAuthenticated(!!user);
+    setIsChecking(false);
+    
+    // Redirect to sign-in if not authenticated and not already on sign-in page
+    if (!user && location !== "/signin") {
+      setLocation("/signin");
+    }
+  }, [location, setLocation]);
+
+  if (isChecking) {
+    return <div className="min-h-screen flex items-center justify-center">
+      <div className="text-white">Loading...</div>
+    </div>;
+  }
 
   return (
     <div className="relative w-full h-full overflow-hidden">
       <Switch>
+        <Route path="/signin" component={SignIn} />
         <Route path="/">
-          {() => (
+          {() => isAuthenticated ? (
             <PageTransition pageKey="dashboard" direction={direction}>
               <Dashboard />
             </PageTransition>
-          )}
+          ) : <SignIn />}
         </Route>
         <Route path="/trips">
-          {() => (
+          {() => isAuthenticated ? (
             <PageTransition pageKey="trips" direction={direction}>
               <Trips />
             </PageTransition>
-          )}
+          ) : <SignIn />}
         </Route>
         <Route path="/rewards">
-          {() => (
+          {() => isAuthenticated ? (
             <PageTransition pageKey="rewards" direction={direction}>
               <Rewards />
             </PageTransition>
-          )}
+          ) : <SignIn />}
         </Route>
         <Route path="/profile">
-          {() => (
+          {() => isAuthenticated ? (
             <PageTransition pageKey="profile" direction={direction}>
               <Profile />
             </PageTransition>
-          )}
+          ) : <SignIn />}
         </Route>
         <Route path="/trip-recording" component={TripRecording} />
         <Route path="/documents" component={Documents} />

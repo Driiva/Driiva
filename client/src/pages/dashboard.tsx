@@ -22,8 +22,9 @@ export default function Dashboard() {
   const [allTrips, setAllTrips] = useState<any[]>([]);
   const [hasMore, setHasMore] = useState(true);
 
-  // Mock user ID - in real app this would come from auth context
-  const userId = 2;
+  // Get user ID from authenticated user
+  const user = localStorage.getItem("driiva_user");
+  const userId = user ? JSON.parse(user).id : null;
 
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: ['/api/dashboard', userId],

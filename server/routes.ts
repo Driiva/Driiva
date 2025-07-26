@@ -5,8 +5,48 @@ import { crypto } from "./lib/crypto";
 import { telematicsProcessor, TelematicsData } from "./lib/telematics";
 import { insertTripSchema, insertIncidentSchema } from "@shared/schema";
 import { z } from "zod";
+import { authService } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Auth endpoints
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      
+      if (!username || !password) {
+        return res.status(400).json({ message: "Username and password required" });
+      }
+
+      const user = await authService.login(username, password);
+      
+      if (!user) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      // Return user data without password
+      const { password: _, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    } catch (error: any) {
+      console.error("Login error:", error);
+      res.status(500).json({ message: "Login failed: " + error.message });
+    }
+  });
+
+  app.get("/api/auth/check", async (req, res) => {
+    // For now, we'll use a simple check - in production, use sessions/JWT
+    const userId = req.headers['x-user-id'];
+    if (!userId) {
+      return res.status(401).json({ authenticated: false });
+    }
+    
+    const user = await storage.getUser(parseInt(userId as string));
+    if (!user) {
+      return res.status(401).json({ authenticated: false });
+    }
+    
+    const { password: _, ...userWithoutPassword } = user;
+    res.json({ authenticated: true, user: userWithoutPassword });
+  });
 
   // Get user dashboard data
   app.get("/api/dashboard/:userId", async (req, res) => {
