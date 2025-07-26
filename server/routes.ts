@@ -181,7 +181,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = parseInt(req.params.userId);
       const limit = parseInt(req.query.limit as string) || 20;
-      const trips = await storage.getUserTrips(userId, limit);
+      const offset = parseInt(req.query.offset as string) || 0;
+      const trips = await storage.getUserTrips(userId, limit, offset);
       res.json(trips);
     } catch (error: any) {
       res.status(500).json({ message: "Error fetching trips: " + error.message });

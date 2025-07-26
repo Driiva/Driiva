@@ -37,7 +37,12 @@ export default function Dashboard() {
 
   // Infinite scroll for trips
   const { data: tripsData } = useQuery({
-    queryKey: ['/api/trips', userId, page],
+    queryKey: ['/api/trips', userId, { page, limit: 20 }],
+    queryFn: () => {
+      if (page === 1) return null; // Skip first page as it's loaded from dashboard
+      return fetch(`/api/trips/${userId}?limit=20&offset=${(page - 1) * 20}`)
+        .then(res => res.json());
+    },
     enabled: page > 1, // Only fetch additional pages after first load
   });
 

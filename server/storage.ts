@@ -39,7 +39,7 @@ export interface IStorage {
   
   // Trip operations
   createTrip(trip: InsertTrip): Promise<Trip>;
-  getUserTrips(userId: number, limit?: number): Promise<Trip[]>;
+  getUserTrips(userId: number, limit?: number, offset?: number): Promise<Trip[]>;
   getTripById(id: number): Promise<Trip | undefined>;
   
   // Community pool operations
@@ -113,11 +113,14 @@ export class DatabaseStorage implements IStorage {
     return newTrip;
   }
 
-  async getUserTrips(userId: number, limit: number = 10): Promise<Trip[]> {
-    return await db.select().from(trips)
+  async getUserTrips(userId: number, limit: number = 10, offset: number = 0): Promise<Trip[]> {
+    const query = db.select().from(trips)
       .where(eq(trips.userId, userId))
       .orderBy(desc(trips.createdAt))
-      .limit(limit);
+      .limit(limit)
+      .offset(offset);
+    
+    return await query;
   }
 
   async getTripById(id: number): Promise<Trip | undefined> {
