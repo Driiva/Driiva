@@ -5,12 +5,15 @@ import MetricsGrid from "@/components/MetricsGrid";
 import CommunityPool from "@/components/CommunityPool";
 import RefundSimulator from "@/components/RefundSimulator";
 import Gamification from "@/components/Gamification";
+import GamifiedRefundTracker from "@/components/GamifiedRefundTracker";
 import BottomNavigation from "@/components/BottomNavigation";
 import PolicyStatusWidget from "@/components/PolicyStatusWidget";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocation } from "wouter";
+import { Zap } from "lucide-react";
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
@@ -23,6 +26,10 @@ export default function Dashboard() {
       return;
     }
   }, [isAuthenticated, setLocation]);
+
+  const handleLightningClick = () => {
+    setLocation('/');
+  };
 
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: ['/api/dashboard', userId],
@@ -71,10 +78,21 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1E293B] to-[#0F172A] text-white">
+    <div className="min-h-screen text-white">
       <DashboardHeader user={data?.user} />
 
       <main className="px-4 pb-20 pt-4">
+        {/* Lightning Button */}
+        <div className="fixed top-4 right-4 z-50">
+          <Button 
+            onClick={handleLightningClick}
+            className="w-12 h-12 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 shadow-lg"
+            size="sm"
+          >
+            <Zap className="w-6 h-6 text-black" />
+          </Button>
+        </div>
+
         {/* Policy Status Widget */}
         {data?.user && (
           <div className="mb-4">
@@ -96,6 +114,19 @@ export default function Dashboard() {
             />
           )}
         </div>
+
+        {/* Gamified Refund Tracker */}
+        {data?.profile && data?.user && data?.achievements && (
+          <div className="mb-4">
+            <GamifiedRefundTracker 
+              currentScore={data.profile.currentScore}
+              projectedRefund={data.profile.projectedRefund}
+              premiumAmount={data.user.premiumAmount}
+              totalMiles={data.profile.totalMiles || 0}
+              achievements={data.achievements}
+            />
+          </div>
+        )}
 
         {/* Metrics Grid Box */}
         {data?.profile && (
