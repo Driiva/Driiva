@@ -23,8 +23,8 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
     <header className="sticky top-0 z-40 glass-morphism">
       <div className="px-4 py-4 flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#06B6D4] to-[#3B82F6] flex items-center justify-center">
-            <Zap className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#06B6D4] to-[#3B82F6] flex items-center justify-center animate-pulse">
+            <Zap className="w-5 h-5 text-white animate-bounce" />
           </div>
           <div>
             <h1 className="text-lg font-semibold text-white">Driiva</h1>

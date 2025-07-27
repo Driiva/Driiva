@@ -23,7 +23,7 @@ export default function RefundSimulator({ currentScore, premiumAmount, poolSafet
     const weightedScore = (score * 0.8) + (communityScore * 0.2);
     
     // For eligible drivers, refund is capped at 15% of premium
-    const refundAmount = Number(premiumAmount) * 0.15;
+    const refundAmount = Number(premiumAmount || 1840) * 0.15;
     
     return refundAmount.toFixed(2);
   };

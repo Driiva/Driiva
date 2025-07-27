@@ -12,23 +12,17 @@ import Documents from "@/pages/documents";
 import Support from "@/pages/support";
 import NotFound from "@/pages/not-found";
 import SignIn from "@/pages/signin";
-import { useInfiniteScroll } from "@/hooks/useInfiniteScroll";
+
 import "./styles/glass.css";
 
-const pages = [
-  { path: '/', component: Dashboard, name: 'Dashboard' },
-  { path: '/trips', component: Trips, name: 'Trips' },
-  { path: '/rewards', component: Rewards, name: 'Rewards' },
-  { path: '/profile', component: Profile, name: 'Profile' },
-];
+
 
 function Router() {
   const [location, setLocation] = useLocation();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
   
-  // Initialize infinite scroll for authenticated pages
-  const { direction } = useInfiniteScroll(pages);
+
   
   useEffect(() => {
     // Check if user is authenticated

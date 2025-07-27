@@ -13,10 +13,10 @@ export default function PolicyStatusWidget({ user }: PolicyStatusWidgetProps) {
   const [isActive] = useState(true);
   
   const policyData = {
-    policyNumber: "DRV-2024-000001",
+    policyNumber: "DRV-2025-000001",
     policyType: "Comprehensive Telematics",
-    startDate: "Jan 15, 2024",
-    renewalDate: "Jan 15, 2025",
+    startDate: "Jul 01, 2025",
+    renewalDate: "Jul 01, 2026",
     premiumAmount: user.premiumAmount
   };
 
@@ -89,7 +89,7 @@ export default function PolicyStatusWidget({ user }: PolicyStatusWidgetProps) {
             </div>
             <div>
               <div className="text-sm font-medium text-white">Annual Premium</div>
-              <div className="text-xs text-gray-400">£{policyData.premiumAmount}</div>
+              <div className="text-xs text-gray-400">£{Number(policyData.premiumAmount || 1840).toLocaleString()}</div>
             </div>
           </div>
         </div>

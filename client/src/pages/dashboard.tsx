@@ -81,30 +81,21 @@ export default function Dashboard() {
     <div className="min-h-screen text-white">
       <DashboardHeader user={data?.user} />
 
-      <main className="px-4 pb-20 pt-4">
-        {/* Lightning Button */}
-        <div className="fixed top-4 right-4 z-50">
-          <Button 
-            onClick={handleLightningClick}
-            className="w-12 h-12 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 shadow-lg"
-            size="sm"
-          >
-            <Zap className="w-6 h-6 text-black" />
-          </Button>
-        </div>
+      <main className="px-3 pb-20 pt-2">
+
 
         {/* Policy Status Widget */}
         {data?.user && (
-          <div className="mb-4">
+          <div className="mb-3">
             <PolicyStatusWidget user={data.user} />
           </div>
         )}
 
         {/* Driving Score Box */}
-        <div className="glass-morphism rounded-xl p-4 mb-4">
-          <div className="text-center mb-4">
-            <h2 className="text-lg font-semibold mb-1">Your Driving Score</h2>
-            <p className="text-gray-300 text-sm">Based on last 30 days of driving</p>
+        <div className="glass-morphism rounded-xl p-3 mb-3">
+          <div className="text-center mb-3">
+            <h2 className="text-base font-semibold mb-1">Your Driving Score</h2>
+            <p className="text-gray-300 text-xs">Based on last 30 days of driving</p>
           </div>
           {data?.profile && (
             <LiquidGauge 
@@ -117,11 +108,11 @@ export default function Dashboard() {
 
         {/* Gamified Refund Tracker */}
         {data?.profile && data?.user && data?.achievements && (
-          <div className="mb-4">
+          <div className="mb-3">
             <GamifiedRefundTracker 
               currentScore={data.profile.currentScore}
               projectedRefund={data.profile.projectedRefund}
-              premiumAmount={data.user.premiumAmount}
+              premiumAmount={data.user.premiumAmount || 1840}
               totalMiles={data.profile.totalMiles || 0}
               achievements={data.achievements}
             />
@@ -130,24 +121,24 @@ export default function Dashboard() {
 
         {/* Metrics Grid Box */}
         {data?.profile && (
-          <div className="mb-4">
+          <div className="mb-3">
             <MetricsGrid profile={data.profile} />
           </div>
         )}
 
         {/* Community Pool Box */}
         {data?.communityPool && (
-          <div className="mb-4">
+          <div className="mb-3">
             <CommunityPool pool={data.communityPool} />
           </div>
         )}
 
         {/* Refund Simulator Box */}
         {data?.profile && data?.user && (
-          <div className="mb-4">
+          <div className="mb-3">
             <RefundSimulator 
               currentScore={data.profile.currentScore}
-              premiumAmount={data.user.premiumAmount}
+              premiumAmount={data.user.premiumAmount || 1840}
               poolSafetyFactor={data.communityPool?.safetyFactor || 0.80}
             />
           </div>
@@ -155,7 +146,7 @@ export default function Dashboard() {
 
         {/* Gamification Box */}
         {data?.achievements && data?.leaderboard && data?.user && (
-          <div className="mb-4">
+          <div className="mb-3">
             <Gamification 
               achievements={data.achievements}
               leaderboard={data.leaderboard}
