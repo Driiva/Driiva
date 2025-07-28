@@ -9,29 +9,29 @@ interface RefundSimulatorProps {
 
 export default function RefundSimulator({ currentScore, premiumAmount, poolSafetyFactor }: RefundSimulatorProps) {
   const [simulatedScore, setSimulatedScore] = useState(currentScore);
-  
+
   const calculateRefund = (score: number) => {
     // Only drivers with personal score >= 70 are eligible for refunds (per documentation)
     if (score < 70) {
       return "0.00";
     }
-    
+
     // Community average score is 75 as per document
     const communityScore = 75;
-    
+
     // Weighting: 80% personal, 20% community (per documentation)
     const weightedScore = (score * 0.8) + (communityScore * 0.2);
-    
+
     // Base refund starts at 5% for 70+ score, scales to 15% at 100 score
     const baseRefundRate = 0.05;
     const maxRefundRate = 0.15;
     const scoreRange = 100 - 70; // 30 point range
     const scoreAboveMin = Math.max(0, score - 70);
-    
+
     // Linear scaling from 5% to 15% based on score above 70
     const refundRate = baseRefundRate + ((maxRefundRate - baseRefundRate) * (scoreAboveMin / scoreRange));
     const refundAmount = Number(premiumAmount || 1840) * Math.min(refundRate, maxRefundRate);
-    
+
     return Math.max(0, refundAmount).toFixed(2);
   };
 

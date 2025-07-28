@@ -143,20 +143,20 @@ export class DrivingScorer {
     if (personalScore < 70) {
       return 0;
     }
-    
+
     // Base refund starts at 5% for 70+ score, scales to 15% at 100 score
     const baseRefundRate = 0.05;
     const maxRefundRate = 0.15;
     const scoreRange = 100 - 70; // 30 point range
     const scoreAboveMin = Math.max(0, personalScore - 70);
-    
+
     // Linear scaling from 5% to 15% based on score above 70
     const refundRate = baseRefundRate + ((maxRefundRate - baseRefundRate) * (scoreAboveMin / scoreRange));
     const refundAmount = premiumAmount * Math.min(refundRate, maxRefundRate);
-    
+
     // Apply pool safety factor adjustment
     const adjustedRefund = refundAmount * (poolSafetyFactor || 1.0);
-    
+
     return Number(Math.min(adjustedRefund, premiumAmount * maxRefundRate).toFixed(2));
   }
 
@@ -208,17 +208,17 @@ export class DrivingScorer {
     for (let i = 1; i < accelerometerData.length; i++) {
       const prevReading = accelerometerData[i - 1];
       const currentReading = accelerometerData[i];
-      
+
       // Calculate deceleration in the forward direction
       const deceleration = Math.abs(currentReading.x - prevReading.x);
-      
+
       if (deceleration > threshold) {
         events++;
         // Prevent multiple detections for the same event
         i += 10; // Skip next 10 readings (~1 second)
       }
     }
-    
+
     return events;
   }
 
@@ -229,17 +229,17 @@ export class DrivingScorer {
     for (let i = 1; i < accelerometerData.length; i++) {
       const prevReading = accelerometerData[i - 1];
       const currentReading = accelerometerData[i];
-      
+
       // Calculate acceleration in the forward direction
       const acceleration = Math.abs(currentReading.x - prevReading.x);
-      
+
       if (acceleration > threshold) {
         events++;
         // Prevent multiple detections for the same event
         i += 10; // Skip next 10 readings (~1 second)
       }
     }
-    
+
     return events;
   }
 
@@ -250,12 +250,12 @@ export class DrivingScorer {
     for (const reading of gyroscopeData) {
       // Calculate lateral force from gyroscope data
       const lateralForce = Math.sqrt(reading.x * reading.x + reading.y * reading.y);
-      
+
       if (lateralForce > threshold) {
         corners++;
       }
     }
-    
+
     // Filter out minor variations - only count significant cornering events
     return Math.floor(corners / 20); // Group consecutive readings into single events
   }
@@ -269,36 +269,36 @@ export class DrivingScorer {
         violations++;
       }
     }
-    
+
     // Group consecutive violations
     return Math.floor(violations / 10);
   }
 
   private calculateEcoScore(telematicsData: TelematicsData): number {
     let score = 100;
-    
+
     // Penalize excessive speeding
     const avgSpeed = this.calculateAverageSpeed(telematicsData.speedData);
     if (avgSpeed > 70) {
       score -= (avgSpeed - 70) * 0.5;
     }
-    
+
     // Reward smooth driving
     const harshEvents = this.detectHardBraking(telematicsData.accelerometerData) + 
                        this.detectHarshAcceleration(telematicsData.accelerometerData);
     score -= harshEvents * 5;
-    
+
     return Math.max(0, Math.min(100, score));
   }
 
   private calculateOverallScore(metrics: DrivingMetrics): number {
     const breakdown = this.calculateScoreBreakdown(metrics);
-    
+
     let weightedScore = 0;
     Object.values(breakdown).forEach(component => {
       weightedScore += component.score * component.weight;
     });
-    
+
     return Math.max(0, Math.min(100, Math.round(weightedScore)));
   }
 
@@ -319,3 +319,49 @@ export class DrivingScorer {
 }
 
 export const drivingScorer = new DrivingScorer();
+export function calculatePersonalScore(profile: DrivingProfile): number {
+  if (!profile) return 0;
+
+  const safetyWeight = 0.4;
+  const efficiencyWeight = 0.25;
+  const experienceWeight = 0.25;
+  const consistencyWeight = 0.1;
+
+  // Safety Score (0-100) - primary factor
+  const hardBrakingPenalty = (profile.hardBraking || 0) * 2;
+  const rapidAccelPenalty = (profile.rapidAcceleration || 0) * 1.5;
+  const safetyScore = Math.max(0, 100 - hardBrakingPenalty - rapidAccelPenalty);
+
+  // Efficiency Score (0-100) - based on fuel efficiency and speed consistency
+  const avgSpeed = profile.averageSpeed || 45;
+  const optimalSpeed = 55; // optimal efficiency speed
+  const speedEfficiency = 100 - Math.abs(avgSpeed - optimalSpeed) * 2;
+  const efficiencyScore = Math.max(0, Math.min(100, speedEfficiency));
+
+  // Experience Score (0-100) - logarithmic based on distance and trips
+  const totalDistance = profile.totalDistance || 0;
+  const tripCount = profile.tripCount || 0;
+  const distanceScore = Math.min(70, (totalDistance / 5000) * 70);
+  const tripScore = Math.min(30, (tripCount / 50) * 30);
+  const experienceScore = distanceScore + tripScore;
+
+  // Consistency Score (0-100) - reward consistent safe driving
+  const scoreDeviation = profile.scoreDeviation || 15;
+  const consistencyScore = Math.max(0, 100 - scoreDeviation * 3);
+
+  const weightedScore = 
+    safetyScore * safetyWeight +
+    efficiencyScore * efficiencyWeight +
+    experienceScore * experienceWeight +
+    consistencyScore * consistencyWeight;
+
+  // Apply bonus for excellent drivers
+  let finalScore = Math.round(Math.max(0, Math.min(100, weightedScore)));
+
+  // Bonus system for consistent safe drivers
+  if (safetyScore >= 85 && consistencyScore >= 70 && experienceScore >= 50) {
+    finalScore = Math.min(100, finalScore + 5);
+  }
+
+  return finalScore;
+}
