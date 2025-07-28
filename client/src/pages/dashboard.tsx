@@ -82,17 +82,17 @@ export default function Dashboard() {
 
           {/* Metrics Grid Box */}
           <div className="mb-3">
-            <MetricsGrid profile={safeProfile} />
+            <MetricsGrid profile={data.profile} />
           </div>
 
           {/* Community Pool Box */}
           <div className="mb-3">
             <CommunityPool 
               pool={{
-                poolAmount: safeCommunityPool.poolAmount,
-                safetyFactor: safeCommunityPool.safetyFactor,
-                participantCount: safeCommunityPool.totalParticipants,
-                safeDriverCount: Math.round(safeCommunityPool.totalParticipants * 0.8)
+                poolAmount: data.communityPool.poolBalance,
+                safetyFactor: data.communityPool.safetyFactor,
+                participantCount: data.communityPool.totalMembers,
+                safeDriverCount: Math.round(data.communityPool.totalMembers * 0.8)
               }}
             />
           </div>
@@ -100,20 +100,20 @@ export default function Dashboard() {
           {/* Gamification Box */}
           <div className="mb-3">
             <Gamification 
-              achievements={achievements}
-              leaderboard={leaderboard}
-              currentUser={safeUser}
-              profile={safeProfile}
-              premiumAmount={Number(safeUser.premiumAmount)}
+              achievements={data.achievements}
+              leaderboard={data.leaderboard}
+              currentUser={data.user}
+              profile={data.profile}
+              premiumAmount={Number(data.user.premiumAmount)}
             />
           </div>
 
           {/* Refund Simulator Box */}
           <div className="mb-3">
             <RefundSimulator 
-              currentScore={safeProfile.currentScore}
-              premiumAmount={Number(safeUser.premiumAmount)}
-              poolSafetyFactor={safeCommunityPool.safetyFactor}
+              currentScore={data.profile.currentScore}
+              premiumAmount={Number(data.user.premiumAmount)}
+              poolSafetyFactor={data.communityPool.safetyFactor}
             />
           </div>
         </main>

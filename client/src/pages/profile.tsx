@@ -1,7 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+
 import DashboardHeader from "@/components/DashboardHeader";
 import BottomNavigation from "@/components/BottomNavigation";
-import DataExport from "@/components/DataExport";
+import PolicyDownload from "@/components/PolicyDownload";
 import DeleteAccount from "@/components/DeleteAccount";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,13 +10,28 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { User, Car, Shield, Settings, Download, Trash2 } from "lucide-react";
 
 export default function Profile() {
-  const user = localStorage.getItem("driiva_user");
-  const userId = user ? JSON.parse(user).id : null;
-  
-  const { data: dashboardData, isLoading } = useQuery({
-    queryKey: ['/api/dashboard', userId],
-    enabled: !!userId,
-  });
+  // Static user data for stable demo
+  const userData = {
+    id: 8,
+    username: "driiva1",
+    firstName: "Test",
+    lastName: "Driver",
+    email: "test@driiva.com",
+    premiumAmount: "1840.00",
+    phoneNumber: "+44 7700 123456"
+  };
+
+  const profileData = {
+    currentScore: 89,
+    totalTrips: 26,
+    totalMiles: 1107.70,
+    hardBrakingScore: 3,
+    accelerationScore: 2,
+    speedAdherenceScore: 1,
+    nightDrivingScore: 5
+  };
+
+  const isLoading = false;
 
   if (isLoading) {
     return (
@@ -38,7 +53,7 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen text-white safe-area">
-      <DashboardHeader />
+      <DashboardHeader user={userData} />
       
       <main className="px-4 pb-20">
         <div className="py-4">
@@ -58,22 +73,22 @@ export default function Profile() {
                 </div>
                 <div>
                   <h2 className="text-xl font-bold">
-                    {dashboardData?.user?.firstName || 'User'} {dashboardData?.user?.lastName || ''}
+                    {userData.firstName} {userData.lastName}
                   </h2>
-                  <p className="text-gray-400">@{dashboardData?.user?.username}</p>
+                  <p className="text-gray-400">@{userData.username}</p>
                 </div>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-[#10B981]">
-                    {dashboardData?.profile?.currentScore || 0}
+                    {profileData.currentScore}
                   </div>
                   <div className="text-xs text-gray-400">Current Score</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-[#06B6D4]">
-                    {dashboardData?.profile?.totalTrips || 0}
+                    {profileData.totalTrips}
                   </div>
                   <div className="text-xs text-gray-400">Total Trips</div>
                 </div>
@@ -92,17 +107,32 @@ export default function Profile() {
             <CardContent className="space-y-4">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-400">Email</span>
-                <span className="text-sm font-medium">{dashboardData?.user?.email || 'Not set'}</span>
+                <span className="text-sm font-medium">{userData.email}</span>
               </div>
               <Separator className="bg-gray-600" />
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-400">Phone</span>
-                <span className="text-sm font-medium">{dashboardData?.user?.phoneNumber || 'Not set'}</span>
+                <span className="text-sm font-medium">{userData.phoneNumber}</span>
               </div>
               <Separator className="bg-gray-600" />
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-400">Premium</span>
-                <span className="text-sm font-medium">£{dashboardData?.user?.premiumAmount || '0.00'}</span>
+                <span className="text-sm font-medium">£{userData.premiumAmount}</span>
+              </div>
+              <Separator className="bg-gray-600" />
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-400">Policy Number</span>
+                <span className="text-sm font-medium">DRV-2025-000001</span>
+              </div>
+              <Separator className="bg-gray-600" />
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-400">Policy Start</span>
+                <span className="text-sm font-medium">July 1, 2025</span>
+              </div>
+              <Separator className="bg-gray-600" />
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-400">Coverage Type</span>
+                <span className="text-sm font-medium">Comprehensive Plus</span>
               </div>
             </CardContent>
           </Card>
@@ -119,25 +149,25 @@ export default function Profile() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="text-center">
                   <div className="text-lg font-bold text-white">
-                    {Number(dashboardData?.profile?.totalMiles || 0).toFixed(1)}
+                    {profileData.totalMiles.toFixed(1)}
                   </div>
                   <div className="text-xs text-gray-400">Total Miles</div>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-bold text-white">
-                    {dashboardData?.profile?.hardBrakingScore || 0}
+                    {profileData.hardBrakingScore}
                   </div>
                   <div className="text-xs text-gray-400">Hard Braking Events</div>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-bold text-white">
-                    {dashboardData?.profile?.speedAdherenceScore || 0}
+                    {profileData.speedAdherenceScore}
                   </div>
                   <div className="text-xs text-gray-400">Speed Violations</div>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-bold text-white">
-                    {dashboardData?.profile?.nightDrivingScore || 0}
+                    {profileData.nightDrivingScore}
                   </div>
                   <div className="text-xs text-gray-400">Night Trips</div>
                 </div>
@@ -154,9 +184,9 @@ export default function Profile() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <DataExport userId={userId} />
+              <PolicyDownload userId={userData.id} userData={userData} />
               <Separator className="bg-gray-600" />
-              <DeleteAccount userId={userId} />
+              <DeleteAccount userId={userData.id} />
             </CardContent>
           </Card>
         </div>
