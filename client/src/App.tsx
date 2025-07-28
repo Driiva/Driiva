@@ -1,8 +1,9 @@
 
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { Router, Route, Switch, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
-import { AuthProvider } from "@/hooks/useAuth";
+import { useState, useEffect } from "react";
 
 // Pages
 import SignIn from "@/pages/signin";
@@ -12,7 +13,6 @@ import Profile from "@/pages/profile";
 import Rewards from "@/pages/rewards";
 import Support from "@/pages/support";
 import Documents from "@/pages/documents";
-import TripRecording from "@/pages/trip-recording";
 import NotFound from "@/pages/not-found";
 
 // Styles
@@ -21,6 +21,13 @@ import "@/index.css";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
+      queryFn: async ({ queryKey }) => {
+        const response = await fetch(queryKey[0] as string);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      },
       retry: 3,
       staleTime: 5 * 60 * 1000, // 5 minutes
       refetchOnWindowFocus: false,
@@ -28,28 +35,67 @@ const queryClient = new QueryClient({
   },
 });
 
+function AppRouter() {
+  const [location, setLocation] = useLocation();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
+
+  
+  useEffect(() => {
+    // Check if user is authenticated
+    const user = localStorage.getItem("driiva_user");
+    setIsAuthenticated(!!user);
+    setIsChecking(false);
+    
+    // Redirect to sign-in if not authenticated
+    if (!user && location !== "/signin") {
+      setLocation("/signin");
+    }
+  }, []);
+
+  if (isChecking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-white">Loading...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen overflow-hidden">
+      <Switch>
+        <Route path="/signin" component={SignIn} />
+        <Route path="/">
+          {() => isAuthenticated ? <Dashboard /> : <SignIn />}
+        </Route>
+        <Route path="/trips">
+          {() => isAuthenticated ? <Trips /> : <SignIn />}
+        </Route>
+        <Route path="/rewards">
+          {() => isAuthenticated ? <Rewards /> : <SignIn />}
+        </Route>
+        <Route path="/profile">
+          {() => isAuthenticated ? <Profile /> : <SignIn />}
+        </Route>
+        <Route path="/documents" component={Documents} />
+        <Route path="/support" component={Support} />
+        <Route component={NotFound} />
+      </Switch>
+    </div>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Router>
-          <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
-            <Routes>
-              <Route path="/" element={<Navigate to="/signin" replace />} />
-              <Route path="/signin" element={<SignIn />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/trips" element={<Trips />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/rewards" element={<Rewards />} />
-              <Route path="/support" element={<Support />} />
-              <Route path="/documents" element={<Documents />} />
-              <Route path="/trip-recording" element={<TripRecording />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <Toaster />
-          </div>
-        </Router>
-      </AuthProvider>
+      <TooltipProvider>
+        <div className="min-h-screen text-white">
+          <Router>
+            <AppRouter />
+          </Router>
+          <Toaster />
+        </div>
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }
