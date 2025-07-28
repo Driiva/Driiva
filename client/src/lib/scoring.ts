@@ -170,3 +170,29 @@ export function simulateScoreChange(
     return calculateRefund(currentScore, premiumAmount, poolSafetyFactor);
   }
 }
+
+/**
+ * Main driving scorer object with all scoring functions
+ */
+export const drivingScorer = {
+  calculatePersonalScore,
+  calculateCommunityScore,
+  calculateTotalScore,
+  calculateRefund,
+  simulateScoreChange,
+  
+  // Additional helper for RefundSimulator component
+  calculateRefundProjection(
+    score: number,
+    poolSafetyFactor: number,
+    premiumAmount: number
+  ): number {
+    try {
+      const refundCalc = calculateRefund(score, premiumAmount, poolSafetyFactor);
+      return refundCalc.refundAmount;
+    } catch (error) {
+      console.error('Error calculating refund projection:', error);
+      return 0;
+    }
+  }
+};

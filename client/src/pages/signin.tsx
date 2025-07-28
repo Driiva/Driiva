@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, LogIn, User, Lock } from "lucide-react";
@@ -9,41 +8,18 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import DriivaLogo from "@/components/DrivvaLogo";
 import FloatingStardust from "@/components/FloatingStardust";
-import { apiRequest } from "@/lib/queryClient";
 import { useParallax } from "@/hooks/useParallax";
+import { useAuth } from "../App";
 
 export default function SignIn() {
   const [, setLocation] = useLocation();
   const [username, setUsername] = useState("driiva1");
   const [password, setPassword] = useState("driiva1");
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { ref: cardRef, style: cardParallaxStyle } = useParallax({ speed: 0.3 });
-
-  const loginMutation = useMutation({
-    mutationFn: async ({ username, password }: { username: string; password: string }) => {
-      return await apiRequest("/api/auth/login", {
-        method: "POST",
-        body: JSON.stringify({ username, password }),
-        headers: { "Content-Type": "application/json" },
-      });
-    },
-    onSuccess: (user) => {
-      localStorage.setItem("driiva_user", JSON.stringify(user));
-      toast({
-        title: "Welcome back!",
-        description: `Signed in as ${user.firstName || user.username}`,
-      });
-      window.location.href = "/"; // Force page reload to update auth state
-    },
-    onError: (error) => {
-      toast({
-        title: "Sign in failed",
-        description: "Invalid username or password",
-        variant: "destructive",
-      });
-    },
-  });
+  const { login } = useAuth();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,7 +31,38 @@ export default function SignIn() {
       });
       return;
     }
-    loginMutation.mutate({ username, password });
+
+    setIsLoading(true);
+    
+    // Simulate authentication (demo purposes)
+    setTimeout(() => {
+      if (username === "driiva1" && password === "driiva1") {
+        const userData = {
+          id: 8,
+          username: "driiva1",
+          firstName: "Test",
+          lastName: "Driver",
+          email: "test@driiva.com",
+          premiumAmount: "1840.00"
+        };
+        
+        login(userData);
+        
+        toast({
+          title: "Welcome back!",
+          description: `Signed in as ${userData.firstName}`,
+        });
+        
+        setLocation("/dashboard");
+      } else {
+        toast({
+          title: "Sign in failed",
+          description: "Invalid username or password",
+          variant: "destructive",
+        });
+      }
+      setIsLoading(false);
+    }, 1000);
   };
 
   return (
@@ -226,7 +233,7 @@ export default function SignIn() {
                 >
                   <Button
                     type="submit"
-                    disabled={loginMutation.isPending}
+                    disabled={isLoading}
                     className="w-full bg-gradient-to-r from-[#8B4513] via-[#B87333] to-[#7B1FA2] hover:from-[#A0522D] hover:via-[#CD853F] hover:to-[#8B5A96] text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 active:scale-95"
                     style={{
                       boxShadow: '0 8px 32px rgba(139, 69, 19, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1)',
@@ -234,7 +241,7 @@ export default function SignIn() {
                       fontFamily: 'Inter, sans-serif'
                     }}
                   >
-                    {loginMutation.isPending ? (
+                    {isLoading ? (
                       <motion.div
                         animate={{ rotate: 360 }}
                         transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
