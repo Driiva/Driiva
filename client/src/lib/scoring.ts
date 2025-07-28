@@ -1,4 +1,3 @@
-
 import { TelematicsData, GPSPoint, AccelerometerReading, GyroscopeReading, SpeedReading } from './telematics';
 
 export interface RiskProfile {
@@ -185,7 +184,7 @@ export class DrivingScorer {
 
     // Linear interpolation between min and max refund rates
     const refundRate = minRefundRate + ((maxRefundRate - minRefundRate) * (scoreAboveMin / scoreRange));
-    
+
     // Calculate base refund amount
     const baseRefund = Number(premiumAmount || 1840) * Math.min(refundRate, maxRefundRate);
 

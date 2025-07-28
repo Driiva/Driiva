@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Slider } from "@/components/ui/slider";
 import { drivingScorer } from "@/lib/scoring";
@@ -123,7 +122,7 @@ export default function RefundSimulator({
                 </div>
               </div>
             </div>
-            
+
             <div className="mt-3 text-xs text-gray-400">
               {simulatedScore < 70 ? 
                 "Score must be 70+ to qualify for refunds" :
