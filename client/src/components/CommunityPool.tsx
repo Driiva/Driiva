@@ -1,4 +1,5 @@
-import { Users, TrendingUp } from "lucide-react";
+import { Users, TrendingUp, Info, ExternalLink } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface CommunityPoolProps {
   pool?: {
@@ -10,10 +11,18 @@ interface CommunityPoolProps {
 }
 
 export default function CommunityPool({ pool }: CommunityPoolProps) {
+  const { toast } = useToast();
   const safetyPercentage = pool ? (Number(pool.safetyFactor) * 100).toFixed(0) : '80';
   const poolAmount = pool ? Number(pool.poolAmount).toFixed(0) : '105,000';
   const participantCount = pool?.participantCount || 1000;
   const safeDriverCount = pool?.safeDriverCount || 800;
+
+  const handlePoolInfoClick = () => {
+    toast({
+      title: "Community Pool Details",
+      description: `Pool size: £${poolAmount}\nActive members: ${participantCount.toLocaleString()}\nSafe drivers: ${safeDriverCount.toLocaleString()} (${safetyPercentage}%)\n\nYour refunds are enhanced by community safety performance.`,
+    });
+  };
 
   return (
     <section className="mb-3">
@@ -23,10 +32,19 @@ export default function CommunityPool({ pool }: CommunityPoolProps) {
         backdropFilter: 'blur(12px)',
       }}>
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-base font-semibold">Community Pool</h3>
+          <h3 className="text-base font-semibold flex items-center gap-2">
+            <Users className="w-4 h-4 text-blue-400" />
+            Community Pool
+          </h3>
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 bg-[#10B981] rounded-full animate-pulse"></div>
-            <span className="text-xs text-gray-400">Live</span>
+            <button
+              onClick={handlePoolInfoClick}
+              className="text-xs text-gray-400 hover:text-white px-2 py-1 hover:bg-white/10 rounded transition-colors flex items-center gap-1"
+            >
+              <Info className="w-3 h-3" />
+              Live
+            </button>
           </div>
         </div>
 
@@ -55,14 +73,23 @@ export default function CommunityPool({ pool }: CommunityPoolProps) {
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div className="text-center">
+          <button
+            onClick={handlePoolInfoClick}
+            className="text-center p-2 hover:bg-white/5 rounded-lg transition-colors"
+          >
             <div className="text-lg font-bold text-white">£{poolAmount}</div>
             <div className="text-xs text-gray-400">Total Pool</div>
-          </div>
-          <div className="text-center">
+          </button>
+          <button
+            onClick={() => toast({
+              title: "Your Pool Share",
+              description: "Your share is calculated based on your safety score and community performance. Higher scores mean larger shares of the reward pool.",
+            })}
+            className="text-center p-2 hover:bg-white/5 rounded-lg transition-colors"
+          >
             <div className="text-lg font-bold text-[#10B981]">£62.50</div>
             <div className="text-xs text-gray-400">Your Share</div>
-          </div>
+          </button>
         </div>
 
         <div className="mt-4 p-3 bg-[#10B981] bg-opacity-10 rounded-xl border border-[#10B981] border-opacity-20">

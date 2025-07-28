@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Slider } from "@/components/ui/slider";
 import { drivingScorer } from "@/lib/scoring";
+import { useToast } from "@/hooks/use-toast";
+import { Calculator, TrendingUp } from "lucide-react";
 
 interface RefundSimulatorProps {
   currentScore: number;
@@ -14,6 +16,7 @@ export default function RefundSimulator({
   poolSafetyFactor 
 }: RefundSimulatorProps) {
   const [simulatedScore, setSimulatedScore] = useState(currentScore);
+  const { toast } = useToast();
 
   const calculateRefund = (score: number): string => {
     return drivingScorer.calculateRefundProjection(
@@ -46,10 +49,19 @@ export default function RefundSimulator({
     <section className="mb-3 sm:mb-4">
       <div className="glass-morphism-subtle rounded-xl p-3 sm:p-4">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm sm:text-base font-semibold">Refund Simulator</h3>
-          <div className="text-xs text-gray-400">
+          <h3 className="text-sm sm:text-base font-semibold flex items-center gap-2">
+            <Calculator className="w-4 h-4 text-blue-400" />
+            Refund Simulator
+          </h3>
+          <button
+            onClick={() => toast({
+              title: "Refund Calculator Help",
+              description: "Adjust the score slider to see how improvements in your driving could increase your annual refund. Scores above 70 qualify for refunds up to 15% of your premium.",
+            })}
+            className="text-xs text-gray-400 hover:text-white px-2 py-1 hover:bg-white/10 rounded transition-colors"
+          >
             Premium: £{premiumAmount || 1840}
-          </div>
+          </button>
         </div>
         <p className="text-xs text-gray-400 mb-3">
           See how improvements could boost your refund

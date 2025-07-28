@@ -1,5 +1,6 @@
-import { Shield, Calendar, CreditCard } from "lucide-react";
+import { Shield, Calendar, CreditCard, ExternalLink, FileText } from "lucide-react";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 interface PolicyStatusWidgetProps {
   user: {
@@ -11,6 +12,7 @@ interface PolicyStatusWidgetProps {
 
 export default function PolicyStatusWidget({ user }: PolicyStatusWidgetProps) {
   const [isActive] = useState(true);
+  const { toast } = useToast();
   
   const policyData = {
     policyNumber: "DRV-2025-000001",
@@ -32,6 +34,10 @@ export default function PolicyStatusWidget({ user }: PolicyStatusWidgetProps) {
               } animate-pulse`}
             />
             <button
+              onClick={() => toast({
+                title: "Policy Status",
+                description: "Your policy is active and up to date. Next renewal: July 1, 2026",
+              })}
               className={`px-3 py-1.5 rounded-lg font-medium text-xs transition-all duration-300 ${
                 isActive
                   ? 'bg-gradient-to-r from-green-400 to-emerald-500 text-white shadow-lg shadow-green-400/30'
@@ -83,14 +89,26 @@ export default function PolicyStatusWidget({ user }: PolicyStatusWidgetProps) {
           </div>
 
           {/* Premium */}
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-green-500/20 rounded-xl flex items-center justify-center">
-              <CreditCard className="w-5 h-5 text-green-400" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-green-500/20 rounded-xl flex items-center justify-center">
+                <CreditCard className="w-5 h-5 text-green-400" />
+              </div>
+              <div>
+                <div className="text-sm font-medium text-white">Annual Premium</div>
+                <div className="text-xs text-gray-400">£{Number(policyData.premiumAmount || 1840).toLocaleString()}</div>
+              </div>
             </div>
-            <div>
-              <div className="text-sm font-medium text-white">Annual Premium</div>
-              <div className="text-xs text-gray-400">£{Number(policyData.premiumAmount || 1840).toLocaleString()}</div>
-            </div>
+            <button
+              onClick={() => toast({
+                title: "Policy Documents",
+                description: "Access your policy documents, payment history, and renewal options",
+              })}
+              className="px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg text-xs font-medium text-blue-400 hover:text-blue-300 transition-all duration-200 flex items-center gap-1"
+            >
+              <FileText className="w-3 h-3" />
+              View Details
+            </button>
           </div>
         </div>
       </div>

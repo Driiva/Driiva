@@ -1,4 +1,5 @@
-import { Truck, TrendingUp, Gauge, Moon } from "lucide-react";
+import { Truck, TrendingUp, Gauge, Moon, Info } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface MetricsGridProps {
   profile: {
@@ -10,8 +11,27 @@ interface MetricsGridProps {
 }
 
 export default function MetricsGrid({ profile }: MetricsGridProps) {
+  const { toast } = useToast();
+  
   const getScoreColor = (score: number, isInverse: boolean = false) => {
     return 'text-white'; // Simplified to white for all scores
+  };
+
+  const handleMetricClick = (metric: any) => {
+    toast({
+      title: `${metric.label} Details`,
+      description: `Current value: ${metric.value} ${metric.unit}\nWeight in scoring: ${metric.weight}\nTip: ${getImprovementTip(metric.label)}`,
+    });
+  };
+
+  const getImprovementTip = (label: string) => {
+    switch (label) {
+      case "Hard Braking": return "Maintain steady speeds and anticipate traffic changes";
+      case "Acceleration": return "Gradually increase speed and avoid rapid acceleration";
+      case "Speed": return "Stay within speed limits and follow traffic regulations";
+      case "Night Driving": return "Limit night trips when possible for better safety scores";
+      default: return "Continue safe driving practices";
+    }
   };
 
   const metrics = [
@@ -57,7 +77,7 @@ export default function MetricsGrid({ profile }: MetricsGridProps) {
     <section className="mb-3">
       <div className="grid grid-cols-2 gap-2 sm:gap-3">
         {metrics.map((metric, index) => (
-          <div key={index} className="glass-morphism-subtle rounded-xl p-3 sm:p-3 transition-all duration-300 hover:scale-102 hover:shadow-lg cursor-pointer">
+          <button key={index} onClick={() => handleMetricClick(metric)} className="glass-morphism-subtle rounded-xl p-3 sm:p-3 transition-all duration-300 hover:scale-102 hover:shadow-lg cursor-pointer w-full text-left">
             <div className="flex items-center space-x-2 mb-2">
               <div 
                 className="w-6 h-6 rounded-lg flex items-center justify-center"
@@ -90,7 +110,7 @@ export default function MetricsGrid({ profile }: MetricsGridProps) {
                 fontFamily: 'Inter, sans-serif'
               }}>{metric.unit}</div>
             </div>
-          </div>
+          </button>
         ))}
       </div>
     </section>

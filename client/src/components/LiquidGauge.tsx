@@ -4,11 +4,22 @@ interface LiquidGaugeProps {
   premiumAmount: number;
 }
 
+import { useToast } from "@/hooks/use-toast";
+import { TrendingUp, Info } from "lucide-react";
+
 export default function LiquidGauge({ score, projectedRefund, premiumAmount }: LiquidGaugeProps) {
+  const { toast } = useToast();
   const strokeOffset = 283 - (score / 100) * 283;
   const personalScore = Math.round(score * 0.8);
   const poolScore = Math.round(score * 0.2);
   const gaugeSize = 150; // Define gaugeSize here
+
+  const handleScoreClick = () => {
+    toast({
+      title: "Score Breakdown",
+      description: `Personal driving: ${personalScore}/100 (80% weight)\nCommunity pool: ${poolScore}/100 (20% weight)\nTotal score: ${score}/100`,
+    });
+  };
 
   return (
     <>
@@ -52,7 +63,7 @@ export default function LiquidGauge({ score, projectedRefund, premiumAmount }: L
           </defs>
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center">
+          <button onClick={handleScoreClick} className="text-center hover:scale-105 transition-transform duration-200">
             <div className="text-4xl font-bold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)]" style={{ 
               textShadow: '1px 1px 3px rgba(0,0,0,0.4)',
               fontFamily: 'Inter, sans-serif',
@@ -62,7 +73,7 @@ export default function LiquidGauge({ score, projectedRefund, premiumAmount }: L
               textShadow: '1px 1px 3px rgba(0,0,0,0.8)',
               fontFamily: 'Inter, sans-serif'
             }}>out of 100</div>
-          </div>
+          </button>
         </div>
       </div>
 
