@@ -81,14 +81,15 @@ export function calculateCommunityScore(poolSafetyFactor: number): number {
 }
 
 /**
- * Calculate total weighted score (70% personal, 30% community)
+ * Calculate total weighted score (80% personal, 20% community)
+ * Based on AI Model documentation
  */
 export function calculateTotalScore(personalScore: number, communityScore: number): number {
   try {
     const safePersonal = Number(personalScore) || 0;
     const safeCommunity = Number(communityScore) || 0;
 
-    const totalScore = (safePersonal * 0.7) + (safeCommunity * 0.3);
+    const totalScore = (safePersonal * 0.8) + (safeCommunity * 0.2);
     return Math.round(Math.max(0, Math.min(100, totalScore)));
   } catch (error) {
     console.error('Error calculating total score:', error);
@@ -98,7 +99,8 @@ export function calculateTotalScore(personalScore: number, communityScore: numbe
 
 /**
  * Calculate refund eligibility and amount
- * Users with 70+ personal score qualify for up to 15% refund
+ * Users with 70+ personal score qualify for 5-15% refund
+ * Based on AI Pricing Engine Model documentation
  */
 export function calculateRefund(
   personalScore: number,
@@ -118,15 +120,18 @@ export function calculateRefund(
 
     let refundPercentage = 0;
     if (qualifiesForRefund) {
-      // Scale refund from 5% to 15% based on personal score (70-100)
+      // AI Model formula: min[15%, 0.7 × personal_score + 0.3 × (Pool Safety Factor × 100)]
+      // Simplified for MVP: Scale refund from 5% to 15% based on score (70-100)
       const scoreRange = Math.max(0, safePersonal - 70);
-      refundPercentage = 5 + (scoreRange / 30) * 10; // 5% + up to 10% more
+      const baseRefund = 5; // Minimum 5% refund
+      const additionalRefund = (scoreRange / 30) * 10; // Up to 10% more
+      refundPercentage = baseRefund + additionalRefund;
 
-      // Apply community factor (0.8 to 1.2 multiplier)
-      const communityMultiplier = 0.8 + (safeFactor * 0.4);
-      refundPercentage *= communityMultiplier;
+      // Apply community pool safety factor adjustment (reduced impact per docs)
+      const poolAdjustment = safeFactor > 0.8 ? 1.0 : 0.9;
+      refundPercentage *= poolAdjustment;
 
-      // Cap at 15%
+      // Cap at 15% as per documentation
       refundPercentage = Math.min(15, refundPercentage);
     }
 

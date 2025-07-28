@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { User, Car, FileText, Settings, LogOut, ChevronDown, Download, HelpCircle } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
+import { useLocation } from "wouter";
 
 interface ProfileDropdownProps {
   user: {
@@ -31,6 +33,8 @@ function DropdownMenuItem({ children, onClick, className }: DropdownMenuItemProp
 export default function ProfileDropdown({ user }: ProfileDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { logout } = useAuth();
+  const [, setLocation] = useLocation();
 
   // Mock data - in real app this would come from user profile
   const profileData = {
@@ -125,7 +129,8 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
             <DropdownMenuItem
               className="flex items-center space-x-2 cursor-pointer hover:bg-white/10"
               onClick={() => {
-                console.log("Sign out");
+                logout();
+                setLocation("/signin");
               }}
             >
               <LogOut className="w-4 h-4" />

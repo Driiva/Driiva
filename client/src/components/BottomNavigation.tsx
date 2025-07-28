@@ -1,4 +1,4 @@
-import { Home, Map, Gift, User } from "lucide-react";
+import { Home, Map, LayoutDashboard, User } from "lucide-react";
 import { useLocation } from "wouter";
 
 interface BottomNavigationProps {
@@ -11,7 +11,7 @@ export default function BottomNavigation({ activeTab }: BottomNavigationProps) {
   const tabs = [
     { id: "home", icon: Home, label: "Home", path: "/" },
     { id: "trips", icon: Map, label: "Trips", path: "/trips" },
-    { id: "rewards", icon: Gift, label: "Rewards", path: "/rewards" },
+    { id: "rewards", icon: LayoutDashboard, label: "Dashboard", path: "/rewards" },
     { id: "profile", icon: User, label: "Profile", path: "/profile" }
   ];
 

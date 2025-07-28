@@ -111,6 +111,23 @@ Key architectural decisions favor real-time user experience, data privacy, and s
 
 ## Recent Changes
 
+### January 30, 2025 - Stable Demo Version 2.0
+- ✅ **AUTHENTICATION FIXED**: Separated AuthContext to dedicated file, resolved all hooks errors
+- ✅ **ROUTING SIMPLIFIED**: Removed complex protected routes to ensure stability
+- ✅ **APP RUNNING**: All pages accessible, signin functional with demo credentials
+- 🔄 **PENDING FIXES**:
+  - Refund simulator scroller visibility
+  - Improvement display (negative numbers → 0)
+  - Algorithm alignment with AI model documentation
+  - Sign out functionality
+  - Rename rewards → dashboard
+  - Profile page UI centering
+  - Coverage dropdown functionality
+  - Notification dropdown
+  - View details button
+  - San Francisco font implementation
+  - Refund bonus reduction per documentation
+
 ### July 28, 2025
 - ✅ **SYSTEMATIC DEBUGGING COMPLETED**: Applied comprehensive debugging protocol for 100% success rate
 - ✅ **COMPREHENSIVE REWARDS DASHBOARD**: Transformed rewards button into full-featured dashboard

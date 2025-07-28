@@ -7,9 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { User, Car, Shield, Settings, Download, Trash2 } from "lucide-react";
+import { User, Car, Shield, Settings, Download, Trash2, ChevronDown } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Profile() {
+  const { toast } = useToast();
+  
   // Static user data for stable demo
   const userData = {
     id: 8,
@@ -67,16 +70,14 @@ export default function Profile() {
           {/* Profile Overview */}
           <Card className="glass-border rounded-3xl mb-6">
             <CardContent className="p-6">
-              <div className="flex items-center space-x-4 mb-6">
-                <div className="w-16 h-16 bg-gradient-to-r from-[#06B6D4] to-[#3B82F6] rounded-full flex items-center justify-center">
-                  <User className="w-8 h-8 text-white" />
+              <div className="flex flex-col items-center text-center mb-6">
+                <div className="w-20 h-20 bg-gradient-to-r from-[#06B6D4] to-[#3B82F6] rounded-full flex items-center justify-center mb-4">
+                  <User className="w-10 h-10 text-white" />
                 </div>
-                <div>
-                  <h2 className="text-xl font-bold">
-                    {userData.firstName} {userData.lastName}
-                  </h2>
-                  <p className="text-gray-400">@{userData.username}</p>
-                </div>
+                <h2 className="text-2xl font-bold mb-1">
+                  {userData.firstName} {userData.lastName}
+                </h2>
+                <p className="text-gray-400">@{userData.username}</p>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
@@ -132,7 +133,18 @@ export default function Profile() {
               <Separator className="bg-gray-600" />
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-400">Coverage Type</span>
-                <span className="text-sm font-medium">Comprehensive Plus</span>
+                <div className="relative">
+                  <button
+                    onClick={() => toast({
+                      title: "Comprehensive Plus Coverage",
+                      description: "✓ Theft & Fire Protection\n✓ Third Party Liability\n✓ Personal Accident Cover\n✓ Windscreen Damage\n✓ Legal Expenses\n✓ Breakdown Assistance\n✓ Courtesy Car",
+                    })}
+                    className="text-sm font-medium text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors"
+                  >
+                    Comprehensive Plus
+                    <ChevronDown className="w-3 h-3" />
+                  </button>
+                </div>
               </div>
             </CardContent>
           </Card>

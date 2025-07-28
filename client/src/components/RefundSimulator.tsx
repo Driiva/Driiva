@@ -97,14 +97,32 @@ export default function RefundSimulator({
                 {simulatedScore}
               </span>
             </div>
-            <Slider
-              value={[simulatedScore]}
-              onValueChange={(value) => setSimulatedScore(value[0])}
-              max={100}
-              min={50}
-              step={1}
-              className="w-full"
-            />
+            <div className="relative">
+              <Slider
+                value={[simulatedScore]}
+                onValueChange={(value) => setSimulatedScore(value[0])}
+                max={100}
+                min={50}
+                step={1}
+                className="w-full [&_[role=slider]]:h-5 [&_[role=slider]]:w-5 [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-blue-400 [&_[role=slider]]:shadow-lg [&_[role=slider]]:shadow-blue-400/30"
+                style={{
+                  '--slider-track-bg': 'rgba(255, 255, 255, 0.2)',
+                  '--slider-range-bg': 'linear-gradient(to right, #F59E0B, #10B981)',
+                } as React.CSSProperties}
+              />
+              <style jsx>{`
+                :global(.slider-track) {
+                  background: var(--slider-track-bg);
+                  height: 8px;
+                  border-radius: 4px;
+                }
+                :global(.slider-range) {
+                  background: var(--slider-range-bg);
+                  height: 8px;
+                  border-radius: 4px;
+                }
+              `}</style>
+            </div>
             <div className="flex justify-between text-xs text-gray-500 mt-1">
               <span>50</span>
               <span className="text-yellow-400">70 (Min for refund)</span>
@@ -124,13 +142,9 @@ export default function RefundSimulator({
               <div className="text-right">
                 <div className="text-sm text-gray-400">Improvement</div>
                 <div className={`text-lg font-semibold ${
-                  improvement > 0 ? 'text-[#10B981]' : 
-                  improvement < 0 ? 'text-red-400' : 
-                  'text-gray-400'
+                  improvement > 0 ? 'text-[#10B981]' : 'text-gray-400'
                 }`}>
-                  {improvement > 0 ? `+£${improvement.toFixed(2)}` : 
-                   improvement < 0 ? `-£${Math.abs(improvement).toFixed(2)}` :
-                   '£0.00'}
+                  {improvement > 0 ? `+£${improvement.toFixed(2)}` : '£0.00'}
                 </div>
               </div>
             </div>

@@ -100,10 +100,12 @@ export default function PolicyStatusWidget({ user }: PolicyStatusWidgetProps) {
               </div>
             </div>
             <button
-              onClick={() => toast({
-                title: "Policy Documents",
-                description: "Access your policy documents, payment history, and renewal options",
-              })}
+              onClick={() => {
+                toast({
+                  title: "Policy Details",
+                  description: "Policy #DRV-2025-000001\n\nCoverage: Comprehensive Telematics\nDeductible: £350\nLiability Limit: £20M\nStatus: Active\n\nNext Payment: Aug 1, 2025\nPayment Method: Direct Debit",
+                });
+              }}
               className="px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg text-xs font-medium text-blue-400 hover:text-blue-300 transition-all duration-200 flex items-center gap-1"
             >
               <FileText className="w-3 h-3" />
