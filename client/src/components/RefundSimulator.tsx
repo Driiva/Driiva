@@ -117,7 +117,20 @@ export default function RefundSimulator({
           </div>
 
           {/* Simulation Results */}
-          <div className="p-4 glass-card rounded-xl">
+          <div className="p-4 rounded-xl" style={{
+            background: 'rgba(255, 255, 255, 0.08)',
+            backdropFilter: 'blur(25px)',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
+            transition: 'all 0.3s ease'
+          }} onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 20px 40px rgba(0, 0, 0, 0.3)';
+          }} onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = 'none';
+          }}>
             <div className="flex justify-between items-center">
               <div>
                 <div className="text-sm text-gray-400">Potential Refund</div>

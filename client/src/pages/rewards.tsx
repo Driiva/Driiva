@@ -64,8 +64,7 @@ export default function Rewards() {
       iconUrl: "🏆",
       progress: 5,
       maxProgress: 7,
-      category: "safety",
-      reward: "£50 refund bonus"
+      category: "safety"
     },
     {
       id: 4,

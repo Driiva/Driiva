@@ -25,11 +25,19 @@ export default function LiquidGauge({ score, projectedRefund, premiumAmount }: L
     <>
       {/* Liquid Fill Gauge for Driving Score */}
       <div className="relative w-48 h-48 mx-auto mb-6">
+        {/* Dynamic Illumination Ring */}
+        <div className="absolute inset-2 rounded-full animate-pulse" style={{
+          background: 'conic-gradient(from 0deg, #D97706, #DC2626, #7C3AED, #3B82F6, #D97706)',
+          filter: 'blur(12px)',
+          opacity: 0.4,
+          animation: 'spin 6s linear infinite',
+        }} />
+        
         <svg 
-          className="w-full h-full progress-ring" 
+          className="relative w-full h-full progress-ring z-10" 
           viewBox="0 0 100 100"
           style={{
-            filter: 'drop-shadow(0 0 16px rgba(139, 69, 19, 0.4)) drop-shadow(0 0 32px rgba(184, 115, 51, 0.3))',
+            filter: 'drop-shadow(0 0 20px rgba(217, 119, 6, 0.6))',
           }}
         >
           <circle 
@@ -55,10 +63,10 @@ export default function LiquidGauge({ score, projectedRefund, premiumAmount }: L
           />
           <defs>
             <linearGradient id="gradientStroke" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style={{ stopColor: '#8B4513', stopOpacity: 1 }} />
-              <stop offset="25%" style={{ stopColor: '#B87333', stopOpacity: 1 }} />
-              <stop offset="75%" style={{ stopColor: '#7B1FA2', stopOpacity: 1 }} />
-              <stop offset="100%" style={{ stopColor: '#1E40AF', stopOpacity: 1 }} />
+              <stop offset="0%" style={{ stopColor: '#D97706', stopOpacity: 1 }} />
+              <stop offset="25%" style={{ stopColor: '#DC2626', stopOpacity: 1 }} />
+              <stop offset="75%" style={{ stopColor: '#7C3AED', stopOpacity: 1 }} />
+              <stop offset="100%" style={{ stopColor: '#3B82F6', stopOpacity: 1 }} />
             </linearGradient>
           </defs>
         </svg>

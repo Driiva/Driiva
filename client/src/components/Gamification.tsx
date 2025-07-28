@@ -40,7 +40,7 @@ export default function Gamification({ achievements, leaderboard, currentUser, p
     { name: "safejenny", score: 70, rank: 3, weeklyChange: "-1%" },
   ];
 
-  const userRank = { name: "You", score: 85, rank: 12 };
+  const userRank = { name: "You", score: 85, rank: 4 };
 
   const handleViewRewards = () => {
     setLocation('/rewards');
@@ -195,7 +195,7 @@ export default function Gamification({ achievements, leaderboard, currentUser, p
           </h4>
           <button
             onClick={handleLeaderboardClick}
-            className="text-xs text-blue-400 hover:text-white px-3 py-1 hover:bg-white/10 rounded-full transition-colors border border-blue-400/30"
+            className="text-xs text-blue-400 hover:text-white px-3 py-1 hover:bg-white/10 rounded-full transition-colors border border-blue-400/30 glass-card"
           >
             See All Driivas
           </button>
@@ -233,7 +233,7 @@ export default function Gamification({ achievements, leaderboard, currentUser, p
             <button
               onClick={() => toast({
                 title: "Your Ranking",
-                description: "You're currently #12 with a score of 85. Drive safely to improve your ranking and earn more rewards!",
+                description: "You're currently #4 with a score of 85. Drive safely to improve your ranking and earn more rewards!",
               })}
               className="flex items-center justify-between w-full p-2 hover:bg-blue-500/10 rounded-lg transition-colors"
             >
