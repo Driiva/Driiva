@@ -1,5 +1,3 @@
-import { InsertTrip, InsertDrivingProfile } from "@shared/schema";
-import { aiRiskScoringEngine, RiskProfile } from './aiRiskScoring';
 
 export interface TelematicsData {
   gpsPoints: GPSPoint[];
@@ -13,6 +11,7 @@ export interface GPSPoint {
   longitude: number;
   timestamp: number;
   accuracy: number;
+  altitude?: number;
   speed?: number;
 }
 
@@ -37,115 +36,117 @@ export interface SpeedReading {
 }
 
 export interface DrivingMetrics {
+  score: number;
   hardBrakingEvents: number;
   harshAccelerationEvents: number;
   speedViolations: number;
   nightDriving: boolean;
   sharpCorners: number;
-  score: number;
   distance: number;
   duration: number;
-  aiRiskProfile?: RiskProfile;
+  avgSpeed: number;
+  maxSpeed: number;
+  ecoScore: number;
 }
 
 export class TelematicsProcessor {
-  private readonly HARD_BRAKING_THRESHOLD = 0.3; // g-force
-  private readonly HARSH_ACCELERATION_THRESHOLD = 0.2; // g-force
-  private readonly CORNERING_THRESHOLD = 0.25; // lateral g-force
-  private readonly SPEED_VIOLATION_THRESHOLD = 5; // mph over limit
-  private readonly NIGHT_HOURS = { start: 22, end: 5 }; // 10 PM to 5 AM
+  private readonly HARD_BRAKING_THRESHOLD = 0.3;
+  private readonly HARSH_ACCELERATION_THRESHOLD = 0.2;
+  private readonly CORNERING_THRESHOLD = 0.25;
+  private readonly SPEED_VIOLATION_THRESHOLD = 5;
+  private readonly NIGHT_HOURS = { start: 22, end: 5 };
 
-  async processTrip(telematicsData: TelematicsData, userId?: number): Promise<DrivingMetrics> {
-    const metrics: DrivingMetrics = {
-      hardBrakingEvents: 0,
-      harshAccelerationEvents: 0,
-      speedViolations: 0,
-      nightDriving: false,
-      sharpCorners: 0,
-      score: 0,
-      distance: 0,
-      duration: 0,
-      aiRiskProfile: undefined
-    };
+  private readonly SCORING_WEIGHTS = {
+    hardBraking: 0.25,
+    acceleration: 0.20,
+    speed: 0.20,
+    nightDriving: 0.15,
+    cornering: 0.10,
+    consistency: 0.10
+  };
 
-    // Calculate distance and duration
-    metrics.distance = this.calculateDistance(telematicsData.gpsPoints);
-    metrics.duration = this.calculateDuration(telematicsData.gpsPoints);
-
-    // Check for night driving
-    metrics.nightDriving = this.isNightDriving(telematicsData.gpsPoints);
-
-    // Analyze accelerometer data for hard braking and harsh acceleration
-    metrics.hardBrakingEvents = this.detectHardBraking(telematicsData.accelerometerData);
-    metrics.harshAccelerationEvents = this.detectHarshAcceleration(telematicsData.accelerometerData);
-
-    // Analyze gyroscope data for sharp cornering
-    metrics.sharpCorners = this.detectSharpCorners(telematicsData.gyroscopeData);
-
-    // Analyze speed violations
-    metrics.speedViolations = this.detectSpeedViolations(telematicsData.speedData);
-
-    // Calculate overall score
-    metrics.score = this.calculateScore(metrics);
-
-    // Get historical data for better AI predictions
-    let historicalData: DrivingMetrics[] = [];
-    if (userId) {
-      try {
-        historicalData = await this.getHistoricalMetrics(userId);
-      } catch (error) {
-        console.warn('Could not fetch historical data for AI scoring:', error);
-      }
-    }
-
-    // Calculate AI risk profile with historical context
-    try {
-      metrics.aiRiskProfile = aiRiskScoringEngine.calculateAIRiskScore(
-        telematicsData,
-        metrics,
-        historicalData
-      );
-      
-      console.log(`AI Risk Profile calculated: ${metrics.aiRiskProfile.riskCategory} risk, score: ${metrics.aiRiskProfile.riskScore.toFixed(3)}`);
-    } catch (error) {
-      console.error('AI risk scoring failed:', error);
-      // Create a fallback basic risk profile
-      metrics.aiRiskProfile = this.createFallbackRiskProfile(metrics);
-    }
-
-    return metrics;
-  }
-
-  private async getHistoricalMetrics(userId: number): Promise<DrivingMetrics[]> {
-    // This would typically fetch from database
-    // For now, return empty array - implement database integration as needed
-    return [];
-  }
-
-  private createFallbackRiskProfile(metrics: DrivingMetrics): RiskProfile {
-    // Create a basic risk profile when AI scoring fails
-    const totalEvents = metrics.hardBrakingEvents + metrics.harshAccelerationEvents + 
-                       metrics.speedViolations + metrics.sharpCorners;
+  async processTrip(telematicsData: TelematicsData, userId: number): Promise<DrivingMetrics> {
+    const distance = this.calculateDistance(telematicsData.gpsPoints);
+    const duration = this.calculateDuration(telematicsData.gpsPoints);
+    const avgSpeed = this.calculateAverageSpeed(telematicsData.speedData);
+    const maxSpeed = this.calculateMaxSpeed(telematicsData.speedData);
     
-    let riskScore = 0.3; // Base risk
-    riskScore += Math.min(0.4, totalEvents * 0.05); // Event-based risk
-    riskScore += metrics.nightDriving ? 0.1 : 0; // Night driving risk
+    const hardBrakingEvents = this.detectHardBraking(telematicsData.accelerometerData);
+    const harshAccelerationEvents = this.detectHarshAcceleration(telematicsData.accelerometerData);
+    const speedViolations = this.detectSpeedViolations(telematicsData.speedData);
+    const nightDriving = this.isNightDriving(telematicsData.gpsPoints);
+    const sharpCorners = this.detectSharpCorners(telematicsData.gyroscopeData);
     
-    const riskCategory = riskScore < 0.3 ? 'LOW' : 
-                        riskScore < 0.6 ? 'MEDIUM' : 
-                        riskScore < 0.8 ? 'HIGH' : 'CRITICAL';
+    const ecoScore = this.calculateEcoScore({
+      avgSpeed,
+      hardBrakingEvents,
+      harshAccelerationEvents
+    });
+
+    const score = this.calculateOverallScore({
+      hardBrakingEvents,
+      harshAccelerationEvents,
+      speedViolations,
+      nightDriving,
+      sharpCorners,
+      ecoScore
+    });
 
     return {
-      riskScore,
-      riskCategory,
-      predictedClaimProbability: riskScore * 15, // Basic claim probability
-      confidenceScore: 0.7, // Lower confidence for fallback
-      riskFactors: [],
-      recommendations: ['Enable AI scoring for detailed insights']
+      score,
+      hardBrakingEvents,
+      harshAccelerationEvents,
+      speedViolations,
+      nightDriving,
+      sharpCorners,
+      distance,
+      duration,
+      avgSpeed,
+      maxSpeed,
+      ecoScore
     };
+  }
+
+  /**
+   * Calculate refund projection with corrected business logic
+   * Only drivers with personal score >= 70 are eligible
+   */
+  calculateRefund(personalScore: number, poolSafetyFactor: number, premiumAmount: number): number {
+    // Eligibility check: Only drivers with personal score >= 70 qualify
+    if (personalScore < 70) {
+      return 0;
+    }
+
+    // Community average score is 75 as per documentation
+    const communityScore = 75;
+
+    // Weighting: 80% personal, 20% community (per documentation)
+    const weightedScore = (personalScore * 0.8) + (communityScore * 0.2);
+
+    // Base refund calculation: 5% at 70 score, scaling to 15% at 100 score
+    const minRefundRate = 0.05; // 5% minimum refund at 70+ score
+    const maxRefundRate = 0.15; // 15% maximum refund at 100 score
+    const scoreRange = 100 - 70; // 30 point scoring range
+    const scoreAboveMin = Math.max(0, weightedScore - 70);
+
+    // Linear interpolation between min and max refund rates
+    const refundRate = minRefundRate + ((maxRefundRate - minRefundRate) * (scoreAboveMin / scoreRange));
+    
+    // Calculate base refund amount
+    const baseRefund = premiumAmount * Math.min(refundRate, maxRefundRate);
+
+    // Apply pool safety factor adjustment (typically 0.8-1.0)
+    const adjustedRefund = baseRefund * poolSafetyFactor;
+
+    // Ensure refund doesn't exceed maximum possible
+    const finalRefund = Math.min(adjustedRefund, premiumAmount * maxRefundRate);
+
+    return Number(Math.max(0, finalRefund).toFixed(2));
   }
 
   private calculateDistance(gpsPoints: GPSPoint[]): number {
+    if (gpsPoints.length < 2) return 0;
+
     let totalDistance = 0;
     for (let i = 1; i < gpsPoints.length; i++) {
       totalDistance += this.haversineDistance(
@@ -160,7 +161,18 @@ export class TelematicsProcessor {
 
   private calculateDuration(gpsPoints: GPSPoint[]): number {
     if (gpsPoints.length < 2) return 0;
-    return Math.round((gpsPoints[gpsPoints.length - 1].timestamp - gpsPoints[0].timestamp) / 60000); // minutes
+    return Math.round((gpsPoints[gpsPoints.length - 1].timestamp - gpsPoints[0].timestamp) / 60000);
+  }
+
+  private calculateAverageSpeed(speedData: SpeedReading[]): number {
+    if (speedData.length === 0) return 0;
+    const totalSpeed = speedData.reduce((sum, reading) => sum + reading.speed, 0);
+    return Number((totalSpeed / speedData.length).toFixed(1));
+  }
+
+  private calculateMaxSpeed(speedData: SpeedReading[]): number {
+    if (speedData.length === 0) return 0;
+    return Math.max(...speedData.map(reading => reading.speed));
   }
 
   private isNightDriving(gpsPoints: GPSPoint[]): boolean {
@@ -203,7 +215,7 @@ export class TelematicsProcessor {
         corners++;
       }
     }
-    return corners;
+    return Math.floor(corners / 10); // Group consecutive readings
   }
 
   private detectSpeedViolations(speedData: SpeedReading[]): number {
@@ -213,59 +225,51 @@ export class TelematicsProcessor {
         violations++;
       }
     }
-    return violations;
+    return Math.floor(violations / 5); // Group consecutive violations
   }
 
-  private calculateScore(metrics: DrivingMetrics): number {
-    // Scoring weights as per business requirements
-    const weights = {
-      hardBraking: 0.25,
-      acceleration: 0.20,
-      speed: 0.20,
-      nightDriving: 0.15,
-      cornering: 0.10,
-      consistency: 0.10
-    };
-
+  private calculateEcoScore(metrics: {
+    avgSpeed: number;
+    hardBrakingEvents: number;
+    harshAccelerationEvents: number;
+  }): number {
     let score = 100;
 
-    // Deduct points for violations
-    score -= metrics.hardBrakingEvents * 2;
-    score -= metrics.harshAccelerationEvents * 1;
-    score -= metrics.speedViolations * 1;
-    score -= metrics.nightDriving ? 2 : 0;
-    score -= metrics.sharpCorners * 1;
+    // Penalize excessive speeding
+    if (metrics.avgSpeed > 70) {
+      score -= (metrics.avgSpeed - 70) * 0.5;
+    }
 
-    // Ensure score is between 0 and 100
+    // Penalize harsh driving behaviors
+    score -= (metrics.hardBrakingEvents + metrics.harshAccelerationEvents) * 5;
+
     return Math.max(0, Math.min(100, score));
   }
 
-  calculateRefund(personalScore: number, poolSafetyFactor: number, premiumAmount: number): number {
-    // Only drivers with personal score >= 70 are eligible for refunds
-    if (personalScore < 70) {
-      return 0;
-    }
-    
-    // Community average score is 75 as per document
-    const communityScore = 75;
-    
-    // Weighting: 80% personal, 20% community
-    const weightedScore = (personalScore * 0.8) + (communityScore * 0.2);
-    
-    // Base refund starts at 5% for 70+ score, scales to 15% at 100 score
-    const baseRefundRate = 0.05;
-    const maxRefundRate = 0.15;
-    const scoreRange = 100 - 70; // 30 point range
-    const scoreAboveMin = Math.max(0, personalScore - 70);
-    
-    // Linear scaling from 5% to 15% based on score above 70
-    const refundRate = baseRefundRate + ((maxRefundRate - baseRefundRate) * (scoreAboveMin / scoreRange));
-    const refundAmount = premiumAmount * Math.min(refundRate, maxRefundRate);
-    
-    // Apply pool safety factor adjustment
-    const adjustedRefund = refundAmount * (poolSafetyFactor || 1.0);
-    
-    return Number(Math.min(adjustedRefund, premiumAmount * maxRefundRate).toFixed(2));
+  private calculateOverallScore(metrics: {
+    hardBrakingEvents: number;
+    harshAccelerationEvents: number;
+    speedViolations: number;
+    nightDriving: boolean;
+    sharpCorners: number;
+    ecoScore: number;
+  }): number {
+    const hardBrakingScore = Math.max(0, 100 - (metrics.hardBrakingEvents * 5));
+    const accelerationScore = Math.max(0, 100 - (metrics.harshAccelerationEvents * 3));
+    const speedScore = Math.max(0, 100 - (metrics.speedViolations * 2));
+    const nightScore = metrics.nightDriving ? 85 : 100;
+    const corneringScore = Math.max(0, 100 - (metrics.sharpCorners * 2));
+    const consistencyScore = 100; // Would be calculated over multiple trips
+
+    const weightedScore = 
+      hardBrakingScore * this.SCORING_WEIGHTS.hardBraking +
+      accelerationScore * this.SCORING_WEIGHTS.acceleration +
+      speedScore * this.SCORING_WEIGHTS.speed +
+      nightScore * this.SCORING_WEIGHTS.nightDriving +
+      corneringScore * this.SCORING_WEIGHTS.cornering +
+      consistencyScore * this.SCORING_WEIGHTS.consistency;
+
+    return Math.max(0, Math.min(100, Math.round(weightedScore)));
   }
 
   private haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {

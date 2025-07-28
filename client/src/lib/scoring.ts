@@ -1,3 +1,4 @@
+
 import { TelematicsData, GPSPoint, AccelerometerReading, GyroscopeReading, SpeedReading } from './telematics';
 
 export interface RiskProfile {
@@ -39,6 +40,28 @@ export interface ScoreBreakdown {
   nightDriving: { score: number; weight: number; hours: number };
   cornering: { score: number; weight: number; events: number };
   consistency: { score: number; weight: number; days: number };
+}
+
+export interface DrivingProfile {
+  id?: number;
+  userId: number;
+  currentScore?: number;
+  hardBrakingScore?: number;
+  accelerationScore?: number;
+  speedAdherenceScore?: number;
+  nightDrivingScore?: number;
+  corneringScore?: number;
+  consistencyScore?: number;
+  totalTrips?: number;
+  totalMiles?: string;
+  averageSpeed?: number;
+  hardBraking?: number;
+  rapidAcceleration?: number;
+  totalDistance?: number;
+  tripCount?: number;
+  scoreDeviation?: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export class DrivingScorer {
@@ -134,30 +157,45 @@ export class DrivingScorer {
     };
   }
 
+  /**
+   * Calculate refund projection based on corrected business logic
+   * Only drivers with personal score >= 70 are eligible for refunds
+   */
   calculateRefundProjection(
     personalScore: number,
     poolSafetyFactor: number,
     premiumAmount: number
   ): number {
-    // Only drivers with personal score >= 70 are eligible for refunds
+    // Eligibility check: Only drivers with personal score >= 70 qualify
     if (personalScore < 70) {
       return 0;
     }
 
-    // Base refund starts at 5% for 70+ score, scales to 15% at 100 score
-    const baseRefundRate = 0.05;
-    const maxRefundRate = 0.15;
-    const scoreRange = 100 - 70; // 30 point range
-    const scoreAboveMin = Math.max(0, personalScore - 70);
+    // Community average score is 75 as per documentation
+    const communityScore = 75;
 
-    // Linear scaling from 5% to 15% based on score above 70
-    const refundRate = baseRefundRate + ((maxRefundRate - baseRefundRate) * (scoreAboveMin / scoreRange));
-    const refundAmount = premiumAmount * Math.min(refundRate, maxRefundRate);
+    // Weighting: 80% personal, 20% community (per documentation)
+    const weightedScore = (personalScore * 0.8) + (communityScore * 0.2);
 
-    // Apply pool safety factor adjustment
-    const adjustedRefund = refundAmount * (poolSafetyFactor || 1.0);
+    // Base refund calculation: 5% at 70 score, scaling to 15% at 100 score
+    const minRefundRate = 0.05; // 5% minimum refund at 70+ score
+    const maxRefundRate = 0.15; // 15% maximum refund at 100 score
+    const scoreRange = 100 - 70; // 30 point scoring range
+    const scoreAboveMin = Math.max(0, weightedScore - 70);
 
-    return Number(Math.min(adjustedRefund, premiumAmount * maxRefundRate).toFixed(2));
+    // Linear interpolation between min and max refund rates
+    const refundRate = minRefundRate + ((maxRefundRate - minRefundRate) * (scoreAboveMin / scoreRange));
+    
+    // Calculate base refund amount
+    const baseRefund = Number(premiumAmount || 1840) * Math.min(refundRate, maxRefundRate);
+
+    // Apply pool safety factor adjustment (typically 0.8-1.0)
+    const adjustedRefund = baseRefund * (poolSafetyFactor || 1.0);
+
+    // Ensure refund doesn't exceed maximum possible
+    const finalRefund = Math.min(adjustedRefund, Number(premiumAmount || 1840) * maxRefundRate);
+
+    return Number(Math.max(0, finalRefund).toFixed(2));
   }
 
   private calculateDistance(gpsPoints: GPSPoint[]): number {
@@ -319,6 +357,7 @@ export class DrivingScorer {
 }
 
 export const drivingScorer = new DrivingScorer();
+
 export function calculatePersonalScore(profile: DrivingProfile): number {
   if (!profile) return 0;
 
