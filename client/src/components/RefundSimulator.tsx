@@ -106,7 +106,7 @@ export default function RefundSimulator({
                 max={100}
                 min={50}
                 step={1}
-                className="w-full [&_[role=slider]]:w-4 [&_[role=slider]]:h-4 [&_[role=slider]]:bg-blue-500 [&_[role=slider]]:border-2 [&_[role=slider]]:border-white [&_[role=slider]]:shadow-lg"
+                className="w-full [&_[role=slider]]:w-6 [&_[role=slider]]:h-6 [&_[role=slider]]:bg-gradient-to-r [&_[role=slider]]:from-amber-500 [&_[role=slider]]:to-purple-600 [&_[role=slider]]:border-2 [&_[role=slider]]:border-white [&_[role=slider]]:shadow-lg [&_[role=slider]]:cursor-grab [&_[role=slider]]:active:cursor-grabbing [&_[role=slider]]:hover:scale-110 [&_[role=slider]]:transition-transform"
               />
             </div>
             <div className="flex justify-between text-xs text-gray-500 mt-1">

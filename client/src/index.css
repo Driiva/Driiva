@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -170,6 +172,104 @@ body {
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+/* Override all fonts with Poppins */
+body, h1, h2, h3, h4, h5, h6, p, span, div, button, input, select, textarea, a {
+  font-family: 'Poppins', sans-serif !important;
+}
+
+/* Dynamic Driiva Gradient Background */
+.driiva-gradient-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 200vh;
+  background: linear-gradient(180deg, 
+    #D97706 0%, 
+    #DC2626 25%, 
+    #7C3AED 50%, 
+    #3B82F6 75%, 
+    #1F2937 100%
+  );
+  z-index: -2;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Radial Glassmorphism Enhancement */
+.glass-morphism {
+  background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.08)) !important;
+  backdrop-filter: blur(40px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(40px) saturate(150%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.2),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 -20px 40px -20px rgba(255, 255, 255, 0.1) !important;
+}
+
+.glass-morphism-subtle {
+  background: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05)) !important;
+  backdrop-filter: blur(30px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(140%) !important;
+}
+
+/* Enhanced Glass Card with Radial Effect */
+.glass-card {
+  background: radial-gradient(ellipse at top left, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.05)) !important;
+  backdrop-filter: blur(35px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(35px) saturate(150%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.glass-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.glass-card:hover::before {
+  opacity: 1;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .glass-morphism, .glass-morphism-subtle, .glass-card {
+    backdrop-filter: blur(25px) saturate(130%) !important;
+    -webkit-backdrop-filter: blur(25px) saturate(130%) !important;
+  }
+  
+  .driiva-gradient-bg {
+    background: linear-gradient(180deg, 
+      #D97706 0%, 
+      #DC2626 20%, 
+      #7C3AED 40%, 
+      #3B82F6 60%, 
+      #1F2937 100%
+    );
+  }
+}
+
+/* Text Readability Enhancement */
+.text-white {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Slider Track Enhancement */
+[role="slider"] {
+  box-shadow: 
+    0 2px 8px rgba(217, 119, 6, 0.4),
+    0 0 20px rgba(124, 58, 237, 0.3) !important;
 }
 
 /* Focus States for Accessibility */

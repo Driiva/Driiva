@@ -1,6 +1,7 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Router, Route, Switch } from 'wouter';
+import ScrollGradient from './components/ScrollGradient';
 
 // Pages
 import Dashboard from './pages/dashboard';
@@ -35,6 +36,8 @@ export default function App() {
       <AuthProvider>
         <Router>
           <div className="App">
+            <div className="driiva-gradient-bg" />
+            <ScrollGradient />
             <Switch>
               {/* Public Routes */}
               <Route path="/signin">
