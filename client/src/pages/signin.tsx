@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import DriivaLogo from "@/components/DrivvaLogo";
 import FloatingStardust from "@/components/FloatingStardust";
 import { useParallax } from "@/hooks/useParallax";
-import { useAuth } from "../App";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function SignIn() {
   const [, setLocation] = useLocation();
