@@ -8,6 +8,7 @@ export default function LiquidGauge({ score, projectedRefund, premiumAmount }: L
   const strokeOffset = 283 - (score / 100) * 283;
   const personalScore = Math.round(score * 0.8);
   const poolScore = Math.round(score * 0.2);
+  const gaugeSize = 150; // Define gaugeSize here
 
   return (
     <>

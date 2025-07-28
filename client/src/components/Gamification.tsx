@@ -59,12 +59,14 @@ export default function Gamification({ achievements, leaderboard, currentUser, p
           <div className="grid grid-cols-3 gap-2">
             {Object.entries(refundTiers).map(([tier, data]) => {
               const isAchieved = profile.currentScore >= data.score;
+              const isEligible = profile.currentScore >= 70; // Base eligibility
               return (
-                <div key={tier} className={`text-center p-2 rounded-lg ${isAchieved ? 'bg-green-500/20' : 'bg-gray-500/10'}`}>
+                <div key={tier} className={`text-center p-2 rounded-lg ${isAchieved ? 'bg-green-500/20' : isEligible ? 'bg-blue-500/10' : 'bg-gray-500/10'}`}>
                   <div className={`text-xs font-medium ${data.color}`}>{data.label}</div>
                   <div className="text-xs text-gray-300">{data.score}+ score</div>
                   <div className="text-xs font-bold text-white">£{data.refund.toFixed(0)}</div>
                   {isAchieved && <div className="text-xs text-green-400">✓ Unlocked</div>}
+                  {!isAchieved && isEligible && <div className="text-xs text-blue-400">Available</div>}
                 </div>
               );
             })}

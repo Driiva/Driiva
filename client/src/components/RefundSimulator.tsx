@@ -22,9 +22,15 @@ export default function RefundSimulator({ currentScore, premiumAmount, poolSafet
     // Weighting: 80% personal, 20% community (per documentation)
     const weightedScore = (score * 0.8) + (communityScore * 0.2);
     
-    // For eligible drivers, refund is proportional to weighted score, capped at 15% of premium
-    const refundPercentage = Math.min(weightedScore / 100 * 0.15, 0.15);
-    const refundAmount = Number(premiumAmount || 1840) * refundPercentage;
+    // Base refund starts at 5% for 70+ score, scales to 15% at 100 score
+    const baseRefundRate = 0.05;
+    const maxRefundRate = 0.15;
+    const scoreRange = 100 - 70; // 30 point range
+    const scoreAboveMin = Math.max(0, score - 70);
+    
+    // Linear scaling from 5% to 15% based on score above 70
+    const refundRate = baseRefundRate + ((maxRefundRate - baseRefundRate) * (scoreAboveMin / scoreRange));
+    const refundAmount = Number(premiumAmount || 1840) * Math.min(refundRate, maxRefundRate);
     
     return Math.max(0, refundAmount).toFixed(2);
   };
@@ -34,9 +40,9 @@ export default function RefundSimulator({ currentScore, premiumAmount, poolSafet
   const improvement = Number(simulatedRefund) - Number(currentRefund);
 
   return (
-    <section className="mb-3">
-      <div className="glass-morphism-subtle rounded-xl p-3">
-        <h3 className="text-base font-semibold mb-2">Refund Simulator</h3>
+    <section className="mb-3 sm:mb-4">
+      <div className="glass-morphism-subtle rounded-xl p-3 sm:p-4">
+        <h3 className="text-sm sm:text-base font-semibold mb-2">Refund Simulator</h3>
         <p className="text-xs text-gray-400 mb-3">See how improvements could boost your refund</p>
 
         <div className="space-y-4">

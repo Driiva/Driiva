@@ -20,8 +20,9 @@ export default function BottomNavigation({ activeTab }: BottomNavigationProps) {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 glass-morphism safe-area">
-      <div className="flex items-center justify-around py-2">
+    <nav className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-lg border-t border-white/10 z-50 safe-area-inset-bottom"
+    >
+      <div className="flex justify-around items-center py-3 px-4 max-w-md mx-auto">
         {tabs.map((tab) => (
           <button
             key={tab.id}

@@ -82,9 +82,17 @@ export class AIInsightsEngine {
       predictedScore = Math.max(currentScore - 3, 60);
     }
     
-    // Calculate refund (max 15% of premium)
-    const refundPercentage = predictedScore >= 80 ? 0.15 : 0;
-    const amount = Math.round(premium * refundPercentage);
+    // Calculate refund using corrected formula (70+ threshold)
+    let refundPercentage = 0;
+    if (predictedScore >= 70) {
+      const baseRefundRate = 0.05;
+      const maxRefundRate = 0.15;
+      const scoreRange = 100 - 70;
+      const scoreAboveMin = Math.max(0, predictedScore - 70);
+      refundPercentage = baseRefundRate + ((maxRefundRate - baseRefundRate) * (scoreAboveMin / scoreRange));
+    }
+    
+    const amount = Math.round(premium * Math.min(refundPercentage, 0.15));
     
     // Confidence based on consistency
     const confidence = trend === 'stable' ? 0.85 : 0.65;

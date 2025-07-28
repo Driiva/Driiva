@@ -26,10 +26,38 @@ export default function GamifiedRefundTracker({
   const refundPercentage = (projectedRefund / premiumAmount) * 100;
   const scoreToRefundRatio = currentScore / 100;
 
+  const calculateRefundForScore = (score: number, premium: number) => {
+    if (score < 70) return 0;
+    const baseRefundRate = 0.05;
+    const maxRefundRate = 0.15;
+    const scoreRange = 100 - 70;
+    const scoreAboveMin = Math.max(0, score - 70);
+    const refundRate = baseRefundRate + ((maxRefundRate - baseRefundRate) * (scoreAboveMin / scoreRange));
+    return premium * Math.min(refundRate, maxRefundRate);
+  };
+
   const goals = {
-    silver: { score: 85, refund: (premiumAmount || 1840) * 0.10, label: "Silver Tier", color: "text-gray-400", bg: "bg-gray-400/20" },
-    gold: { score: 90, refund: (premiumAmount || 1840) * 0.12, label: "Gold Tier", color: "text-yellow-400", bg: "bg-yellow-400/20" },
-    platinum: { score: 95, refund: (premiumAmount || 1840) * 0.15, label: "Platinum Tier", color: "text-purple-400", bg: "bg-purple-400/20" }
+    silver: { 
+      score: 75, 
+      refund: calculateRefundForScore(75, premiumAmount || 1840), 
+      label: "Silver Tier", 
+      color: "text-gray-400", 
+      bg: "bg-gray-400/20" 
+    },
+    gold: { 
+      score: 85, 
+      refund: calculateRefundForScore(85, premiumAmount || 1840), 
+      label: "Gold Tier", 
+      color: "text-yellow-400", 
+      bg: "bg-yellow-400/20" 
+    },
+    platinum: { 
+      score: 95, 
+      refund: calculateRefundForScore(95, premiumAmount || 1840), 
+      label: "Platinum Tier", 
+      color: "text-purple-400", 
+      bg: "bg-purple-400/20" 
+    }
   };
 
   const currentGoal = goals[selectedGoal];

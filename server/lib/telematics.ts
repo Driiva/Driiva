@@ -241,8 +241,8 @@ export class TelematicsProcessor {
   }
 
   calculateRefund(personalScore: number, poolSafetyFactor: number, premiumAmount: number): number {
-    // Only drivers with personal score >= 80 are eligible for refunds
-    if (personalScore < 80) {
+    // Only drivers with personal score >= 70 are eligible for refunds
+    if (personalScore < 70) {
       return 0;
     }
     
@@ -252,14 +252,20 @@ export class TelematicsProcessor {
     // Weighting: 80% personal, 20% community
     const weightedScore = (personalScore * 0.8) + (communityScore * 0.2);
     
-    // For eligible drivers (score >= 80), the refund is calculated as a fixed amount
-    // Based on the document: £311 per eligible driver for the pool
-    // This represents approximately 15% of the average low-risk premium (£2,070)
-    const refundPercentage = 0.15;
-    const refundAmount = premiumAmount * refundPercentage;
+    // Base refund starts at 5% for 70+ score, scales to 15% at 100 score
+    const baseRefundRate = 0.05;
+    const maxRefundRate = 0.15;
+    const scoreRange = 100 - 70; // 30 point range
+    const scoreAboveMin = Math.max(0, personalScore - 70);
     
-    // Cap at 15% of premium
-    return Number(Math.min(refundAmount, premiumAmount * 0.15).toFixed(2));
+    // Linear scaling from 5% to 15% based on score above 70
+    const refundRate = baseRefundRate + ((maxRefundRate - baseRefundRate) * (scoreAboveMin / scoreRange));
+    const refundAmount = premiumAmount * Math.min(refundRate, maxRefundRate);
+    
+    // Apply pool safety factor adjustment
+    const adjustedRefund = refundAmount * (poolSafetyFactor || 1.0);
+    
+    return Number(Math.min(adjustedRefund, premiumAmount * maxRefundRate).toFixed(2));
   }
 
   private haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
