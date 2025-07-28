@@ -25,12 +25,12 @@ export default function Profile() {
   };
 
   const profileData = {
-    currentScore: 89,
-    totalTrips: 26,
-    totalMiles: 1107.70,
+    currentScore: 72,
+    totalTrips: 28,
+    totalMiles: 1168.50,
     hardBrakingScore: 3,
     accelerationScore: 2,
-    speedAdherenceScore: 1,
+    speedAdherenceScore: 2,
     nightDrivingScore: 5
   };
 
@@ -55,7 +55,7 @@ export default function Profile() {
   }
 
   return (
-    <div className="min-h-screen text-white safe-area">
+    <div className="min-h-screen text-white">
       <DashboardHeader user={userData} />
       
       <main className="px-4 pb-20">

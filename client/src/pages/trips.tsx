@@ -61,8 +61,7 @@ export default function Trips() {
 
   return (
     <PageTransition>
-      <div className="min-h-screen text-white relative">
-        <div className="driiva-gradient-bg" />
+      <div className="min-h-screen text-white">
         <DashboardHeader user={user} />
         <main className="px-4 pb-20">
           <div className="pt-4">

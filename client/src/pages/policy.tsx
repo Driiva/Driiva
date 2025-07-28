@@ -21,7 +21,6 @@ export default function PolicyPage() {
 
   return (
     <div className="min-h-screen text-white">
-      <div className="driiva-gradient-bg" />
       <DashboardHeader user={user} />
       
       <main className="px-4 pb-20 relative z-10">

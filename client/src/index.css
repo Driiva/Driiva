@@ -185,14 +185,13 @@ body, h1, h2, h3, h4, h5, h6, p, span, div, button, input, select, textarea, a {
   top: 0;
   left: 0;
   width: 100%;
-  height: 300vh;
-  background: radial-gradient(ellipse at top, 
-    #D97706 0%, 
-    #DC2626 15%, 
-    #B91C1C 30%, 
-    #7C3AED 60%, 
-    #3B82F6 80%, 
-    #1F2937 100%
+  height: 200vh;
+  background: radial-gradient(ellipse at 50% 0%, 
+    #713F12 0%, 
+    #7F1D1D 25%, 
+    #581C87 55%, 
+    #1E3A8A 85%, 
+    #0F172A 100%
   );
   z-index: -2;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -252,11 +251,11 @@ body, h1, h2, h3, h4, h5, h6, p, span, div, button, input, select, textarea, a {
   
   .driiva-gradient-bg {
     background: linear-gradient(180deg, 
-      #D97706 0%, 
-      #DC2626 20%, 
-      #7C3AED 40%, 
-      #3B82F6 60%, 
-      #1F2937 100%
+      #713F12 0%, 
+      #7F1D1D 20%, 
+      #581C87 50%, 
+      #1E3A8A 80%, 
+      #0F172A 100%
     );
   }
 }
@@ -269,8 +268,8 @@ body, h1, h2, h3, h4, h5, h6, p, span, div, button, input, select, textarea, a {
 /* Slider Track Enhancement */
 [role="slider"] {
   box-shadow: 
-    0 2px 8px rgba(217, 119, 6, 0.4),
-    0 0 20px rgba(124, 58, 237, 0.3) !important;
+    0 2px 8px rgba(113, 63, 18, 0.6),
+    0 0 20px rgba(88, 28, 135, 0.4) !important;
 }
 
 /* Focus States for Accessibility */

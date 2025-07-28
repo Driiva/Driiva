@@ -66,8 +66,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="min-h-screen text-white relative">
-      <div className="driiva-gradient-bg" />
+    <div className="min-h-screen text-white">
       <DashboardHeader user={userData} />
       
       <main className="px-4 pb-20">

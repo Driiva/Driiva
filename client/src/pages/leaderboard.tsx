@@ -6,20 +6,20 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 export default function LeaderboardPage() {
   // Extended leaderboard data with GDPR-compliant usernames and weekly changes
   const fullLeaderboard = [
-    { rank: 1, username: "driiva1", score: 72, weeklyChange: +5, changeType: "up" },
-    { rank: 2, username: "speedracer42", score: 87, weeklyChange: -2, changeType: "down" },
-    { rank: 3, username: "safejenny", score: 85, weeklyChange: +3, changeType: "up" },
-    { rank: 4, username: "carlover88", score: 83, weeklyChange: 0, changeType: "same" },
-    { rank: 5, username: "roadmaster", score: 82, weeklyChange: +7, changeType: "up" },
-    { rank: 6, username: "eco_driver", score: 81, weeklyChange: -1, changeType: "down" },
-    { rank: 7, username: "nighthawk", score: 80, weeklyChange: +2, changeType: "up" },
-    { rank: 8, username: "citycommuter", score: 79, weeklyChange: -4, changeType: "down" },
-    { rank: 9, username: "highway_hero", score: 78, weeklyChange: +1, changeType: "up" },
-    { rank: 10, username: "cruisecontrol", score: 77, weeklyChange: 0, changeType: "same" },
-    { rank: 11, username: "smoothrider", score: 76, weeklyChange: +3, changeType: "up" },
-    { rank: 12, username: "careful_kate", score: 75, weeklyChange: -2, changeType: "down" },
-    { rank: 13, username: "autopilot_ai", score: 74, weeklyChange: +4, changeType: "up" },
-    { rank: 14, username: "weekend_warrior", score: 73, weeklyChange: -1, changeType: "down" },
+    { rank: 1, username: "speedracer42", score: 87, weeklyChange: -2, changeType: "down" },
+    { rank: 2, username: "safejenny", score: 85, weeklyChange: +3, changeType: "up" },
+    { rank: 3, username: "carlover88", score: 83, weeklyChange: 0, changeType: "same" },
+    { rank: 4, username: "roadmaster", score: 82, weeklyChange: +7, changeType: "up" },
+    { rank: 5, username: "eco_driver", score: 81, weeklyChange: -1, changeType: "down" },
+    { rank: 6, username: "nighthawk", score: 80, weeklyChange: +2, changeType: "up" },
+    { rank: 7, username: "citycommuter", score: 79, weeklyChange: -4, changeType: "down" },
+    { rank: 8, username: "highway_hero", score: 78, weeklyChange: +1, changeType: "up" },
+    { rank: 9, username: "cruisecontrol", score: 77, weeklyChange: 0, changeType: "same" },
+    { rank: 10, username: "smoothrider", score: 76, weeklyChange: +3, changeType: "up" },
+    { rank: 11, username: "careful_kate", score: 75, weeklyChange: -2, changeType: "down" },
+    { rank: 12, username: "autopilot_ai", score: 74, weeklyChange: +4, changeType: "up" },
+    { rank: 13, username: "weekend_warrior", score: 73, weeklyChange: -1, changeType: "down" },
+    { rank: 14, username: "driiva1", score: 72, weeklyChange: +5, changeType: "up" },
     { rank: 15, username: "slow_and_steady", score: 72, weeklyChange: +2, changeType: "up" },
   ];
 
@@ -47,8 +47,7 @@ export default function LeaderboardPage() {
   };
 
   return (
-    <div className="min-h-screen text-white relative">
-      <div className="driiva-gradient-bg" />
+    <div className="min-h-screen text-white">
       {/* Header */}
       <header className="sticky top-0 z-40 glass-morphism">
         <div className="px-4 py-4 flex items-center justify-between">
