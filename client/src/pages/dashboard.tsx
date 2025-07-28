@@ -16,6 +16,7 @@ export default function Dashboard() {
       username: "driiva1",
       firstName: "Test",
       lastName: "Driver",
+      email: "test@driiva.com",
       premiumAmount: "1840.00"
     },
     profile: {
@@ -77,7 +78,7 @@ export default function Dashboard() {
             <LiquidGauge 
               score={data.profile.currentScore}
               projectedRefund={data.profile.projectedRefund}
-              premiumAmount={data.user.premiumAmount}
+              premiumAmount={Number(data.user.premiumAmount)}
             />
           </div>
 
@@ -89,10 +90,12 @@ export default function Dashboard() {
           {/* Community Pool Box */}
           <div className="mb-3">
             <CommunityPool 
-              totalMembers={data.communityPool.totalMembers}
-              averageScore={data.communityPool.averageScore}
-              safetyFactor={data.communityPool.safetyFactor}
-              poolBalance={data.communityPool.poolBalance}
+              pool={{
+                poolAmount: data.communityPool.poolBalance,
+                safetyFactor: data.communityPool.safetyFactor,
+                participantCount: data.communityPool.totalMembers,
+                safeDriverCount: Math.round(data.communityPool.totalMembers * 0.8)
+              }}
             />
           </div>
 
@@ -111,7 +114,7 @@ export default function Dashboard() {
           <div className="mb-3">
             <RefundSimulator 
               currentScore={data.profile.currentScore}
-              premiumAmount={data.user.premiumAmount}
+              premiumAmount={Number(data.user.premiumAmount)}
               poolSafetyFactor={data.communityPool.safetyFactor}
             />
           </div>
