@@ -14,6 +14,7 @@ import TripRecording from './pages/trip-recording';
 import LeaderboardPage from './pages/leaderboard';
 import PolicyPage from './pages/policy';
 import NotFound from './pages/not-found';
+import FileDownloads from './pages/file-downloads'; //Import the FileDownloads page
 
 // Context
 import { AuthProvider } from './contexts/AuthContext';
@@ -76,6 +77,10 @@ export default function App() {
 
               <Route path="/policy">
                 <PolicyPage />
+              </Route>
+
+              <Route path="/downloads">
+                <FileDownloads />
               </Route>
 
               {/* Default and 404 Routes */}
