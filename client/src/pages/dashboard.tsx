@@ -5,7 +5,7 @@ import MetricsGrid from "@/components/MetricsGrid";
 import CommunityPool from "@/components/CommunityPool";
 import RefundSimulator from "@/components/RefundSimulator";
 import Gamification from "@/components/Gamification";
-import GamifiedRefundTracker from "@/components/GamifiedRefundTracker";
+
 import BottomNavigation from "@/components/BottomNavigation";
 import PolicyStatusWidget from "@/components/PolicyStatusWidget";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -106,18 +106,7 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Gamified Refund Tracker */}
-        {data?.profile && data?.user && data?.achievements && (
-          <div className="mb-3">
-            <GamifiedRefundTracker 
-              currentScore={data.profile.currentScore}
-              projectedRefund={data.profile.projectedRefund}
-              premiumAmount={data.user.premiumAmount || 1840}
-              totalMiles={data.profile.totalMiles || 0}
-              achievements={data.achievements}
-            />
-          </div>
-        )}
+
 
         {/* Metrics Grid Box */}
         {data?.profile && (
@@ -144,13 +133,15 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Gamification Box */}
-        {data?.achievements && data?.leaderboard && data?.user && (
+        {/* Enhanced Gamification Box with Refund Tracking */}
+        {data?.achievements && data?.leaderboard && data?.user && data?.profile && (
           <div className="mb-3">
             <Gamification 
               achievements={data.achievements}
               leaderboard={data.leaderboard}
               currentUser={data.user}
+              profile={data.profile}
+              premiumAmount={data.user.premiumAmount || 1840}
             />
           </div>
         )}

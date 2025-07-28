@@ -11,21 +11,22 @@ export default function RefundSimulator({ currentScore, premiumAmount, poolSafet
   const [simulatedScore, setSimulatedScore] = useState(currentScore);
   
   const calculateRefund = (score: number) => {
-    // Only drivers with personal score >= 80 are eligible for refunds
-    if (score < 80) {
+    // Only drivers with personal score >= 70 are eligible for refunds (per documentation)
+    if (score < 70) {
       return "0.00";
     }
     
     // Community average score is 75 as per document
     const communityScore = 75;
     
-    // Weighting: 80% personal, 20% community
+    // Weighting: 80% personal, 20% community (per documentation)
     const weightedScore = (score * 0.8) + (communityScore * 0.2);
     
-    // For eligible drivers, refund is capped at 15% of premium
-    const refundAmount = Number(premiumAmount || 1840) * 0.15;
+    // For eligible drivers, refund is proportional to weighted score, capped at 15% of premium
+    const refundPercentage = Math.min(weightedScore / 100 * 0.15, 0.15);
+    const refundAmount = Number(premiumAmount || 1840) * refundPercentage;
     
-    return refundAmount.toFixed(2);
+    return Math.max(0, refundAmount).toFixed(2);
   };
 
   const currentRefund = calculateRefund(currentScore);
@@ -62,8 +63,8 @@ export default function RefundSimulator({ currentScore, premiumAmount, poolSafet
               </div>
               <div className="text-right">
                 <div className="text-sm text-gray-400">Improvement</div>
-                <div className={`text-lg font-semibold ${improvement >= 0 ? 'text-[#10B981]' : 'text-[#EF4444]'}`}>
-                  {improvement >= 0 ? '+' : ''}£{improvement.toFixed(2)}
+                <div className={`text-lg font-semibold ${improvement >= 0 ? 'text-[#10B981]' : 'text-gray-400'}`}>
+                  {improvement >= 0 ? `+£${improvement.toFixed(2)}` : 'Need 70+ score'}
                 </div>
               </div>
             </div>
