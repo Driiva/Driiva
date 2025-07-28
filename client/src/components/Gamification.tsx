@@ -47,10 +47,7 @@ export default function Gamification({ achievements, leaderboard, currentUser, p
   };
 
   const handleLeaderboardClick = () => {
-    toast({
-      title: "Community Leaderboard",
-      description: "You're currently ranked #12 out of 1,000+ drivers. Keep up the great work to climb higher!",
-    });
+    setLocation('/leaderboard');
   };
 
   return (
@@ -65,7 +62,7 @@ export default function Gamification({ achievements, leaderboard, currentUser, p
           className="px-3 py-1.5 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white text-xs font-medium rounded-lg transition-all duration-200 flex items-center gap-1"
         >
           <Gift className="w-3 h-3" />
-          View All Rewards
+          View Achievements
         </button>
       </div>
 
@@ -89,7 +86,33 @@ export default function Gamification({ achievements, leaderboard, currentUser, p
               const isAchieved = profile.currentScore >= data.score;
               const isEligible = profile.currentScore >= 70; // Base eligibility
               return (
-                <div key={tier} className={`text-center p-2 rounded-lg ${isAchieved ? 'bg-green-500/20' : isEligible ? 'bg-blue-500/10' : 'bg-gray-500/10'}`}>
+                <div 
+                  key={tier} 
+                  className={`text-center p-2 rounded-lg transition-all duration-300 hover:scale-105 cursor-pointer ${
+                    isAchieved ? 'bg-green-500/20' : isEligible ? 'bg-blue-500/10' : 'bg-gray-500/10'
+                  }`}
+                  style={{
+                    background: isAchieved 
+                      ? 'rgba(34, 197, 94, 0.2)' 
+                      : isEligible 
+                        ? 'rgba(59, 130, 246, 0.1)' 
+                        : 'rgba(107, 114, 128, 0.1)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+                    e.currentTarget.style.backdropFilter = 'blur(20px)';
+                    e.currentTarget.style.boxShadow = '0 8px 32px rgba(59, 130, 246, 0.2)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = isAchieved 
+                      ? 'rgba(34, 197, 94, 0.2)' 
+                      : isEligible 
+                        ? 'rgba(59, 130, 246, 0.1)' 
+                        : 'rgba(107, 114, 128, 0.1)';
+                    e.currentTarget.style.backdropFilter = 'blur(12px)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
                   <div className={`text-xs font-medium ${data.color}`}>{data.label}</div>
                   <div className="text-xs text-gray-300">{data.score}+ score</div>
                   <div className="text-xs font-bold text-white">£{data.refund.toFixed(0)}</div>
@@ -104,11 +127,25 @@ export default function Gamification({ achievements, leaderboard, currentUser, p
 
       <div className="grid grid-cols-3 gap-3 mb-6">
         {unlockedAchievements.map((achievement, index) => (
-          <div key={index} className="rounded-2xl p-4 text-center" style={{
-            background: 'rgba(255, 255, 255, 0.04)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            backdropFilter: 'blur(12px)',
-          }}>
+          <div 
+            key={index} 
+            className="rounded-2xl p-4 text-center transition-all duration-300 hover:scale-105 cursor-pointer" 
+            style={{
+              background: 'rgba(255, 255, 255, 0.04)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              backdropFilter: 'blur(12px)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+              e.currentTarget.style.backdropFilter = 'blur(20px)';
+              e.currentTarget.style.boxShadow = '0 8px 32px rgba(59, 130, 246, 0.3)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+              e.currentTarget.style.backdropFilter = 'blur(12px)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+          >
             <div className={`w-12 h-12 bg-gradient-to-r ${achievement.color} rounded-full flex items-center justify-center mx-auto mb-2`}>
               <achievement.icon className="w-6 h-6 text-white" />
             </div>
@@ -118,11 +155,25 @@ export default function Gamification({ achievements, leaderboard, currentUser, p
         ))}
 
         {lockedAchievements.map((achievement, index) => (
-          <div key={index} className="rounded-2xl p-4 text-center opacity-50" style={{
-            background: 'rgba(255, 255, 255, 0.04)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            backdropFilter: 'blur(12px)',
-          }}>
+          <div 
+            key={index} 
+            className="rounded-2xl p-4 text-center opacity-50 transition-all duration-300 hover:scale-105 cursor-pointer" 
+            style={{
+              background: 'rgba(255, 255, 255, 0.04)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              backdropFilter: 'blur(12px)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+              e.currentTarget.style.backdropFilter = 'blur(16px)';
+              e.currentTarget.style.boxShadow = '0 4px 16px rgba(107, 114, 128, 0.2)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.04)';
+              e.currentTarget.style.backdropFilter = 'blur(12px)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+          >
             <div className={`w-12 h-12 ${achievement.color} rounded-full flex items-center justify-center mx-auto mb-2`}>
               <achievement.icon className="w-6 h-6 text-gray-400" />
             </div>

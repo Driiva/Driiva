@@ -102,8 +102,8 @@ export default function PolicyStatusWidget({ user }: PolicyStatusWidgetProps) {
             <button
               onClick={() => {
                 toast({
-                  title: "Policy Details",
-                  description: "Policy #DRV-2025-000001\n\nCoverage: Comprehensive Telematics\nDeductible: £350\nLiability Limit: £20M\nStatus: Active\n\nNext Payment: Aug 1, 2025\nPayment Method: Direct Debit",
+                  title: "Policy Information",
+                  description: `Policy Number: ${policyData.policyNumber}\nType: ${policyData.policyType}\nStatus: Active\n\nCoverage Details:\n• Comprehensive Protection\n• Deductible: £350\n• Liability Limit: £20M\n• Telematics Discount Applied\n\nPayment Information:\n• Annual Premium: £${policyData.premiumAmount}\n• Next Payment: Aug 1, 2025\n• Method: Direct Debit\n\nRenewal Date: ${policyData.renewalDate}`,
                 });
               }}
               className="px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg text-xs font-medium text-blue-400 hover:text-blue-300 transition-all duration-200 flex items-center gap-1"

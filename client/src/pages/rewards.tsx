@@ -55,8 +55,7 @@ export default function Rewards() {
       description: "30 days of safe driving",
       iconUrl: "⭐",
       unlockedAt: "2025-07-25",
-      category: "consistency",
-      reward: "£15 refund bonus"
+      category: "consistency"
     },
     {
       id: 3,
@@ -75,16 +74,14 @@ export default function Rewards() {
       iconUrl: "👑",
       progress: 8,
       maxProgress: 10,
-      category: "community",
-      reward: "£30 refund bonus"
+      category: "community"
     },
     {
       id: 5,
       title: "Perfect Week",
       description: "7 days with zero incidents",
       iconUrl: "💎",
-      category: "safety",
-      reward: "£40 refund bonus"
+      category: "safety"
     },
     {
       id: 6,
@@ -164,9 +161,9 @@ export default function Rewards() {
         <main className="px-4 pb-20">
         {/* Header Stats */}
         <div className="pt-4 mb-6">
-          <div className="glass-morphism rounded-2xl p-4">
+          <div className="glass-morphism rounded-2xl p-4 border border-white/10 backdrop-blur-xl">
             <h1 className="text-2xl font-bold mb-4 flex items-center gap-2">
-              <Gift className="w-6 h-6 text-yellow-400" />
+              <Gift className="w-6 h-6 text-yellow-400 drop-shadow-lg" />
               Rewards Dashboard
             </h1>
             
@@ -193,15 +190,15 @@ export default function Rewards() {
 
         {/* Tab Navigation */}
         <div className="mb-6">
-          <div className="glass-morphism rounded-xl p-1 flex">
+          <div className="glass-morphism rounded-xl p-1 flex border border-white/10 backdrop-blur-xl">
             {["achievements", "rewards", "progress"].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab as any)}
-                className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm transition-all duration-200 ${
+                className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm transition-all duration-300 ${
                   activeTab === tab
-                    ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg"
-                    : "text-gray-400 hover:text-white"
+                    ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg backdrop-blur-sm border border-white/20"
+                    : "text-gray-400 hover:text-white hover:bg-white/5"
                 }`}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -228,19 +225,20 @@ export default function Rewards() {
                 return (
                   <motion.div
                     key={achievement.id}
-                    className="glass-morphism rounded-xl p-4 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/20 cursor-pointer transform-gpu"
+                    className="glass-morphism rounded-xl p-4 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/20 cursor-pointer transform-gpu border border-white/10"
                     whileHover={{ 
-                      scale: 1.02,
-                      boxShadow: "0 20px 40px rgba(59, 130, 246, 0.15)",
-                      backdropFilter: "blur(20px)"
+                      scale: 1.025,
+                      boxShadow: "0 25px 50px rgba(59, 130, 246, 0.2)",
+                      backdropFilter: "blur(25px)",
+                      background: "rgba(255, 255, 255, 0.12)"
                     }}
                     whileTap={{ scale: 0.98 }}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ 
-                      duration: 0.3,
-                      delay: achievement.id * 0.1,
-                      ease: "easeOut"
+                      duration: 0.4,
+                      delay: achievement.id * 0.08,
+                      ease: [0.23, 1, 0.320, 1]
                     }}
                   >
                     <div className="flex items-start gap-4">

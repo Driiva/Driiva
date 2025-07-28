@@ -99,14 +99,14 @@ export default function RefundSimulator({
                 {simulatedScore}
               </span>
             </div>
-            <div className="relative">
+            <div className="relative px-1">
               <Slider
                 value={[simulatedScore]}
                 onValueChange={(value) => setSimulatedScore(value[0])}
                 max={100}
                 min={50}
                 step={1}
-                className="w-full"
+                className="w-full [&_[role=slider]]:w-4 [&_[role=slider]]:h-4 [&_[role=slider]]:bg-blue-500 [&_[role=slider]]:border-2 [&_[role=slider]]:border-white [&_[role=slider]]:shadow-lg"
               />
             </div>
             <div className="flex justify-between text-xs text-gray-500 mt-1">
