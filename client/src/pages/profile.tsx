@@ -163,25 +163,31 @@ export default function Profile() {
                   <div className="text-lg font-bold text-white">
                     {profileData.totalMiles.toFixed(1)}
                   </div>
-                  <div className="text-xs text-gray-400">Total Miles</div>
+                  <div className="text-xs text-gray-400">Miles This Month</div>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-bold text-white">
                     {profileData.hardBrakingScore}
                   </div>
-                  <div className="text-xs text-gray-400">Hard Braking Events</div>
+                  <div className="text-xs text-gray-400">
+                    {profileData.hardBrakingScore === 1 ? 'Harsh Braking Event This Month' : 'Harsh Braking Events This Month'}
+                  </div>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-bold text-white">
                     {profileData.speedAdherenceScore}
                   </div>
-                  <div className="text-xs text-gray-400">Speed Violations</div>
+                  <div className="text-xs text-gray-400">
+                    {profileData.speedAdherenceScore === 1 ? 'Speed Violation This Month' : 'Speed Violations This Month'}
+                  </div>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-bold text-white">
                     {profileData.nightDrivingScore}
                   </div>
-                  <div className="text-xs text-gray-400">Night Trips</div>
+                  <div className="text-xs text-gray-400">
+                    {profileData.nightDrivingScore === 1 ? 'Night Trip This Month' : 'Night Trips This Month'}
+                  </div>
                 </div>
               </div>
             </CardContent>

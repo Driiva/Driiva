@@ -41,7 +41,7 @@ export default function MetricsGrid({ profile }: MetricsGridProps) {
       value: profile.hardBrakingScore,
       weight: "25% weight",
       color: "#EF4444",
-      unit: "incidents this month",
+      unit: profile.hardBrakingScore === 1 ? "harsh event this month" : "harsh events this month",
       isInverse: true
     },
     {
@@ -50,7 +50,7 @@ export default function MetricsGrid({ profile }: MetricsGridProps) {
       value: profile.accelerationScore,
       weight: "20% weight",
       color: "#F59E0B",
-      unit: "harsh events",
+      unit: profile.accelerationScore === 1 ? "harsh event this month" : "harsh events this month",
       isInverse: true
     },
     {
@@ -59,7 +59,7 @@ export default function MetricsGrid({ profile }: MetricsGridProps) {
       value: profile.speedAdherenceScore,
       weight: "20% weight",
       color: "#3B82F6",
-      unit: "violations",
+      unit: profile.speedAdherenceScore === 1 ? "violation this month" : "violations this month",
       isInverse: true
     },
     {
@@ -68,7 +68,7 @@ export default function MetricsGrid({ profile }: MetricsGridProps) {
       value: profile.nightDrivingScore,
       weight: "15% weight",
       color: "#A855F7",
-      unit: "night trips",
+      unit: profile.nightDrivingScore === 1 ? "night trip this month" : "night trips this month",
       isInverse: true
     }
   ];
