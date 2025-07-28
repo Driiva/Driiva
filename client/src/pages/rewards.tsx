@@ -1,179 +1,402 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import DashboardHeader from "@/components/DashboardHeader";
 import BottomNavigation from "@/components/BottomNavigation";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Gift, PoundSterling, Trophy, Users } from "lucide-react";
+import PageTransition from "@/components/PageTransition";
+import { Trophy, Award, Star, Target, TrendingUp, Gift, Calendar, Zap } from "lucide-react";
+import { motion } from "framer-motion";
+
+interface Achievement {
+  id: number;
+  title: string;
+  description: string;
+  iconUrl: string;
+  unlockedAt?: string;
+  progress?: number;
+  maxProgress?: number;
+  reward?: string;
+  category: "safety" | "distance" | "consistency" | "community";
+}
+
+interface Reward {
+  id: number;
+  title: string;
+  description: string;
+  points: number;
+  category: "discount" | "cashback" | "premium";
+  value: string;
+  available: boolean;
+}
 
 export default function Rewards() {
-  const user = localStorage.getItem("driiva_user");
-  const userId = user ? JSON.parse(user).id : null;
-  
-  const { data: dashboardData, isLoading } = useQuery({
-    queryKey: ['/api/dashboard', userId],
-    enabled: !!userId,
-  });
+  const [activeTab, setActiveTab] = useState<"achievements" | "rewards" | "progress">("achievements");
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-[#1E293B] to-[#0F172A] text-white">
-        <DashboardHeader />
-        <main className="px-4 pb-20">
-          <div className="py-6 space-y-6">
-            <Skeleton className="h-32 w-full rounded-3xl" />
-            <div className="grid grid-cols-2 gap-4">
-              <Skeleton className="h-24 w-full rounded-2xl" />
-              <Skeleton className="h-24 w-full rounded-2xl" />
-            </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
+  // Static data - no API calls
+  const user = {
+    firstName: "Test",
+    lastName: "Driver",
+    username: "driiva1",
+    email: "test@driiva.com",
+    premiumAmount: "1840.00"
+  };
+
+  const achievements: Achievement[] = [
+    {
+      id: 1,
+      title: "Long Distance Driver",
+      description: "Drive over 1000 miles safely",
+      iconUrl: "🚗",
+      unlockedAt: "2025-07-20",
+      category: "distance",
+      reward: "£25 refund bonus"
+    },
+    {
+      id: 2,
+      title: "Consistent Driver",
+      description: "30 days of safe driving",
+      iconUrl: "⭐",
+      unlockedAt: "2025-07-25",
+      category: "consistency",
+      reward: "£15 refund bonus"
+    },
+    {
+      id: 3,
+      title: "Safety Champion",
+      description: "Maintain 90+ score for 7 days",
+      iconUrl: "🏆",
+      progress: 5,
+      maxProgress: 7,
+      category: "safety",
+      reward: "£50 refund bonus"
+    },
+    {
+      id: 4,
+      title: "Community Leader",
+      description: "Be in top 10% of community pool",
+      iconUrl: "👑",
+      progress: 8,
+      maxProgress: 10,
+      category: "community",
+      reward: "£30 refund bonus"
+    },
+    {
+      id: 5,
+      title: "Perfect Week",
+      description: "7 days with zero incidents",
+      iconUrl: "💎",
+      category: "safety",
+      reward: "£40 refund bonus"
+    },
+    {
+      id: 6,
+      title: "Miles Milestone",
+      description: "Drive 2000 miles safely",
+      iconUrl: "🛣️",
+      progress: 1107,
+      maxProgress: 2000,
+      category: "distance",
+      reward: "£60 refund bonus"
+    }
+  ];
+
+  const rewards: Reward[] = [
+    {
+      id: 1,
+      title: "Premium Discount",
+      description: "5% off next year's premium",
+      points: 1000,
+      category: "discount",
+      value: "£92",
+      available: true
+    },
+    {
+      id: 2,
+      title: "Cashback Bonus",
+      description: "Direct cash refund",
+      points: 800,
+      category: "cashback",
+      value: "£40",
+      available: true
+    },
+    {
+      id: 3,
+      title: "Premium Freeze",
+      description: "Lock current premium rate",
+      points: 1500,
+      category: "premium",
+      value: "Rate Lock",
+      available: false
+    }
+  ];
+
+  const stats = {
+    totalPoints: 1250,
+    achievementsUnlocked: 2,
+    totalAchievements: 6,
+    currentStreak: 12,
+    totalRefunds: 138.00
+  };
+
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case "safety": return Trophy;
+      case "distance": return Target;
+      case "consistency": return Calendar;
+      case "community": return Star;
+      default: return Award;
+    }
+  };
+
+  const getCategoryColor = (category: string) => {
+    switch (category) {
+      case "safety": return "from-yellow-400 to-orange-500";
+      case "distance": return "from-blue-400 to-cyan-500";
+      case "consistency": return "from-green-400 to-emerald-500";
+      case "community": return "from-purple-400 to-pink-500";
+      default: return "from-gray-400 to-gray-500";
+    }
+  };
 
   return (
-    <div className="min-h-screen text-white safe-area">
-      <DashboardHeader />
-      
-      <main className="px-4 pb-20">
-        <div className="py-4">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-xl font-bold">Rewards & Refunds</h1>
-            <Badge variant="outline" className="glass-morphism border-[#10B981]">
-              Active
-            </Badge>
+    <PageTransition>
+      <div className="min-h-screen text-white bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
+        <DashboardHeader user={user} />
+        
+        <main className="px-4 pb-20">
+        {/* Header Stats */}
+        <div className="pt-4 mb-6">
+          <div className="glass-morphism rounded-2xl p-4">
+            <h1 className="text-2xl font-bold mb-4 flex items-center gap-2">
+              <Gift className="w-6 h-6 text-yellow-400" />
+              Rewards Dashboard
+            </h1>
+            
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-yellow-400">{stats.totalPoints}</div>
+                <div className="text-sm text-gray-400">Total Points</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-400">{stats.achievementsUnlocked}/{stats.totalAchievements}</div>
+                <div className="text-sm text-gray-400">Achievements</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-400">{stats.currentStreak}</div>
+                <div className="text-sm text-gray-400">Day Streak</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-purple-400">£{stats.totalRefunds}</div>
+                <div className="text-sm text-gray-400">Total Refunds</div>
+              </div>
+            </div>
           </div>
+        </div>
 
-          {/* Current Refund Status */}
-          <Card className="glass-border rounded-3xl mb-6">
-            <CardContent className="p-6">
-              <div className="text-center mb-6">
-                <div className="w-16 h-16 bg-[#10B981] bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <PoundSterling className="w-8 h-8 text-[#10B981]" />
-                </div>
-                <h2 className="text-xl font-bold mb-2">Current Refund Status</h2>
-                <p className="text-gray-400 text-sm">Annual refund projection</p>
-              </div>
-              
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-400">Progress to max refund</span>
-                  <span className="text-sm font-medium">
-                    {((dashboardData?.profile?.currentScore || 0) / 100 * 100).toFixed(0)}%
-                  </span>
-                </div>
-                <Progress 
-                  value={(dashboardData?.profile?.currentScore || 0)} 
-                  className="h-2"
-                />
+        {/* Tab Navigation */}
+        <div className="mb-6">
+          <div className="glass-morphism rounded-xl p-1 flex">
+            {["achievements", "rewards", "progress"].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab as any)}
+                className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm transition-all duration-200 ${
+                  activeTab === tab
+                    ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg"
+                    : "text-gray-400 hover:text-white"
+                }`}
+              >
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Content */}
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.2 }}
+        >
+          {activeTab === "achievements" && (
+            <div className="grid gap-3">
+              {achievements.map((achievement) => {
+                const IconComponent = getCategoryIcon(achievement.category);
+                const isUnlocked = !!achievement.unlockedAt;
+                const hasProgress = achievement.progress !== undefined;
                 
-                <div className="grid grid-cols-2 gap-4 mt-6">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-[#10B981]">
-                      £{dashboardData?.profile?.projectedRefund || '0.00'}
+                return (
+                  <motion.div
+                    key={achievement.id}
+                    className="glass-morphism rounded-xl p-4 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/20 cursor-pointer transform-gpu"
+                    whileHover={{ 
+                      scale: 1.02,
+                      boxShadow: "0 20px 40px rgba(59, 130, 246, 0.15)",
+                      backdropFilter: "blur(20px)"
+                    }}
+                    whileTap={{ scale: 0.98 }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ 
+                      duration: 0.3,
+                      delay: achievement.id * 0.1,
+                      ease: "easeOut"
+                    }}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-r ${getCategoryColor(achievement.category)} flex items-center justify-center flex-shrink-0`}>
+                        {achievement.iconUrl ? (
+                          <span className="text-xl">{achievement.iconUrl}</span>
+                        ) : (
+                          <IconComponent className="w-6 h-6 text-white" />
+                        )}
+                      </div>
+                      
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-semibold text-white">{achievement.title}</h3>
+                          {isUnlocked && (
+                            <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                              <Zap className="w-3 h-3 text-white" />
+                            </div>
+                          )}
+                        </div>
+                        
+                        <p className="text-sm text-gray-400 mb-2">{achievement.description}</p>
+                        
+                        {achievement.reward && (
+                          <div className="text-xs text-yellow-400 font-medium mb-2">
+                            Reward: {achievement.reward}
+                          </div>
+                        )}
+                        
+                        {hasProgress && (
+                          <div className="space-y-1">
+                            <div className="flex justify-between text-xs">
+                              <span className="text-gray-400">Progress</span>
+                              <span className="text-white">{achievement.progress}/{achievement.maxProgress}</span>
+                            </div>
+                            <div className="w-full bg-gray-700 rounded-full h-2">
+                              <motion.div
+                                className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full"
+                                initial={{ width: 0 }}
+                                animate={{ width: `${(achievement.progress! / achievement.maxProgress!) * 100}%` }}
+                                transition={{ duration: 0.8, ease: "easeOut" }}
+                              />
+                            </div>
+                          </div>
+                        )}
+                        
+                        {isUnlocked && achievement.unlockedAt && (
+                          <div className="text-xs text-green-400 mt-2">
+                            Unlocked: {new Date(achievement.unlockedAt).toLocaleDateString()}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-400">Current Projection</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-[#06B6D4]">
-                      £{(Number(dashboardData?.user?.premiumAmount || 0) * 0.15).toFixed(2)}
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
+
+          {activeTab === "rewards" && (
+            <div className="grid gap-3">
+              {rewards.map((reward) => (
+                <motion.div
+                  key={reward.id}
+                  className={`glass-morphism rounded-xl p-4 transition-all duration-300 hover:scale-[1.02] cursor-pointer ${
+                    reward.available ? "hover:shadow-lg" : "opacity-60"
+                  }`}
+                  whileHover={reward.available ? { scale: 1.02 } : {}}
+                  whileTap={reward.available ? { scale: 0.98 } : {}}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-white mb-1">{reward.title}</h3>
+                      <p className="text-sm text-gray-400 mb-2">{reward.description}</p>
+                      <div className="flex items-center gap-4">
+                        <div className="text-lg font-bold text-yellow-400">{reward.points} pts</div>
+                        <div className="text-lg font-bold text-green-400">{reward.value}</div>
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-400">Maximum Possible</div>
+                    
+                    <button
+                      className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                        reward.available
+                          ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:shadow-lg"
+                          : "bg-gray-600 text-gray-400 cursor-not-allowed"
+                      }`}
+                      disabled={!reward.available}
+                    >
+                      {reward.available ? "Claim" : "Locked"}
+                    </button>
                   </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+
+          {activeTab === "progress" && (
+            <div className="space-y-6">
+              {/* Weekly Progress */}
+              <div className="glass-morphism rounded-xl p-4">
+                <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
+                  <TrendingUp className="w-5 h-5 text-blue-400" />
+                  Weekly Progress
+                </h3>
+                
+                <div className="grid grid-cols-7 gap-2">
+                  {Array.from({ length: 7 }, (_, i) => {
+                    const dayScore = Math.floor(Math.random() * 20) + 80;
+                    const isToday = i === 6;
+                    
+                    return (
+                      <div key={i} className="text-center">
+                        <div className={`w-10 h-10 rounded-lg mx-auto mb-1 flex items-center justify-center text-xs font-bold ${
+                          isToday ? "bg-blue-500 text-white" : "bg-white/10 text-gray-300"
+                        }`}>
+                          {dayScore}
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][i]}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-            </CardContent>
-          </Card>
 
-          {/* Community Impact */}
-          <Card className="glass-morphism border-gray-700 mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Users className="w-5 h-5 text-[#A855F7]" />
-                <span>Community Impact</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">Pool Safety Factor</span>
-                  <span className="text-sm font-medium text-[#06B6D4]">
-                    {((dashboardData?.communityPool?.safetyFactor || 0.80) * 100).toFixed(0)}%
-                  </span>
-                </div>
+              {/* Monthly Summary */}
+              <div className="glass-morphism rounded-xl p-4">
+                <h3 className="font-semibold text-white mb-4">Monthly Summary</h3>
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="text-center">
-                    <div className="text-lg font-bold text-white">
-                      {dashboardData?.communityPool?.safeDriverCount || 0}
-                    </div>
-                    <div className="text-xs text-gray-400">Safe Drivers</div>
+                    <div className="text-3xl font-bold text-green-400">89</div>
+                    <div className="text-sm text-gray-400">Average Score</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-lg font-bold text-white">
-                      {dashboardData?.communityPool?.participantCount || 0}
-                    </div>
-                    <div className="text-xs text-gray-400">Total Participants</div>
+                    <div className="text-3xl font-bold text-blue-400">28</div>
+                    <div className="text-sm text-gray-400">Safe Days</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-purple-400">245</div>
+                    <div className="text-sm text-gray-400">Miles Driven</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-yellow-400">£42</div>
+                    <div className="text-sm text-gray-400">Refund Earned</div>
                   </div>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Achievement Rewards */}
-          <Card className="glass-morphism border-gray-700">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Trophy className="w-5 h-5 text-[#F59E0B]" />
-                <span>Achievement Rewards</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 glass-morphism rounded-xl">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-[#10B981] bg-opacity-20 rounded-full flex items-center justify-center">
-                      <Trophy className="w-4 h-4 text-[#10B981]" />
-                    </div>
-                    <span className="text-sm font-medium">Safe Driver (30 days)</span>
-                  </div>
-                  <Badge variant="outline" className="border-[#10B981] text-[#10B981]">
-                    Unlocked
-                  </Badge>
-                </div>
-                
-                <div className="flex items-center justify-between p-3 glass-morphism rounded-xl">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-[#3B82F6] bg-opacity-20 rounded-full flex items-center justify-center">
-                      <Trophy className="w-4 h-4 text-[#3B82F6]" />
-                    </div>
-                    <span className="text-sm font-medium">Speed Master</span>
-                  </div>
-                  <Badge variant="outline" className="border-[#3B82F6] text-[#3B82F6]">
-                    Unlocked
-                  </Badge>
-                </div>
-                
-                <div className="flex items-center justify-between p-3 glass-morphism rounded-xl opacity-50">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-gray-600 rounded-full flex items-center justify-center">
-                      <Trophy className="w-4 h-4 text-gray-400" />
-                    </div>
-                    <span className="text-sm font-medium">Night Owl</span>
-                  </div>
-                  <Badge variant="outline" className="border-gray-600 text-gray-400">
-                    Locked
-                  </Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          )}
+        </motion.div>
       </main>
-
-      <BottomNavigation activeTab="rewards" />
-    </div>
+        
+        <BottomNavigation activeTab="rewards" />
+      </div>
+    </PageTransition>
   );
 }

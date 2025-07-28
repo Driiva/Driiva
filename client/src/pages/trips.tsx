@@ -1,5 +1,6 @@
 import DashboardHeader from "@/components/DashboardHeader";
 import BottomNavigation from "@/components/BottomNavigation";
+import PageTransition from "@/components/PageTransition";
 import { Map } from "lucide-react";
 
 interface Trip {
@@ -59,53 +60,55 @@ export default function Trips() {
   };
 
   return (
-    <div className="min-h-screen text-white bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
-      <DashboardHeader user={user} />
-      <main className="px-4 pb-20">
-        <div className="pt-4">
-          <h2 className="text-xl font-semibold mb-4">Recent Trips</h2>
-          
-          <div className="space-y-3">
-            {trips.map((trip) => (
-              <div key={trip.id} className="glass-morphism rounded-2xl p-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-blue-500/20 rounded-xl flex items-center justify-center">
-                      <Map className="w-5 h-5 text-blue-400" />
+    <PageTransition>
+      <div className="min-h-screen text-white bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
+        <DashboardHeader user={user} />
+        <main className="px-4 pb-20">
+          <div className="pt-4">
+            <h2 className="text-xl font-semibold mb-4">Recent Trips</h2>
+            
+            <div className="space-y-3">
+              {trips.map((trip) => (
+                <div key={trip.id} className="glass-morphism rounded-2xl p-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-blue-500/20 rounded-xl flex items-center justify-center">
+                        <Map className="w-5 h-5 text-blue-400" />
+                      </div>
+                      <div>
+                        <h3 className="font-medium">{trip.startLocation} → {trip.endLocation}</h3>
+                        <p className="text-sm text-gray-400">
+                          {new Date(trip.startTime).toLocaleDateString()}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-medium">{trip.startLocation} → {trip.endLocation}</h3>
-                      <p className="text-sm text-gray-400">
-                        {new Date(trip.startTime).toLocaleDateString()}
-                      </p>
+                    <div className="text-right">
+                      <div className="text-lg font-semibold text-green-400">{trip.score}/100</div>
+                      <div className="text-sm text-gray-400">{trip.distance} mi</div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-lg font-semibold text-green-400">{trip.score}/100</div>
-                    <div className="text-sm text-gray-400">{trip.distance} mi</div>
+                  
+                  <div className="mt-3 grid grid-cols-3 gap-2">
+                    <div className="text-center">
+                      <div className="text-xs text-gray-400">Braking</div>
+                      <div className="text-sm font-medium">{trip.hardBrakingEvents}</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xs text-gray-400">Acceleration</div>
+                      <div className="text-sm font-medium">{trip.harshAcceleration}</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xs text-gray-400">Speed</div>
+                      <div className="text-sm font-medium">{trip.speedViolations}</div>
+                    </div>
                   </div>
                 </div>
-                
-                <div className="mt-3 grid grid-cols-3 gap-2">
-                  <div className="text-center">
-                    <div className="text-xs text-gray-400">Braking</div>
-                    <div className="text-sm font-medium">{trip.hardBrakingEvents}</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-xs text-gray-400">Acceleration</div>
-                    <div className="text-sm font-medium">{trip.harshAcceleration}</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-xs text-gray-400">Speed</div>
-                    <div className="text-sm font-medium">{trip.speedViolations}</div>
-                  </div>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      </main>
-      <BottomNavigation activeTab="trips" />
-    </div>
+        </main>
+        <BottomNavigation activeTab="trips" />
+      </div>
+    </PageTransition>
   );
 }

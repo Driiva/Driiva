@@ -6,6 +6,7 @@ import RefundSimulator from "@/components/RefundSimulator";
 import Gamification from "@/components/Gamification";
 import BottomNavigation from "@/components/BottomNavigation";
 import PolicyStatusWidget from "@/components/PolicyStatusWidget";
+import PageTransition from "@/components/PageTransition";
 
 export default function Dashboard() {
   // Static data for stable demo - no API calls
@@ -62,59 +63,61 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen text-white bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
-      <DashboardHeader user={data.user} />
-      <main className="px-4 pb-20">
-        {/* Policy Status Widget */}
-        <div className="pt-4 mb-3">
-          <PolicyStatusWidget user={data.user} />
-        </div>
+    <PageTransition>
+      <div className="min-h-screen text-white bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
+        <DashboardHeader user={data.user} />
+        <main className="px-4 pb-20">
+          {/* Policy Status Widget */}
+          <div className="pt-4 mb-3">
+            <PolicyStatusWidget user={data.user} />
+          </div>
 
-        {/* Driving Score Box */}
-        <div className="mb-3">
-          <LiquidGauge 
-            score={data.profile.currentScore}
-            projectedRefund={data.profile.projectedRefund}
-            premiumAmount={data.user.premiumAmount}
-          />
-        </div>
+          {/* Driving Score Box */}
+          <div className="mb-3">
+            <LiquidGauge 
+              score={data.profile.currentScore}
+              projectedRefund={data.profile.projectedRefund}
+              premiumAmount={data.user.premiumAmount}
+            />
+          </div>
 
-        {/* Metrics Grid Box */}
-        <div className="mb-3">
-          <MetricsGrid profile={data.profile} />
-        </div>
+          {/* Metrics Grid Box */}
+          <div className="mb-3">
+            <MetricsGrid profile={data.profile} />
+          </div>
 
-        {/* Community Pool Box */}
-        <div className="mb-3">
-          <CommunityPool 
-            totalMembers={data.communityPool.totalMembers}
-            averageScore={data.communityPool.averageScore}
-            safetyFactor={data.communityPool.safetyFactor}
-            poolBalance={data.communityPool.poolBalance}
-          />
-        </div>
+          {/* Community Pool Box */}
+          <div className="mb-3">
+            <CommunityPool 
+              totalMembers={data.communityPool.totalMembers}
+              averageScore={data.communityPool.averageScore}
+              safetyFactor={data.communityPool.safetyFactor}
+              poolBalance={data.communityPool.poolBalance}
+            />
+          </div>
 
-        {/* Gamification Box */}
-        <div className="mb-3">
-          <Gamification 
-            achievements={data.achievements}
-            leaderboard={data.leaderboard}
-            currentUser={data.user}
-            profile={data.profile}
-            premiumAmount={Number(data.user.premiumAmount)}
-          />
-        </div>
+          {/* Gamification Box */}
+          <div className="mb-3">
+            <Gamification 
+              achievements={data.achievements}
+              leaderboard={data.leaderboard}
+              currentUser={data.user}
+              profile={data.profile}
+              premiumAmount={Number(data.user.premiumAmount)}
+            />
+          </div>
 
-        {/* Refund Simulator Box */}
-        <div className="mb-3">
-          <RefundSimulator 
-            currentScore={data.profile.currentScore}
-            premiumAmount={data.user.premiumAmount}
-            poolSafetyFactor={data.communityPool.safetyFactor}
-          />
-        </div>
-      </main>
-      <BottomNavigation activeTab="home" />
-    </div>
+          {/* Refund Simulator Box */}
+          <div className="mb-3">
+            <RefundSimulator 
+              currentScore={data.profile.currentScore}
+              premiumAmount={data.user.premiumAmount}
+              poolSafetyFactor={data.communityPool.safetyFactor}
+            />
+          </div>
+        </main>
+        <BottomNavigation activeTab="home" />
+      </div>
+    </PageTransition>
   );
 }

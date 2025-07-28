@@ -3,75 +3,44 @@ import { ReactNode } from "react";
 
 interface PageTransitionProps {
   children: ReactNode;
-  pageKey: string;
-  direction?: 'left' | 'right' | 'up' | 'down';
+  className?: string;
 }
 
-export default function PageTransition({ children, pageKey, direction = 'right' }: PageTransitionProps) {
-  const variants = {
-    initial: (direction: string) => {
-      switch (direction) {
-        case 'left':
-          return { x: '-100%', opacity: 0 };
-        case 'right':
-          return { x: '100%', opacity: 0 };
-        case 'up':
-          return { y: '-100%', opacity: 0 };
-        case 'down':
-          return { y: '100%', opacity: 0 };
-        default:
-          return { x: '100%', opacity: 0 };
-      }
-    },
-    animate: {
-      x: 0,
-      y: 0,
-      opacity: 1,
-    },
-    exit: (direction: string) => {
-      switch (direction) {
-        case 'left':
-          return { x: '100%', opacity: 0 };
-        case 'right':
-          return { x: '-100%', opacity: 0 };
-        case 'up':
-          return { y: '100%', opacity: 0 };
-        case 'down':
-          return { y: '-100%', opacity: 0 };
-        default:
-          return { x: '-100%', opacity: 0 };
-      }
-    },
-  };
+const pageVariants = {
+  initial: {
+    opacity: 0,
+    x: 20,
+    scale: 0.98
+  },
+  in: {
+    opacity: 1,
+    x: 0,
+    scale: 1
+  },
+  out: {
+    opacity: 0,
+    x: -20,
+    scale: 0.98
+  }
+};
 
-  const transition = {
-    type: "spring",
-    stiffness: 300,
-    damping: 30,
-    mass: 0.8,
-  };
+const pageTransition = {
+  type: "tween",
+  ease: "anticipate",
+  duration: 0.3
+};
 
+export default function PageTransition({ children, className = "" }: PageTransitionProps) {
   return (
-    <AnimatePresence mode="wait" custom={direction}>
-      <motion.div
-        key={pageKey}
-        custom={direction}
-        variants={variants}
-        initial="initial"
-        animate="animate"
-        exit="exit"
-        transition={transition}
-        className="w-full h-full"
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-        }}
-      >
-        {children}
-      </motion.div>
-    </AnimatePresence>
+    <motion.div
+      initial="initial"
+      animate="in"
+      exit="out"
+      variants={pageVariants}
+      transition={pageTransition}
+      className={className}
+    >
+      {children}
+    </motion.div>
   );
 }
