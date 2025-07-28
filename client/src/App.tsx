@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { useState, useEffect } from "react";
 
 // Pages
-import SignIn from "@/pages/signin";
+import SignIn from "@/pages/signin-minimal";
 import Dashboard from "@/pages/dashboard";
 import Trips from "@/pages/trips";
 import Profile from "@/pages/profile";
