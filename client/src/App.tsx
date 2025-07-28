@@ -10,6 +10,7 @@ import Profile from './pages/profile';
 import Support from './pages/support';
 import SignIn from './pages/signin';
 import TripRecording from './pages/trip-recording';
+import LeaderboardPage from './pages/leaderboard';
 import NotFound from './pages/not-found';
 
 // Context
@@ -63,6 +64,10 @@ export default function App() {
 
               <Route path="/trip-recording">
                 <TripRecording />
+              </Route>
+
+              <Route path="/leaderboard">
+                <LeaderboardPage />
               </Route>
 
               {/* Default and 404 Routes */}

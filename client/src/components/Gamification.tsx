@@ -35,9 +35,9 @@ export default function Gamification({ achievements, leaderboard, currentUser, p
   } : null;
 
   const topLeaderboard = [
-    { name: "Sarah M.", score: 98, rank: 1 },
-    { name: "John D.", score: 95, rank: 2 },
-    { name: "Emma K.", score: 93, rank: 3 },
+    { name: "driiva1", score: 72, rank: 1, weeklyChange: "+2%" },
+    { name: "speedracer42", score: 71, rank: 2, weeklyChange: "+3%" },
+    { name: "safejenny", score: 70, rank: 3, weeklyChange: "-1%" },
   ];
 
   const userRank = { name: "You", score: 85, rank: 12 };
@@ -144,9 +144,9 @@ export default function Gamification({ achievements, leaderboard, currentUser, p
           </h4>
           <button
             onClick={handleLeaderboardClick}
-            className="text-xs text-gray-400 hover:text-white px-2 py-1 hover:bg-white/10 rounded transition-colors"
+            className="text-xs text-blue-400 hover:text-white px-3 py-1 hover:bg-white/10 rounded-full transition-colors border border-blue-400/30"
           >
-            This Week
+            See All Driivas
           </button>
         </div>
 
@@ -165,7 +165,10 @@ export default function Gamification({ achievements, leaderboard, currentUser, p
                 }`}>
                   {entry.rank}
                 </div>
-                <span className="text-sm font-medium">{entry.name}</span>
+                <div className="flex flex-col items-start">
+                  <span className="text-sm font-medium">{entry.name}</span>
+                  <span className="text-xs text-gray-400">{entry.weeklyChange} this week</span>
+                </div>
               </div>
               <span className="text-sm text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]" style={{ 
                 textShadow: '2px 2px 4px rgba(0,0,0,0.9), -1px -1px 2px rgba(0,0,0,0.7)',

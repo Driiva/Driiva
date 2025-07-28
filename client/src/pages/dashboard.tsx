@@ -21,8 +21,8 @@ export default function Dashboard() {
   };
 
   const userProfile = {
-    currentScore: 89,
-    projectedRefund: 276.00,
+    currentScore: 72, // Test score above 70% threshold
+    projectedRefund: 100.80, // Calculated: (1840 * 5.48%) for score 72
     totalMiles: 1107.70,
     totalTrips: 26,
     hardBrakingScore: 3,

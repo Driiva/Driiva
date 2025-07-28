@@ -19,16 +19,18 @@ export default function RefundSimulator({
   const { toast } = useToast();
 
   const calculateRefund = (score: number): string => {
-    return drivingScorer.calculateRefundProjection(
-      score,
-      poolSafetyFactor || 0.85,
-      premiumAmount || 1840
-    ).toString();
+    if (score < 70) return "0.00";
+    const scoreRange = Math.max(0, score - 70);
+    const baseRefund = 5; // Minimum 5% refund for 70+ scores
+    const additionalRefund = (scoreRange / 30) * 10; // Up to 10% more
+    const refundPercentage = Math.min(15, baseRefund + additionalRefund);
+    const refundAmount = (premiumAmount * refundPercentage) / 100;
+    return refundAmount.toFixed(2);
   };
 
   const currentRefund = calculateRefund(currentScore);
   const simulatedRefund = calculateRefund(simulatedScore);
-  const improvement = Number(simulatedRefund) - Number(currentRefund);
+  const improvement = Math.max(0, Number(simulatedRefund) - Number(currentRefund));
 
   const getEligibilityMessage = (score: number): string => {
     if (score < 70) {
@@ -104,24 +106,8 @@ export default function RefundSimulator({
                 max={100}
                 min={50}
                 step={1}
-                className="w-full [&_[role=slider]]:h-5 [&_[role=slider]]:w-5 [&_[role=slider]]:bg-white [&_[role=slider]]:border-2 [&_[role=slider]]:border-blue-400 [&_[role=slider]]:shadow-lg [&_[role=slider]]:shadow-blue-400/30"
-                style={{
-                  '--slider-track-bg': 'rgba(255, 255, 255, 0.2)',
-                  '--slider-range-bg': 'linear-gradient(to right, #F59E0B, #10B981)',
-                } as React.CSSProperties}
+                className="w-full"
               />
-              <style jsx>{`
-                :global(.slider-track) {
-                  background: var(--slider-track-bg);
-                  height: 8px;
-                  border-radius: 4px;
-                }
-                :global(.slider-range) {
-                  background: var(--slider-range-bg);
-                  height: 8px;
-                  border-radius: 4px;
-                }
-              `}</style>
             </div>
             <div className="flex justify-between text-xs text-gray-500 mt-1">
               <span>50</span>
