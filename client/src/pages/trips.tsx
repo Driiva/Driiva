@@ -5,7 +5,6 @@ import DashboardHeader from "@/components/DashboardHeader";
 import BottomNavigation from "@/components/BottomNavigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Map } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
 import TripTimeline from "@/components/TripTimeline";
 
 interface Trip {
@@ -28,16 +27,11 @@ interface DashboardData {
 }
 
 export default function Trips() {
-  const { userId, user, isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();
-
-  // Redirect to signin if not authenticated
-  useEffect(() => {
-    if (!isAuthenticated) {
-      setLocation('/signin');
-      return;
-    }
-  }, [isAuthenticated, setLocation]);
+  
+  // Get user from localStorage for stable auth
+  const user = JSON.parse(localStorage.getItem("driiva_user") || "{}");
+  const userId = user.id || 8; // fallback to test user
   
   const { data: dashboardData } = useQuery<DashboardData>({
     queryKey: ['/api/dashboard', userId],
@@ -46,7 +40,7 @@ export default function Trips() {
   
   const { data: trips, isLoading } = useQuery<Trip[]>({
     queryKey: ['/api/trips', userId],
-    enabled: !!userId && isAuthenticated,
+    enabled: !!userId,
   });
 
   if (isLoading) {

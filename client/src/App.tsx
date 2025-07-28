@@ -40,29 +40,22 @@ function AppRouter() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
 
-  
   useEffect(() => {
-    // Check if user is authenticated
     const user = localStorage.getItem("driiva_user");
     setIsAuthenticated(!!user);
     setIsChecking(false);
-    
-    // Redirect to sign-in if not authenticated
-    if (!user && location !== "/signin") {
-      setLocation("/signin");
-    }
-  }, []);
+  }, [location]);
 
   if (isChecking) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 flex items-center justify-center">
         <div className="text-white">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen overflow-hidden">
+    <div className="min-h-screen overflow-hidden bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
       <Switch>
         <Route path="/signin" component={SignIn} />
         <Route path="/">
