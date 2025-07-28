@@ -12,6 +12,7 @@ import Support from './pages/support';
 import SignIn from './pages/signin';
 import TripRecording from './pages/trip-recording';
 import LeaderboardPage from './pages/leaderboard';
+import PolicyPage from './pages/policy';
 import NotFound from './pages/not-found';
 
 // Context
@@ -71,6 +72,10 @@ export default function App() {
 
               <Route path="/leaderboard">
                 <LeaderboardPage />
+              </Route>
+
+              <Route path="/policy">
+                <PolicyPage />
               </Route>
 
               {/* Default and 404 Routes */}

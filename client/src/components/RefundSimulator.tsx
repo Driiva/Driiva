@@ -106,7 +106,7 @@ export default function RefundSimulator({
                 max={100}
                 min={50}
                 step={1}
-                className="w-full [&_[role=slider]]:w-6 [&_[role=slider]]:h-6 [&_[role=slider]]:bg-gradient-to-r [&_[role=slider]]:from-amber-500 [&_[role=slider]]:to-purple-600 [&_[role=slider]]:border-2 [&_[role=slider]]:border-white [&_[role=slider]]:shadow-lg [&_[role=slider]]:cursor-grab [&_[role=slider]]:active:cursor-grabbing [&_[role=slider]]:hover:scale-110 [&_[role=slider]]:transition-transform"
+                className="w-full [&_.slider-track]:bg-gradient-to-r [&_.slider-track]:from-orange-500 [&_.slider-track]:to-purple-600 [&_.slider-track]:h-2 [&_.slider-range]:bg-gradient-to-r [&_.slider-range]:from-orange-400 [&_.slider-range]:to-purple-500 [&_[role=slider]]:w-5 [&_[role=slider]]:h-5 [&_[role=slider]]:bg-gradient-to-r [&_[role=slider]]:from-amber-500 [&_[role=slider]]:to-purple-600 [&_[role=slider]]:border-2 [&_[role=slider]]:border-white [&_[role=slider]]:shadow-lg [&_[role=slider]]:cursor-grab [&_[role=slider]]:active:cursor-grabbing [&_[role=slider]]:hover:scale-110 [&_[role=slider]]:transition-transform [&_[data-orientation=horizontal]]:h-2 [&_[data-orientation=horizontal]]:bg-white/20 [&_[data-orientation=horizontal]]:rounded-full"
               />
             </div>
             <div className="flex justify-between text-xs text-gray-500 mt-1">

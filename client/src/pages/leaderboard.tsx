@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 export default function LeaderboardPage() {
   // Extended leaderboard data with GDPR-compliant usernames and weekly changes
   const fullLeaderboard = [
-    { rank: 1, username: "driiva1", score: 89, weeklyChange: +5, changeType: "up" },
+    { rank: 1, username: "driiva1", score: 72, weeklyChange: +5, changeType: "up" },
     { rank: 2, username: "speedracer42", score: 87, weeklyChange: -2, changeType: "down" },
     { rank: 3, username: "safejenny", score: 85, weeklyChange: +3, changeType: "up" },
     { rank: 4, username: "carlover88", score: 83, weeklyChange: 0, changeType: "same" },
@@ -47,7 +47,8 @@ export default function LeaderboardPage() {
   };
 
   return (
-    <div className="min-h-screen text-white bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
+    <div className="min-h-screen text-white relative">
+      <div className="driiva-gradient-bg" />
       {/* Header */}
       <header className="sticky top-0 z-40 glass-morphism">
         <div className="px-4 py-4 flex items-center justify-between">

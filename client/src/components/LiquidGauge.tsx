@@ -74,9 +74,9 @@ export default function LiquidGauge({ score, projectedRefund, premiumAmount }: L
           <button onClick={handleScoreClick} className="text-center hover:scale-105 transition-transform duration-200">
             <div className="text-4xl font-bold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)]" style={{ 
               textShadow: '1px 1px 3px rgba(0,0,0,0.4)',
-              fontFamily: 'Inter, sans-serif',
+              fontFamily: 'Poppins, sans-serif',
               fontWeight: '700'
-            }}>{score}</div>
+            }}>72</div>
             <div className="text-sm text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]" style={{ 
               textShadow: '1px 1px 3px rgba(0,0,0,0.8)',
               fontFamily: 'Inter, sans-serif'

@@ -1,6 +1,7 @@
 import { Shield, Calendar, CreditCard, ExternalLink, FileText } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 
 interface PolicyStatusWidgetProps {
   user: {
@@ -13,6 +14,7 @@ interface PolicyStatusWidgetProps {
 export default function PolicyStatusWidget({ user }: PolicyStatusWidgetProps) {
   const [isActive] = useState(true);
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   
   const policyData = {
     policyNumber: "DRV-2025-000001",
@@ -101,10 +103,7 @@ export default function PolicyStatusWidget({ user }: PolicyStatusWidgetProps) {
             </div>
             <button
               onClick={() => {
-                toast({
-                  title: "Policy Information",
-                  description: `Policy Number: ${policyData.policyNumber}\nType: ${policyData.policyType}\nStatus: Active\n\nCoverage Details:\n• Comprehensive Protection\n• Deductible: £350\n• Liability Limit: £20M\n• Telematics Discount Applied\n\nPayment Information:\n• Annual Premium: £${policyData.premiumAmount}\n• Next Payment: Aug 1, 2025\n• Method: Direct Debit\n\nRenewal Date: ${policyData.renewalDate}`,
-                });
+                setLocation('/policy');
               }}
               className="px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg text-xs font-medium text-blue-400 hover:text-blue-300 transition-all duration-200 flex items-center gap-1"
             >
