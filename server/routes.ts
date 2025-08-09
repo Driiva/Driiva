@@ -7,10 +7,11 @@ import { aiInsightsEngine } from "./lib/aiInsights";
 import { insertTripSchema, insertIncidentSchema } from "@shared/schema";
 import { z } from "zod";
 import { authService } from "./auth";
+import { authLimiter, tripDataLimiter } from "./middleware/security";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Auth endpoints
-  app.post("/api/auth/login", async (req, res) => {
+  // Auth endpoints with rate limiting
+  app.post("/api/auth/login", authLimiter, async (req, res) => {
     try {
       const { username, password } = req.body;
       
@@ -50,22 +51,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
 
-  // Firebase Authentication
-  app.post("/api/auth/firebase", async (req, res) => {
+  // Firebase Authentication with rate limiting (placeholder for future implementation)
+  app.post("/api/auth/firebase", authLimiter, async (req, res) => {
     try {
-      const { token } = req.body;
-      
-      if (!token) {
-        return res.status(400).json({ message: "Token is required" });
-      }
-
-      // Verify the Firebase token
-      const decodedToken = await authService.verifyFirebaseToken(token);
-      
-      // Find or create user in database
-      const user = await authService.findOrCreateUser(decodedToken);
-      
-      res.json(user);
+      // TODO: Implement Firebase authentication when needed
+      res.status(501).json({ message: "Firebase authentication not implemented yet" });
     } catch (error) {
       console.error("Firebase auth error:", error);
       res.status(401).json({ message: "Invalid token" });
@@ -125,8 +115,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Submit trip data
-  app.post("/api/trips", async (req, res) => {
+  // Submit trip data with rate limiting
+  app.post("/api/trips", tripDataLimiter, async (req, res) => {
     try {
       const tripData = insertTripSchema.parse(req.body);
       const telematicsData: TelematicsData = req.body.telematicsData;
@@ -301,7 +291,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const insights = aiInsightsEngine.generateInsights(
         profile,
         trips,
-        communityPool?.averageScore || 75
+        Number(communityPool?.safetyFactor) * 100 || 75
       );
       
       res.json(insights);

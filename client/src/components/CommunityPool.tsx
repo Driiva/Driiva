@@ -1,5 +1,7 @@
+import React, { useState } from "react";
 import { Users, TrendingUp, Info, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import LiveInfoPopup from "./LiveInfoPopup";
 
 interface CommunityPoolProps {
   pool?: {
@@ -12,16 +14,14 @@ interface CommunityPoolProps {
 
 export default function CommunityPool({ pool }: CommunityPoolProps) {
   const { toast } = useToast();
+  const [showPopup, setShowPopup] = useState(false);
   const safetyPercentage = pool ? (Number(pool.safetyFactor) * 100).toFixed(0) : '80';
   const poolAmount = pool ? Number(pool.poolAmount).toFixed(0) : '105,000';
   const participantCount = pool?.participantCount || 1000;
   const safeDriverCount = pool?.safeDriverCount || 800;
 
   const handlePoolInfoClick = () => {
-    toast({
-      title: "Community Pool Details",
-      description: `Pool size: £${poolAmount}\nActive members: ${participantCount.toLocaleString()}\nSafe drivers: ${safeDriverCount.toLocaleString()} (${safetyPercentage}%)\n\nYour refunds are enhanced by community safety performance.`,
-    });
+    setShowPopup(true);
   };
 
   return (
@@ -41,6 +41,7 @@ export default function CommunityPool({ pool }: CommunityPoolProps) {
             <button
               onClick={handlePoolInfoClick}
               className="text-xs text-gray-400 hover:text-white px-2 py-1 hover:bg-white/10 rounded transition-colors flex items-center gap-1"
+              data-testid="live-info-button"
             >
               <Info className="w-3 h-3" />
               Live
@@ -99,6 +100,13 @@ export default function CommunityPool({ pool }: CommunityPoolProps) {
           </div>
         </div>
       </div>
+      
+      {/* Live Info Popup */}
+      <LiveInfoPopup 
+        isOpen={showPopup}
+        onClose={() => setShowPopup(false)}
+        poolData={pool}
+      />
     </section>
   );
 }

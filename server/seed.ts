@@ -1,112 +1,259 @@
 import { db } from './db';
-import { users, drivingProfiles, communityPool, achievements } from '@shared/schema';
+import { 
+  users, 
+  drivingProfiles, 
+  trips, 
+  communityPool, 
+  achievements, 
+  userAchievements,
+  leaderboard 
+} from '@shared/schema';
+import { eq } from 'drizzle-orm';
+import bcrypt from 'bcrypt';
 
-async function seedDatabase() {
+const SALT_ROUNDS = 10;
+
+/**
+ * Seed the database with initial test data
+ */
+export async function seedDatabase() {
   try {
-    // Create a test user - Sebastian Thomas (Low risk driver from document)
-    const [user] = await db.insert(users).values({
-      username: 'sebastian_thomas',
-      email: 'sebastian@driiva.com',
-      password: 'demo_password', // In real app this would be hashed
-      firstName: 'Sebastian',
-      lastName: 'Thomas',
-      premiumAmount: '690.00', // £690 annual premium from document
-      phoneNumber: '+1234567890'
-    }).returning();
-    
-    // Create driiva1 test user for sign-in
-    const [testUser] = await db.insert(users).values({
-      username: 'driiva1',
-      email: 'driiva1@driiva.com',
-      password: 'driiva1', // In real app this would be hashed
-      firstName: 'Test',
-      lastName: 'Driver',
-      premiumAmount: '500.00',
-      phoneNumber: '+442071234567'
-    }).returning();
+    console.log('🌱 Starting database seeding...');
 
-    console.log('Created user:', user);
+    // Hash password for test user
+    const hashedPassword = await bcrypt.hash('driiva1', SALT_ROUNDS);
 
-    // Create driving profile for Sebastian (low risk, score 92.1 from document)
-    const [profile] = await db.insert(drivingProfiles).values({
-      userId: user.id,
-      currentScore: 92,
-      hardBrakingScore: 2,
-      accelerationScore: 1,
-      speedAdherenceScore: 1,
-      nightDrivingScore: 0,
-      corneringScore: 2,
-      consistencyScore: 95,
-      totalTrips: 85,
-      totalMiles: '2350.5',
-      projectedRefund: 104 // £104 refund from document
-    }).returning();
+    // 1. Create test user
+    console.log('Creating test user...');
+    const [testUser] = await db.insert(users)
+      .values({
+        username: 'driiva1',
+        email: 'test@driiva.com',
+        password: hashedPassword,
+        firstName: 'Test',
+        lastName: 'Driver',
+        phoneNumber: '+44 7700 123456',
+        premiumAmount: '1840.00'
+      })
+      .onConflictDoUpdate({
+        target: users.username,
+        set: {
+          email: 'test@driiva.com',
+          firstName: 'Test',
+          lastName: 'Driver',
+          phoneNumber: '+44 7700 123456',
+          premiumAmount: '1840.00'
+        }
+      })
+      .returning();
 
-    console.log('Created driving profile:', profile);
-    
-    // Create driving profile for test user
-    const [testProfile] = await db.insert(drivingProfiles).values({
-      userId: testUser.id,
-      currentScore: 85,
-      hardBrakingScore: 5,
-      accelerationScore: 3,
-      speedAdherenceScore: 2,
-      nightDrivingScore: 2,
-      corneringScore: 3,
-      consistencyScore: 90,
-      totalTrips: 50,
-      totalMiles: '1500.0',
-      projectedRefund: 75
-    }).returning();
-    
-    console.log('Created test user profile:', testProfile);
+    console.log('✅ Test user created:', testUser.username);
 
-    // Create community pool (from document: 280 drivers, 140 low-risk eligible)
-    const [pool] = await db.insert(communityPool).values({
-      poolAmount: '43522.00', // £43,522 refund pool from document
-      safetyFactor: '0.75', // Community average score 75 from document
-      participantCount: 280,
-      safeDriverCount: 140 // 50% low-risk drivers eligible for refunds
-    }).returning();
+    // 2. Create driving profile
+    console.log('Creating driving profile...');
+    await db.insert(drivingProfiles)
+      .values({
+        userId: testUser.id,
+        currentScore: 72,
+        hardBrakingScore: 85,
+        accelerationScore: 78,
+        speedAdherenceScore: 74,
+        nightDrivingScore: 82,
+        corneringScore: 79,
+        consistencyScore: 75,
+        totalTrips: 26,
+        totalMiles: '1107.70',
+        projectedRefund: '100.80'
+      })
+      .onConflictDoUpdate({
+        target: drivingProfiles.userId,
+        set: {
+          currentScore: 72,
+          hardBrakingScore: 85,
+          accelerationScore: 78,
+          speedAdherenceScore: 74,
+          nightDrivingScore: 82,
+          corneringScore: 79,
+          consistencyScore: 75,
+          totalTrips: 26,
+          totalMiles: '1107.70',
+          projectedRefund: '100.80'
+        }
+      });
 
-    console.log('Created community pool:', pool);
+    console.log('✅ Driving profile created');
 
-    // Create achievements
-    const achievementsList = [
+    // 3. Create community pool
+    console.log('Creating community pool...');
+    await db.insert(communityPool)
+      .values({
+        poolAmount: '105000.00',
+        safetyFactor: '0.85',
+        participantCount: 1000,
+        safeDriverCount: 850
+      })
+      .onConflictDoNothing();
+
+    console.log('✅ Community pool created');
+
+    // 4. Create achievements
+    console.log('Creating achievements...');
+    const achievementData = [
       {
-        name: 'First Trip',
-        description: 'Complete your first trip with Driiva',
-        icon: '🛣️',
-        criteria: { trips: 1 },
-        badgeColor: '#10B981',
-        isActive: true
+        name: 'Long Distance Driver',
+        description: 'Drove over 1000 miles safely',
+        icon: 'road',
+        criteria: { minMiles: 1000 },
+        badgeColor: 'driiva-blue'
       },
       {
-        name: 'Safe Driver',
-        description: 'Maintain a score above 80 for 30 days',
-        icon: '🛡️',
-        criteria: { minScore: 80, days: 30 },
-        badgeColor: '#3B82F6',
-        isActive: true
+        name: 'Consistent Driver',
+        description: 'Maintained 70+ score for 4 weeks',
+        icon: 'target',
+        criteria: { minScore: 70, weeks: 4 },
+        badgeColor: 'driiva-green'
       },
       {
-        name: 'Weekly Warrior',
-        description: 'Complete 7 trips in one week',
-        icon: '🏆',
-        criteria: { tripsPerWeek: 7 },
-        badgeColor: '#F59E0B',
-        isActive: true
+        name: 'Safe Night Driver',
+        description: 'Perfect night driving record',
+        icon: 'moon',
+        criteria: { nightScore: 90 },
+        badgeColor: 'driiva-purple'
+      },
+      {
+        name: 'Speed Master',
+        description: 'No speed violations in 30 days',
+        icon: 'gauge',
+        criteria: { speedViolations: 0, days: 30 },
+        badgeColor: 'driiva-orange'
       }
     ];
 
-    for (const achievement of achievementsList) {
-      await db.insert(achievements).values(achievement);
+    for (const achievement of achievementData) {
+      await db.insert(achievements)
+        .values(achievement)
+        .onConflictDoNothing();
     }
 
-    console.log('Database seeded successfully!');
+    console.log('✅ Achievements created');
+
+    // 5. Award achievements to test user
+    console.log('Awarding achievements...');
+    const allAchievements = await db.select().from(achievements);
+    
+    // Award first two achievements
+    for (let i = 0; i < Math.min(2, allAchievements.length); i++) {
+      await db.insert(userAchievements)
+        .values({
+          userId: testUser.id,
+          achievementId: allAchievements[i].id
+        })
+        .onConflictDoNothing();
+    }
+
+    console.log('✅ Achievements awarded');
+
+    // 6. Create sample trips
+    console.log('Creating sample trips...');
+    const sampleTrips = [
+      {
+        userId: testUser.id,
+        startLocation: 'Manchester City Centre',
+        endLocation: 'Trafford Centre',
+        startTime: new Date('2025-01-28T09:00:00Z'),
+        endTime: new Date('2025-01-28T09:45:00Z'),
+        distance: '12.5',
+        duration: 45,
+        score: 85,
+        hardBrakingEvents: 1,
+        harshAcceleration: 0,
+        speedViolations: 0,
+        nightDriving: false,
+        sharpCorners: 2,
+        telematicsData: { avgSpeed: 28, maxSpeed: 45 }
+      },
+      {
+        userId: testUser.id,
+        startLocation: 'Home',
+        endLocation: 'Supermarket',
+        startTime: new Date('2025-01-27T14:30:00Z'),
+        endTime: new Date('2025-01-27T15:00:00Z'),
+        distance: '8.2',
+        duration: 30,
+        score: 92,
+        hardBrakingEvents: 0,
+        harshAcceleration: 0,
+        speedViolations: 0,
+        nightDriving: false,
+        sharpCorners: 1,
+        telematicsData: { avgSpeed: 25, maxSpeed: 35 }
+      },
+      {
+        userId: testUser.id,
+        startLocation: 'Office',
+        endLocation: 'Home',
+        startTime: new Date('2025-01-26T18:00:00Z'),
+        endTime: new Date('2025-01-26T18:35:00Z'),
+        distance: '15.8',
+        duration: 35,
+        score: 78,
+        hardBrakingEvents: 2,
+        harshAcceleration: 1,
+        speedViolations: 1,
+        nightDriving: false,
+        sharpCorners: 3,
+        telematicsData: { avgSpeed: 32, maxSpeed: 55 }
+      }
+    ];
+
+    for (const trip of sampleTrips) {
+      await db.insert(trips)
+        .values(trip)
+        .onConflictDoNothing();
+    }
+
+    console.log('✅ Sample trips created');
+
+    // 7. Create leaderboard entries
+    console.log('Creating leaderboard...');
+    const leaderboardData = [
+      { userId: testUser.id, score: 72, rank: 14, period: 'weekly' },
+      { userId: testUser.id, score: 75, rank: 12, period: 'monthly' }
+    ];
+
+    for (const entry of leaderboardData) {
+      await db.insert(leaderboard)
+        .values(entry)
+        .onConflictDoUpdate({
+          target: [leaderboard.userId, leaderboard.period],
+          set: { score: entry.score, rank: entry.rank }
+        });
+    }
+
+    console.log('✅ Leaderboard entries created');
+    console.log('🎉 Database seeding completed successfully!');
+    
+    return {
+      success: true,
+      testUser,
+      message: 'Database seeded with test data'
+    };
+
   } catch (error) {
-    console.error('Error seeding database:', error);
+    console.error('❌ Database seeding failed:', error);
+    throw error;
   }
 }
 
-seedDatabase();
+// Run seeding if called directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+  seedDatabase()
+    .then(() => {
+      console.log('Seeding completed');
+      process.exit(0);
+    })
+    .catch((error) => {
+      console.error('Seeding failed:', error);
+      process.exit(1);
+    });
+}

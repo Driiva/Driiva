@@ -1,26 +1,34 @@
 
 import React from 'react';
-import DashboardHeader from "@/components/DashboardHeader";
-import LiquidGauge from "@/components/LiquidGauge";
-import MetricsGrid from "@/components/MetricsGrid";
-import CommunityPool from "@/components/CommunityPool";
-import RefundSimulator from "@/components/RefundSimulator";
-import Gamification from "@/components/Gamification";
-import BottomNavigation from "@/components/BottomNavigation";
-import PolicyStatusWidget from "@/components/PolicyStatusWidget";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import {
+  MemoizedDashboardHeader as DashboardHeader,
+  MemoizedLiquidGauge as LiquidGauge,
+  MemoizedMetricsGrid as MetricsGrid,
+  MemoizedCommunityPool as CommunityPool,
+  MemoizedRefundSimulator as RefundSimulator,
+  MemoizedGamification as Gamification,
+  MemoizedBottomNavigation as BottomNavigation,
+  MemoizedPolicyStatusWidget as PolicyStatusWidget
+} from "@/components/OptimizedComponents";
+import { MetricUser, CommunityPoolData, DrivingProfile, Achievement, LeaderboardEntry } from "@shared/types";
 
-export default function Dashboard() {
+interface DashboardProps {
+  isLoading?: boolean;
+}
+
+export default function Dashboard({ isLoading = false }: DashboardProps) {
   // Stable mock data - optimized for runtime stability
-  const userData = {
+  const [userData] = React.useState<MetricUser>({
     id: 8,
     username: "driiva1",
     firstName: "Test",
     lastName: "Driver",
     email: "test@driiva.com",
     premiumAmount: "1840.00"
-  };
+  });
 
-  const userProfile = {
+  const [userProfile] = React.useState<Partial<DrivingProfile>>({
     currentScore: 72, // Test score above 70% threshold
     projectedRefund: 100.80, // Calculated: (1840 * 5.48%) for score 72
     totalMiles: 1107.70,
@@ -29,16 +37,17 @@ export default function Dashboard() {
     accelerationScore: 2,
     speedAdherenceScore: 1,
     nightDrivingScore: 5
-  };
+  });
 
-  const communityPoolData = {
+  const [communityPoolData] = React.useState<CommunityPoolData>({
     poolAmount: 105000,
     safetyFactor: 0.85,
-    totalParticipants: 1000,
+    participantCount: 1000,
+    safeDriverCount: 800,
     averageScore: 82
-  };
+  });
 
-  const achievementsData = [
+  const [achievementsData] = React.useState<Achievement[]>([
     {
       id: 1,
       name: "Long Distance Driver",
@@ -53,23 +62,28 @@ export default function Dashboard() {
       iconUrl: "⭐",
       unlockedAt: "2025-07-25"
     }
-  ];
+  ]);
 
-  const leaderboardData = [
+  const [leaderboardData] = React.useState<LeaderboardEntry[]>([
     {
       id: 1,
       userId: 8,
-      rank: 1,
-      score: 89,
-      weeklyScore: 92
+      rank: 14,
+      score: 72,
+      weeklyScore: 74
     }
-  ];
+  ]);
+
+  // Show loading spinner if data is loading
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
 
   return (
     <div className="min-h-screen text-white">
       <DashboardHeader user={userData} />
       
-      <main className="px-4 pb-20">
+      <main className="px-4 pb-20 space-y-4">
         {/* Policy Status Widget */}
         <div className="pt-4 mb-4">
           <PolicyStatusWidget user={userData} />
@@ -78,15 +92,20 @@ export default function Dashboard() {
         {/* Driving Score Gauge */}
         <div className="mb-4">
           <LiquidGauge 
-            score={userProfile.currentScore}
-            projectedRefund={userProfile.projectedRefund}
+            score={userProfile.currentScore || 72}
+            projectedRefund={userProfile.projectedRefund || 100.80}
             premiumAmount={Number(userData.premiumAmount)}
           />
         </div>
 
         {/* Metrics Grid */}
         <div className="mb-4">
-          <MetricsGrid profile={userProfile} />
+          <MetricsGrid profile={{
+            hardBrakingScore: userProfile.hardBrakingScore || 3,
+            accelerationScore: userProfile.accelerationScore || 2,
+            speedAdherenceScore: userProfile.speedAdherenceScore || 1,
+            nightDrivingScore: userProfile.nightDrivingScore || 5
+          }} />
         </div>
 
         {/* Community Pool */}
@@ -95,8 +114,8 @@ export default function Dashboard() {
             pool={{
               poolAmount: communityPoolData.poolAmount,
               safetyFactor: communityPoolData.safetyFactor,
-              participantCount: communityPoolData.totalParticipants,
-              safeDriverCount: Math.round(communityPoolData.totalParticipants * 0.8)
+              participantCount: communityPoolData.participantCount,
+              safeDriverCount: communityPoolData.safeDriverCount
             }}
           />
         </div>
@@ -107,7 +126,11 @@ export default function Dashboard() {
             achievements={achievementsData}
             leaderboard={leaderboardData}
             currentUser={userData}
-            profile={userProfile}
+            profile={{
+              currentScore: userProfile.currentScore || 72,
+              projectedRefund: userProfile.projectedRefund || 100.80,
+              totalMiles: userProfile.totalMiles || 1107.70
+            }}
             premiumAmount={Number(userData.premiumAmount)}
           />
         </div>
@@ -115,7 +138,7 @@ export default function Dashboard() {
         {/* Refund Simulator */}
         <div className="mb-4">
           <RefundSimulator 
-            currentScore={userProfile.currentScore}
+            currentScore={userProfile.currentScore || 72}
             premiumAmount={Number(userData.premiumAmount)}
             poolSafetyFactor={communityPoolData.safetyFactor}
           />

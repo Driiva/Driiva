@@ -2,6 +2,7 @@ import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Router, Route, Switch } from 'wouter';
 import ScrollGradient from './components/ScrollGradient';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Pages
 import Dashboard from './pages/dashboard';
@@ -34,12 +35,13 @@ const queryClient = new QueryClient({
 
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Router>
-          <div className="App">
-            <div className="driiva-gradient-bg" />
-            <ScrollGradient />
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <Router>
+            <div className="App">
+              <div className="driiva-gradient-bg" />
+              <ScrollGradient />
             <Switch>
               {/* Public Routes */}
               <Route path="/signin">
@@ -96,5 +98,6 @@ export default function App() {
         </Router>
       </AuthProvider>
     </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
