@@ -7,6 +7,7 @@ import { aiInsightsEngine } from "./lib/aiInsights";
 import { insertTripSchema, insertIncidentSchema } from "@shared/schema";
 import { z } from "zod";
 import { authService } from "./auth";
+import { webauthnService } from "./webauthn";
 import { authLimiter, tripDataLimiter } from "./middleware/security";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -59,6 +60,101 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Firebase auth error:", error);
       res.status(401).json({ message: "Invalid token" });
+    }
+  });
+
+  // WebAuthn (Face ID/Touch ID) Authentication Endpoints
+  app.post("/api/auth/webauthn/register/start", authLimiter, async (req, res) => {
+    try {
+      const { username } = req.body;
+      
+      if (!username) {
+        return res.status(400).json({ message: "Username required" });
+      }
+
+      const options = await webauthnService.generateRegistrationOptions(username);
+      res.json(options);
+    } catch (error: any) {
+      console.error("WebAuthn registration start error:", error);
+      res.status(400).json({ message: error.message || "Failed to generate registration options" });
+    }
+  });
+
+  app.post("/api/auth/webauthn/register/complete", authLimiter, async (req, res) => {
+    try {
+      const { username, credential } = req.body;
+      
+      if (!username || !credential) {
+        return res.status(400).json({ message: "Username and credential required" });
+      }
+
+      const result = await webauthnService.verifyRegistration(username, credential);
+      
+      if (result.verified) {
+        res.json({ success: true, message: "Biometric authentication registered successfully" });
+      } else {
+        res.status(400).json({ message: result.error || "Registration verification failed" });
+      }
+    } catch (error: any) {
+      console.error("WebAuthn registration complete error:", error);
+      res.status(500).json({ message: error.message || "Registration failed" });
+    }
+  });
+
+  app.post("/api/auth/webauthn/authenticate/start", authLimiter, async (req, res) => {
+    try {
+      const { username } = req.body;
+      
+      if (!username) {
+        return res.status(400).json({ message: "Username required" });
+      }
+
+      const options = await webauthnService.generateAuthenticationOptions(username);
+      res.json(options);
+    } catch (error: any) {
+      console.error("WebAuthn authentication start error:", error);
+      res.status(400).json({ message: error.message || "Failed to generate authentication options" });
+    }
+  });
+
+  app.post("/api/auth/webauthn/authenticate/complete", authLimiter, async (req, res) => {
+    try {
+      const { username, assertion } = req.body;
+      
+      if (!username || !assertion) {
+        return res.status(400).json({ message: "Username and assertion required" });
+      }
+
+      const result = await webauthnService.verifyAuthentication(username, assertion);
+      
+      if (result.verified && result.user) {
+        res.json({ success: true, user: result.user });
+      } else {
+        res.status(401).json({ message: result.error || "Authentication failed" });
+      }
+    } catch (error: any) {
+      console.error("WebAuthn authentication complete error:", error);
+      res.status(500).json({ message: error.message || "Authentication failed" });
+    }
+  });
+
+  app.get("/api/auth/webauthn/credentials/:username", async (req, res) => {
+    try {
+      const { username } = req.params;
+      
+      const credentials = await webauthnService.getUserCredentials(username);
+      res.json({
+        credentials: credentials.map((cred: any) => ({
+          id: cred.credentialId,
+          deviceType: cred.deviceType,
+          deviceName: cred.deviceName,
+          createdAt: cred.createdAt,
+          lastUsed: cred.lastUsed
+        }))
+      });
+    } catch (error: any) {
+      console.error("Get credentials error:", error);
+      res.status(500).json({ message: "Failed to fetch credentials" });
     }
   });
 
