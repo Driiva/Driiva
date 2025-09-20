@@ -10,7 +10,6 @@ import DriivaLogo from "@/components/DrivvaLogo";
 import FloatingStardust from "@/components/FloatingStardust";
 import { useParallax } from "@/hooks/useParallax";
 import { useAuth } from "../contexts/AuthContext";
-import BiometricAuth from "@/components/BiometricAuth";
 
 export default function SignIn() {
   const [, setLocation] = useLocation();
@@ -90,10 +89,6 @@ export default function SignIn() {
     }
   };
 
-  const handleBiometricSuccess = (userData: any) => {
-    login(userData);
-    setLocation("/dashboard");
-  };
 
   return (
     <div className="min-h-screen text-white relative overflow-hidden">
@@ -174,18 +169,6 @@ export default function SignIn() {
                 </p>
               </motion.div>
 
-              {/* Biometric Authentication */}
-              <motion.div
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.7 }}
-                className="mb-4"
-              >
-                <BiometricAuth
-                  username={username}
-                  onSuccess={handleBiometricSuccess}
-                />
-              </motion.div>
 
               {/* Sign In Form */}
               <motion.form

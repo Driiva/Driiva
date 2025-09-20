@@ -7,7 +7,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { checkBiometricSupport, authenticateWithBiometrics, registerBiometricCredential } from "@/lib/webauthn";
-import { FaceId, Smartphone, ShieldCheck, AlertCircle } from "lucide-react";
+import { Smartphone, ShieldCheck, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface BiometricAuthProps {
@@ -127,14 +127,7 @@ export default function BiometricAuth({ username, onSuccess, onRegister }: Biome
   };
 
   const getDeviceIcon = () => {
-    const userAgent = navigator.userAgent;
-    if (userAgent.includes('iPhone') || userAgent.includes('iPad')) {
-      return <FaceId className="w-6 h-6" />;
-    } else if (userAgent.includes('Mac')) {
-      return <Smartphone className="w-6 h-6" />;
-    } else {
-      return <ShieldCheck className="w-6 h-6" />;
-    }
+    return <ShieldCheck className="w-6 h-6" />;
   };
 
   const getDeviceLabel = () => {
