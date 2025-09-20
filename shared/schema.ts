@@ -102,6 +102,19 @@ export const leaderboard = pgTable("leaderboard", {
   lastUpdated: timestamp("last_updated").defaultNow(),
 });
 
+export const webauthnCredentials = pgTable("webauthn_credentials", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  credentialId: text("credential_id").notNull().unique(),
+  publicKey: text("public_key").notNull(),
+  counter: integer("counter").default(0),
+  deviceType: text("device_type"), // "face-id", "touch-id", "fingerprint", etc.
+  deviceName: text("device_name"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  lastUsed: timestamp("last_used"),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ one, many }) => ({
   drivingProfile: one(drivingProfiles, {
@@ -115,6 +128,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     fields: [users.id],
     references: [leaderboard.userId],
   }),
+  webauthnCredentials: many(webauthnCredentials),
 }));
 
 export const drivingProfilesRelations = relations(drivingProfiles, ({ one }) => ({
@@ -156,6 +170,13 @@ export const leaderboardRelations = relations(leaderboard, ({ one }) => ({
   }),
 }));
 
+export const webauthnCredentialsRelations = relations(webauthnCredentials, ({ one }) => ({
+  user: one(users, {
+    fields: [webauthnCredentials.userId],
+    references: [users.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -191,6 +212,12 @@ export const insertUserAchievementSchema = createInsertSchema(userAchievements).
   unlockedAt: true,
 });
 
+export const insertWebauthnCredentialSchema = createInsertSchema(webauthnCredentials).omit({
+  id: true,
+  createdAt: true,
+  lastUsed: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -206,3 +233,5 @@ export type InsertUserAchievement = z.infer<typeof insertUserAchievementSchema>;
 export type Incident = typeof incidents.$inferSelect;
 export type InsertIncident = z.infer<typeof insertIncidentSchema>;
 export type Leaderboard = typeof leaderboard.$inferSelect;
+export type WebauthnCredential = typeof webauthnCredentials.$inferSelect;
+export type InsertWebauthnCredential = z.infer<typeof insertWebauthnCredentialSchema>;
