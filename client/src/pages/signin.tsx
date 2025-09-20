@@ -10,6 +10,7 @@ import DriivaLogo from "@/components/DrivvaLogo";
 import FloatingStardust from "@/components/FloatingStardust";
 import { useParallax } from "@/hooks/useParallax";
 import { useAuth } from "../contexts/AuthContext";
+import BiometricAuth from "@/components/BiometricAuth";
 
 export default function SignIn() {
   const [, setLocation] = useLocation();
@@ -21,7 +22,7 @@ export default function SignIn() {
   const { ref: cardRef, style: cardParallaxStyle } = useParallax({ speed: 0.3 });
   const { login } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!username.trim() || !password.trim()) {
       toast({
@@ -34,35 +35,64 @@ export default function SignIn() {
 
     setIsLoading(true);
     
-    // Simulate authentication (demo purposes)
-    setTimeout(() => {
-      if (username === "driiva1" && password === "driiva1") {
-        const userData = {
-          id: 8,
-          username: "driiva1",
-          firstName: "Test",
-          lastName: "Driver",
-          email: "test@driiva.com",
-          premiumAmount: "1840.00"
-        };
-        
+    try {
+      // Try real authentication first
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
         login(userData);
         
         toast({
           title: "Welcome back!",
-          description: `Signed in as ${userData.firstName}`,
+          description: `Signed in as ${userData.firstName || userData.username}`,
         });
         
         setLocation("/dashboard");
       } else {
-        toast({
-          title: "Sign in failed",
-          description: "Invalid username or password",
-          variant: "destructive",
-        });
+        // Fallback to demo authentication
+        if (username === "driiva1" && password === "driiva1") {
+          const userData = {
+            id: 8,
+            username: "driiva1",
+            firstName: "Test",
+            lastName: "Driver",
+            email: "test@driiva.com",
+            premiumAmount: "1840.00"
+          };
+          
+          login(userData);
+          
+          toast({
+            title: "Welcome back!",
+            description: `Signed in as ${userData.firstName}`,
+          });
+          
+          setLocation("/dashboard");
+        } else {
+          throw new Error('Invalid credentials');
+        }
       }
+    } catch (error) {
+      toast({
+        title: "Sign in failed",
+        description: "Invalid username or password",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
+  };
+
+  const handleBiometricSuccess = (userData: any) => {
+    login(userData);
+    setLocation("/dashboard");
   };
 
   return (
@@ -142,6 +172,19 @@ export default function SignIn() {
                 }}>
                   Sign in to your telematics insurance account
                 </p>
+              </motion.div>
+
+              {/* Biometric Authentication */}
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7 }}
+                className="mb-4"
+              >
+                <BiometricAuth
+                  username={username}
+                  onSuccess={handleBiometricSuccess}
+                />
               </motion.div>
 
               {/* Sign In Form */}
