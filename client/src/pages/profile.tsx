@@ -9,9 +9,18 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { User, Car, Shield, Settings, Download, Trash2, ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 export default function Profile() {
   const { toast } = useToast();
+  const [showCoverageDropdown, setShowCoverageDropdown] = useState(false);
+  const [selectedCoverage, setSelectedCoverage] = useState("Comprehensive Plus");
+  
+  const coverageOptions = [
+    { value: "comprehensive-plus", label: "Comprehensive Plus", description: "Full coverage with extras" },
+    { value: "comprehensive", label: "Comprehensive", description: "Standard full coverage" },
+    { value: "third-party", label: "Third Party", description: "Basic legal requirement" }
+  ];
   
   // Static user data for stable demo
   const userData = {
@@ -135,15 +144,51 @@ export default function Profile() {
                 <span className="text-sm text-gray-400">Coverage Type</span>
                 <div className="relative">
                   <button
-                    onClick={() => toast({
-                      title: "Comprehensive Plus Coverage",
-                      description: "✓ Theft & Fire Protection\n✓ Third Party Liability\n✓ Personal Accident Cover\n✓ Windscreen Damage\n✓ Legal Expenses\n✓ Breakdown Assistance\n✓ Courtesy Car",
-                    })}
+                    onClick={() => setShowCoverageDropdown(!showCoverageDropdown)}
                     className="text-sm font-medium text-blue-400 hover:text-blue-300 flex items-center gap-1 transition-colors"
+                    data-testid="coverage-dropdown-button"
+                    aria-expanded={showCoverageDropdown}
+                    aria-haspopup="listbox"
                   >
-                    Comprehensive Plus
-                    <ChevronDown className="w-3 h-3" />
+                    {selectedCoverage}
+                    <ChevronDown className={`w-3 h-3 transition-transform ${showCoverageDropdown ? 'rotate-180' : ''}`} />
                   </button>
+                  
+                  {showCoverageDropdown && (
+                    <div 
+                      className="absolute right-0 top-full mt-2 w-64 glass-card border border-white/20 rounded-lg z-50"
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.15)',
+                        backdropFilter: 'blur(12px)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        borderRadius: 'var(--radius-card)',
+                        padding: 'var(--space-2)'
+                      }}
+                      role="listbox"
+                      data-testid="coverage-dropdown-menu"
+                    >
+                      {coverageOptions.map((option) => (
+                        <button
+                          key={option.value}
+                          onClick={() => {
+                            setSelectedCoverage(option.label);
+                            setShowCoverageDropdown(false);
+                            toast({
+                              title: `Coverage changed to ${option.label}`,
+                              description: option.description,
+                            });
+                          }}
+                          className="w-full text-left px-3 py-2 text-sm text-white hover:bg-white/10 rounded-lg transition-colors"
+                          role="option"
+                          aria-selected={selectedCoverage === option.label}
+                          data-testid={`coverage-option-${option.value}`}
+                        >
+                          <div className="font-medium">{option.label}</div>
+                          <div className="text-xs text-white/70">{option.description}</div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>

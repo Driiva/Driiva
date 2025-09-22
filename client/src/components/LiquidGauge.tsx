@@ -172,7 +172,7 @@ export default function LiquidGauge({ score, projectedRefund, premiumAmount }: L
         <div 
           className="text-white/90 mb-2" 
           style={{ 
-            fontSize: 'var(--font-caption)', // 12px professional scale
+            fontSize: 'var(--font-body)', // 16px professional scale for subheadings
             fontFamily: 'SF Pro Text, Inter, sans-serif',
             fontWeight: '500',
             textShadow: '0 1px 2px rgba(0,0,0,0.5)',
