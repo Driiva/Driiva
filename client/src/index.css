@@ -32,13 +32,40 @@ h1, h2, h3, h4, h5, h6 {
   letter-spacing: -0.02em;
 }
 
-/* Global CSS Variables */
+/* Professional Design System Foundation */
 :root {
-  --glass-bg: rgba(255, 255, 255, 0.1);
+  /* Professional Color Tokens */
+  --primary-purple: #8B5CF6;
+  --secondary-blue: #3B82F6;
+  --glass-overlay: rgba(255, 255, 255, 0.15);
+  --glass-overlay-subtle: rgba(255, 255, 255, 0.12);
   --glass-border: rgba(255, 255, 255, 0.2);
   --glass-shadow: rgba(0, 0, 0, 0.1);
-  --primary-blue: #06B6D4;
-  --primary-purple: #8B5CF6;
+  
+  /* Typography Scale */
+  --font-display: 28px;
+  --font-heading: 20px;
+  --font-body: 16px;
+  --font-caption: 12px;
+  
+  /* Spacing Scale (4px grid) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  
+  /* Border Radius */
+  --radius-button: 8px;
+  --radius-card: 12px;
+  --radius-container: 16px;
+  
+  /* Effects */
+  --blur-glass: 6px;
+  --shadow-professional: 0 2px 8px rgba(0, 0, 0, 0.1);
+  
+  /* Status Colors */
   --success-green: #10B981;
   --warning-yellow: #F59E0B;
   --error-red: #EF4444;
@@ -64,21 +91,22 @@ body {
   overflow-x: hidden;
 }
 
-/* Glass Morphism Effects */
+/* Professional Glass Morphism System */
 .glass-morphism {
-  background: var(--glass-bg);
-  backdrop-filter: blur(35px);
-  -webkit-backdrop-filter: blur(35px);
+  background: var(--glass-overlay);
+  backdrop-filter: blur(var(--blur-glass));
+  -webkit-backdrop-filter: blur(var(--blur-glass));
   border: 1px solid var(--glass-border);
-  box-shadow: 0 8px 32px var(--glass-shadow);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-professional);
+  transition: all 200ms ease-out;
 }
 
 .glass-morphism:hover {
-  background: rgba(255, 255, 255, 0.15);
-  border-color: rgba(255, 255, 255, 0.3);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.25);
+  opacity: 0.8;
+  transform: translateY(-1px);
 }
 
 .glass-border {
@@ -92,17 +120,23 @@ body {
   background: linear-gradient(135deg, #D97706 0%, #DC2626 25%, #7C3AED 75%, #3B82F6 100%);
 }
 
+/* Optimized Professional Card System */
 .glass-card {
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(25px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  transition: all 0.3s ease;
+  background: var(--glass-overlay-subtle);
+  backdrop-filter: blur(var(--blur-glass));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-card);
+  padding: var(--space-4); /* Reduced from 24px to 16px */
+  margin-bottom: var(--space-3); /* Reduced from 20px to 12px */
+  transition: all 200ms ease-out;
+  min-height: fit-content; /* Reduce card height automatically */
 }
 
 .glass-card:hover {
-  background: rgba(255, 255, 255, 0.15);
-  transform: translateY(-2px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  background: rgba(255, 255, 255, 0.18);
+  opacity: 0.8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
 }
 
 /* Component Specific Styles */

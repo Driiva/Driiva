@@ -75,9 +75,19 @@ export default function MetricsGrid({ profile }: MetricsGridProps) {
 
   return (
     <section className="mb-3">
-      <div className="grid grid-cols-2 gap-2 sm:gap-3">
+      <div className="grid grid-cols-2 gap-3">
         {metrics.map((metric, index) => (
-          <button key={index} onClick={() => handleMetricClick(metric)} className="glass-morphism-subtle rounded-xl p-3 sm:p-3 transition-all duration-300 hover:scale-102 hover:shadow-lg cursor-pointer w-full text-left">
+          <button 
+            key={index} 
+            onClick={() => handleMetricClick(metric)} 
+            className="glass-card transition-all duration-200 hover:scale-[1.02] cursor-pointer w-full text-left min-h-[80px]" 
+            style={{ 
+              minHeight: '80px',
+              padding: 'var(--space-3)', // 12px using design token
+              borderRadius: 'var(--radius-card)' // 12px using design token
+            }}
+            data-testid={`metric-${metric.label.toLowerCase().replace(' ', '-')}`}
+          >
             <div className="flex items-center space-x-2 mb-2">
               <div 
                 className="w-6 h-6 rounded-lg flex items-center justify-center"
@@ -85,30 +95,58 @@ export default function MetricsGrid({ profile }: MetricsGridProps) {
               >
                 <metric.icon className="w-3 h-3" style={{ color: metric.color }} />
               </div>
-              <div>
-                <div className="text-sm font-medium text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]" style={{ 
-                  textShadow: '1px 1px 2px rgba(0,0,0,0.6)',
-                  fontFamily: 'Inter, sans-serif',
-                  fontWeight: '500'
-                }}>{metric.label}</div>
-                <div className="text-xs text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]" style={{ 
-                  textShadow: '1px 1px 1px rgba(0,0,0,0.5)',
-                  fontFamily: 'Inter, sans-serif'
-                }}>{metric.weight}</div>
+              <div className="flex-1">
+                <div 
+                  className="font-semibold text-white" 
+                  style={{ 
+                    fontSize: 'var(--font-caption)', // 12px professional scale
+                    fontFamily: 'SF Pro Text, Inter, sans-serif',
+                    fontWeight: '600',
+                    textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+                    lineHeight: '1.2'
+                  }}
+                >
+                  {metric.label}
+                </div>
+                <div 
+                  className="text-white/70" 
+                  style={{ 
+                    fontSize: '10px', // Smaller for weight info
+                    fontFamily: 'SF Pro Text, Inter, sans-serif',
+                    fontWeight: '400',
+                    textShadow: '0 1px 1px rgba(0,0,0,0.4)'
+                  }}
+                >
+                  {metric.weight}
+                </div>
               </div>
             </div>
             <div className="text-right">
-              <div className={`text-lg font-bold ${getScoreColor(metric.value, metric.isInverse)} drop-shadow-[0_1px_1px_rgba(0,0,0,0.3)]`} style={{ 
-                textShadow: '1px 1px 1px rgba(0,0,0,0.3)',
-                fontFamily: 'Inter, sans-serif',
-                fontWeight: '700'
-              }}>
+              <div 
+                className="text-white font-semibold" 
+                style={{ 
+                  fontSize: 'var(--font-heading)', // 20px professional scale
+                  fontFamily: 'SF Pro Display, Inter, sans-serif',
+                  fontWeight: '600', // Semi-bold instead of bold
+                  textShadow: '0 1px 2px rgba(0,0,0,0.4)',
+                  lineHeight: '1.1'
+                }}
+                data-testid={`metric-value-${metric.label.toLowerCase().replace(' ', '-')}`}
+              >
                 {metric.value}
               </div>
-              <div className="text-xs text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.3)]" style={{ 
-                textShadow: '1px 1px 1px rgba(0,0,0,0.3)',
-                fontFamily: 'Inter, sans-serif'
-              }}>{metric.unit}</div>
+              <div 
+                className="text-white/80 mt-1" 
+                style={{ 
+                  fontSize: 'var(--font-caption)', // 12px for unit text
+                  fontFamily: 'SF Pro Text, Inter, sans-serif',
+                  fontWeight: '400',
+                  textShadow: '0 1px 1px rgba(0,0,0,0.3)',
+                  lineHeight: '1.2'
+                }}
+              >
+                {metric.unit}
+              </div>
             </div>
           </button>
         ))}
