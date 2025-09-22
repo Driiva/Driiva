@@ -71,65 +71,145 @@ export default function LiquidGauge({ score, projectedRefund, premiumAmount }: L
           </defs>
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <button onClick={handleScoreClick} className="text-center hover:scale-105 transition-transform duration-200">
-            <div className="text-4xl font-bold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.4)]" style={{ 
-              textShadow: '1px 1px 3px rgba(0,0,0,0.4)',
-              fontFamily: 'Poppins, sans-serif',
-              fontWeight: '700'
-            }}>72</div>
-            <div className="text-sm text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]" style={{ 
-              textShadow: '1px 1px 3px rgba(0,0,0,0.8)',
-              fontFamily: 'Inter, sans-serif'
-            }}>out of 100</div>
+          <button 
+            onClick={handleScoreClick} 
+            className="text-center hover:scale-105 transition-transform duration-200" 
+            data-testid="driving-score-button"
+          >
+            <div 
+              className="text-white font-semibold" 
+              style={{ 
+                fontSize: 'var(--font-display)', // 28px professional scale
+                fontFamily: 'SF Pro Display, Inter, sans-serif',
+                fontWeight: '600', // Semi-bold instead of bold
+                textShadow: '0 2px 4px rgba(0,0,0,0.5)',
+                lineHeight: '1.1'
+              }}
+              data-testid="driving-score-value"
+            >
+              {score}
+            </div>
+            <div 
+              className="text-white/90 mt-1" 
+              style={{ 
+                fontSize: 'var(--font-caption)', // 12px professional scale
+                fontFamily: 'SF Pro Text, Inter, sans-serif',
+                fontWeight: '400',
+                textShadow: '0 1px 2px rgba(0,0,0,0.6)',
+                letterSpacing: '0.5px'
+              }}
+            >
+              out of 100
+            </div>
           </button>
         </div>
       </div>
 
       {/* Score Breakdown */}
-      <div className="grid grid-cols-2 gap-2 mb-3">
+      <div className="grid grid-cols-2 gap-3 mb-4">
         <div className="text-center">
-          <div className="text-base font-semibold text-white" style={{ 
-            fontFamily: 'Inter, sans-serif',
-            fontWeight: '600'
-          }}>{personalScore}%</div>
-          <div className="text-xs text-white/80" style={{ 
-            fontFamily: 'Inter, sans-serif'
-          }}>Personal Score</div>
+          <div 
+            className="text-white font-semibold" 
+            style={{ 
+              fontSize: 'var(--font-body)', // 16px professional scale
+              fontFamily: 'SF Pro Display, Inter, sans-serif',
+              fontWeight: '600',
+              textShadow: '0 1px 2px rgba(0,0,0,0.4)'
+            }}
+            data-testid="personal-score"
+          >
+            {personalScore}%
+          </div>
+          <div 
+            className="text-white/80 mt-1" 
+            style={{ 
+              fontSize: 'var(--font-caption)', // 12px professional scale
+              fontFamily: 'SF Pro Text, Inter, sans-serif',
+              fontWeight: '400',
+              textShadow: '0 1px 1px rgba(0,0,0,0.4)'
+            }}
+          >
+            Personal Score
+          </div>
         </div>
         <div className="text-center">
-          <div className="text-base font-semibold text-white" style={{ 
-            fontFamily: 'Inter, sans-serif',
-            fontWeight: '600'
-          }}>{poolScore}%</div>
-          <div className="text-xs text-white/80" style={{ 
-            fontFamily: 'Inter, sans-serif'
-          }}>Pool Score</div>
+          <div 
+            className="text-white font-semibold" 
+            style={{ 
+              fontSize: 'var(--font-body)', // 16px professional scale
+              fontFamily: 'SF Pro Display, Inter, sans-serif',
+              fontWeight: '600',
+              textShadow: '0 1px 2px rgba(0,0,0,0.4)'
+            }}
+            data-testid="pool-score"
+          >
+            {poolScore}%
+          </div>
+          <div 
+            className="text-white/80 mt-1" 
+            style={{ 
+              fontSize: 'var(--font-caption)', // 12px professional scale
+              fontFamily: 'SF Pro Text, Inter, sans-serif',
+              fontWeight: '400',
+              textShadow: '0 1px 1px rgba(0,0,0,0.4)'
+            }}
+          >
+            Pool Score
+          </div>
         </div>
       </div>
 
       {/* Projected Refund */}
-      <div className="text-center p-3 rounded-xl" style={{
-        background: 'rgba(255, 255, 255, 0.04)',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
-        backdropFilter: 'blur(12px)',
-      }}>
-        <div className="text-xs text-white mb-1 drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]" style={{ 
-          textShadow: '1px 1px 2px rgba(0,0,0,0.6)',
-          fontFamily: 'Inter, sans-serif'
-        }}>Projected Annual Refund</div>
-        <div className="text-2xl font-bold text-white" style={{ 
-          fontFamily: 'Inter, sans-serif',
-          fontWeight: '700'
-        }}>£{projectedRefund}</div>
-        <div className="text-xs text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.6)]" style={{ 
-          textShadow: '1px 1px 2px rgba(0,0,0,0.6)',
-          fontFamily: 'Inter, sans-serif'
-        }}>
-          <span className="font-semibold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]" style={{ 
-            textShadow: '1px 1px 3px rgba(0,0,0,0.8)',
-            fontFamily: 'Inter, sans-serif',
-            fontWeight: '600'
-          }}>{((projectedRefund / Number(premiumAmount)) * 100).toFixed(1)}%</span> of £{premiumAmount} premium
+      <div 
+        className="text-center glass-card" 
+        style={{
+          padding: 'var(--space-4)', // 16px using design token
+          borderRadius: 'var(--radius-card)', // 12px using design token
+          marginBottom: 'var(--space-3)' // 12px
+        }}
+        data-testid="projected-refund-card"
+      >
+        <div 
+          className="text-white/90 mb-2" 
+          style={{ 
+            fontSize: 'var(--font-caption)', // 12px professional scale
+            fontFamily: 'SF Pro Text, Inter, sans-serif',
+            fontWeight: '500',
+            textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+            letterSpacing: '0.5px'
+          }}
+        >
+          Projected Annual Refund
+        </div>
+        <div 
+          className="text-white font-semibold" 
+          style={{ 
+            fontSize: 'var(--font-heading)', // 20px professional scale
+            fontFamily: 'SF Pro Display, Inter, sans-serif',
+            fontWeight: '600', // Semi-bold instead of bold
+            textShadow: '0 1px 3px rgba(0,0,0,0.5)'
+          }}
+          data-testid="refund-amount"
+        >
+          £{projectedRefund.toFixed(2)}
+        </div>
+        <div 
+          className="text-white/80 mt-2" 
+          style={{ 
+            fontSize: 'var(--font-caption)', // 12px professional scale
+            fontFamily: 'SF Pro Text, Inter, sans-serif',
+            fontWeight: '400',
+            textShadow: '0 1px 2px rgba(0,0,0,0.5)'
+          }}
+        >
+          <span 
+            className="font-semibold text-white" 
+            style={{ 
+              fontWeight: '600'
+            }}
+          >
+            {((projectedRefund / Number(premiumAmount)) * 100).toFixed(1)}%
+          </span> of £{premiumAmount.toLocaleString()} premium
         </div>
       </div>
     </>

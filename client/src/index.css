@@ -183,12 +183,54 @@ body {
   perspective: 1000px;
 }
 
-/* Smooth Animations */
+/* Professional Micro-Animations */
 .smooth-transition {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 200ms ease-out;
 }
 
-/* Loading States */
+/* Professional Button Styles */
+button, .btn {
+  min-height: 44px; /* Ensure 44px tap target */
+  border-radius: var(--radius-button);
+  transition: all 200ms ease-out;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled), .btn:hover:not(:disabled) {
+  opacity: 0.8;
+  transform: translateY(-1px);
+}
+
+button:active:not(:disabled), .btn:active:not(:disabled) {
+  transform: translateY(0);
+  transition: all 100ms ease-out;
+}
+
+/* Professional Card Hover States */
+.glass-card:hover {
+  background: rgba(255, 255, 255, 0.18);
+  opacity: 0.8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* Success/Warning Color Coding */
+.status-success {
+  color: var(--success-green);
+  border-color: var(--success-green);
+}
+
+.status-warning {
+  color: var(--warning-yellow);
+  border-color: var(--warning-yellow);
+}
+
+.status-error {
+  color: var(--error-red);
+  border-color: var(--error-red);
+}
+
+/* Professional Loading States */
 .loading-shimmer {
   background: linear-gradient(90deg, 
     rgba(255, 255, 255, 0.1) 0%, 
@@ -196,11 +238,41 @@ body {
     rgba(255, 255, 255, 0.1) 100%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-card);
+}
+
+.loading-skeleton {
+  background: var(--glass-overlay-subtle);
+  border-radius: var(--radius-card);
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Professional Focus States */
+input:focus, select:focus, textarea:focus {
+  outline: 2px solid var(--primary-purple);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+}
+
+/* Interactive Element Feedback */
+.interactive:hover {
+  transform: translateY(-1px);
+  transition: transform 200ms ease-out;
+}
+
+.interactive:active {
+  transform: translateY(0);
+  transition: transform 100ms ease-out;
 }
 
 @keyframes spin {
@@ -249,14 +321,17 @@ body, h1, h2, h3, h4, h5, h6, p, span, div, button, input, select, textarea, a {
   -webkit-backdrop-filter: blur(30px) saturate(140%) !important;
 }
 
-/* Enhanced Glass Card with Radial Effect */
+/* Enhanced Professional Glass Cards */
 .glass-card {
-  background: radial-gradient(ellipse at top left, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.05)) !important;
-  backdrop-filter: blur(35px) saturate(150%) !important;
-  -webkit-backdrop-filter: blur(35px) saturate(150%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  background: var(--glass-overlay-subtle) !important;
+  backdrop-filter: blur(var(--blur-glass)) !important;
+  -webkit-backdrop-filter: blur(var(--blur-glass)) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: var(--radius-card) !important;
+  box-shadow: var(--shadow-professional) !important;
   position: relative;
   overflow: hidden;
+  transition: all 200ms ease-out;
 }
 
 .glass-card::before {
@@ -266,14 +341,28 @@ body, h1, h2, h3, h4, h5, h6, p, span, div, button, input, select, textarea, a {
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 200ms ease-out;
   pointer-events: none;
 }
 
 .glass-card:hover::before {
   opacity: 1;
+}
+
+/* Professional Enterprise Polish */
+.enterprise-polish {
+  --contrast-ratio: 4.5; /* WCAG AA compliance */
+  font-smoothing: antialiased;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* High contrast text for glass backgrounds */
+.glass-text {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  font-weight: 500;
 }
 
 /* Responsive Adjustments */
