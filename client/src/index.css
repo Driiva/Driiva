@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -34,13 +34,21 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Professional Design System Foundation */
 :root {
-  /* Professional Color Tokens */
+  /* Professional Color Tokens - Darker Tech Aesthetic */
+  --primary-dark-blue: #1E3A5F;
+  --secondary-deep-blue: #0F172A;
+  --accent-blue: #3B82F6;
+  
+  /* Backward compatibility tokens */
   --primary-purple: #8B5CF6;
   --secondary-blue: #3B82F6;
-  --glass-overlay: rgba(255, 255, 255, 0.15);
-  --glass-overlay-subtle: rgba(255, 255, 255, 0.12);
-  --glass-border: rgba(255, 255, 255, 0.2);
-  --glass-shadow: rgba(0, 0, 0, 0.1);
+  --primary-blue: #3B82F6;
+  
+  /* Glass morphism tokens */
+  --glass-overlay: rgba(255, 255, 255, 0.12);
+  --glass-overlay-subtle: rgba(255, 255, 255, 0.08);
+  --glass-border: rgba(255, 255, 255, 0.15);
+  --glass-shadow: rgba(0, 0, 0, 0.2);
   
   /* Typography Scale */
   --font-display: 28px;
@@ -117,7 +125,7 @@ body {
 }
 
 .driiva-gradient {
-  background: linear-gradient(135deg, #D97706 0%, #DC2626 25%, #7C3AED 75%, #3B82F6 100%);
+  background: linear-gradient(135deg, #0F172A 0%, #1E293B 40%, #334155 100%);
 }
 
 /* Optimized Professional Card System */
@@ -280,12 +288,14 @@ input:focus, select:focus, textarea:focus {
   to { transform: rotate(360deg); }
 }
 
-/* Override all fonts with Poppins */
+/* Professional Font System - Inter for Polish */
 body, h1, h2, h3, h4, h5, h6, p, span, div, button, input, select, textarea, a {
-  font-family: 'Poppins', sans-serif !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif !important;
+  font-weight: 400;
+  letter-spacing: -0.01em;
 }
 
-/* Dynamic Driiva Gradient Background */
+/* Dynamic Driiva Gradient Background - Darker Tech Aesthetic */
 .driiva-gradient-bg {
   position: fixed;
   top: 0;
@@ -293,11 +303,11 @@ body, h1, h2, h3, h4, h5, h6, p, span, div, button, input, select, textarea, a {
   width: 100%;
   height: 200vh;
   background: radial-gradient(ellipse at 50% 0%, 
-    #713F12 0%, 
-    #7F1D1D 25%, 
-    #581C87 55%, 
-    #1E3A8A 85%, 
-    #0F172A 100%
+    #1E293B 0%, 
+    #334155 20%, 
+    #1E3A5F 45%, 
+    #0F172A 75%, 
+    #020617 100%
   );
   z-index: -2;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -374,11 +384,11 @@ body, h1, h2, h3, h4, h5, h6, p, span, div, button, input, select, textarea, a {
   
   .driiva-gradient-bg {
     background: linear-gradient(180deg, 
-      #713F12 0%, 
-      #7F1D1D 20%, 
-      #581C87 50%, 
-      #1E3A8A 80%, 
-      #0F172A 100%
+      #1E293B 0%, 
+      #334155 25%, 
+      #1E3A5F 50%, 
+      #0F172A 75%, 
+      #020617 100%
     );
   }
 }

@@ -26,7 +26,7 @@ export default function PolicyStatusWidget({ user }: PolicyStatusWidgetProps) {
 
   return (
     <section className="mb-3">
-      <div className="glass-morphism rounded-xl p-3">
+      <div className="glass-morphism rounded-xl p-3" style={{ background: 'rgba(255, 255, 255, 0.06)', backdropFilter: 'blur(10px)' }}>
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-base font-semibold text-white">Policy Status</h3>
           <div className="flex items-center space-x-2">

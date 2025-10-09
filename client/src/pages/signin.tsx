@@ -104,10 +104,10 @@ export default function SignIn() {
         </div>
       </div>
 
-      {/* Glassmorphism overlay */}
+      {/* Glassmorphism overlay - Darker Tech Aesthetic */}
       <div className="absolute inset-0" style={{
-        background: 'radial-gradient(circle at 30% 20%, rgba(139, 69, 19, 0.15) 0%, rgba(184, 115, 51, 0.1) 35%, rgba(123, 31, 162, 0.08) 70%, transparent 100%)',
-        backdropFilter: 'blur(1px)',
+        background: 'radial-gradient(circle at 30% 20%, rgba(30, 58, 95, 0.2) 0%, rgba(51, 65, 85, 0.15) 35%, rgba(15, 23, 42, 0.1) 70%, transparent 100%)',
+        backdropFilter: 'blur(2px)',
       }} />
 
       <div className="relative z-10 min-h-screen flex items-center justify-center px-4">
