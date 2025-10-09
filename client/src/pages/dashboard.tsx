@@ -83,14 +83,14 @@ export default function Dashboard({ isLoading = false }: DashboardProps) {
     <div className="min-h-screen text-white">
       <DashboardHeader user={userData} />
       
-      <main className="px-4 pb-20" style={{ gap: 'var(--space-3)' }}>
+      <main className="px-3 pb-20 stagger-children">
         {/* Policy Status Widget */}
-        <div style={{ paddingTop: 'var(--space-4)', marginBottom: 'var(--space-3)' }}>
+        <div style={{ paddingTop: 'var(--space-3)', marginBottom: 'var(--space-2)' }}>
           <PolicyStatusWidget user={userData} />
         </div>
 
         {/* Driving Score Gauge */}
-        <div style={{ marginBottom: 'var(--space-3)' }}>
+        <div style={{ marginBottom: 'var(--space-2)' }} className="animate-scale-in">
           <LiquidGauge 
             score={userProfile.currentScore || 72}
             projectedRefund={userProfile.projectedRefund || 100.80}
@@ -99,7 +99,7 @@ export default function Dashboard({ isLoading = false }: DashboardProps) {
         </div>
 
         {/* Metrics Grid */}
-        <div style={{ marginBottom: 'var(--space-3)' }}>
+        <div style={{ marginBottom: 'var(--space-2)' }}>
           <MetricsGrid profile={{
             hardBrakingScore: userProfile.hardBrakingScore || 3,
             accelerationScore: userProfile.accelerationScore || 2,
@@ -109,7 +109,7 @@ export default function Dashboard({ isLoading = false }: DashboardProps) {
         </div>
 
         {/* Community Pool */}
-        <div style={{ marginBottom: 'var(--space-3)' }}>
+        <div style={{ marginBottom: 'var(--space-2)' }}>
           <CommunityPool 
             pool={{
               poolAmount: communityPoolData.poolAmount,
@@ -121,7 +121,7 @@ export default function Dashboard({ isLoading = false }: DashboardProps) {
         </div>
 
         {/* Gamification */}
-        <div style={{ marginBottom: 'var(--space-3)' }}>
+        <div style={{ marginBottom: 'var(--space-2)' }}>
           <Gamification 
             achievements={achievementsData}
             leaderboard={leaderboardData}
@@ -136,7 +136,7 @@ export default function Dashboard({ isLoading = false }: DashboardProps) {
         </div>
 
         {/* Refund Simulator */}
-        <div style={{ marginBottom: 'var(--space-4)' }}>
+        <div style={{ marginBottom: 'var(--space-3)' }}>
           <RefundSimulator 
             currentScore={userProfile.currentScore || 72}
             premiumAmount={Number(userData.premiumAmount)}

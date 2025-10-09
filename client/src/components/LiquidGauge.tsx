@@ -106,7 +106,7 @@ export default function LiquidGauge({ score, projectedRefund, premiumAmount }: L
       </div>
 
       {/* Score Breakdown */}
-      <div className="grid grid-cols-2 gap-3 mb-4">
+      <div className="grid grid-cols-2 gap-2 mb-3">
         <div className="text-center">
           <div 
             className="text-white font-semibold" 
@@ -161,22 +161,21 @@ export default function LiquidGauge({ score, projectedRefund, premiumAmount }: L
 
       {/* Projected Refund */}
       <div 
-        className="text-center glass-card" 
+        className="text-center glass-card glass-card-sm" 
         style={{
-          padding: 'var(--space-4)', // 16px using design token
-          borderRadius: 'var(--radius-card)', // 12px using design token
-          marginBottom: 'var(--space-3)' // 12px
+          padding: 'var(--card-padding-xs)',
+          borderRadius: 'var(--radius-md)',
+          marginBottom: 'var(--space-2)'
         }}
         data-testid="projected-refund-card"
       >
         <div 
-          className="text-white/90 mb-2" 
+          className="text-white/90 mb-1" 
           style={{ 
-            fontSize: 'var(--font-body)', // 16px professional scale for subheadings
-            fontFamily: 'SF Pro Text, Inter, sans-serif',
-            fontWeight: '500',
+            fontSize: 'var(--font-sm)',
+            fontWeight: 'var(--font-medium)',
             textShadow: '0 1px 2px rgba(0,0,0,0.5)',
-            letterSpacing: '0.5px'
+            letterSpacing: '0.3px'
           }}
         >
           Projected Annual Refund
