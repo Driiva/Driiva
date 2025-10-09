@@ -74,23 +74,23 @@ export default function MetricsGrid({ profile }: MetricsGridProps) {
   ];
 
   return (
-    <section className="mb-3">
-      <div className="grid grid-cols-2 gap-3">
+    <section className="mb-2">
+      <div className="grid grid-cols-2 gap-2">
         {metrics.map((metric, index) => (
           <button 
             key={index} 
             onClick={() => handleMetricClick(metric)} 
-            className="glass-card transition-all duration-200 hover:scale-[1.02] cursor-pointer w-full text-left min-h-[80px]" 
+            className="glass-card glass-card-sm transition-all duration-200 hover:scale-[1.02] cursor-pointer w-full text-left" 
             style={{ 
-              minHeight: '80px',
-              padding: 'var(--space-3)', // 12px using design token
-              borderRadius: 'var(--radius-card)' // 12px using design token
+              minHeight: '60px',
+              padding: 'var(--card-padding-xs)',
+              borderRadius: 'var(--radius-md)'
             }}
             data-testid={`metric-${metric.label.toLowerCase().replace(' ', '-')}`}
           >
-            <div className="flex items-center space-x-2 mb-2">
+            <div className="flex items-center space-x-2 mb-1">
               <div 
-                className="w-6 h-6 rounded-lg flex items-center justify-center"
+                className="w-5 h-5 rounded-md flex items-center justify-center"
                 style={{ backgroundColor: `${metric.color}20` }}
               >
                 <metric.icon className="w-3 h-3" style={{ color: metric.color }} />
@@ -99,9 +99,8 @@ export default function MetricsGrid({ profile }: MetricsGridProps) {
                 <div 
                   className="font-semibold text-white" 
                   style={{ 
-                    fontSize: 'var(--font-caption)', // 12px professional scale
-                    fontFamily: 'SF Pro Text, Inter, sans-serif',
-                    fontWeight: '600',
+                    fontSize: 'var(--font-xs)',
+                    fontWeight: 'var(--font-semibold)',
                     textShadow: '0 1px 2px rgba(0,0,0,0.5)',
                     lineHeight: '1.2'
                   }}
@@ -111,9 +110,8 @@ export default function MetricsGrid({ profile }: MetricsGridProps) {
                 <div 
                   className="text-white/70" 
                   style={{ 
-                    fontSize: '10px', // Smaller for weight info
-                    fontFamily: 'SF Pro Text, Inter, sans-serif',
-                    fontWeight: '400',
+                    fontSize: '9px',
+                    fontWeight: 'var(--font-regular)',
                     textShadow: '0 1px 1px rgba(0,0,0,0.4)'
                   }}
                 >
@@ -125,22 +123,20 @@ export default function MetricsGrid({ profile }: MetricsGridProps) {
               <div 
                 className="text-white font-semibold" 
                 style={{ 
-                  fontSize: 'var(--font-heading)', // 20px professional scale
-                  fontFamily: 'SF Pro Display, Inter, sans-serif',
-                  fontWeight: '600', // Semi-bold instead of bold
+                  fontSize: 'var(--font-lg)',
+                  fontWeight: 'var(--font-bold)',
                   textShadow: '0 1px 2px rgba(0,0,0,0.4)',
-                  lineHeight: '1.1'
+                  lineHeight: '1'
                 }}
                 data-testid={`metric-value-${metric.label.toLowerCase().replace(' ', '-')}`}
               >
                 {metric.value}
               </div>
               <div 
-                className="text-white/80 mt-1" 
+                className="text-white/80 mt-0.5" 
                 style={{ 
-                  fontSize: 'var(--font-caption)', // 12px for unit text
-                  fontFamily: 'SF Pro Text, Inter, sans-serif',
-                  fontWeight: '400',
+                  fontSize: '10px',
+                  fontWeight: 'var(--font-regular)',
                   textShadow: '0 1px 1px rgba(0,0,0,0.3)',
                   lineHeight: '1.2'
                 }}
