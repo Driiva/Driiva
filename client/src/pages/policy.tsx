@@ -26,11 +26,11 @@ export default function PolicyPage() {
       <main className="px-4 pb-20 relative z-10">
         <div className="pt-4 mb-6">
           <button
-            onClick={() => setLocation('/profile')}
+            onClick={() => setLocation('/dashboard')}
             className="flex items-center gap-2 text-white/80 hover:text-white mb-4 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Profile
+            Back to Dashboard
           </button>
           
           <div className="glass-morphism rounded-2xl p-6 border border-white/10">
