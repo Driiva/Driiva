@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client';
 import App from './App';
 import './index.css';
 
-// Error Boundary Component
+// Fixed: Enhanced Error Boundary with better error handling
 class ErrorBoundary extends React.Component<
   { children: React.ReactNode },
   { hasError: boolean; error?: Error }
@@ -14,11 +14,16 @@ class ErrorBoundary extends React.Component<
   }
 
   static getDerivedStateFromError(error: Error) {
+    console.error('Error Boundary caught error:', error);
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('App Error:', error, errorInfo);
+    console.error('App Error Details:', {
+      error: error.message,
+      stack: error.stack,
+      componentStack: errorInfo.componentStack
+    });
   }
 
   render() {
@@ -31,7 +36,10 @@ class ErrorBoundary extends React.Component<
               {this.state.error?.message || 'An unexpected error occurred'}
             </p>
             <button
-              onClick={() => window.location.reload()}
+              onClick={() => {
+                this.setState({ hasError: false, error: undefined });
+                window.location.reload();
+              }}
               className="px-6 py-3 bg-[#06B6D4] hover:bg-[#0891B2] text-white rounded-lg font-medium transition-colors"
             >
               Reload App
@@ -45,7 +53,7 @@ class ErrorBoundary extends React.Component<
   }
 }
 
-// Initialize app
+// Fixed: Initialize app with proper error handling
 const container = document.getElementById('root');
 if (!container) {
   throw new Error('Root element not found');

@@ -12,56 +12,61 @@ export interface User {
 
 interface AuthContextType {
   user: User | null;
-  isAuthenticated: boolean;
   login: (userData: User) => void;
   logout: () => void;
+  isAuthenticated: boolean;
+  isLoading: boolean;
 }
 
-// Create Auth Context
-const AuthContext = createContext<AuthContextType | null>(null);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Auth Provider
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Check for stored user data on app startup
     try {
-      const savedUser = localStorage.getItem('driiva_user');
-      if (savedUser) {
-        const userData = JSON.parse(savedUser);
-        setUser(userData);
-        setIsAuthenticated(true);
+      const storedUser = localStorage.getItem('driiva_user');
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
       }
     } catch (error) {
-      console.error('Failed to load user from localStorage:', error);
+      console.error('Error loading stored user:', error);
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
   const login = (userData: User) => {
     setUser(userData);
-    setIsAuthenticated(true);
     localStorage.setItem('driiva_user', JSON.stringify(userData));
   };
 
   const logout = () => {
     setUser(null);
-    setIsAuthenticated(false);
     localStorage.removeItem('driiva_user');
   };
 
+  const value = {
+    user,
+    login,
+    logout,
+    isAuthenticated: !!user,
+    isLoading
+  };
+
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
-// Auth Hook
-export const useAuth = () => {
+export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-};
+}

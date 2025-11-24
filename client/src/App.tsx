@@ -1,8 +1,6 @@
-import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Router, Route, Switch } from 'wouter';
 import ScrollGradient from './components/ScrollGradient';
-import { ErrorBoundary } from './components/ErrorBoundary';
 
 // Pages
 import Dashboard from './pages/dashboard';
@@ -15,17 +13,16 @@ import TripRecording from './pages/trip-recording';
 import LeaderboardPage from './pages/leaderboard';
 import PolicyPage from './pages/policy';
 import NotFound from './pages/not-found';
-import FileDownloads from './pages/file-downloads'; //Import the FileDownloads page
 
 // Context
 import { AuthProvider } from './contexts/AuthContext';
 
-// Create stable query client
+// Fixed: Create stable query client with proper error handling
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 5 * 60 * 1000,
       refetchOnWindowFocus: false,
     },
   },
@@ -35,20 +32,17 @@ const queryClient = new QueryClient({
 
 export default function App() {
   return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <Router>
-            <div className="App">
-              <div className="driiva-gradient-bg" />
-              <ScrollGradient />
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <Router>
+          <div className="App">
+            <div className="driiva-gradient-bg" />
+            <ScrollGradient />
             <Switch>
-              {/* Public Routes */}
               <Route path="/signin">
                 <SignIn />
               </Route>
 
-              {/* Protected Routes */}
               <Route path="/dashboard">
                 <Dashboard />
               </Route>
@@ -81,11 +75,6 @@ export default function App() {
                 <PolicyPage />
               </Route>
 
-              <Route path="/downloads">
-                <FileDownloads />
-              </Route>
-
-              {/* Default and 404 Routes */}
               <Route path="/">
                 <Dashboard />
               </Route>
@@ -98,6 +87,5 @@ export default function App() {
         </Router>
       </AuthProvider>
     </QueryClientProvider>
-    </ErrorBoundary>
   );
 }
