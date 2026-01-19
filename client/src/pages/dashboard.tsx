@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { motion } from 'framer-motion';
 import { LoadingSpinner } from "@/components/LoadingSpinner";
@@ -18,6 +17,30 @@ import { MetricUser, CommunityPoolData, DrivingProfile, Achievement, Leaderboard
 interface DashboardProps {
   isLoading?: boolean;
 }
+
+const pageVariants = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1 },
+  exit: { opacity: 0 }
+};
+
+const staggerContainer = {
+  animate: {
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.1
+    }
+  }
+};
+
+const fadeInUp = {
+  initial: { opacity: 0, y: 20 },
+  animate: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }
+  }
+};
 
 export default function Dashboard({ isLoading = false }: DashboardProps) {
   const [userData] = React.useState<MetricUser>({
@@ -80,79 +103,85 @@ export default function Dashboard({ isLoading = false }: DashboardProps) {
   }
 
   return (
-    <div className="min-h-screen text-white">
+    <motion.div 
+      className="min-h-screen text-white"
+      variants={pageVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+    >
       <GradientMesh />
       <DashboardHeader user={userData} />
       
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.2, ease: "easeOut" }}
+      <motion.main 
+        className="px-4 pb-28"
+        variants={staggerContainer}
+        initial="initial"
+        animate="animate"
       >
-        <main className="px-4 pb-28">
-          {/* Policy Status Widget */}
-          <div className="pt-4 mb-6">
-            <PolicyStatusWidget user={userData} />
-          </div>
+        {/* Policy Status Widget */}
+        <motion.div className="pt-4 mb-6" variants={fadeInUp}>
+          <PolicyStatusWidget user={userData} />
+        </motion.div>
 
-          {/* Driving Score Gauge */}
-          <div className="mb-6">
-            <LiquidGauge 
-              score={userProfile.currentScore || 72}
-              projectedRefund={userProfile.projectedRefund || 100.80}
-              premiumAmount={Number(userData.premiumAmount)}
-            />
-          </div>
+        {/* Driving Score Gauge */}
+        <motion.div className="mb-6" variants={fadeInUp}>
+          <LiquidGauge 
+            score={userProfile.currentScore || 72}
+            projectedRefund={userProfile.projectedRefund || 100.80}
+            premiumAmount={Number(userData.premiumAmount)}
+          />
+        </motion.div>
 
-          {/* Metrics Grid */}
-          <div className="mb-6">
-            <MetricsGrid profile={{
-              hardBrakingScore: userProfile.hardBrakingScore || 3,
-              accelerationScore: userProfile.accelerationScore || 2,
-              speedAdherenceScore: userProfile.speedAdherenceScore || 1,
-              nightDrivingScore: userProfile.nightDrivingScore || 5
-            }} />
-          </div>
+        {/* Metrics Grid */}
+        <motion.div className="mb-6" variants={fadeInUp}>
+          <MetricsGrid profile={{
+            hardBrakingScore: userProfile.hardBrakingScore || 3,
+            accelerationScore: userProfile.accelerationScore || 2,
+            speedAdherenceScore: userProfile.speedAdherenceScore || 1,
+            nightDrivingScore: userProfile.nightDrivingScore || 5
+          }} />
+        </motion.div>
 
-          {/* Community Pool */}
-          <div className="mb-6">
-            <CommunityPool 
-              pool={{
-                poolAmount: communityPoolData.poolAmount,
-                safetyFactor: communityPoolData.safetyFactor,
-                participantCount: communityPoolData.participantCount,
-                safeDriverCount: communityPoolData.safeDriverCount
-              }}
-            />
-          </div>
+        {/* Community Pool */}
+        <motion.div className="mb-6" variants={fadeInUp}>
+          <CommunityPool 
+            pool={{
+              poolAmount: communityPoolData.poolAmount,
+              safetyFactor: communityPoolData.safetyFactor,
+              participantCount: communityPoolData.participantCount,
+              safeDriverCount: communityPoolData.safeDriverCount
+            }}
+          />
+        </motion.div>
 
-          {/* Gamification */}
-          <div className="mb-6">
-            <Gamification 
-              achievements={achievementsData}
-              leaderboard={leaderboardData}
-              currentUser={userData}
-              profile={{
-                currentScore: userProfile.currentScore || 72,
-                projectedRefund: userProfile.projectedRefund || 100.80,
-                totalMiles: userProfile.totalMiles || 1107.70
-              }}
-              premiumAmount={Number(userData.premiumAmount)}
-            />
-          </div>
+        {/* Gamification */}
+        <motion.div className="mb-6" variants={fadeInUp}>
+          <Gamification 
+            achievements={achievementsData}
+            leaderboard={leaderboardData}
+            currentUser={userData}
+            profile={{
+              currentScore: userProfile.currentScore || 72,
+              projectedRefund: userProfile.projectedRefund || 100.80,
+              totalMiles: userProfile.totalMiles || 1107.70
+            }}
+            premiumAmount={Number(userData.premiumAmount)}
+          />
+        </motion.div>
 
-          {/* Refund Simulator */}
-          <div className="mb-8">
-            <RefundSimulator 
-              currentScore={userProfile.currentScore || 72}
-              premiumAmount={Number(userData.premiumAmount)}
-              poolSafetyFactor={communityPoolData.safetyFactor}
-            />
-          </div>
-        </main>
-      </motion.div>
+        {/* Refund Simulator */}
+        <motion.div className="mb-8" variants={fadeInUp}>
+          <RefundSimulator 
+            currentScore={userProfile.currentScore || 72}
+            premiumAmount={Number(userData.premiumAmount)}
+            poolSafetyFactor={communityPoolData.safetyFactor}
+          />
+        </motion.div>
+      </motion.main>
       
       <BottomNavigation activeTab="home" />
-    </div>
+    </motion.div>
   );
 }
