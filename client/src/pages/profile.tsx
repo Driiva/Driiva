@@ -15,18 +15,19 @@ const pageVariants = {
   exit: { opacity: 0 }
 };
 
-const staggerContainer = {
-  animate: {
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
     transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.15
+      staggerChildren: 0.1
     }
   }
 };
 
-const fadeInUp = {
-  initial: { opacity: 0, y: 20 },
-  animate: { 
+const item = {
+  hidden: { opacity: 0, y: 20 },
+  show: { 
     opacity: 1, 
     y: 0,
     transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }
@@ -81,9 +82,9 @@ export default function Profile() {
       <main className="px-4 pb-28">
         <motion.div 
           className="pt-6 mb-6"
-          variants={fadeInUp}
-          initial="initial"
-          animate="animate"
+          variants={item}
+          initial="hidden"
+          animate="show"
         >
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-semibold text-white">Profile</h1>
@@ -99,12 +100,12 @@ export default function Profile() {
         </motion.div>
 
         <motion.div
-          variants={staggerContainer}
-          initial="initial"
-          animate="animate"
+          variants={container}
+          initial="hidden"
+          animate="show"
         >
           {/* Profile Overview */}
-          <motion.div variants={fadeInUp}>
+          <motion.div variants={item}>
             <GlassCard className="p-6 mb-6">
               <div className="flex flex-col items-center text-center mb-6">
                 <motion.div 
@@ -148,7 +149,7 @@ export default function Profile() {
           </motion.div>
 
           {/* Account Details */}
-          <motion.div variants={fadeInUp}>
+          <motion.div variants={item}>
             <GlassCard className="p-6 mb-6">
               <div className="flex items-center space-x-2 mb-4">
                 <Settings className="w-5 h-5 text-white/60" />
@@ -231,7 +232,7 @@ export default function Profile() {
           </motion.div>
 
           {/* Driving Statistics */}
-          <motion.div variants={fadeInUp}>
+          <motion.div variants={item}>
             <GlassCard className="p-6 mb-6">
               <div className="flex items-center space-x-2 mb-4">
                 <Car className="w-5 h-5 text-white/60" />
@@ -260,7 +261,7 @@ export default function Profile() {
           </motion.div>
 
           {/* Preferences */}
-          <motion.div variants={fadeInUp}>
+          <motion.div variants={item}>
             <GlassCard className="p-6 mb-6">
               <div className="flex items-center space-x-2 mb-4">
                 <Settings className="w-5 h-5 text-white/60" />
@@ -311,7 +312,7 @@ export default function Profile() {
           </motion.div>
 
           {/* Privacy & Data */}
-          <motion.div variants={fadeInUp}>
+          <motion.div variants={item}>
             <GlassCard className="p-6 mb-8">
               <div className="flex items-center space-x-2 mb-4">
                 <Shield className="w-5 h-5 text-white/60" />

@@ -26,18 +26,19 @@ const pageVariants = {
   exit: { opacity: 0 }
 };
 
-const staggerContainer = {
-  animate: {
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
     transition: {
-      staggerChildren: 0.08,
-      delayChildren: 0.1
+      staggerChildren: 0.08
     }
   }
 };
 
-const fadeInUp = {
-  initial: { opacity: 0, y: 20 },
-  animate: { 
+const item = {
+  hidden: { opacity: 0, y: 20 },
+  show: { 
     opacity: 1, 
     y: 0,
     transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }
@@ -127,9 +128,9 @@ export default function Trips() {
       <main className="px-4 pb-28">
         <motion.div 
           className="pt-6 mb-6"
-          variants={fadeInUp}
-          initial="initial"
-          animate="animate"
+          variants={item}
+          initial="hidden"
+          animate="show"
         >
           <h2 className="text-xl font-semibold text-white mb-1">Recent Trips</h2>
           <p className="text-sm text-white/50">{trips.length} trips this month</p>
@@ -137,14 +138,14 @@ export default function Trips() {
         
         <motion.div 
           className="space-y-3"
-          variants={staggerContainer}
-          initial="initial"
-          animate="animate"
+          variants={container}
+          initial="hidden"
+          animate="show"
         >
           {trips.map((trip, index) => (
             <motion.div
               key={trip.id}
-              variants={fadeInUp}
+              variants={item}
               whileHover={{ scale: 1.01, transition: { duration: 0.2 } }}
               whileTap={{ scale: 0.98 }}
             >

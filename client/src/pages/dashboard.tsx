@@ -24,18 +24,19 @@ const pageVariants = {
   exit: { opacity: 0 }
 };
 
-const staggerContainer = {
-  animate: {
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
     transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.1
+      staggerChildren: 0.08
     }
   }
 };
 
-const fadeInUp = {
-  initial: { opacity: 0, y: 20 },
-  animate: { 
+const item = {
+  hidden: { opacity: 0, y: 20 },
+  show: { 
     opacity: 1, 
     y: 0,
     transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }
@@ -116,17 +117,17 @@ export default function Dashboard({ isLoading = false }: DashboardProps) {
       
       <motion.main 
         className="px-4 pb-28"
-        variants={staggerContainer}
-        initial="initial"
-        animate="animate"
+        variants={container}
+        initial="hidden"
+        animate="show"
       >
         {/* Policy Status Widget */}
-        <motion.div className="pt-4 mb-6" variants={fadeInUp}>
+        <motion.div className="pt-4 mb-6" variants={item}>
           <PolicyStatusWidget user={userData} />
         </motion.div>
 
         {/* Driving Score Gauge */}
-        <motion.div className="mb-6" variants={fadeInUp}>
+        <motion.div className="mb-6" variants={item}>
           <LiquidGauge 
             score={userProfile.currentScore || 72}
             projectedRefund={userProfile.projectedRefund || 100.80}
@@ -135,7 +136,7 @@ export default function Dashboard({ isLoading = false }: DashboardProps) {
         </motion.div>
 
         {/* Metrics Grid */}
-        <motion.div className="mb-6" variants={fadeInUp}>
+        <motion.div className="mb-6" variants={item}>
           <MetricsGrid profile={{
             hardBrakingScore: userProfile.hardBrakingScore || 3,
             accelerationScore: userProfile.accelerationScore || 2,
@@ -145,7 +146,7 @@ export default function Dashboard({ isLoading = false }: DashboardProps) {
         </motion.div>
 
         {/* Community Pool */}
-        <motion.div className="mb-6" variants={fadeInUp}>
+        <motion.div className="mb-6" variants={item}>
           <CommunityPool 
             pool={{
               poolAmount: communityPoolData.poolAmount,
@@ -157,7 +158,7 @@ export default function Dashboard({ isLoading = false }: DashboardProps) {
         </motion.div>
 
         {/* Gamification */}
-        <motion.div className="mb-6" variants={fadeInUp}>
+        <motion.div className="mb-6" variants={item}>
           <Gamification 
             achievements={achievementsData}
             leaderboard={leaderboardData}
@@ -172,7 +173,7 @@ export default function Dashboard({ isLoading = false }: DashboardProps) {
         </motion.div>
 
         {/* Refund Simulator */}
-        <motion.div className="mb-8" variants={fadeInUp}>
+        <motion.div className="mb-8" variants={item}>
           <RefundSimulator 
             currentScore={userProfile.currentScore || 72}
             premiumAmount={Number(userData.premiumAmount)}

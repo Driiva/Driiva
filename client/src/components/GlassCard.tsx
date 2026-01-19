@@ -1,23 +1,34 @@
-import { ReactNode } from 'react';
+import { motion, HTMLMotionProps } from "framer-motion";
+import { ReactNode } from "react";
 
-interface GlassCardProps {
+interface GlassCardProps extends Omit<HTMLMotionProps<"div">, "children"> {
   children: ReactNode;
   className?: string;
+  interactive?: boolean;
 }
 
-export const GlassCard = ({ children, className = '' }: GlassCardProps) => {
+export function GlassCard({ 
+  children, 
+  className = "", 
+  interactive = true,
+  ...props 
+}: GlassCardProps) {
   return (
-    <div className={`
-      backdrop-blur-xl bg-white/[0.08]
-      border border-white/[0.08]
-      shadow-[0_8px_32px_rgba(0,0,0,0.12)]
-      rounded-2xl p-5
-      transition-all duration-200 ease-out
-      hover:scale-[1.01]
-      hover:bg-white/[0.10]
-      ${className}
-    `}>
+    <motion.div
+      className={`
+        backdrop-blur-xl 
+        bg-white/[0.08] 
+        border border-white/[0.08] 
+        shadow-[0_8px_32px_rgba(0,0,0,0.12)]
+        rounded-2xl
+        ${className}
+      `}
+      whileTap={interactive ? { scale: 0.98 } : undefined}
+      whileHover={interactive ? { scale: 1.01 } : undefined}
+      transition={{ duration: 0.15 }}
+      {...props}
+    >
       {children}
-    </div>
+    </motion.div>
   );
-};
+}

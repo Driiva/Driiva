@@ -34,18 +34,19 @@ const pageVariants = {
   exit: { opacity: 0 }
 };
 
-const staggerContainer = {
-  animate: {
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
     transition: {
-      staggerChildren: 0.08,
-      delayChildren: 0.1
+      staggerChildren: 0.08
     }
   }
 };
 
-const fadeInUp = {
-  initial: { opacity: 0, y: 20 },
-  animate: { 
+const item = {
+  hidden: { opacity: 0, y: 20 },
+  show: { 
     opacity: 1, 
     y: 0,
     transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }
@@ -172,9 +173,9 @@ export default function Rewards() {
         {/* Header Stats */}
         <motion.div 
           className="pt-6 mb-6"
-          variants={fadeInUp}
-          initial="initial"
-          animate="animate"
+          variants={item}
+          initial="hidden"
+          animate="show"
         >
           <GlassCard className="p-6">
             <h1 className="text-xl font-semibold mb-4 flex items-center gap-2 text-white">
@@ -245,9 +246,9 @@ export default function Rewards() {
             {activeTab === "achievements" && (
               <motion.div 
                 className="space-y-3"
-                variants={staggerContainer}
-                initial="initial"
-                animate="animate"
+                variants={container}
+                initial="hidden"
+                animate="show"
               >
                 {achievements.map((achievement) => {
                   const isUnlocked = !!achievement.unlockedAt;
@@ -256,7 +257,7 @@ export default function Rewards() {
                   return (
                     <motion.div
                       key={achievement.id}
-                      variants={fadeInUp}
+                      variants={item}
                       whileHover={{ scale: 1.01 }}
                       whileTap={{ scale: 0.98 }}
                     >
@@ -327,14 +328,14 @@ export default function Rewards() {
             {activeTab === "rewards" && (
               <motion.div 
                 className="space-y-3"
-                variants={staggerContainer}
-                initial="initial"
-                animate="animate"
+                variants={container}
+                initial="hidden"
+                animate="show"
               >
                 {rewards.map((reward) => (
                   <motion.div
                     key={reward.id}
-                    variants={fadeInUp}
+                    variants={item}
                     whileHover={{ scale: reward.available ? 1.01 : 1 }}
                     whileTap={{ scale: reward.available ? 0.98 : 1 }}
                   >
@@ -372,12 +373,12 @@ export default function Rewards() {
             {activeTab === "progress" && (
               <motion.div 
                 className="space-y-6"
-                variants={staggerContainer}
-                initial="initial"
-                animate="animate"
+                variants={container}
+                initial="hidden"
+                animate="show"
               >
                 {/* Weekly Progress */}
-                <motion.div variants={fadeInUp}>
+                <motion.div variants={item}>
                   <GlassCard className="p-6">
                     <h3 className="font-semibold text-white text-sm mb-4 flex items-center gap-2">
                       <TrendingUp className="w-4 h-4 text-white/60" />
@@ -418,7 +419,7 @@ export default function Rewards() {
                 </motion.div>
 
                 {/* Monthly Summary */}
-                <motion.div variants={fadeInUp}>
+                <motion.div variants={item}>
                   <GlassCard className="p-6">
                     <h3 className="font-semibold text-white text-sm mb-4">Monthly Summary</h3>
                     

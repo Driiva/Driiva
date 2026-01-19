@@ -1,18 +1,43 @@
+import { motion, useMotionValue, useTransform, animate } from "framer-motion";
+import { useEffect, useRef } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { GlassCard } from './GlassCard';
+
 interface LiquidGaugeProps {
   score: number;
   projectedRefund: number;
   premiumAmount: number;
 }
 
-import { useToast } from "@/hooks/use-toast";
-import { AnimatedScore } from './AnimatedScore';
-import { GlassCard } from './GlassCard';
+function AnimatedCounter({ value, className }: { value: number; className?: string }) {
+  const nodeRef = useRef<HTMLSpanElement>(null);
+  const motionValue = useMotionValue(0);
+  
+  useEffect(() => {
+    const node = nodeRef.current;
+    if (!node) return;
+    
+    const controls = animate(motionValue.get(), value, {
+      duration: 1.2,
+      ease: [0.16, 1, 0.3, 1],
+      onUpdate: (latest) => {
+        node.textContent = Math.round(latest).toString();
+      }
+    });
+    
+    motionValue.set(value);
+    
+    return () => controls.stop();
+  }, [value, motionValue]);
+  
+  return <span ref={nodeRef} className={className}>0</span>;
+}
 
 export default function LiquidGauge({ score, projectedRefund, premiumAmount }: LiquidGaugeProps) {
   const { toast } = useToast();
-  const strokeOffset = 283 - (score / 100) * 283;
   const personalScore = Math.round(score * 0.8);
   const poolScore = Math.round(score * 0.2);
+  const scorePercentage = score / 100;
 
   const handleScoreClick = () => {
     toast({
@@ -23,8 +48,13 @@ export default function LiquidGauge({ score, projectedRefund, premiumAmount }: L
 
   return (
     <GlassCard className="p-6">
-      {/* Score Ring */}
-      <div className="relative w-40 h-40 mx-auto mb-6">
+      {/* Score Ring with spring entrance */}
+      <motion.div 
+        className="relative w-40 h-40 mx-auto mb-6"
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.6, ease: [0.34, 1.56, 0.64, 1] }}
+      >
         <svg 
           className="w-full h-full -rotate-90" 
           viewBox="0 0 100 100"
@@ -38,8 +68,8 @@ export default function LiquidGauge({ score, projectedRefund, premiumAmount }: L
             strokeWidth="6" 
             fill="none"
           />
-          {/* Progress ring */}
-          <circle 
+          {/* Animated progress ring */}
+          <motion.circle 
             cx="50" 
             cy="50" 
             r="45" 
@@ -48,56 +78,97 @@ export default function LiquidGauge({ score, projectedRefund, premiumAmount }: L
             fill="none" 
             strokeLinecap="round"
             strokeDasharray="283"
-            style={{ 
-              strokeDashoffset: strokeOffset,
-              transition: 'stroke-dashoffset 0.5s ease-out'
-            }}
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: scorePercentage }}
+            transition={{ duration: 1.5, ease: "easeOut", delay: 0.3 }}
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <button 
+          <motion.button 
             onClick={handleScoreClick} 
-            className="text-center min-h-[44px] min-w-[44px] transition-all duration-200 ease-out active:scale-95" 
+            className="text-center min-h-[44px] min-w-[44px]" 
+            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.02 }}
+            transition={{ duration: 0.15 }}
             data-testid="driving-score-button"
           >
-            <AnimatedScore value={score} className="text-5xl font-semibold text-white" />
+            <motion.div
+              key={score}
+              initial={{ scale: 1 }}
+              animate={{ scale: [1, 1.05, 1] }}
+              transition={{ duration: 0.3 }}
+            >
+              <AnimatedCounter value={score} className="text-5xl font-semibold text-white" />
+            </motion.div>
             <div className="text-xs text-white/50 mt-1">
               out of 100
             </div>
-          </button>
+          </motion.button>
         </div>
-      </div>
+      </motion.div>
 
       {/* Score Breakdown */}
       <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="text-center p-3 bg-white/5 rounded-xl">
+        <motion.div 
+          className="text-center p-3 bg-white/5 rounded-xl"
+          whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.08)" }}
+          whileTap={{ scale: 0.98 }}
+          transition={{ duration: 0.15 }}
+        >
           <div className="text-lg font-semibold text-white" data-testid="personal-score">
             {personalScore}%
           </div>
           <div className="text-xs text-white/50 mt-1">
             Personal Score
           </div>
-        </div>
-        <div className="text-center p-3 bg-white/5 rounded-xl">
+        </motion.div>
+        <motion.div 
+          className="text-center p-3 bg-white/5 rounded-xl"
+          whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.08)" }}
+          whileTap={{ scale: 0.98 }}
+          transition={{ duration: 0.15 }}
+        >
           <div className="text-lg font-semibold text-white" data-testid="pool-score">
             {poolScore}%
           </div>
           <div className="text-xs text-white/50 mt-1">
             Pool Score
           </div>
-        </div>
+        </motion.div>
       </div>
 
-      {/* Projected Annual Refund */}
+      {/* Projected Annual Refund with shimmer */}
       <div 
-        className="bg-emerald-500/20 border border-emerald-500/30 rounded-xl p-5 text-center"
+        className="relative overflow-hidden bg-gradient-to-br from-emerald-500/20 to-teal-600/20 border border-emerald-500/30 rounded-xl p-5 text-center"
         data-testid="projected-refund-card"
       >
-        <div className="text-xs font-medium text-white/60 mb-1">Projected Annual Refund</div>
-        <div className="text-3xl font-semibold text-emerald-400 mb-1">£{projectedRefund.toFixed(2)}</div>
-        <p className="text-xs text-white/50">
-          {((projectedRefund / Number(premiumAmount)) * 100).toFixed(1)}% of £{premiumAmount.toLocaleString()} premium
-        </p>
+        {/* Shimmer overlay */}
+        <motion.div
+          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+          initial={{ x: '-100%' }}
+          animate={{ x: '200%' }}
+          transition={{ 
+            duration: 2, 
+            repeat: Infinity, 
+            repeatDelay: 3,
+            ease: "easeInOut" 
+          }}
+        />
+        <div className="relative z-10">
+          <div className="text-xs font-medium text-white/60 mb-1">Projected Annual Refund</div>
+          <motion.div 
+            className="text-3xl font-semibold text-emerald-400 mb-1"
+            key={projectedRefund}
+            initial={{ scale: 1 }}
+            animate={{ scale: [1, 1.03, 1] }}
+            transition={{ duration: 0.3 }}
+          >
+            £{projectedRefund.toFixed(2)}
+          </motion.div>
+          <p className="text-xs text-white/50">
+            {((projectedRefund / Number(premiumAmount)) * 100).toFixed(1)}% of £{premiumAmount.toLocaleString()} premium
+          </p>
+        </div>
       </div>
     </GlassCard>
   );
