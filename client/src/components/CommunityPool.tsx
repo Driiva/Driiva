@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Users, TrendingUp, Info, ExternalLink } from "lucide-react";
+import { Users, TrendingUp, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import LiveInfoPopup from "./LiveInfoPopup";
 import { GlassCard } from './GlassCard';
@@ -26,46 +26,38 @@ export default function CommunityPool({ pool }: CommunityPoolProps) {
   };
 
   return (
-    <section className="mb-3">
+    <section>
       <GlassCard className="p-6">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-base font-semibold flex items-center gap-2">
-            <Users className="w-4 h-4 text-blue-400" />
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-base font-semibold flex items-center gap-2 text-white">
+            <Users className="w-5 h-5 text-blue-400" />
             Community Pool
           </h3>
           <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 bg-[#10B981] rounded-full animate-pulse"></div>
+            <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
             <button
               onClick={handlePoolInfoClick}
-              className="text-xs text-gray-400 hover:text-white px-2 py-1 hover:bg-white/10 rounded transition-colors flex items-center gap-1"
+              className="text-sm text-white/60 hover:text-white min-h-[44px] px-3 hover:bg-white/5 rounded-xl transition-all duration-200 ease-out flex items-center gap-1 active:scale-95"
               data-testid="live-info-button"
             >
-              <Info className="w-3 h-3" />
+              <Info className="w-4 h-4" />
               Live
             </button>
           </div>
         </div>
 
-        <div className="mb-3">
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-sm text-gray-400">Pool Safety Factor</span>
-            <span className="text-sm font-semibold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]" style={{ 
-              textShadow: '2px 2px 4px rgba(0,0,0,0.9), -1px -1px 2px rgba(0,0,0,0.7)',
-              fontFamily: 'Inter, sans-serif',
-              fontWeight: '600'
-            }}>{safetyPercentage}%</span>
+        <div className="mb-4">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-sm text-white/60">Pool Safety Factor</span>
+            <span className="text-sm font-semibold text-white">{safetyPercentage}%</span>
           </div>
-          <div className="w-full bg-gray-700/30 rounded-full h-2 relative">
+          <div className="w-full bg-white/10 rounded-full h-2.5 relative overflow-hidden">
             <div 
-              className="bg-gradient-to-r from-[#8B4513] via-[#B87333] to-[#7B1FA2] h-2 rounded-full transition-all duration-500" 
-              style={{ 
-                width: `${safetyPercentage}%`,
-                boxShadow: '0 0 12px rgba(139, 69, 19, 0.6), 0 0 24px rgba(184, 115, 51, 0.4), 0 0 36px rgba(123, 31, 162, 0.3)',
-                filter: 'drop-shadow(0 0 8px rgba(139, 69, 19, 0.5))'
-              }}
+              className="bg-gradient-to-r from-purple-500 via-blue-500 to-emerald-500 h-2.5 rounded-full transition-all duration-500 ease-out" 
+              style={{ width: `${safetyPercentage}%` }}
             />
           </div>
-          <div className="text-xs text-gray-400 mt-1">
+          <div className="text-xs text-white/50 mt-2">
             {safeDriverCount} of {participantCount} drivers meet safety thresholds
           </div>
         </div>
@@ -73,32 +65,31 @@ export default function CommunityPool({ pool }: CommunityPoolProps) {
         <div className="grid grid-cols-2 gap-4">
           <button
             onClick={handlePoolInfoClick}
-            className="text-center p-2 hover:bg-white/5 rounded-lg transition-colors"
+            className="text-center p-4 min-h-[44px] hover:bg-white/5 rounded-xl transition-all duration-200 ease-out active:scale-95"
           >
-            <div className="text-lg font-bold text-white">£{poolAmount}</div>
-            <div className="text-xs text-gray-400">Total Pool</div>
+            <div className="text-xl font-semibold text-white">£{poolAmount}</div>
+            <div className="text-xs text-white/50 mt-1">Total Pool</div>
           </button>
           <button
             onClick={() => toast({
               title: "Your Pool Share",
-              description: "Your share is calculated based on your safety score and community performance. Higher scores mean larger shares of the reward pool.",
+              description: "Your share is calculated based on your safety score and community performance.",
             })}
-            className="text-center p-2 hover:bg-white/5 rounded-lg transition-colors"
+            className="text-center p-4 min-h-[44px] hover:bg-white/5 rounded-xl transition-all duration-200 ease-out active:scale-95"
           >
-            <div className="text-lg font-bold text-[#10B981]">£62.50</div>
-            <div className="text-xs text-gray-400">Your Share</div>
+            <div className="text-xl font-semibold text-emerald-400">£62.50</div>
+            <div className="text-xs text-white/50 mt-1">Your Share</div>
           </button>
         </div>
 
-        <div className="mt-4 p-3 bg-[#10B981] bg-opacity-10 rounded-xl border border-[#10B981] border-opacity-20">
+        <div className="mt-4 p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
           <div className="flex items-center space-x-2">
-            <TrendingUp className="w-4 h-4 text-[#10B981]" />
-            <span className="text-sm text-[#10B981] font-medium">Pool performing +5% above target</span>
+            <TrendingUp className="w-4 h-4 text-emerald-400" />
+            <span className="text-sm text-emerald-400 font-medium">Pool performing +5% above target</span>
           </div>
         </div>
       </GlassCard>
       
-      {/* Live Info Popup */}
       <LiveInfoPopup 
         isOpen={showPopup}
         onClose={() => setShowPopup(false)}

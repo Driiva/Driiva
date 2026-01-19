@@ -1,4 +1,4 @@
-import { Truck, TrendingUp, Gauge, Moon, Info } from "lucide-react";
+import { Truck, TrendingUp, Gauge, Moon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { GlassCard } from './GlassCard';
 
@@ -13,10 +13,6 @@ interface MetricsGridProps {
 
 export default function MetricsGrid({ profile }: MetricsGridProps) {
   const { toast } = useToast();
-  
-  const getScoreColor = (score: number, isInverse: boolean = false) => {
-    return 'text-white';
-  };
 
   const handleMetricClick = (metric: any) => {
     toast({
@@ -42,8 +38,7 @@ export default function MetricsGrid({ profile }: MetricsGridProps) {
       value: profile.hardBrakingScore,
       weight: "25% weight",
       color: "#EF4444",
-      unit: profile.hardBrakingScore === 1 ? "harsh event this month" : "harsh events this month",
-      isInverse: true
+      unit: profile.hardBrakingScore === 1 ? "harsh event this month" : "harsh events this month"
     },
     {
       icon: TrendingUp,
@@ -51,8 +46,7 @@ export default function MetricsGrid({ profile }: MetricsGridProps) {
       value: profile.accelerationScore,
       weight: "20% weight",
       color: "#F59E0B",
-      unit: profile.accelerationScore === 1 ? "harsh event this month" : "harsh events this month",
-      isInverse: true
+      unit: profile.accelerationScore === 1 ? "harsh event this month" : "harsh events this month"
     },
     {
       icon: Gauge,
@@ -60,8 +54,7 @@ export default function MetricsGrid({ profile }: MetricsGridProps) {
       value: profile.speedAdherenceScore,
       weight: "20% weight",
       color: "#3B82F6",
-      unit: profile.speedAdherenceScore === 1 ? "violation this month" : "violations this month",
-      isInverse: true
+      unit: profile.speedAdherenceScore === 1 ? "violation this month" : "violations this month"
     },
     {
       icon: Moon,
@@ -69,77 +62,41 @@ export default function MetricsGrid({ profile }: MetricsGridProps) {
       value: profile.nightDrivingScore,
       weight: "15% weight",
       color: "#A855F7",
-      unit: profile.nightDrivingScore === 1 ? "night trip this month" : "night trips this month",
-      isInverse: true
+      unit: profile.nightDrivingScore === 1 ? "night trip this month" : "night trips this month"
     }
   ];
 
   return (
-    <section className="mb-2">
-      <div className="grid grid-cols-2 gap-2">
+    <section>
+      <div className="grid grid-cols-2 gap-3">
         {metrics.map((metric, index) => (
-          <GlassCard key={index} className="p-4">
+          <GlassCard key={index} className="p-5">
             <button 
               onClick={() => handleMetricClick(metric)} 
-              className="w-full text-left transition-all duration-200 hover:scale-[1.02] cursor-pointer" 
-              style={{ 
-                minHeight: '60px'
-              }}
+              className="w-full text-left min-h-[44px] transition-all duration-200 ease-out active:scale-95" 
               data-testid={`metric-${metric.label.toLowerCase().replace(' ', '-')}`}
             >
-              <div className="flex items-center space-x-2 mb-1">
+              <div className="flex items-center space-x-2 mb-2">
                 <div 
-                  className="w-5 h-5 rounded-md flex items-center justify-center"
+                  className="w-8 h-8 rounded-xl flex items-center justify-center"
                   style={{ backgroundColor: `${metric.color}20` }}
                 >
-                  <metric.icon className="w-3 h-3" style={{ color: metric.color }} />
+                  <metric.icon className="w-4 h-4" style={{ color: metric.color }} />
                 </div>
                 <div className="flex-1">
-                  <div 
-                    className="font-semibold text-white" 
-                    style={{ 
-                      fontSize: 'var(--font-xs)',
-                      fontWeight: 'var(--font-semibold)',
-                      textShadow: '0 1px 2px rgba(0,0,0,0.5)',
-                      lineHeight: '1.2'
-                    }}
-                  >
+                  <div className="font-semibold text-white text-sm">
                     {metric.label}
                   </div>
-                  <div 
-                    className="text-white/70" 
-                    style={{ 
-                      fontSize: '9px',
-                      fontWeight: 'var(--font-regular)',
-                      textShadow: '0 1px 1px rgba(0,0,0,0.4)'
-                    }}
-                  >
+                  <div className="text-white/50 text-xs">
                     {metric.weight}
                   </div>
                 </div>
               </div>
               <div className="text-right">
-                <div 
-                  className="text-white font-semibold" 
-                  style={{ 
-                    fontSize: 'var(--font-lg)',
-                    fontWeight: 'var(--font-bold)',
-                    textShadow: '0 1px 2px rgba(0,0,0,0.4)',
-                    lineHeight: '1'
-                  }}
-                  data-testid={`metric-value-${metric.label.toLowerCase().replace(' ', '-')}`}
-                >
+                <div className="text-white font-semibold text-2xl">
                   {metric.value}
                 </div>
-                <div 
-                  className="text-white/80 mt-0.5" 
-                  style={{ 
-                    fontSize: '10px',
-                    fontWeight: 'var(--font-regular)',
-                    textShadow: '0 1px 1px rgba(0,0,0,0.3)',
-                    lineHeight: '1.2'
-                  }}
-                >
+                <div className="text-white/60 text-xs mt-1">
                   {metric.unit}
                 </div>
               </div>

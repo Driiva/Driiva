@@ -20,23 +20,25 @@ export default function BottomNavigation({ activeTab }: BottomNavigationProps) {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-lg border-t border-white/10 z-50 safe-area-inset-bottom"
+    <nav 
+      className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-xl border-t border-white/10 z-50"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
     >
-      <div className="flex justify-around items-center py-3 px-4 max-w-md mx-auto">
+      <div className="flex justify-around items-center py-2 px-4 max-w-md mx-auto">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => handleNavigation(tab.path)}
-            className="flex flex-col items-center py-2 px-4"
+            className="flex flex-col items-center min-h-[44px] min-w-[44px] justify-center px-4 py-2 transition-all duration-200 ease-out active:scale-95"
           >
             <tab.icon 
-              className={`w-5 h-5 mb-1 ${
-                activeTab === tab.id ? 'text-[#8B4513]' : 'text-gray-400'
+              className={`w-6 h-6 mb-1 transition-colors duration-200 ease-out ${
+                activeTab === tab.id ? 'text-purple-400' : 'text-gray-500'
               }`} 
             />
             <span 
-              className={`text-xs font-medium ${
-                activeTab === tab.id ? 'text-[#8B4513]' : 'text-gray-400'
+              className={`text-xs font-semibold transition-colors duration-200 ease-out ${
+                activeTab === tab.id ? 'text-purple-400' : 'text-gray-500'
               }`}
             >
               {tab.label}

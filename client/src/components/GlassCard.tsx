@@ -8,12 +8,13 @@ interface GlassCardProps {
 export const GlassCard = ({ children, className = '' }: GlassCardProps) => {
   return (
     <div className={`
-      bg-slate-900/40 backdrop-blur-sm
-      border border-white/5
+      backdrop-blur-xl bg-white/[0.08]
+      border border-white/[0.08]
+      shadow-[0_8px_32px_rgba(0,0,0,0.12)]
       rounded-2xl p-5
-      transition-all duration-300
-      hover:bg-slate-900/50
-      hover:border-white/10
+      transition-all duration-200 ease-out
+      hover:scale-[1.01]
+      hover:bg-white/[0.10]
       ${className}
     `}>
       {children}

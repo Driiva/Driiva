@@ -20,7 +20,6 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ isLoading = false }: DashboardProps) {
-  // Stable mock data - optimized for runtime stability
   const [userData] = React.useState<MetricUser>({
     id: 8,
     username: "driiva1",
@@ -31,8 +30,8 @@ export default function Dashboard({ isLoading = false }: DashboardProps) {
   });
 
   const [userProfile] = React.useState<Partial<DrivingProfile>>({
-    currentScore: 72, // Test score above 70% threshold
-    projectedRefund: 100.80, // Calculated: (1840 * 5.48%) for score 72
+    currentScore: 72,
+    projectedRefund: 100.80,
     totalMiles: 1107.70,
     totalTrips: 26,
     hardBrakingScore: 3,
@@ -76,7 +75,6 @@ export default function Dashboard({ isLoading = false }: DashboardProps) {
     }
   ]);
 
-  // Show loading spinner if data is loading
   if (isLoading) {
     return <LoadingSpinner />;
   }
@@ -89,16 +87,16 @@ export default function Dashboard({ isLoading = false }: DashboardProps) {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
       >
-        <main className="px-3 pb-20 stagger-children">
+        <main className="px-4 pb-28">
           {/* Policy Status Widget */}
-          <div style={{ paddingTop: 'var(--space-3)', marginBottom: 'var(--space-2)' }}>
+          <div className="pt-4 mb-6">
             <PolicyStatusWidget user={userData} />
           </div>
 
           {/* Driving Score Gauge */}
-          <div style={{ marginBottom: 'var(--space-2)' }} className="animate-scale-in">
+          <div className="mb-6">
             <LiquidGauge 
               score={userProfile.currentScore || 72}
               projectedRefund={userProfile.projectedRefund || 100.80}
@@ -107,7 +105,7 @@ export default function Dashboard({ isLoading = false }: DashboardProps) {
           </div>
 
           {/* Metrics Grid */}
-          <div style={{ marginBottom: 'var(--space-2)' }}>
+          <div className="mb-6">
             <MetricsGrid profile={{
               hardBrakingScore: userProfile.hardBrakingScore || 3,
               accelerationScore: userProfile.accelerationScore || 2,
@@ -117,7 +115,7 @@ export default function Dashboard({ isLoading = false }: DashboardProps) {
           </div>
 
           {/* Community Pool */}
-          <div style={{ marginBottom: 'var(--space-2)' }}>
+          <div className="mb-6">
             <CommunityPool 
               pool={{
                 poolAmount: communityPoolData.poolAmount,
@@ -129,7 +127,7 @@ export default function Dashboard({ isLoading = false }: DashboardProps) {
           </div>
 
           {/* Gamification */}
-          <div style={{ marginBottom: 'var(--space-2)' }}>
+          <div className="mb-6">
             <Gamification 
               achievements={achievementsData}
               leaderboard={leaderboardData}
@@ -144,7 +142,7 @@ export default function Dashboard({ isLoading = false }: DashboardProps) {
           </div>
 
           {/* Refund Simulator */}
-          <div style={{ marginBottom: 'var(--space-3)' }}>
+          <div className="mb-8">
             <RefundSimulator 
               currentScore={userProfile.currentScore || 72}
               premiumAmount={Number(userData.premiumAmount)}

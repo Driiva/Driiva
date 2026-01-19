@@ -1,4 +1,4 @@
-import { Shield, Calendar, CreditCard, ExternalLink, FileText } from "lucide-react";
+import { Shield, Calendar, CreditCard, FileText } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
@@ -26,14 +26,14 @@ export default function PolicyStatusWidget({ user }: PolicyStatusWidgetProps) {
   };
 
   return (
-    <section className="mb-2 animate-fade-in">
-      <GlassCard className="mb-6">
-        <div className="flex items-center justify-between mb-2">
+    <section>
+      <GlassCard className="p-6">
+        <div className="flex items-center justify-between mb-4">
           <h3 className="text-base font-semibold text-white">Policy Status</h3>
           <div className="flex items-center space-x-2">
             <div
-              className={`w-3 h-3 rounded-full ${
-                isActive ? 'bg-green-400 shadow-lg shadow-green-400/50' : 'bg-red-400 shadow-lg shadow-red-400/50'
+              className={`w-2.5 h-2.5 rounded-full ${
+                isActive ? 'bg-emerald-400' : 'bg-red-400'
               } animate-pulse`}
             />
             <button
@@ -41,51 +41,47 @@ export default function PolicyStatusWidget({ user }: PolicyStatusWidgetProps) {
                 title: "Policy Status",
                 description: "Your policy is active and up to date. Next renewal: July 1, 2026",
               })}
-              className={`px-3 py-1.5 rounded-lg font-medium text-xs transition-all duration-300 ${
+              className={`px-4 py-2 min-h-[44px] rounded-xl font-semibold text-sm transition-all duration-200 ease-out active:scale-95 ${
                 isActive
-                  ? 'bg-gradient-to-r from-green-400 to-emerald-500 text-white shadow-lg shadow-green-400/30'
-                  : 'bg-gradient-to-r from-red-400 to-red-500 text-white shadow-lg shadow-red-400/30'
-              } haptic-button spring-transition hover:scale-105`}
-              style={{
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255, 255, 255, 0.2)'
-              }}
+                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                  : 'bg-red-500/20 text-red-400 border border-red-500/30'
+              }`}
             >
               {isActive ? 'Active' : 'Inactive'}
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-2">
+        <div className="space-y-4">
           {/* Policy Type */}
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-blue-500/20 rounded-lg flex items-center justify-center">
-              <Shield className="w-4 h-4 text-blue-400" />
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-blue-500/20 rounded-xl flex items-center justify-center">
+              <Shield className="w-5 h-5 text-blue-400" />
             </div>
             <div>
               <div className="text-sm font-medium text-white">{policyData.policyType}</div>
-              <div className="text-xs text-gray-400">Policy No: {policyData.policyNumber}</div>
+              <div className="text-xs text-white/50">Policy No: {policyData.policyNumber}</div>
             </div>
           </div>
 
           {/* Dates */}
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-4">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-purple-500/20 rounded-lg flex items-center justify-center">
-                <Calendar className="w-4 h-4 text-purple-400" />
+              <div className="w-10 h-10 bg-purple-500/20 rounded-xl flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-purple-400" />
               </div>
               <div>
-                <div className="text-xs text-gray-400">Start Date</div>
+                <div className="text-xs text-white/50">Start Date</div>
                 <div className="text-sm font-medium text-white">{policyData.startDate}</div>
               </div>
             </div>
             
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center">
-                <Calendar className="w-4 h-4 text-orange-400" />
+              <div className="w-10 h-10 bg-orange-500/20 rounded-xl flex items-center justify-center">
+                <Calendar className="w-5 h-5 text-orange-400" />
               </div>
               <div>
-                <div className="text-xs text-gray-400">Renewal Date</div>
+                <div className="text-xs text-white/50">Renewal Date</div>
                 <div className="text-sm font-medium text-white">{policyData.renewalDate}</div>
               </div>
             </div>
@@ -94,21 +90,19 @@ export default function PolicyStatusWidget({ user }: PolicyStatusWidgetProps) {
           {/* Premium */}
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-green-500/20 rounded-xl flex items-center justify-center">
-                <CreditCard className="w-5 h-5 text-green-400" />
+              <div className="w-10 h-10 bg-emerald-500/20 rounded-xl flex items-center justify-center">
+                <CreditCard className="w-5 h-5 text-emerald-400" />
               </div>
               <div>
                 <div className="text-sm font-medium text-white">Annual Premium</div>
-                <div className="text-xs text-gray-400">£{Number(policyData.premiumAmount || 1840).toLocaleString()}</div>
+                <div className="text-xs text-white/50">£{Number(policyData.premiumAmount || 1840).toLocaleString()}</div>
               </div>
             </div>
             <button
-              onClick={() => {
-                setLocation('/policy');
-              }}
-              className="px-3 py-1.5 bg-blue-500/20 hover:bg-blue-500/30 rounded-lg text-xs font-medium text-blue-400 hover:text-blue-300 transition-all duration-200 flex items-center gap-1"
+              onClick={() => setLocation('/policy')}
+              className="px-4 py-2 min-h-[44px] bg-blue-500/20 hover:bg-blue-500/30 rounded-xl text-sm font-semibold text-blue-400 transition-all duration-200 ease-out flex items-center gap-2 active:scale-95"
             >
-              <FileText className="w-3 h-3" />
+              <FileText className="w-4 h-4" />
               View Details
             </button>
           </div>
