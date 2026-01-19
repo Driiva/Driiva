@@ -6,13 +6,15 @@ interface LiquidGaugeProps {
 
 import { useToast } from "@/hooks/use-toast";
 import { TrendingUp, Info } from "lucide-react";
+import { AnimatedScore } from './AnimatedScore';
+import { GlassCard } from './GlassCard';
 
 export default function LiquidGauge({ score, projectedRefund, premiumAmount }: LiquidGaugeProps) {
   const { toast } = useToast();
   const strokeOffset = 283 - (score / 100) * 283;
   const personalScore = Math.round(score * 0.8);
   const poolScore = Math.round(score * 0.2);
-  const gaugeSize = 150; // Define gaugeSize here
+  const gaugeSize = 150;
 
   const handleScoreClick = () => {
     toast({
@@ -79,20 +81,20 @@ export default function LiquidGauge({ score, projectedRefund, premiumAmount }: L
             <div 
               className="text-white font-semibold" 
               style={{ 
-                fontSize: 'var(--font-display)', // 28px professional scale
+                fontSize: 'var(--font-display)',
                 fontFamily: 'SF Pro Display, Inter, sans-serif',
-                fontWeight: '600', // Semi-bold instead of bold
+                fontWeight: '600',
                 textShadow: '0 2px 4px rgba(0,0,0,0.5)',
                 lineHeight: '1.1'
               }}
               data-testid="driving-score-value"
             >
-              {score}
+              <AnimatedScore value={score} className="text-6xl font-bold text-white" />
             </div>
             <div 
               className="text-white/90 mt-1" 
               style={{ 
-                fontSize: 'var(--font-caption)', // 12px professional scale
+                fontSize: 'var(--font-caption)',
                 fontFamily: 'SF Pro Text, Inter, sans-serif',
                 fontWeight: '400',
                 textShadow: '0 1px 2px rgba(0,0,0,0.6)',
@@ -111,7 +113,7 @@ export default function LiquidGauge({ score, projectedRefund, premiumAmount }: L
           <div 
             className="text-white font-semibold" 
             style={{ 
-              fontSize: 'var(--font-body)', // 16px professional scale
+              fontSize: 'var(--font-body)',
               fontFamily: 'SF Pro Display, Inter, sans-serif',
               fontWeight: '600',
               textShadow: '0 1px 2px rgba(0,0,0,0.4)'
@@ -123,7 +125,7 @@ export default function LiquidGauge({ score, projectedRefund, premiumAmount }: L
           <div 
             className="text-white/80 mt-1" 
             style={{ 
-              fontSize: 'var(--font-caption)', // 12px professional scale
+              fontSize: 'var(--font-caption)',
               fontFamily: 'SF Pro Text, Inter, sans-serif',
               fontWeight: '400',
               textShadow: '0 1px 1px rgba(0,0,0,0.4)'
@@ -136,7 +138,7 @@ export default function LiquidGauge({ score, projectedRefund, premiumAmount }: L
           <div 
             className="text-white font-semibold" 
             style={{ 
-              fontSize: 'var(--font-body)', // 16px professional scale
+              fontSize: 'var(--font-body)',
               fontFamily: 'SF Pro Display, Inter, sans-serif',
               fontWeight: '600',
               textShadow: '0 1px 2px rgba(0,0,0,0.4)'
@@ -148,7 +150,7 @@ export default function LiquidGauge({ score, projectedRefund, premiumAmount }: L
           <div 
             className="text-white/80 mt-1" 
             style={{ 
-              fontSize: 'var(--font-caption)', // 12px professional scale
+              fontSize: 'var(--font-caption)',
               fontFamily: 'SF Pro Text, Inter, sans-serif',
               fontWeight: '400',
               textShadow: '0 1px 1px rgba(0,0,0,0.4)'
@@ -159,57 +161,16 @@ export default function LiquidGauge({ score, projectedRefund, premiumAmount }: L
         </div>
       </div>
 
-      {/* Projected Refund */}
+      {/* Projected Annual Refund - Enhanced Gradient Card */}
       <div 
-        className="text-center glass-card glass-card-sm" 
-        style={{
-          padding: 'var(--card-padding-xs)',
-          borderRadius: 'var(--radius-md)',
-          marginBottom: 'var(--space-2)'
-        }}
+        className="bg-gradient-to-br from-emerald-500 via-green-500 to-teal-600 rounded-3xl p-8 text-white shadow-2xl mb-6 transform transition-transform hover:scale-[1.02]"
         data-testid="projected-refund-card"
       >
-        <div 
-          className="text-white/90 mb-1" 
-          style={{ 
-            fontSize: 'var(--font-sm)',
-            fontWeight: 'var(--font-medium)',
-            textShadow: '0 1px 2px rgba(0,0,0,0.5)',
-            letterSpacing: '0.3px'
-          }}
-        >
-          Projected Annual Refund
-        </div>
-        <div 
-          className="text-white font-semibold" 
-          style={{ 
-            fontSize: 'var(--font-heading)', // 20px professional scale
-            fontFamily: 'SF Pro Display, Inter, sans-serif',
-            fontWeight: '600', // Semi-bold instead of bold
-            textShadow: '0 1px 3px rgba(0,0,0,0.5)'
-          }}
-          data-testid="refund-amount"
-        >
-          £{projectedRefund.toFixed(2)}
-        </div>
-        <div 
-          className="text-white/80 mt-2" 
-          style={{ 
-            fontSize: 'var(--font-caption)', // 12px professional scale
-            fontFamily: 'SF Pro Text, Inter, sans-serif',
-            fontWeight: '400',
-            textShadow: '0 1px 2px rgba(0,0,0,0.5)'
-          }}
-        >
-          <span 
-            className="font-semibold text-white" 
-            style={{ 
-              fontWeight: '600'
-            }}
-          >
-            {((projectedRefund / Number(premiumAmount)) * 100).toFixed(1)}%
-          </span> of £{premiumAmount.toLocaleString()} premium
-        </div>
+        <div className="text-sm font-medium opacity-90 mb-2">Projected Annual Refund</div>
+        <div className="text-5xl font-bold mb-1">£{projectedRefund.toFixed(2)}</div>
+        <p className="text-sm opacity-90">
+          {((projectedRefund / Number(premiumAmount)) * 100).toFixed(1)}% of £{premiumAmount.toLocaleString()} premium
+        </p>
       </div>
     </>
   );

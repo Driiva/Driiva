@@ -2,6 +2,7 @@ import { Shield, Calendar, CreditCard, ExternalLink, FileText } from "lucide-rea
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
+import { GlassCard } from './GlassCard';
 
 interface PolicyStatusWidgetProps {
   user: {
@@ -26,10 +27,7 @@ export default function PolicyStatusWidget({ user }: PolicyStatusWidgetProps) {
 
   return (
     <section className="mb-2 animate-fade-in">
-      <div className="glass-card glass-card-sm" style={{ 
-        background: 'var(--glass-white-5)', 
-        backdropFilter: 'blur(var(--glass-blur-md))' 
-      }}>
+      <GlassCard className="mb-6">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-base font-semibold text-white">Policy Status</h3>
           <div className="flex items-center space-x-2">
@@ -115,7 +113,7 @@ export default function PolicyStatusWidget({ user }: PolicyStatusWidgetProps) {
             </button>
           </div>
         </div>
-      </div>
+      </GlassCard>
     </section>
   );
 }

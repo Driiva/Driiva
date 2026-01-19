@@ -1,6 +1,8 @@
 
 import React from 'react';
+import { motion } from 'framer-motion';
 import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { GradientMesh } from '@/components/GradientMesh';
 import {
   MemoizedDashboardHeader as DashboardHeader,
   MemoizedLiquidGauge as LiquidGauge,
@@ -81,69 +83,76 @@ export default function Dashboard({ isLoading = false }: DashboardProps) {
 
   return (
     <div className="min-h-screen text-white">
+      <GradientMesh />
       <DashboardHeader user={userData} />
       
-      <main className="px-3 pb-20 stagger-children">
-        {/* Policy Status Widget */}
-        <div style={{ paddingTop: 'var(--space-3)', marginBottom: 'var(--space-2)' }}>
-          <PolicyStatusWidget user={userData} />
-        </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
+        <main className="px-3 pb-20 stagger-children">
+          {/* Policy Status Widget */}
+          <div style={{ paddingTop: 'var(--space-3)', marginBottom: 'var(--space-2)' }}>
+            <PolicyStatusWidget user={userData} />
+          </div>
 
-        {/* Driving Score Gauge */}
-        <div style={{ marginBottom: 'var(--space-2)' }} className="animate-scale-in">
-          <LiquidGauge 
-            score={userProfile.currentScore || 72}
-            projectedRefund={userProfile.projectedRefund || 100.80}
-            premiumAmount={Number(userData.premiumAmount)}
-          />
-        </div>
+          {/* Driving Score Gauge */}
+          <div style={{ marginBottom: 'var(--space-2)' }} className="animate-scale-in">
+            <LiquidGauge 
+              score={userProfile.currentScore || 72}
+              projectedRefund={userProfile.projectedRefund || 100.80}
+              premiumAmount={Number(userData.premiumAmount)}
+            />
+          </div>
 
-        {/* Metrics Grid */}
-        <div style={{ marginBottom: 'var(--space-2)' }}>
-          <MetricsGrid profile={{
-            hardBrakingScore: userProfile.hardBrakingScore || 3,
-            accelerationScore: userProfile.accelerationScore || 2,
-            speedAdherenceScore: userProfile.speedAdherenceScore || 1,
-            nightDrivingScore: userProfile.nightDrivingScore || 5
-          }} />
-        </div>
+          {/* Metrics Grid */}
+          <div style={{ marginBottom: 'var(--space-2)' }}>
+            <MetricsGrid profile={{
+              hardBrakingScore: userProfile.hardBrakingScore || 3,
+              accelerationScore: userProfile.accelerationScore || 2,
+              speedAdherenceScore: userProfile.speedAdherenceScore || 1,
+              nightDrivingScore: userProfile.nightDrivingScore || 5
+            }} />
+          </div>
 
-        {/* Community Pool */}
-        <div style={{ marginBottom: 'var(--space-2)' }}>
-          <CommunityPool 
-            pool={{
-              poolAmount: communityPoolData.poolAmount,
-              safetyFactor: communityPoolData.safetyFactor,
-              participantCount: communityPoolData.participantCount,
-              safeDriverCount: communityPoolData.safeDriverCount
-            }}
-          />
-        </div>
+          {/* Community Pool */}
+          <div style={{ marginBottom: 'var(--space-2)' }}>
+            <CommunityPool 
+              pool={{
+                poolAmount: communityPoolData.poolAmount,
+                safetyFactor: communityPoolData.safetyFactor,
+                participantCount: communityPoolData.participantCount,
+                safeDriverCount: communityPoolData.safeDriverCount
+              }}
+            />
+          </div>
 
-        {/* Gamification */}
-        <div style={{ marginBottom: 'var(--space-2)' }}>
-          <Gamification 
-            achievements={achievementsData}
-            leaderboard={leaderboardData}
-            currentUser={userData}
-            profile={{
-              currentScore: userProfile.currentScore || 72,
-              projectedRefund: userProfile.projectedRefund || 100.80,
-              totalMiles: userProfile.totalMiles || 1107.70
-            }}
-            premiumAmount={Number(userData.premiumAmount)}
-          />
-        </div>
+          {/* Gamification */}
+          <div style={{ marginBottom: 'var(--space-2)' }}>
+            <Gamification 
+              achievements={achievementsData}
+              leaderboard={leaderboardData}
+              currentUser={userData}
+              profile={{
+                currentScore: userProfile.currentScore || 72,
+                projectedRefund: userProfile.projectedRefund || 100.80,
+                totalMiles: userProfile.totalMiles || 1107.70
+              }}
+              premiumAmount={Number(userData.premiumAmount)}
+            />
+          </div>
 
-        {/* Refund Simulator */}
-        <div style={{ marginBottom: 'var(--space-3)' }}>
-          <RefundSimulator 
-            currentScore={userProfile.currentScore || 72}
-            premiumAmount={Number(userData.premiumAmount)}
-            poolSafetyFactor={communityPoolData.safetyFactor}
-          />
-        </div>
-      </main>
+          {/* Refund Simulator */}
+          <div style={{ marginBottom: 'var(--space-3)' }}>
+            <RefundSimulator 
+              currentScore={userProfile.currentScore || 72}
+              premiumAmount={Number(userData.premiumAmount)}
+              poolSafetyFactor={communityPoolData.safetyFactor}
+            />
+          </div>
+        </main>
+      </motion.div>
       
       <BottomNavigation activeTab="home" />
     </div>

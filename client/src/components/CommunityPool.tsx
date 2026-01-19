@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Users, TrendingUp, Info, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import LiveInfoPopup from "./LiveInfoPopup";
+import { GlassCard } from './GlassCard';
 
 interface CommunityPoolProps {
   pool?: {
@@ -26,11 +27,7 @@ export default function CommunityPool({ pool }: CommunityPoolProps) {
 
   return (
     <section className="mb-3">
-      <div className="glass-morphism-subtle rounded-xl p-3" style={{
-        background: 'rgba(255, 255, 255, 0.04)',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
-        backdropFilter: 'blur(12px)',
-      }}>
+      <GlassCard className="p-6">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-base font-semibold flex items-center gap-2">
             <Users className="w-4 h-4 text-blue-400" />
@@ -99,7 +96,7 @@ export default function CommunityPool({ pool }: CommunityPoolProps) {
             <span className="text-sm text-[#10B981] font-medium">Pool performing +5% above target</span>
           </div>
         </div>
-      </div>
+      </GlassCard>
       
       {/* Live Info Popup */}
       <LiveInfoPopup 

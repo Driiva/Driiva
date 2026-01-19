@@ -1,5 +1,6 @@
 import { Truck, TrendingUp, Gauge, Moon, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { GlassCard } from './GlassCard';
 
 interface MetricsGridProps {
   profile: {
@@ -14,7 +15,7 @@ export default function MetricsGrid({ profile }: MetricsGridProps) {
   const { toast } = useToast();
   
   const getScoreColor = (score: number, isInverse: boolean = false) => {
-    return 'text-white'; // Simplified to white for all scores
+    return 'text-white';
   };
 
   const handleMetricClick = (metric: any) => {
@@ -77,74 +78,73 @@ export default function MetricsGrid({ profile }: MetricsGridProps) {
     <section className="mb-2">
       <div className="grid grid-cols-2 gap-2">
         {metrics.map((metric, index) => (
-          <button 
-            key={index} 
-            onClick={() => handleMetricClick(metric)} 
-            className="glass-card glass-card-sm transition-all duration-200 hover:scale-[1.02] cursor-pointer w-full text-left" 
-            style={{ 
-              minHeight: '60px',
-              padding: 'var(--card-padding-xs)',
-              borderRadius: 'var(--radius-md)'
-            }}
-            data-testid={`metric-${metric.label.toLowerCase().replace(' ', '-')}`}
-          >
-            <div className="flex items-center space-x-2 mb-1">
-              <div 
-                className="w-5 h-5 rounded-md flex items-center justify-center"
-                style={{ backgroundColor: `${metric.color}20` }}
-              >
-                <metric.icon className="w-3 h-3" style={{ color: metric.color }} />
-              </div>
-              <div className="flex-1">
+          <GlassCard key={index} className="p-4">
+            <button 
+              onClick={() => handleMetricClick(metric)} 
+              className="w-full text-left transition-all duration-200 hover:scale-[1.02] cursor-pointer" 
+              style={{ 
+                minHeight: '60px'
+              }}
+              data-testid={`metric-${metric.label.toLowerCase().replace(' ', '-')}`}
+            >
+              <div className="flex items-center space-x-2 mb-1">
                 <div 
-                  className="font-semibold text-white" 
+                  className="w-5 h-5 rounded-md flex items-center justify-center"
+                  style={{ backgroundColor: `${metric.color}20` }}
+                >
+                  <metric.icon className="w-3 h-3" style={{ color: metric.color }} />
+                </div>
+                <div className="flex-1">
+                  <div 
+                    className="font-semibold text-white" 
+                    style={{ 
+                      fontSize: 'var(--font-xs)',
+                      fontWeight: 'var(--font-semibold)',
+                      textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+                      lineHeight: '1.2'
+                    }}
+                  >
+                    {metric.label}
+                  </div>
+                  <div 
+                    className="text-white/70" 
+                    style={{ 
+                      fontSize: '9px',
+                      fontWeight: 'var(--font-regular)',
+                      textShadow: '0 1px 1px rgba(0,0,0,0.4)'
+                    }}
+                  >
+                    {metric.weight}
+                  </div>
+                </div>
+              </div>
+              <div className="text-right">
+                <div 
+                  className="text-white font-semibold" 
                   style={{ 
-                    fontSize: 'var(--font-xs)',
-                    fontWeight: 'var(--font-semibold)',
-                    textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+                    fontSize: 'var(--font-lg)',
+                    fontWeight: 'var(--font-bold)',
+                    textShadow: '0 1px 2px rgba(0,0,0,0.4)',
+                    lineHeight: '1'
+                  }}
+                  data-testid={`metric-value-${metric.label.toLowerCase().replace(' ', '-')}`}
+                >
+                  {metric.value}
+                </div>
+                <div 
+                  className="text-white/80 mt-0.5" 
+                  style={{ 
+                    fontSize: '10px',
+                    fontWeight: 'var(--font-regular)',
+                    textShadow: '0 1px 1px rgba(0,0,0,0.3)',
                     lineHeight: '1.2'
                   }}
                 >
-                  {metric.label}
-                </div>
-                <div 
-                  className="text-white/70" 
-                  style={{ 
-                    fontSize: '9px',
-                    fontWeight: 'var(--font-regular)',
-                    textShadow: '0 1px 1px rgba(0,0,0,0.4)'
-                  }}
-                >
-                  {metric.weight}
+                  {metric.unit}
                 </div>
               </div>
-            </div>
-            <div className="text-right">
-              <div 
-                className="text-white font-semibold" 
-                style={{ 
-                  fontSize: 'var(--font-lg)',
-                  fontWeight: 'var(--font-bold)',
-                  textShadow: '0 1px 2px rgba(0,0,0,0.4)',
-                  lineHeight: '1'
-                }}
-                data-testid={`metric-value-${metric.label.toLowerCase().replace(' ', '-')}`}
-              >
-                {metric.value}
-              </div>
-              <div 
-                className="text-white/80 mt-0.5" 
-                style={{ 
-                  fontSize: '10px',
-                  fontWeight: 'var(--font-regular)',
-                  textShadow: '0 1px 1px rgba(0,0,0,0.3)',
-                  lineHeight: '1.2'
-                }}
-              >
-                {metric.unit}
-              </div>
-            </div>
-          </button>
+            </button>
+          </GlassCard>
         ))}
       </div>
     </section>
