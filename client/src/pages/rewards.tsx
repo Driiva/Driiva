@@ -1,8 +1,9 @@
 import { useState } from "react";
 import DashboardHeader from "@/components/DashboardHeader";
 import BottomNavigation from "@/components/BottomNavigation";
-import PageTransition from "@/components/PageTransition";
-import { Trophy, Award, Star, Target, TrendingUp, Gift, Calendar, Zap } from "lucide-react";
+import { GradientMesh } from "@/components/GradientMesh";
+import { GlassCard } from "@/components/GlassCard";
+import { Trophy, Award, Star, Target, TrendingUp, Gift, Calendar, Check } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface Achievement {
@@ -30,7 +31,6 @@ interface Reward {
 export default function Rewards() {
   const [activeTab, setActiveTab] = useState<"achievements" | "rewards" | "progress">("achievements");
 
-  // Static data - no API calls
   const user = {
     firstName: "Test",
     lastName: "Driver",
@@ -132,204 +132,160 @@ export default function Rewards() {
     totalRefunds: 138.00
   };
 
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case "safety": return Trophy;
-      case "distance": return Target;
-      case "consistency": return Calendar;
-      case "community": return Star;
-      default: return Award;
-    }
-  };
-
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case "safety": return "from-yellow-400 to-orange-500";
-      case "distance": return "from-blue-400 to-cyan-500";
-      case "consistency": return "from-green-400 to-emerald-500";
-      case "community": return "from-purple-400 to-pink-500";
-      default: return "from-gray-400 to-gray-500";
-    }
-  };
-
   return (
-    <PageTransition>
-      <div className="min-h-screen text-white">
-        <DashboardHeader user={user} />
-        
-        <main className="px-4 pb-20">
+    <div className="min-h-screen text-white">
+      <GradientMesh />
+      <DashboardHeader user={user} />
+      
+      <main className="px-4 pb-28">
         {/* Header Stats */}
-        <div className="pt-4 mb-6">
-          <div className="glass-morphism rounded-2xl p-4 border border-white/10 backdrop-blur-xl">
-            <h1 className="text-2xl font-bold mb-4 flex items-center gap-2">
-              <Gift className="w-6 h-6 text-yellow-400 drop-shadow-lg" />
+        <div className="pt-6 mb-6">
+          <GlassCard className="p-6">
+            <h1 className="text-xl font-semibold mb-4 flex items-center gap-2 text-white">
+              <Gift className="w-5 h-5 text-white/60" />
               Rewards Dashboard
             </h1>
             
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-yellow-400">{stats.totalPoints}</div>
-                <div className="text-sm text-gray-400">Total Points</div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center p-3 bg-white/5 rounded-xl">
+                <div className="text-2xl font-semibold text-emerald-400">{stats.totalPoints}</div>
+                <div className="text-xs text-white/50 mt-1">Total Points</div>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-400">{stats.achievementsUnlocked}/{stats.totalAchievements}</div>
-                <div className="text-sm text-gray-400">Achievements</div>
+              <div className="text-center p-3 bg-white/5 rounded-xl">
+                <div className="text-2xl font-semibold text-white">{stats.achievementsUnlocked}/{stats.totalAchievements}</div>
+                <div className="text-xs text-white/50 mt-1">Achievements</div>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-400">{stats.currentStreak}</div>
-                <div className="text-sm text-gray-400">Day Streak</div>
+              <div className="text-center p-3 bg-white/5 rounded-xl">
+                <div className="text-2xl font-semibold text-white">{stats.currentStreak}</div>
+                <div className="text-xs text-white/50 mt-1">Day Streak</div>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-purple-400">£{stats.totalRefunds}</div>
-                <div className="text-sm text-gray-400">Total Refunds</div>
+              <div className="text-center p-3 bg-white/5 rounded-xl">
+                <div className="text-2xl font-semibold text-emerald-400">£{stats.totalRefunds}</div>
+                <div className="text-xs text-white/50 mt-1">Total Refunds</div>
               </div>
             </div>
-          </div>
+          </GlassCard>
         </div>
 
         {/* Tab Navigation */}
         <div className="mb-6">
-          <div className="glass-morphism rounded-xl p-1 flex border border-white/10 backdrop-blur-xl">
+          <GlassCard className="p-1.5 flex">
             {["achievements", "rewards", "progress"].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab as any)}
-                className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm transition-all duration-300 ${
+                className={`flex-1 py-3 px-4 rounded-xl font-medium text-sm min-h-[44px] transition-all duration-200 ease-out ${
                   activeTab === tab
-                    ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg backdrop-blur-sm border border-white/20"
-                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                    : "text-white/50 hover:text-white hover:bg-white/5"
                 }`}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
               </button>
             ))}
-          </div>
+          </GlassCard>
         </div>
 
         {/* Content */}
         <motion.div
           key={activeTab}
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.2 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
         >
           {activeTab === "achievements" && (
-            <div className="grid gap-3">
+            <div className="space-y-3">
               {achievements.map((achievement) => {
-                const IconComponent = getCategoryIcon(achievement.category);
                 const isUnlocked = !!achievement.unlockedAt;
                 const hasProgress = achievement.progress !== undefined;
                 
                 return (
-                  <motion.div
-                    key={achievement.id}
-                    className="glass-morphism rounded-xl p-4 transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/20 cursor-pointer transform-gpu border border-white/10"
-                    whileHover={{ 
-                      scale: 1.025,
-                      boxShadow: "0 25px 50px rgba(59, 130, 246, 0.2)",
-                      backdropFilter: "blur(25px)",
-                      background: "rgba(255, 255, 255, 0.12)"
-                    }}
-                    whileTap={{ scale: 0.98 }}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ 
-                      duration: 0.4,
-                      delay: achievement.id * 0.08,
-                      ease: [0.23, 1, 0.320, 1]
-                    }}
+                  <GlassCard 
+                    key={achievement.id} 
+                    className={`p-5 ${!isUnlocked && !hasProgress ? 'opacity-50' : ''}`}
                   >
                     <div className="flex items-start gap-4">
-                      <div className={`w-12 h-12 rounded-xl bg-gradient-to-r ${getCategoryColor(achievement.category)} flex items-center justify-center flex-shrink-0`}>
-                        {achievement.iconUrl ? (
-                          <span className="text-xl">{achievement.iconUrl}</span>
-                        ) : (
-                          <IconComponent className="w-6 h-6 text-white" />
-                        )}
+                      <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <span className="text-xl">{achievement.iconUrl}</span>
                       </div>
                       
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold text-white">{achievement.title}</h3>
+                          <h3 className="font-semibold text-white text-sm">{achievement.title}</h3>
                           {isUnlocked && (
-                            <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                              <Zap className="w-3 h-3 text-white" />
+                            <div className="w-5 h-5 bg-emerald-500/20 border border-emerald-500/30 rounded-full flex items-center justify-center">
+                              <Check className="w-3 h-3 text-emerald-400" />
                             </div>
                           )}
                         </div>
                         
-                        <p className="text-sm text-gray-400 mb-2">{achievement.description}</p>
+                        <p className="text-xs text-white/50 mb-2">{achievement.description}</p>
                         
-                        {achievement.reward && (
-                          <div className="text-xs text-yellow-400 font-medium mb-2">
+                        {achievement.reward && isUnlocked && (
+                          <div className="text-xs text-emerald-400 font-medium mb-2">
                             Reward: {achievement.reward}
                           </div>
                         )}
                         
                         {hasProgress && (
-                          <div className="space-y-1">
+                          <div className="space-y-1.5">
                             <div className="flex justify-between text-xs">
-                              <span className="text-gray-400">Progress</span>
-                              <span className="text-white">{achievement.progress}/{achievement.maxProgress}</span>
+                              <span className="text-white/40">Progress</span>
+                              <span className="text-white/70">{achievement.progress}/{achievement.maxProgress}</span>
                             </div>
-                            <div className="w-full bg-gray-700 rounded-full h-2">
-                              <motion.div
-                                className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full"
-                                initial={{ width: 0 }}
-                                animate={{ width: `${(achievement.progress! / achievement.maxProgress!) * 100}%` }}
-                                transition={{ duration: 0.8, ease: "easeOut" }}
+                            <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
+                              <div
+                                className="bg-emerald-500/60 h-1.5 rounded-full transition-all duration-500 ease-out"
+                                style={{ width: `${(achievement.progress! / achievement.maxProgress!) * 100}%` }}
                               />
                             </div>
                           </div>
                         )}
                         
                         {isUnlocked && achievement.unlockedAt && (
-                          <div className="text-xs text-green-400 mt-2">
+                          <div className="text-xs text-white/40 mt-2">
                             Unlocked: {new Date(achievement.unlockedAt).toLocaleDateString()}
                           </div>
                         )}
                       </div>
                     </div>
-                  </motion.div>
+                  </GlassCard>
                 );
               })}
             </div>
           )}
 
           {activeTab === "rewards" && (
-            <div className="grid gap-3">
+            <div className="space-y-3">
               {rewards.map((reward) => (
-                <motion.div
-                  key={reward.id}
-                  className={`glass-morphism rounded-xl p-4 transition-all duration-300 hover:scale-[1.02] cursor-pointer ${
-                    reward.available ? "hover:shadow-lg" : "opacity-60"
-                  }`}
-                  whileHover={reward.available ? { scale: 1.02 } : {}}
-                  whileTap={reward.available ? { scale: 0.98 } : {}}
+                <GlassCard 
+                  key={reward.id} 
+                  className={`p-5 ${!reward.available ? 'opacity-40' : ''}`}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <h3 className="font-semibold text-white mb-1">{reward.title}</h3>
-                      <p className="text-sm text-gray-400 mb-2">{reward.description}</p>
+                      <h3 className="font-semibold text-white text-sm mb-1">{reward.title}</h3>
+                      <p className="text-xs text-white/50 mb-2">{reward.description}</p>
                       <div className="flex items-center gap-4">
-                        <div className="text-lg font-bold text-yellow-400">{reward.points} pts</div>
-                        <div className="text-lg font-bold text-green-400">{reward.value}</div>
+                        <div className="text-sm font-semibold text-white/70">{reward.points} pts</div>
+                        <div className={`text-sm font-semibold ${reward.available ? 'text-emerald-400' : 'text-white/30'}`}>
+                          {reward.value}
+                        </div>
                       </div>
                     </div>
                     
                     <button
-                      className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                      className={`px-4 py-2.5 min-h-[44px] rounded-xl font-medium text-sm transition-all duration-200 ease-out ${
                         reward.available
-                          ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:shadow-lg"
-                          : "bg-gray-600 text-gray-400 cursor-not-allowed"
+                          ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30 active:scale-95"
+                          : "bg-white/5 text-white/30 cursor-not-allowed"
                       }`}
                       disabled={!reward.available}
                     >
                       {reward.available ? "Claim" : "Locked"}
                     </button>
                   </div>
-                </motion.div>
+                </GlassCard>
               ))}
             </div>
           )}
@@ -337,63 +293,64 @@ export default function Rewards() {
           {activeTab === "progress" && (
             <div className="space-y-6">
               {/* Weekly Progress */}
-              <div className="glass-morphism rounded-xl p-4">
-                <h3 className="font-semibold text-white mb-4 flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-blue-400" />
+              <GlassCard className="p-6">
+                <h3 className="font-semibold text-white text-sm mb-4 flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-white/60" />
                   Weekly Progress
                 </h3>
                 
                 <div className="grid grid-cols-7 gap-2">
                   {Array.from({ length: 7 }, (_, i) => {
-                    const dayScore = Math.floor(Math.random() * 20) + 80;
+                    const dayScore = [85, 88, 92, 87, 90, 94, 89][i];
                     const isToday = i === 6;
                     
                     return (
                       <div key={i} className="text-center">
-                        <div className={`w-10 h-10 rounded-lg mx-auto mb-1 flex items-center justify-center text-xs font-bold ${
-                          isToday ? "bg-blue-500 text-white" : "bg-white/10 text-gray-300"
+                        <div className={`w-10 h-10 rounded-lg mx-auto mb-1 flex items-center justify-center text-xs font-semibold ${
+                          isToday 
+                            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" 
+                            : "bg-white/5 text-white/70"
                         }`}>
                           {dayScore}
                         </div>
-                        <div className="text-xs text-gray-400">
-                          {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][i]}
+                        <div className="text-xs text-white/40">
+                          {["M", "T", "W", "T", "F", "S", "S"][i]}
                         </div>
                       </div>
                     );
                   })}
                 </div>
-              </div>
+              </GlassCard>
 
               {/* Monthly Summary */}
-              <div className="glass-morphism rounded-xl p-4">
-                <h3 className="font-semibold text-white mb-4">Monthly Summary</h3>
+              <GlassCard className="p-6">
+                <h3 className="font-semibold text-white text-sm mb-4">Monthly Summary</h3>
                 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-green-400">89</div>
-                    <div className="text-sm text-gray-400">Average Score</div>
+                  <div className="text-center p-4 bg-white/5 rounded-xl">
+                    <div className="text-2xl font-semibold text-emerald-400">89</div>
+                    <div className="text-xs text-white/50 mt-1">Average Score</div>
                   </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-blue-400">28</div>
-                    <div className="text-sm text-gray-400">Safe Days</div>
+                  <div className="text-center p-4 bg-white/5 rounded-xl">
+                    <div className="text-2xl font-semibold text-white">28</div>
+                    <div className="text-xs text-white/50 mt-1">Safe Days</div>
                   </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-purple-400">245</div>
-                    <div className="text-sm text-gray-400">Miles Driven</div>
+                  <div className="text-center p-4 bg-white/5 rounded-xl">
+                    <div className="text-2xl font-semibold text-white">245</div>
+                    <div className="text-xs text-white/50 mt-1">Miles Driven</div>
                   </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-yellow-400">£42</div>
-                    <div className="text-sm text-gray-400">Refund Earned</div>
+                  <div className="text-center p-4 bg-white/5 rounded-xl">
+                    <div className="text-2xl font-semibold text-emerald-400">£42</div>
+                    <div className="text-xs text-white/50 mt-1">Refund Earned</div>
                   </div>
                 </div>
-              </div>
+              </GlassCard>
             </div>
           )}
         </motion.div>
       </main>
         
-        <BottomNavigation activeTab="rewards" />
-      </div>
-    </PageTransition>
+      <BottomNavigation activeTab="rewards" />
+    </div>
   );
 }

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Slider } from "@/components/ui/slider";
-import { drivingScorer } from "@/lib/scoring";
 import { useToast } from "@/hooks/use-toast";
-import { Calculator, TrendingUp } from "lucide-react";
+import { Calculator, Info } from "lucide-react";
+import { GlassCard } from './GlassCard';
 
 interface RefundSimulatorProps {
   currentScore: number;
@@ -21,8 +21,8 @@ export default function RefundSimulator({
   const calculateRefund = (score: number): string => {
     if (score < 70) return "0.00";
     const scoreRange = Math.max(0, score - 70);
-    const baseRefund = 5; // Minimum 5% refund for 70+ scores
-    const additionalRefund = (scoreRange / 30) * 10; // Up to 10% more
+    const baseRefund = 5;
+    const additionalRefund = (scoreRange / 30) * 10;
     const refundPercentage = Math.min(15, baseRefund + additionalRefund);
     const refundAmount = (premiumAmount * refundPercentage) / 100;
     return refundAmount.toFixed(2);
@@ -40,115 +40,93 @@ export default function RefundSimulator({
     return `Eligible for refunds (${percentile}% towards max)`;
   };
 
-  const getScoreColor = (score: number): string => {
-    if (score < 70) return "text-red-400";
-    if (score < 80) return "text-yellow-400";
-    if (score < 90) return "text-[#06B6D4]";
-    return "text-[#10B981]";
-  };
-
   return (
-    <section className="mb-3 sm:mb-4">
-      <div className="glass-morphism-subtle rounded-xl p-3 sm:p-4">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm sm:text-base font-semibold flex items-center gap-2">
-            <Calculator className="w-4 h-4 text-blue-400" />
+    <section>
+      <GlassCard className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-base font-semibold flex items-center gap-2 text-white">
+            <Calculator className="w-5 h-5 text-white/60" />
             Refund Simulator
           </h3>
           <button
             onClick={() => toast({
-              title: "Refund Calculator Help",
-              description: "Adjust the score slider to see how improvements in your driving could increase your annual refund. Scores above 70 qualify for refunds up to 15% of your premium.",
+              title: "Refund Calculator",
+              description: "Adjust the score slider to see how improvements could increase your refund. Scores 70+ qualify for refunds up to 15%.",
             })}
-            className="text-xs text-gray-400 hover:text-white px-2 py-1 hover:bg-white/10 rounded transition-colors"
+            className="min-h-[44px] px-3 text-xs text-white/50 hover:text-white/70 hover:bg-white/5 rounded-xl transition-all duration-200 ease-out flex items-center gap-1"
           >
-            Premium: £{premiumAmount || 1840}
+            <Info className="w-3.5 h-3.5" />
+            £{premiumAmount || 1840}
           </button>
         </div>
-        <p className="text-xs text-gray-400 mb-3">
-          See how improvements could boost your refund
-        </p>
 
-        <div className="space-y-4">
+        <div className="space-y-5">
           {/* Current Score Display */}
-          <div className="p-3 glass-card rounded-xl">
+          <div className="p-4 bg-white/5 rounded-xl">
             <div className="flex justify-between items-center">
               <div>
-                <div className="text-xs text-gray-400">Current Score</div>
-                <div className={`text-lg font-bold ${getScoreColor(currentScore)}`}>
+                <div className="text-xs text-white/50 mb-1">Current Score</div>
+                <div className={`text-xl font-semibold ${currentScore >= 70 ? 'text-emerald-400' : 'text-white'}`}>
                   {currentScore}
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-xs text-gray-400">Current Refund</div>
-                <div className="text-lg font-bold text-[#10B981]">
+                <div className="text-xs text-white/50 mb-1">Current Refund</div>
+                <div className="text-xl font-semibold text-emerald-400">
                   £{currentRefund}
                 </div>
               </div>
             </div>
-            <div className="mt-2 text-xs text-gray-400">
+            <div className="mt-2 text-xs text-white/40">
               {getEligibilityMessage(currentScore)}
             </div>
           </div>
 
           {/* Score Slider */}
           <div>
-            <div className="flex justify-between items-center mb-2">
-              <label className="text-sm font-medium">Simulate Score</label>
-              <span className={`text-sm font-semibold ${getScoreColor(simulatedScore)}`}>
+            <div className="flex justify-between items-center mb-3">
+              <label className="text-sm font-medium text-white">Simulate Score</label>
+              <span className={`text-sm font-semibold ${simulatedScore >= 70 ? 'text-emerald-400' : 'text-white/70'}`}>
                 {simulatedScore}
               </span>
             </div>
-            <div className="relative px-1">
+            <div className="px-1">
               <Slider
                 value={[simulatedScore]}
                 onValueChange={(value) => setSimulatedScore(value[0])}
                 max={100}
                 min={50}
                 step={1}
-                className="w-full [&_.slider-track]:bg-gradient-to-r [&_.slider-track]:from-orange-500 [&_.slider-track]:to-purple-600 [&_.slider-track]:h-2 [&_.slider-range]:bg-gradient-to-r [&_.slider-range]:from-orange-400 [&_.slider-range]:to-purple-500 [&_[role=slider]]:w-5 [&_[role=slider]]:h-5 [&_[role=slider]]:bg-gradient-to-r [&_[role=slider]]:from-amber-500 [&_[role=slider]]:to-purple-600 [&_[role=slider]]:border-2 [&_[role=slider]]:border-white [&_[role=slider]]:shadow-lg [&_[role=slider]]:cursor-grab [&_[role=slider]]:active:cursor-grabbing [&_[role=slider]]:hover:scale-110 [&_[role=slider]]:transition-transform [&_[data-orientation=horizontal]]:h-2 [&_[data-orientation=horizontal]]:bg-white/20 [&_[data-orientation=horizontal]]:rounded-full"
+                className="w-full [&_[role=slider]]:w-5 [&_[role=slider]]:h-5 [&_[role=slider]]:bg-emerald-400 [&_[role=slider]]:border-2 [&_[role=slider]]:border-white [&_[role=slider]]:shadow-lg [&_[role=slider]]:cursor-grab [&_[role=slider]]:active:cursor-grabbing [&_[role=slider]]:transition-transform [&_[role=slider]]:duration-200 [&_[role=slider]]:hover:scale-110 [&_[data-orientation=horizontal]]:h-2 [&_[data-orientation=horizontal]]:bg-white/10 [&_[data-orientation=horizontal]]:rounded-full"
               />
             </div>
-            <div className="flex justify-between text-xs text-gray-500 mt-1">
+            <div className="flex justify-between text-xs text-white/40 mt-2">
               <span>50</span>
-              <span className="text-yellow-400">70 (Min for refund)</span>
+              <span className="text-emerald-400/70">70 (Min)</span>
               <span>100</span>
             </div>
           </div>
 
           {/* Simulation Results */}
-          <div className="p-4 rounded-xl" style={{
-            background: 'rgba(255, 255, 255, 0.08)',
-            backdropFilter: 'blur(25px)',
-            border: '1px solid rgba(255, 255, 255, 0.12)',
-            transition: 'all 0.3s ease'
-          }} onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 20px 40px rgba(0, 0, 0, 0.3)';
-          }} onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = 'none';
-          }}>
+          <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
             <div className="flex justify-between items-center">
               <div>
-                <div className="text-sm text-gray-400">Potential Refund</div>
-                <div className="text-xl font-bold text-[#10B981]">
+                <div className="text-xs text-white/50 mb-1">Potential Refund</div>
+                <div className="text-2xl font-semibold text-emerald-400">
                   £{simulatedRefund}
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-sm text-gray-400">Improvement</div>
+                <div className="text-xs text-white/50 mb-1">Improvement</div>
                 <div className={`text-lg font-semibold ${
-                  improvement > 0 ? 'text-[#10B981]' : 'text-gray-400'
+                  improvement > 0 ? 'text-emerald-400' : 'text-white/40'
                 }`}>
                   {improvement > 0 ? `+£${improvement.toFixed(2)}` : '£0.00'}
                 </div>
               </div>
             </div>
 
-            <div className="mt-3 text-xs text-gray-400">
+            <div className="mt-3 text-xs text-white/40">
               {simulatedScore < 70 ? 
                 "Score must be 70+ to qualify for refunds" :
                 `Refund rate: ${(((simulatedScore - 70) / 30) * 10 + 5).toFixed(1)}% of premium`
@@ -158,11 +136,11 @@ export default function RefundSimulator({
 
           {/* Improvement Tips */}
           {improvement > 0 && (
-            <div className="p-3 glass-card rounded-xl border border-[#10B981]/20">
-              <div className="text-xs text-[#10B981] font-medium mb-1">
-                💡 How to achieve this score:
+            <div className="p-4 bg-white/5 rounded-xl">
+              <div className="text-xs text-emerald-400 font-medium mb-2">
+                Tips to achieve this score:
               </div>
-              <div className="text-xs text-gray-400 space-y-1">
+              <div className="text-xs text-white/50 space-y-1.5">
                 {simulatedScore > currentScore + 10 && (
                   <div>• Reduce hard braking events by 50%</div>
                 )}
@@ -175,7 +153,7 @@ export default function RefundSimulator({
             </div>
           )}
         </div>
-      </div>
+      </GlassCard>
     </section>
   );
 }
