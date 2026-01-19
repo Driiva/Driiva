@@ -2,15 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-* {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-}
-
 body {
   margin: 0;
-  background: linear-gradient(180deg, #F9FAFB 0%, #F3F4F6 100%);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background: linear-gradient(180deg, #F9FAFB 0%, #F3F4F6 100%);
 }
 
 html {
