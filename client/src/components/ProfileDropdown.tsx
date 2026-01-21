@@ -49,7 +49,13 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
         whileTap={microInteractions.tap}
         transition={{ duration: timing.quick / 1000 }}
       >
-        <div className="w-8 h-8 bg-emerald-500 hover:bg-emerald-600 rounded-full flex items-center justify-center transition-colors">
+        <div 
+          className="w-8 h-8 rounded-full flex items-center justify-center border-2 border-emerald-500/60"
+          style={{
+            background: 'radial-gradient(circle at center, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.05) 70%, transparent 100%)',
+            boxShadow: '0 0 20px rgba(16, 185, 129, 0.15), inset 0 0 20px rgba(16, 185, 129, 0.1)'
+          }}
+        >
           <span className="text-xs font-semibold text-white">
             {profileData.name.charAt(0).toUpperCase()}
           </span>
@@ -87,8 +93,13 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
               {/* User info section */}
               <div className="p-4 border-b border-white/[0.08]">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-emerald-500 
-                                flex items-center justify-center text-white font-semibold">
+                  <div 
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold border-2 border-emerald-500/60"
+                    style={{
+                      background: 'radial-gradient(circle at center, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.05) 70%, transparent 100%)',
+                      boxShadow: '0 0 20px rgba(16, 185, 129, 0.15), inset 0 0 20px rgba(16, 185, 129, 0.1)'
+                    }}
+                  >
                     {profileData.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
