@@ -5,6 +5,7 @@ import ScrollGradient from './components/ScrollGradient';
 // Pages
 import Welcome from './pages/welcome';
 import Signup from './pages/signup';
+import Permissions from './pages/permissions';
 import Dashboard from './pages/dashboard';
 import Trips from './pages/trips';
 import Rewards from './pages/rewards';
@@ -51,6 +52,10 @@ export default function App() {
 
               <Route path="/signup">
                 <Signup />
+              </Route>
+
+              <Route path="/permissions">
+                <Permissions />
               </Route>
 
               <Route path="/dashboard">
