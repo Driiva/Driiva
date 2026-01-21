@@ -1,6 +1,6 @@
-import React, { useState, useEffect, createContext, useContext } from 'react';
+import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import { useLocation } from 'wouter';
 
-// Types
 export interface User {
   id: number;
   username: string;
@@ -20,12 +20,12 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [, navigate] = useLocation();
 
   useEffect(() => {
-    // Check for stored user data on app startup
     try {
       const storedUser = localStorage.getItem('driiva_user');
       if (storedUser) {
@@ -41,11 +41,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = (userData: User) => {
     setUser(userData);
     localStorage.setItem('driiva_user', JSON.stringify(userData));
+    navigate('/dashboard');
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem('driiva_user');
+    navigate('/');
   };
 
   const value = {

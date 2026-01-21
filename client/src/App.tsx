@@ -36,8 +36,8 @@ const queryClient = new QueryClient({
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Router>
+      <Router>
+        <AuthProvider>
           <div className="App">
             <div className="driiva-gradient-bg" />
             <ScrollGradient />
@@ -99,8 +99,8 @@ export default function App() {
               </Route>
             </Switch>
           </div>
-        </Router>
-      </AuthProvider>
+        </AuthProvider>
+      </Router>
     </QueryClientProvider>
   );
 }
