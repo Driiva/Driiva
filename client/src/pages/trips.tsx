@@ -146,8 +146,9 @@ export default function Trips() {
             <motion.div
               key={trip.id}
               variants={item}
-              whileHover={{ scale: 1.01, transition: { duration: 0.2 } }}
+              whileHover={{ x: 4 }}
               whileTap={{ scale: 0.98 }}
+              transition={{ duration: 0.2 }}
             >
               <GlassCard className="p-5">
                 <div className="flex items-start justify-between">
