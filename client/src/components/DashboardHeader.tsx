@@ -21,7 +21,7 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
   const { logout } = useAuth();
   const [location, setLocation] = useLocation();
 
-  const isHomePage = location === '/' || location === '/dashboard';
+  const isHomePage = location === '/dashboard';
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -45,8 +45,10 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
 
   const handleSignOut = () => {
     setMenuOpen(false);
-    logout();
-    setLocation("/");
+    setTimeout(() => {
+      logout();
+      setLocation("/");
+    }, 100);
   };
 
   return (
