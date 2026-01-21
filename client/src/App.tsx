@@ -3,6 +3,7 @@ import { Router, Route, Switch } from 'wouter';
 import ScrollGradient from './components/ScrollGradient';
 
 // Pages
+import Welcome from './pages/welcome';
 import Dashboard from './pages/dashboard';
 import Trips from './pages/trips';
 import Rewards from './pages/rewards';
@@ -39,7 +40,15 @@ export default function App() {
             <div className="driiva-gradient-bg" />
             <ScrollGradient />
             <Switch>
+              <Route path="/welcome">
+                <Welcome />
+              </Route>
+
               <Route path="/signin">
+                <SignIn />
+              </Route>
+
+              <Route path="/signup">
                 <SignIn />
               </Route>
 
@@ -76,7 +85,7 @@ export default function App() {
               </Route>
 
               <Route path="/">
-                <Dashboard />
+                <Welcome />
               </Route>
 
               <Route>
