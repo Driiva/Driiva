@@ -1,8 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Router, Route, Switch } from 'wouter';
+import { Router, Route, Switch, Redirect } from 'wouter';
 import ScrollGradient from './components/ScrollGradient';
 
-// Pages
 import Welcome from './pages/welcome';
 import Signup from './pages/signup';
 import Permissions from './pages/permissions';
@@ -15,12 +14,9 @@ import SignIn from './pages/signin';
 import TripRecording from './pages/trip-recording';
 import LeaderboardPage from './pages/leaderboard';
 import PolicyPage from './pages/policy';
-import NotFound from './pages/not-found';
 
-// Context
 import { AuthProvider } from './contexts/AuthContext';
 
-// Fixed: Create stable query client with proper error handling
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -31,8 +27,6 @@ const queryClient = new QueryClient({
   },
 });
 
-
-
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
@@ -42,61 +36,22 @@ export default function App() {
             <div className="driiva-gradient-bg" />
             <ScrollGradient />
             <Switch>
-              <Route path="/welcome">
-                <Welcome />
-              </Route>
-
-              <Route path="/signin">
-                <SignIn />
-              </Route>
-
-              <Route path="/signup">
-                <Signup />
-              </Route>
-
-              <Route path="/permissions">
-                <Permissions />
-              </Route>
-
-              <Route path="/dashboard">
-                <Dashboard />
-              </Route>
-
-              <Route path="/trips">
-                <Trips />
-              </Route>
-
-              <Route path="/rewards">
-                <Rewards />
-              </Route>
-
-              <Route path="/profile">
-                <Profile />
-              </Route>
-
-              <Route path="/support">
-                <Support />
-              </Route>
-
-              <Route path="/trip-recording">
-                <TripRecording />
-              </Route>
-
-              <Route path="/leaderboard">
-                <LeaderboardPage />
-              </Route>
-
-              <Route path="/policy">
-                <PolicyPage />
-              </Route>
-
-              <Route path="/">
-                <Welcome />
-              </Route>
-
-              <Route>
-                <NotFound />
-              </Route>
+              <Route path="/" component={Welcome} />
+              <Route path="/welcome" component={Welcome} />
+              <Route path="/signin" component={SignIn} />
+              <Route path="/signup" component={Signup} />
+              <Route path="/permissions" component={Permissions} />
+              
+              <Route path="/dashboard"><Dashboard /></Route>
+              <Route path="/trips" component={Trips} />
+              <Route path="/rewards" component={Rewards} />
+              <Route path="/profile" component={Profile} />
+              <Route path="/support" component={Support} />
+              <Route path="/trip-recording" component={TripRecording} />
+              <Route path="/leaderboard" component={LeaderboardPage} />
+              <Route path="/policy" component={PolicyPage} />
+              
+              <Route>{() => <Redirect to="/" />}</Route>
             </Switch>
           </div>
         </AuthProvider>
