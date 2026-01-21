@@ -1,27 +1,139 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import DashboardHeader from "@/components/DashboardHeader";
 import BottomNavigation from "@/components/BottomNavigation";
 import { GradientMesh } from "@/components/GradientMesh";
 import { GlassCard } from "@/components/GlassCard";
 import PolicyDownload from "@/components/PolicyDownload";
 import DeleteAccount from "@/components/DeleteAccount";
-import { User, Car, Shield, Settings, ChevronDown } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Car, Shield, Settings, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { pageVariants, container, item, timing, easing, microInteractions } from "@/lib/animations";
 
+function PolicyFeature({ icon, title, description }: { icon: string; title: string; description: string }) {
+  return (
+    <div className="flex items-start gap-3">
+      <span className="text-base mt-0.5">{icon}</span>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-white">{title}</p>
+        <p className="text-xs text-white/50">{description}</p>
+      </div>
+    </div>
+  );
+}
+
+function CoverageTypeSection({ currentScore }: { currentScore: number }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const projectedRefund = ((currentScore - 70) / 30 * 10 + 5) / 100 * 1840;
+
+  return (
+    <div className="backdrop-blur-xl bg-white/[0.04] border border-white/[0.08] rounded-2xl overflow-hidden mb-6">
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full p-4 flex items-center justify-between text-left hover:bg-white/[0.02] transition-colors min-h-[56px]"
+      >
+        <span className="text-sm text-white/60">Coverage Type</span>
+        <div className="flex items-center gap-2">
+          <span className="text-emerald-400 font-medium">Comprehensive Plus</span>
+          <motion.div
+            animate={{ rotate: isExpanded ? 180 : 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <ChevronDown className="w-4 h-4 text-emerald-400" />
+          </motion.div>
+        </div>
+      </button>
+
+      <AnimatePresence initial={false}>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: easing.smoothDecel }}
+            className="overflow-hidden"
+          >
+            <div className="px-4 pb-4 pt-2 border-t border-white/[0.08]">
+              <p className="text-sm text-white/50 mb-4">Full coverage with extras</p>
+
+              <div className="space-y-3">
+                <h4 className="text-xs font-semibold text-white/80 uppercase tracking-wide">
+                  What's Included
+                </h4>
+                
+                <PolicyFeature
+                  icon="✅"
+                  title="Collision Coverage"
+                  description="Damage to your vehicle from accidents"
+                />
+                <PolicyFeature
+                  icon="✅"
+                  title="Comprehensive Coverage"
+                  description="Theft, vandalism, weather damage"
+                />
+                <PolicyFeature
+                  icon="✅"
+                  title="Third-Party Liability"
+                  description="Up to £20M coverage for injuries & property"
+                />
+                <PolicyFeature
+                  icon="✅"
+                  title="Personal Injury Protection"
+                  description="Medical expenses for you and passengers"
+                />
+                <PolicyFeature
+                  icon="✅"
+                  title="Roadside Assistance"
+                  description="24/7 emergency breakdown service"
+                />
+                <PolicyFeature
+                  icon="✅"
+                  title="Courtesy Car"
+                  description="Replacement vehicle during repairs"
+                />
+                <PolicyFeature
+                  icon="✅"
+                  title="Legal Expenses"
+                  description="Up to £100,000 legal cover"
+                />
+              </div>
+
+              <div className="mt-4 p-3 bg-white/[0.03] rounded-xl border border-white/[0.05]">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-white/60">Voluntary Excess</span>
+                  <span className="text-sm font-medium text-white">£250</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-white/60">Compulsory Excess</span>
+                  <span className="text-sm font-medium text-white">£350</span>
+                </div>
+                <div className="mt-2 pt-2 border-t border-white/[0.05] flex items-center justify-between">
+                  <span className="text-xs font-semibold text-white/80">Total Excess</span>
+                  <span className="text-base font-semibold text-emerald-400">£600</span>
+                </div>
+              </div>
+
+              <div className="mt-4 flex items-start gap-2 p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
+                <span className="text-base">ℹ️</span>
+                <div>
+                  <p className="text-xs text-emerald-300 font-medium mb-1">
+                    Policy Benefits
+                  </p>
+                  <p className="text-xs text-emerald-200/70">
+                    Your safe driving score of {currentScore} could reduce your premium by up to £{projectedRefund.toFixed(2)} at renewal. Keep driving safely to maximize your refund!
+                  </p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 export default function Profile() {
-  const { toast } = useToast();
-  const [showCoverageDropdown, setShowCoverageDropdown] = useState(false);
-  const [selectedCoverage, setSelectedCoverage] = useState("Comprehensive Plus");
   const [locationTracking, setLocationTracking] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(true);
-  
-  const coverageOptions = [
-    { value: "comprehensive-plus", label: "Comprehensive Plus", description: "Full coverage with extras" },
-    { value: "comprehensive", label: "Comprehensive", description: "Standard full coverage" },
-    { value: "third-party", label: "Third Party", description: "Basic legal requirement" }
-  ];
   
   const userData = {
     id: 8,
@@ -149,62 +261,17 @@ export default function Profile() {
                   <span className="text-sm text-white/50">Policy Number</span>
                   <span className="text-sm font-medium text-white">DRV-2025-000001</span>
                 </div>
-                <div className="flex justify-between items-center py-2 border-b border-white/5">
+                <div className="flex justify-between items-center py-2">
                   <span className="text-sm text-white/50">Policy Start</span>
                   <span className="text-sm font-medium text-white">July 1, 2025</span>
                 </div>
-                <div className="flex justify-between items-center py-2">
-                  <span className="text-sm text-white/50">Coverage Type</span>
-                  <div className="relative">
-                    <button
-                      onClick={() => setShowCoverageDropdown(!showCoverageDropdown)}
-                      className="text-sm font-medium text-emerald-400 hover:text-emerald-300 flex items-center gap-1 min-h-[44px] transition-all duration-200 ease-out"
-                      data-testid="coverage-dropdown-button"
-                    >
-                      {selectedCoverage}
-                      <motion.div
-                        animate={{ rotate: showCoverageDropdown ? 180 : 0 }}
-                        transition={{ duration: timing.interaction }}
-                      >
-                        <ChevronDown className="w-4 h-4" />
-                      </motion.div>
-                    </button>
-                    
-                    {showCoverageDropdown && (
-                      <motion.div 
-                        className="absolute right-0 top-full mt-2 w-64 backdrop-blur-xl bg-white/10 border border-white/10 rounded-xl z-50 overflow-hidden"
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: timing.interaction, ease: easing.button }}
-                        role="listbox"
-                        data-testid="coverage-dropdown-menu"
-                      >
-                        {coverageOptions.map((option) => (
-                          <motion.button
-                            key={option.value}
-                            onClick={() => {
-                              setSelectedCoverage(option.label);
-                              setShowCoverageDropdown(false);
-                              toast({
-                                title: `Coverage changed to ${option.label}`,
-                                description: option.description,
-                              });
-                            }}
-                            className="w-full text-left px-4 py-3 text-sm text-white hover:bg-white/10 transition-all duration-200 ease-out min-h-[44px]"
-                            whileHover={{ backgroundColor: "rgba(255,255,255,0.1)" }}
-                            role="option"
-                          >
-                            <div className="font-medium">{option.label}</div>
-                            <div className="text-xs text-white/50">{option.description}</div>
-                          </motion.button>
-                        ))}
-                      </motion.div>
-                    )}
-                  </div>
-                </div>
               </div>
             </GlassCard>
+          </motion.div>
+
+          {/* Coverage Type - Expandable Accordion */}
+          <motion.div variants={item}>
+            <CoverageTypeSection currentScore={profileData.currentScore} />
           </motion.div>
 
           {/* Driving Statistics */}
