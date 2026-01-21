@@ -4,6 +4,7 @@ import BottomNavigation from "@/components/BottomNavigation";
 import { GradientMesh } from "@/components/GradientMesh";
 import { GlassCard } from "@/components/GlassCard";
 import { Map } from "lucide-react";
+import { pageVariants, container, item, timing, easing, microInteractions } from "@/lib/animations";
 
 interface Trip {
   id: number;
@@ -19,31 +20,6 @@ interface Trip {
   harshAcceleration: number;
   speedViolations: number;
 }
-
-const pageVariants = {
-  initial: { opacity: 0 },
-  animate: { opacity: 1 },
-  exit: { opacity: 0 }
-};
-
-const container = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.08
-    }
-  }
-};
-
-const item = {
-  hidden: { opacity: 0, y: 20 },
-  show: { 
-    opacity: 1, 
-    y: 0,
-    transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }
-  }
-};
 
 export default function Trips() {
   const trips: Trip[] = [
@@ -120,7 +96,7 @@ export default function Trips() {
       initial="initial"
       animate="animate"
       exit="exit"
-      transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+      transition={{ duration: timing.pageTransition, ease: easing.button }}
     >
       <GradientMesh />
       <DashboardHeader user={user} />
@@ -146,9 +122,9 @@ export default function Trips() {
             <motion.div
               key={trip.id}
               variants={item}
-              whileHover={{ x: 4 }}
-              whileTap={{ scale: 0.98 }}
-              transition={{ duration: 0.2 }}
+              whileHover={microInteractions.hoverShift}
+              whileTap={microInteractions.tap}
+              transition={{ duration: timing.interaction }}
             >
               <GlassCard className="p-5">
                 <div className="flex items-start justify-between">
@@ -156,7 +132,7 @@ export default function Trips() {
                     <motion.div 
                       className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center"
                       whileHover={{ rotate: 5, scale: 1.05 }}
-                      transition={{ duration: 0.2 }}
+                      transition={{ duration: timing.interaction }}
                     >
                       <Map className="w-5 h-5 text-white/70" />
                     </motion.div>
@@ -178,7 +154,7 @@ export default function Trips() {
                       className={`text-lg font-semibold ${trip.score >= 90 ? 'text-emerald-400' : 'text-white'}`}
                       initial={{ scale: 0.8, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
-                      transition={{ delay: 0.2 + index * 0.08, duration: 0.3 }}
+                      transition={{ delay: timing.interaction + index * 0.08, duration: timing.cardEntrance }}
                     >
                       {trip.score}
                     </motion.div>

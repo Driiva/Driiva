@@ -8,31 +8,7 @@ import DeleteAccount from "@/components/DeleteAccount";
 import { User, Car, Shield, Settings, ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-
-const pageVariants = {
-  initial: { opacity: 0 },
-  animate: { opacity: 1 },
-  exit: { opacity: 0 }
-};
-
-const container = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1
-    }
-  }
-};
-
-const item = {
-  hidden: { opacity: 0, y: 20 },
-  show: { 
-    opacity: 1, 
-    y: 0,
-    transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }
-  }
-};
+import { pageVariants, container, item, timing, easing, microInteractions } from "@/lib/animations";
 
 export default function Profile() {
   const { toast } = useToast();
@@ -74,7 +50,7 @@ export default function Profile() {
       initial="initial"
       animate="animate"
       exit="exit"
-      transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+      transition={{ duration: timing.pageTransition, ease: easing.button }}
     >
       <GradientMesh />
       <DashboardHeader user={userData} />
@@ -92,7 +68,7 @@ export default function Profile() {
               className="px-3 py-1.5 bg-emerald-500/20 border border-emerald-500/30 rounded-full"
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.3, duration: 0.3 }}
+              transition={{ delay: timing.pageTransition, duration: timing.cardEntrance, ease: easing.elastic }}
             >
               <span className="text-xs font-medium text-emerald-400">Verified</span>
             </motion.div>
@@ -111,7 +87,7 @@ export default function Profile() {
                 <motion.div 
                   className="w-20 h-20 bg-white/10 rounded-full flex items-center justify-center mb-4"
                   whileHover={{ scale: 1.05, rotate: 5 }}
-                  transition={{ duration: 0.2 }}
+                  transition={{ duration: timing.interaction }}
                 >
                   <span className="text-2xl font-semibold text-white/80">
                     {userData.firstName[0]}{userData.lastName[0]}
@@ -126,8 +102,8 @@ export default function Profile() {
               <div className="grid grid-cols-2 gap-4">
                 <motion.div 
                   className="text-center p-4 bg-white/5 rounded-xl"
-                  whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.08)" }}
-                  transition={{ duration: 0.2 }}
+                  whileHover={microInteractions.hover}
+                  transition={{ duration: timing.quick }}
                 >
                   <div className="text-2xl font-semibold text-emerald-400">
                     {profileData.currentScore}
@@ -136,8 +112,8 @@ export default function Profile() {
                 </motion.div>
                 <motion.div 
                   className="text-center p-4 bg-white/5 rounded-xl"
-                  whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.08)" }}
-                  transition={{ duration: 0.2 }}
+                  whileHover={microInteractions.hover}
+                  transition={{ duration: timing.quick }}
                 >
                   <div className="text-2xl font-semibold text-white">
                     {profileData.totalTrips}
@@ -188,7 +164,7 @@ export default function Profile() {
                       {selectedCoverage}
                       <motion.div
                         animate={{ rotate: showCoverageDropdown ? 180 : 0 }}
-                        transition={{ duration: 0.2 }}
+                        transition={{ duration: timing.interaction }}
                       >
                         <ChevronDown className="w-4 h-4" />
                       </motion.div>
@@ -200,7 +176,7 @@ export default function Profile() {
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.2 }}
+                        transition={{ duration: timing.interaction, ease: easing.button }}
                         role="listbox"
                         data-testid="coverage-dropdown-menu"
                       >
@@ -249,8 +225,8 @@ export default function Profile() {
                   <motion.div 
                     key={index}
                     className="text-center p-4 bg-white/5 rounded-xl"
-                    whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.08)" }}
-                    transition={{ duration: 0.2 }}
+                    whileHover={microInteractions.hover}
+                    transition={{ duration: timing.quick }}
                   >
                     <div className="text-lg font-semibold text-white">{stat.value}</div>
                     <div className="text-xs text-white/50 mt-1">{stat.label}</div>
@@ -284,7 +260,7 @@ export default function Profile() {
                     <motion.div 
                       className="absolute top-1 w-5 h-5 bg-white rounded-full shadow-md"
                       animate={{ left: locationTracking ? 24 : 4 }}
-                      transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
+                      transition={{ duration: timing.interaction, ease: easing.button }}
                     />
                   </motion.button>
                 </div>
@@ -303,7 +279,7 @@ export default function Profile() {
                     <motion.div 
                       className="absolute top-1 w-5 h-5 bg-white rounded-full shadow-md"
                       animate={{ left: pushNotifications ? 24 : 4 }}
-                      transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
+                      transition={{ duration: timing.interaction, ease: easing.button }}
                     />
                   </motion.button>
                 </div>

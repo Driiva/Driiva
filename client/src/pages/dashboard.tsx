@@ -13,35 +13,11 @@ import {
   MemoizedPolicyStatusWidget as PolicyStatusWidget
 } from "@/components/OptimizedComponents";
 import { MetricUser, CommunityPoolData, DrivingProfile, Achievement, LeaderboardEntry } from "@shared/types";
+import { pageVariants, container, item, timing, easing } from "@/lib/animations";
 
 interface DashboardProps {
   isLoading?: boolean;
 }
-
-const pageVariants = {
-  initial: { opacity: 0 },
-  animate: { opacity: 1 },
-  exit: { opacity: 0 }
-};
-
-const container = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.08
-    }
-  }
-};
-
-const item = {
-  hidden: { opacity: 0, y: 20 },
-  show: { 
-    opacity: 1, 
-    y: 0,
-    transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }
-  }
-};
 
 export default function Dashboard({ isLoading = false }: DashboardProps) {
   const [userData] = React.useState<MetricUser>({
@@ -110,7 +86,7 @@ export default function Dashboard({ isLoading = false }: DashboardProps) {
       initial="initial"
       animate="animate"
       exit="exit"
-      transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+      transition={{ duration: timing.pageTransition, ease: easing.button }}
     >
       <GradientMesh />
       <DashboardHeader user={userData} />

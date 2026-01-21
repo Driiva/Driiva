@@ -5,6 +5,7 @@ import BottomNavigation from "@/components/BottomNavigation";
 import { GradientMesh } from "@/components/GradientMesh";
 import { GlassCard } from "@/components/GlassCard";
 import { Trophy, Award, Star, Target, TrendingUp, Gift, Calendar, Check } from "lucide-react";
+import { pageVariants, container, item, timing, easing, microInteractions } from "@/lib/animations";
 
 interface Achievement {
   id: number;
@@ -27,31 +28,6 @@ interface Reward {
   value: string;
   available: boolean;
 }
-
-const pageVariants = {
-  initial: { opacity: 0 },
-  animate: { opacity: 1 },
-  exit: { opacity: 0 }
-};
-
-const container = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.08
-    }
-  }
-};
-
-const item = {
-  hidden: { opacity: 0, y: 20 },
-  show: { 
-    opacity: 1, 
-    y: 0,
-    transition: { duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }
-  }
-};
 
 export default function Rewards() {
   const [activeTab, setActiveTab] = useState<"achievements" | "rewards" | "progress">("achievements");
@@ -164,7 +140,7 @@ export default function Rewards() {
       initial="initial"
       animate="animate"
       exit="exit"
-      transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+      transition={{ duration: timing.pageTransition, ease: easing.button }}
     >
       <GradientMesh />
       <DashboardHeader user={user} />
@@ -193,8 +169,8 @@ export default function Rewards() {
                 <motion.div 
                   key={index}
                   className="text-center p-3 bg-white/5 rounded-xl"
-                  whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.08)" }}
-                  transition={{ duration: 0.2 }}
+                  whileHover={microInteractions.hover}
+                  transition={{ duration: timing.quick }}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   style={{ transitionDelay: `${index * 0.05}s` }}
@@ -214,7 +190,7 @@ export default function Rewards() {
           className="mb-6"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.3 }}
+          transition={{ delay: timing.interaction, duration: timing.pageTransition, ease: easing.button }}
         >
           <GlassCard className="p-1.5 flex">
             {["achievements", "rewards", "progress"].map((tab) => (
@@ -226,7 +202,7 @@ export default function Rewards() {
                     ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
                     : "text-white/50 hover:text-white hover:bg-white/5"
                 }`}
-                whileTap={{ scale: 0.98 }}
+                whileTap={microInteractions.tap}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
               </motion.button>
@@ -241,7 +217,7 @@ export default function Rewards() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
+            transition={{ duration: timing.interaction, ease: easing.button }}
           >
             {activeTab === "achievements" && (
               <motion.div 
@@ -258,15 +234,15 @@ export default function Rewards() {
                     <motion.div
                       key={achievement.id}
                       variants={item}
-                      whileHover={{ scale: 1.01 }}
-                      whileTap={{ scale: 0.98 }}
+                      whileHover={microInteractions.hoverSubtle}
+                      whileTap={microInteractions.tap}
                     >
                       <GlassCard className={`p-5 ${!isUnlocked && !hasProgress ? 'opacity-50' : ''}`}>
                         <div className="flex items-start gap-4">
                           <motion.div 
                             className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0"
                             whileHover={{ rotate: 5, scale: 1.05 }}
-                            transition={{ duration: 0.2 }}
+                            transition={{ duration: timing.interaction }}
                           >
                             <span className="text-xl">{achievement.iconUrl}</span>
                           </motion.div>
@@ -279,7 +255,7 @@ export default function Rewards() {
                                   className="w-5 h-5 bg-emerald-500/20 border border-emerald-500/30 rounded-full flex items-center justify-center"
                                   initial={{ scale: 0 }}
                                   animate={{ scale: 1 }}
-                                  transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
+                                  transition={{ delay: timing.interaction, type: "spring", stiffness: 380, damping: 30 }}
                                 >
                                   <Check className="w-3 h-3 text-emerald-400" />
                                 </motion.div>
@@ -305,7 +281,7 @@ export default function Rewards() {
                                     className="bg-emerald-500/60 h-1.5 rounded-full"
                                     initial={{ width: 0 }}
                                     animate={{ width: `${(achievement.progress! / achievement.maxProgress!) * 100}%` }}
-                                    transition={{ duration: 0.8, ease: "easeOut", delay: 0.3 }}
+                                    transition={{ duration: timing.counter, ease: easing.smoothDecel, delay: timing.pageTransition }}
                                   />
                                 </div>
                               </div>
@@ -336,8 +312,8 @@ export default function Rewards() {
                   <motion.div
                     key={reward.id}
                     variants={item}
-                    whileHover={{ scale: reward.available ? 1.01 : 1 }}
-                    whileTap={{ scale: reward.available ? 0.98 : 1 }}
+                    whileHover={reward.available ? microInteractions.hoverSubtle : undefined}
+                    whileTap={reward.available ? microInteractions.tap : undefined}
                   >
                     <GlassCard className={`p-5 ${!reward.available ? 'opacity-40' : ''}`}>
                       <div className="flex items-center justify-between">
@@ -359,7 +335,7 @@ export default function Rewards() {
                               : "bg-white/5 text-white/30 cursor-not-allowed"
                           }`}
                           disabled={!reward.available}
-                          whileTap={reward.available ? { scale: 0.95 } : {}}
+                          whileTap={reward.available ? microInteractions.press : undefined}
                         >
                           {reward.available ? "Claim" : "Locked"}
                         </motion.button>
@@ -395,7 +371,7 @@ export default function Rewards() {
                             className="text-center"
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: i * 0.05, duration: 0.3 }}
+                            transition={{ delay: i * 0.05, duration: timing.cardEntrance, ease: easing.button }}
                           >
                             <motion.div 
                               className={`w-10 h-10 rounded-lg mx-auto mb-1 flex items-center justify-center text-xs font-semibold ${
@@ -404,7 +380,7 @@ export default function Rewards() {
                                   : "bg-white/5 text-white/70"
                               }`}
                               whileHover={{ scale: 1.1 }}
-                              transition={{ duration: 0.2 }}
+                              transition={{ duration: timing.quick }}
                             >
                               {dayScore}
                             </motion.div>
@@ -433,8 +409,8 @@ export default function Rewards() {
                         <motion.div 
                           key={index}
                           className="text-center p-4 bg-white/5 rounded-xl"
-                          whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.08)" }}
-                          transition={{ duration: 0.2 }}
+                          whileHover={microInteractions.hover}
+                          transition={{ duration: timing.quick }}
                         >
                           <div className={`text-2xl font-semibold ${stat.accent ? 'text-emerald-400' : 'text-white'}`}>
                             {stat.value}

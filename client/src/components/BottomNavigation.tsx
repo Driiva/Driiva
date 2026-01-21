@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Home, Map, LayoutDashboard, User } from "lucide-react";
 import { useLocation } from "wouter";
+import { timing, microInteractions } from "@/lib/animations";
 
 interface BottomNavigationProps {
   activeTab: string;
@@ -31,8 +32,8 @@ export default function BottomNavigation({ activeTab }: BottomNavigationProps) {
             key={tab.id}
             onClick={() => handleNavigation(tab.path)}
             className="relative flex flex-col items-center min-h-[48px] min-w-[48px] justify-center px-4 py-2"
-            whileTap={{ scale: 0.95 }}
-            transition={{ duration: 0.15 }}
+            whileTap={microInteractions.press}
+            transition={{ duration: timing.quick }}
           >
             <motion.div
               animate={{ 

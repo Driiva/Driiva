@@ -1,7 +1,8 @@
-import { motion, useMotionValue, useTransform, animate } from "framer-motion";
+import { motion, useMotionValue, animate } from "framer-motion";
 import { useEffect, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { GlassCard } from './GlassCard';
+import { timing, easing, loopAnimations } from "@/lib/animations";
 
 interface LiquidGaugeProps {
   score: number;
@@ -18,8 +19,8 @@ function AnimatedCounter({ value, className }: { value: number; className?: stri
     if (!node) return;
     
     const controls = animate(motionValue.get(), value, {
-      duration: 1.2,
-      ease: [0.16, 1, 0.3, 1],
+      duration: timing.counter,
+      ease: easing.smoothDecel,
       onUpdate: (latest) => {
         node.textContent = Math.round(latest).toString();
       }
@@ -53,7 +54,7 @@ export default function LiquidGauge({ score, projectedRefund, premiumAmount }: L
         className="relative w-40 h-40 mx-auto mb-6"
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.6, ease: [0.34, 1.56, 0.64, 1] }}
+        transition={{ duration: timing.cardEntrance * 1.5, ease: easing.elastic }}
       >
         <svg 
           className="w-full h-full -rotate-90" 
@@ -80,7 +81,7 @@ export default function LiquidGauge({ score, projectedRefund, premiumAmount }: L
             strokeDasharray="283"
             initial={{ pathLength: 0 }}
             animate={{ pathLength: scorePercentage }}
-            transition={{ duration: 1.5, ease: "easeOut", delay: 0.3 }}
+            transition={{ duration: timing.loop, ease: "easeOut", delay: timing.pageTransition }}
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
@@ -89,7 +90,7 @@ export default function LiquidGauge({ score, projectedRefund, premiumAmount }: L
             className="text-center min-h-[44px] min-w-[44px]" 
             whileTap={{ scale: 0.95 }}
             whileHover={{ scale: 1.02 }}
-            transition={{ duration: 0.15 }}
+            transition={{ duration: timing.quick }}
             data-testid="driving-score-button"
           >
             <motion.div
@@ -111,9 +112,9 @@ export default function LiquidGauge({ score, projectedRefund, premiumAmount }: L
       <div className="grid grid-cols-2 gap-4 mb-6">
         <motion.div 
           className="text-center p-3 bg-white/5 rounded-xl"
-          whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.08)" }}
+          whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          transition={{ duration: 0.15 }}
+          transition={{ duration: timing.quick }}
         >
           <div className="text-lg font-semibold text-white" data-testid="personal-score">
             {personalScore}%
@@ -124,9 +125,9 @@ export default function LiquidGauge({ score, projectedRefund, premiumAmount }: L
         </motion.div>
         <motion.div 
           className="text-center p-3 bg-white/5 rounded-xl"
-          whileHover={{ scale: 1.02, backgroundColor: "rgba(255,255,255,0.08)" }}
+          whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          transition={{ duration: 0.15 }}
+          transition={{ duration: timing.quick }}
         >
           <div className="text-lg font-semibold text-white" data-testid="pool-score">
             {poolScore}%
@@ -145,14 +146,7 @@ export default function LiquidGauge({ score, projectedRefund, premiumAmount }: L
         {/* Shimmer overlay */}
         <motion.div
           className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
-          initial={{ x: '-100%' }}
-          animate={{ x: '200%' }}
-          transition={{ 
-            duration: 2, 
-            repeat: Infinity, 
-            repeatDelay: 3,
-            ease: "easeInOut" 
-          }}
+          {...loopAnimations.shimmer}
         />
         <div className="relative z-10">
           <div className="text-xs font-medium text-white/60 mb-1">Projected Annual Refund</div>

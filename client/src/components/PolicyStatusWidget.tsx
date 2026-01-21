@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useLocation } from "wouter";
 import { GlassCard } from './GlassCard';
+import { timing, easing, loopAnimations, microInteractions } from "@/lib/animations";
 
 interface PolicyStatusWidgetProps {
   user: {
@@ -36,9 +37,8 @@ export default function PolicyStatusWidget({ user }: PolicyStatusWidgetProps) {
               title: "Policy Status",
               description: "Your policy is active and up to date. Next renewal: July 1, 2026",
             })}
-            animate={{ scale: [1, 1.02, 1] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            whileTap={{ scale: 0.95 }}
+            {...loopAnimations.pulse}
+            whileTap={microInteractions.press}
             className={`px-4 py-2 min-h-[44px] rounded-xl font-semibold text-sm flex items-center ${
               isActive
                 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
@@ -46,8 +46,7 @@ export default function PolicyStatusWidget({ user }: PolicyStatusWidgetProps) {
             }`}
           >
             <motion.div
-              animate={{ opacity: [0.5, 1, 0.5] }}
-              transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+              {...loopAnimations.glow}
               className={`w-2 h-2 rounded-full mr-2 ${
                 isActive ? 'bg-emerald-400' : 'bg-red-400'
               }`}
@@ -104,9 +103,9 @@ export default function PolicyStatusWidget({ user }: PolicyStatusWidgetProps) {
             </div>
             <motion.button
               onClick={() => setLocation('/policy')}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.95 }}
-              transition={{ duration: 0.15 }}
+              whileHover={microInteractions.hover}
+              whileTap={microInteractions.press}
+              transition={{ duration: timing.quick }}
               className="px-4 py-2 min-h-[44px] bg-white/5 hover:bg-white/10 rounded-xl text-sm font-semibold text-white/80 flex items-center gap-2"
             >
               <FileText className="w-4 h-4" />

@@ -1,5 +1,6 @@
 import { motion, HTMLMotionProps } from "framer-motion";
 import { ReactNode } from "react";
+import { timing, microInteractions } from "@/lib/animations";
 
 interface GlassCardProps extends Omit<HTMLMotionProps<"div">, "children"> {
   children: ReactNode;
@@ -23,9 +24,9 @@ export function GlassCard({
         rounded-2xl
         ${className}
       `}
-      whileTap={interactive ? { scale: 0.98 } : undefined}
-      whileHover={interactive ? { scale: 1.01 } : undefined}
-      transition={{ duration: 0.15 }}
+      whileTap={interactive ? microInteractions.tap : undefined}
+      whileHover={interactive ? microInteractions.hoverSubtle : undefined}
+      transition={{ duration: timing.quick }}
       {...props}
     >
       {children}
