@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Bell } from "lucide-react";
+import { timing, easing, microInteractions } from "@/lib/animations";
 
 export default function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
@@ -19,37 +21,47 @@ export default function NotificationDropdown() {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <button
+      <motion.button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 rounded-lg glass-morphism-subtle hover:bg-white/20 transition-all duration-200 w-8 h-8 flex items-center justify-center"
+        whileTap={microInteractions.tap}
+        transition={{ duration: timing.quick / 1000 }}
+        className="relative p-2 text-white/60 hover:text-white transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
       >
-        <Bell className="w-4 h-4 text-white" />
+        <Bell className="w-5 h-5" />
         {hasUnread && (
-          <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse" />
+          <motion.div 
+            className="absolute top-2 right-2 w-2 h-2 bg-emerald-500 rounded-full"
+            animate={{ scale: [1, 1.2, 1] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          />
         )}
-      </button>
+      </motion.button>
 
-      {isOpen && (
-        <div className="absolute right-0 mt-2 w-64 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200" style={{
-          background: 'rgba(255, 255, 255, 0.25)',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
-          backdropFilter: 'blur(20px)',
-        }}>
-          <div className="p-3 border-b border-white/15">
-            <h3 className="text-sm font-semibold text-white">Notifications</h3>
-          </div>
-          
-          <div className="p-3">
-            <div className="flex flex-col items-center justify-center py-4 text-center">
-              <div className="w-12 h-12 bg-gray-800/30 rounded-full flex items-center justify-center mb-2">
-                <Bell className="w-6 h-6 text-gray-300" />
-              </div>
-              <p className="text-sm text-white mb-1">You have no unread messages</p>
-              <p className="text-xs text-white/70">We'll notify you when something important happens</p>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            transition={{ duration: timing.quick / 1000, ease: easing.button }}
+            className="fixed top-16 right-4 w-72 max-w-[calc(100vw-32px)] backdrop-blur-xl bg-white/[0.12] border border-white/[0.1] rounded-2xl shadow-2xl z-[100] overflow-hidden"
+          >
+            <div className="p-4 border-b border-white/[0.08]">
+              <h3 className="text-sm font-semibold text-white">Notifications</h3>
             </div>
-          </div>
-        </div>
-      )}
+            
+            <div className="p-4">
+              <div className="flex flex-col items-center justify-center py-6 text-center">
+                <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mb-3">
+                  <Bell className="w-5 h-5 text-white/40" />
+                </div>
+                <p className="text-sm text-white/70 mb-1">No new notifications</p>
+                <p className="text-xs text-white/40">We'll notify you when something happens</p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

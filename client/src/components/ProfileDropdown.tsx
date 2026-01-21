@@ -69,18 +69,18 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
     <div className="relative" ref={dropdownRef}>
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-2 backdrop-blur-xl bg-white/[0.08] border border-white/[0.08] rounded-full p-2 min-h-[44px]"
+        className="flex items-center space-x-1 p-1 min-h-[44px]"
         whileTap={microInteractions.tap}
-        transition={{ duration: timing.quick }}
+        transition={{ duration: timing.quick / 1000 }}
       >
-        <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center">
+        <div className="w-8 h-8 bg-white/10 hover:bg-white/15 rounded-full flex items-center justify-center transition-colors">
           <span className="text-xs font-semibold text-white/80">
             {profileData.name.charAt(0).toUpperCase()}
           </span>
         </div>
         <motion.div
           animate={{ rotate: isOpen ? 180 : 0 }}
-          transition={{ duration: timing.interaction }}
+          transition={{ duration: timing.interaction / 1000 }}
         >
           <ChevronDown className="w-4 h-4 text-white/50" />
         </motion.div>
