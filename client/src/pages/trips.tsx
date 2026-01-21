@@ -182,7 +182,7 @@ export default function Trips() {
         </motion.div>
       </main>
       
-      <BottomNavigation activeTab="trips" />
+      <BottomNavigation />
     </motion.div>
   );
 }

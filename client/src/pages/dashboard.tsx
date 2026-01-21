@@ -158,7 +158,7 @@ export default function Dashboard({ isLoading = false }: DashboardProps) {
         </motion.div>
       </motion.main>
       
-      <BottomNavigation activeTab="home" />
+      <BottomNavigation />
     </motion.div>
   );
 }

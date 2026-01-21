@@ -76,7 +76,7 @@ export default function Documents() {
         </div>
       </main>
 
-      <BottomNavigation activeTab="home" />
+      <BottomNavigation />
     </div>
   );
 }

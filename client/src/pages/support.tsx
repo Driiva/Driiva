@@ -107,7 +107,7 @@ export default function Support() {
         </div>
       </main>
 
-      <BottomNavigation activeTab="home" />
+      <BottomNavigation />
     </div>
   );
 }

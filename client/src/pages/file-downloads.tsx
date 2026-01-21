@@ -90,7 +90,7 @@ export default function Dashboard() {
         </div>
       </main>
       
-      <BottomNavigation activeTab="home" />
+      <BottomNavigation />
     </div>
   );
 }

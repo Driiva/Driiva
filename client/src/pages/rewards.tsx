@@ -427,7 +427,7 @@ export default function Rewards() {
         </AnimatePresence>
       </main>
         
-      <BottomNavigation activeTab="rewards" />
+      <BottomNavigation />
     </motion.div>
   );
 }

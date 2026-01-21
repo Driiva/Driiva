@@ -288,7 +288,7 @@ export default function Profile() {
         </div>
       </div>
 
-      <BottomNavigation activeTab="profile" />
+      <BottomNavigation />
     </motion.div>
   );
 }
