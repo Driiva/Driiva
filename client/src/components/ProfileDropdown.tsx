@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from "react";
-import { User, Car, FileText, Settings, LogOut, ChevronDown, Download, HelpCircle } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { FileText, LogOut, Download, HelpCircle, ChevronDown } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { useLocation } from "wouter";
+import { timing, easing, microInteractions } from "@/lib/animations";
 
 interface ProfileDropdownProps {
   user: {
@@ -19,14 +21,17 @@ interface DropdownMenuItemProps {
   className?: string;
 }
 
-function DropdownMenuItem({ children, onClick, className }: DropdownMenuItemProps) {
+function DropdownMenuItem({ children, onClick, className = "" }: DropdownMenuItemProps) {
   return (
-    <div
-      className={`flex items-center space-x-2 cursor-pointer hover:bg-white/10 p-2 rounded ${className}`}
+    <motion.button
+      className={`w-full flex items-center space-x-3 p-3 rounded-xl text-white/80 hover:text-white hover:bg-white/10 transition-colors ${className}`}
       onClick={onClick}
+      whileHover={{ x: 4 }}
+      whileTap={microInteractions.tap}
+      transition={{ duration: timing.quick }}
     >
       {children}
-    </div>
+    </motion.button>
   );
 }
 
@@ -36,7 +41,6 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
   const { logout } = useAuth();
   const [, setLocation] = useLocation();
 
-  // Mock data - in real app this would come from user profile
   const profileData = {
     name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username,
     vehicle: "2023 Tesla Model 3",
@@ -56,89 +60,105 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const handleNavigate = (path: string) => {
+    setIsOpen(false);
+    setLocation(path);
+  };
+
   return (
     <div className="relative" ref={dropdownRef}>
-      <button
+      <motion.button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-2 glass-morphism rounded-full p-2 haptic-button spring-transition hover:scale-105"
+        className="flex items-center space-x-2 backdrop-blur-xl bg-white/[0.08] border border-white/[0.08] rounded-full p-2 min-h-[44px]"
+        whileTap={microInteractions.tap}
+        transition={{ duration: timing.quick }}
       >
-        <div className="w-8 h-8 bg-gradient-to-r from-[#06B6D4] to-[#3B82F6] rounded-full flex items-center justify-center">
-          <span className="text-xs font-bold text-white">
+        <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center">
+          <span className="text-xs font-semibold text-white/80">
             {profileData.name.charAt(0).toUpperCase()}
           </span>
         </div>
-        <ChevronDown className={`w-4 h-4 text-gray-300 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
+        <motion.div
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: timing.interaction }}
+        >
+          <ChevronDown className="w-4 h-4 text-white/50" />
+        </motion.div>
+      </motion.button>
 
-      {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-80 glass-morphism rounded-2xl shadow-xl border border-white/10 overflow-hidden z-50">
-          {/* Profile Header */}
-          <div className="p-4 border-b border-white/10">
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-r from-[#06B6D4] to-[#3B82F6] rounded-full flex items-center justify-center">
-                <span className="text-lg font-bold text-white">
-                  {profileData.name.charAt(0).toUpperCase()}
-                </span>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            transition={{ duration: timing.quick, ease: easing.button }}
+            className="fixed top-16 right-4 w-72 max-w-[calc(100vw-32px)] backdrop-blur-xl bg-white/[0.12] border border-white/[0.1] rounded-2xl shadow-2xl z-[100] overflow-hidden"
+          >
+            {/* Profile Header */}
+            <div className="p-4 border-b border-white/[0.08]">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="text-lg font-semibold text-white/80">
+                    {profileData.name.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div className="min-w-0">
+                  <div className="font-semibold text-white truncate">{profileData.name}</div>
+                  <div className="text-xs text-white/50 truncate">{profileData.email}</div>
+                </div>
               </div>
-              <div>
-                <div className="font-semibold text-white">{profileData.name}</div>
-                <div className="text-sm text-gray-400">{profileData.email}</div>
+
+              {/* Profile Info */}
+              <div className="mt-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-white/40">Vehicle</span>
+                  <span className="text-xs text-white/70 font-medium">{profileData.vehicle}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-white/40">Policy Number</span>
+                  <span className="text-xs text-white/70 font-medium">{profileData.policyNumber}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-white/40">Member Since</span>
+                  <span className="text-xs text-white/70 font-medium">{profileData.memberSince}</span>
+                </div>
               </div>
             </div>
 
-            {/* Profile Info */}
-            <div className="mt-4 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-400">Vehicle</span>
-                <span className="text-xs text-white font-medium">{profileData.vehicle}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-400">Policy Number</span>
-                <span className="text-xs text-white font-medium">{profileData.policyNumber}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-400">Member Since</span>
-                <span className="text-xs text-white font-medium">{profileData.memberSince}</span>
-              </div>
-            </div>
-          </div>
+            {/* Menu Items */}
+            <div className="p-2">
+              <DropdownMenuItem onClick={() => handleNavigate('/documents')}>
+                <FileText className="w-4 h-4 text-white/60" />
+                <span className="text-sm">Documents</span>
+              </DropdownMenuItem>
+              
+              <DropdownMenuItem onClick={() => handleNavigate('/profile')}>
+                <Download className="w-4 h-4 text-white/60" />
+                <span className="text-sm">Export Data</span>
+              </DropdownMenuItem>
+              
+              <DropdownMenuItem onClick={() => handleNavigate('/support')}>
+                <HelpCircle className="w-4 h-4 text-white/60" />
+                <span className="text-sm">Support</span>
+              </DropdownMenuItem>
 
-          {/* Menu Items */}
-          <div className="p-2">
-              <DropdownMenuItem 
-                className="flex items-center space-x-2 cursor-pointer hover:bg-white/10"
-                onClick={() => window.location.href = '/documents'}
+              <div className="my-2 border-t border-white/[0.08]" />
+              
+              <DropdownMenuItem
+                onClick={() => {
+                  logout();
+                  setLocation("/signin");
+                }}
+                className="text-red-400 hover:text-red-300"
               >
-                <FileText className="w-4 h-4" />
-                <span>Documents</span>
+                <LogOut className="w-4 h-4" />
+                <span className="text-sm">Sign Out</span>
               </DropdownMenuItem>
-              <DropdownMenuItem 
-                className="flex items-center space-x-2 cursor-pointer hover:bg-white/10"
-                onClick={() => window.location.href = '/profile'}
-              >
-                <Download className="w-4 h-4" />
-                <span>Export Data</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                className="flex items-center space-x-2 cursor-pointer hover:bg-white/10"
-                onClick={() => window.location.href = '/support'}
-              >
-                <HelpCircle className="w-4 h-4" />
-                <span>Support</span>
-              </DropdownMenuItem>
-            <DropdownMenuItem
-              className="flex items-center space-x-2 cursor-pointer hover:bg-white/10"
-              onClick={() => {
-                logout();
-                setLocation("/signin");
-              }}
-            >
-              <LogOut className="w-4 h-4" />
-              <span>Sign Out</span>
-            </DropdownMenuItem>
-          </div>
-        </div>
-      )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
