@@ -433,7 +433,6 @@ input:focus, select:focus, textarea:focus {
 /* Professional Font System - Inter for Polish */
 body, h1, h2, h3, h4, h5, h6, p, span, div, button, input, select, textarea, a {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif !important;
-  font-weight: 400;
   letter-spacing: -0.01em;
 }
 

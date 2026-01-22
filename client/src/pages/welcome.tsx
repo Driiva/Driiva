@@ -181,7 +181,7 @@ export default function Welcome() {
               maxWidth: '80vw',
               height: '60px',
               overflow: 'hidden',
-              marginBottom: '12px',
+              marginBottom: '9px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -203,17 +203,17 @@ export default function Welcome() {
             style={{ 
               color: '#ffffff',
               fontSize: '22px',
-              fontWeight: 600,
+              fontWeight: 700,
               fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
               letterSpacing: '-0.2px',
-              lineHeight: 1.4,
+              lineHeight: 1.3,
               textAlign: 'center',
               background: 'transparent',
               textShadow: 'none',
               margin: '0 auto 48px',
             }}
           >
-            <span style={{ display: 'block' }}>AI-powered. Community-driven.</span>
+            <span style={{ display: 'block' }}>AI-powered, community-driven.</span>
             <span style={{ display: 'block' }}>Your driving, rewarded.</span>
           </div>
         </motion.div>
