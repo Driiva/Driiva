@@ -4,27 +4,23 @@ import { useLocation } from "wouter";
 import { timing, easing } from "@/lib/animations";
 import { BarChart3, Wallet, Trophy } from "lucide-react";
 import gradientBackground from "@/assets/gradient-background.png";
-import driivaLogo from "@/assets/driiva-logo-2.png";
+import driivaLogo from "@/assets/driiva-logo-transparent.png";
 
 const particles = [
-  { size: 3, left: '12%', top: '15%', color: 'rgba(0, 217, 160, 0.12)', animType: 1, delay: 0, duration: 28 },
-  { size: 2, left: '25%', top: '80%', color: 'rgba(255, 255, 255, 0.08)', animType: 2, delay: -3, duration: 35 },
-  { size: 4, left: '40%', top: '25%', color: 'rgba(120, 100, 255, 0.1)', animType: 3, delay: -7, duration: 32 },
-  { size: 3, left: '55%', top: '60%', color: 'rgba(0, 217, 160, 0.12)', animType: 4, delay: -2, duration: 38 },
-  { size: 2, left: '70%', top: '35%', color: 'rgba(255, 255, 255, 0.08)', animType: 1, delay: -5, duration: 30 },
-  { size: 4, left: '85%', top: '70%', color: 'rgba(120, 100, 255, 0.1)', animType: 2, delay: -8, duration: 26 },
-  { size: 3, left: '15%', top: '45%', color: 'rgba(0, 217, 160, 0.12)', animType: 3, delay: -4, duration: 34 },
-  { size: 2, left: '60%', top: '88%', color: 'rgba(255, 255, 255, 0.08)', animType: 4, delay: -6, duration: 40 },
-  { size: 4, left: '80%', top: '20%', color: 'rgba(0, 217, 160, 0.12)', animType: 1, delay: -1, duration: 36 },
-  { size: 3, left: '35%', top: '55%', color: 'rgba(120, 100, 255, 0.1)', animType: 2, delay: -9, duration: 28 },
-  { size: 2, left: '90%', top: '50%', color: 'rgba(255, 255, 255, 0.08)', animType: 3, delay: -12, duration: 33 },
-  { size: 4, left: '20%', top: '70%', color: 'rgba(0, 217, 160, 0.12)', animType: 4, delay: -15, duration: 29 },
-  { size: 3, left: '45%', top: '10%', color: 'rgba(120, 100, 255, 0.1)', animType: 1, delay: -10, duration: 37 },
-  { size: 2, left: '65%', top: '42%', color: 'rgba(255, 255, 255, 0.08)', animType: 2, delay: -18, duration: 31 },
-  { size: 4, left: '30%', top: '85%', color: 'rgba(0, 217, 160, 0.12)', animType: 3, delay: -14, duration: 42 },
-  { size: 3, left: '75%', top: '65%', color: 'rgba(120, 100, 255, 0.1)', animType: 4, delay: -11, duration: 27 },
-  { size: 2, left: '50%', top: '30%', color: 'rgba(255, 255, 255, 0.08)', animType: 1, delay: -16, duration: 39 },
-  { size: 4, left: '10%', top: '90%', color: 'rgba(0, 217, 160, 0.12)', animType: 2, delay: -19, duration: 25 },
+  { size: 4, left: '12%', top: '15%', color: 'rgba(0, 217, 160, 0.08)', animType: 1, delay: 0, duration: 28 },
+  { size: 3, left: '25%', top: '80%', color: 'rgba(255, 255, 255, 0.05)', animType: 2, delay: -3, duration: 35 },
+  { size: 5, left: '40%', top: '25%', color: 'rgba(120, 100, 255, 0.07)', animType: 3, delay: -7, duration: 32 },
+  { size: 4, left: '55%', top: '60%', color: 'rgba(0, 217, 160, 0.08)', animType: 4, delay: -2, duration: 38 },
+  { size: 3, left: '70%', top: '35%', color: 'rgba(255, 255, 255, 0.05)', animType: 1, delay: -5, duration: 30 },
+  { size: 5, left: '85%', top: '70%', color: 'rgba(120, 100, 255, 0.07)', animType: 2, delay: -8, duration: 26 },
+  { size: 4, left: '15%', top: '45%', color: 'rgba(0, 217, 160, 0.08)', animType: 3, delay: -4, duration: 34 },
+  { size: 3, left: '60%', top: '88%', color: 'rgba(255, 255, 255, 0.05)', animType: 4, delay: -6, duration: 40 },
+  { size: 5, left: '80%', top: '20%', color: 'rgba(0, 217, 160, 0.08)', animType: 1, delay: -1, duration: 36 },
+  { size: 4, left: '35%', top: '55%', color: 'rgba(120, 100, 255, 0.07)', animType: 2, delay: -9, duration: 28 },
+  { size: 3, left: '90%', top: '50%', color: 'rgba(255, 255, 255, 0.05)', animType: 3, delay: -12, duration: 33 },
+  { size: 5, left: '20%', top: '70%', color: 'rgba(0, 217, 160, 0.08)', animType: 4, delay: -15, duration: 29 },
+  { size: 4, left: '45%', top: '10%', color: 'rgba(120, 100, 255, 0.07)', animType: 1, delay: -10, duration: 37 },
+  { size: 3, left: '65%', top: '42%', color: 'rgba(255, 255, 255, 0.05)', animType: 2, delay: -18, duration: 31 },
 ];
 
 const features = [
@@ -99,13 +95,14 @@ export default function Welcome() {
         {particles.map((p, i) => (
           <div
             key={i}
-            className="absolute rounded-full particle-dot"
+            className="absolute star-particle"
             style={{
               width: p.size,
               height: p.size,
               left: p.left,
               top: p.top,
               background: p.color,
+              clipPath: 'polygon(50% 0%, 65% 35%, 100% 50%, 65% 65%, 50% 100%, 35% 65%, 0% 50%, 35% 35%)',
               animation: `float${p.animType} ${p.duration}s ease-in-out infinite`,
               animationDelay: `${p.delay}s`,
               willChange: 'transform, opacity',
@@ -132,7 +129,7 @@ export default function Welcome() {
           50% { transform: translate(50px, 50px); opacity: 1; }
         }
         @media (prefers-reduced-motion: reduce) {
-          .particle-dot { animation: none !important; }
+          .star-particle { animation: none !important; }
         }
       `}</style>
       
@@ -153,23 +150,27 @@ export default function Welcome() {
               width: '280px',
               height: 'auto',
               imageRendering: 'auto',
-              marginBottom: '16px',
+              marginBottom: '20px',
+              mixBlendMode: 'lighten',
             }}
           />
           
-          <p 
+          <div 
             className="text-center"
             style={{ 
-              color: 'rgba(255, 255, 255, 0.85)',
-              fontSize: '16px',
-              fontWeight: 500,
-              letterSpacing: '0.3px',
-              lineHeight: 1.4,
-              marginBottom: '48px',
+              color: 'rgba(255, 255, 255, 0.90)',
+              fontSize: '17px',
+              fontWeight: 700,
+              fontFamily: 'Inter, -apple-system-bold, BlinkMacSystemFont, sans-serif',
+              letterSpacing: '-0.2px',
+              lineHeight: 1.3,
+              marginBottom: '56px',
             }}
           >
-            AI-powered. Community-driven. Your driving, rewarded.
-          </p>
+            <span>AI-powered. Community-driven.</span>
+            <br />
+            <span>Your driving, rewarded.</span>
+          </div>
         </motion.div>
 
         <div className="flex-1 flex flex-col items-center justify-center w-full px-6">
