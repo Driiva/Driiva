@@ -46,7 +46,8 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
   const handleSignOut = () => {
     setMenuOpen(false);
     setTimeout(() => {
-      logout(); // Clears auth and redirects to welcome page
+      logout();
+      setLocation("/signin");
     }, 100);
   };
 
