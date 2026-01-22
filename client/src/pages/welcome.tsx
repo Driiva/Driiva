@@ -83,14 +83,12 @@ export default function Welcome() {
           filter: 'blur(3px)',
         }}
       />
-      
       <div 
         className="absolute inset-0 pointer-events-none"
         style={{
           background: 'radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.2) 100%)',
         }}
       />
-
       <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 1 }}>
         {particles.map((p, i) => (
           <div
@@ -110,7 +108,6 @@ export default function Welcome() {
           />
         ))}
       </div>
-
       <style>{`
         @keyframes float1 {
           0%, 100% { transform: translate(0, 0); opacity: 0.6; }
@@ -136,7 +133,6 @@ export default function Welcome() {
           100% { background-position: 200% center; }
         }
       `}</style>
-      
       <div className="relative z-10 flex flex-col items-center min-h-screen w-full py-8 pb-[env(safe-area-inset-bottom,24px)]">
         
         <motion.div
@@ -192,7 +188,7 @@ export default function Welcome() {
           </div>
         </motion.div>
 
-        <div className="flex-1 flex flex-col items-center justify-center w-full px-6">
+        <div className="flex-1 flex flex-col items-center justify-center w-full px-6 pl-[10px] pr-[10px] pt-[10px] pb-[10px]">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
