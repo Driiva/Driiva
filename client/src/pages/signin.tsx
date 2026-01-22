@@ -20,7 +20,7 @@ export default function SignIn() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { ref: cardRef, style: cardParallaxStyle } = useParallax({ speed: 0.3 });
-  const { login, setUser } = useAuth();
+  const { setUser } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,34 +37,50 @@ export default function SignIn() {
     
     try {
       // Try Supabase authentication first
-      try {
-        await login(username, password);
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: username,
+        password: password,
+      });
+
+      if (!error && data.user) {
+        // Supabase auth succeeded - populate user data
+        setUser({
+          id: data.user.id,
+          email: data.user.email || username,
+          name: data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'User',
+        });
+
         toast({
           title: "Welcome back!",
           description: "Successfully signed in",
         });
         setLocation("/dashboard");
         return;
-      } catch (supabaseError) {
-        // If Supabase fails, try demo fallback
-        if (username === "driiva1" && password === "driiva1") {
-          setUser({
-            id: "demo-user-8",
-            email: "test@driiva.com",
-            name: "Test Driver",
-          });
-
-          toast({
-            title: "Welcome back!",
-            description: "Signed in as Test Driver",
-          });
-
-          setLocation("/dashboard");
-          return;
-        } else {
-          throw new Error('Invalid credentials');
-        }
       }
+
+      // If Supabase fails, try demo fallback
+      if (username === "driiva1" && password === "driiva1") {
+        setUser({
+          id: "demo-user-8",
+          email: "test@driiva.com",
+          name: "Test Driver",
+        });
+
+        toast({
+          title: "Welcome back!",
+          description: "Signed in as Test Driver",
+        });
+
+        setLocation("/dashboard");
+        return;
+      }
+
+      // Both failed - show error
+      toast({
+        title: "Sign in failed",
+        description: error?.message || "Invalid username or password",
+        variant: "destructive",
+      });
     } catch (error) {
       toast({
         title: "Sign in failed",
