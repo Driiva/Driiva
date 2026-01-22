@@ -132,15 +132,49 @@ export default function Welcome() {
           0% { background-position: -200% center; }
           100% { background-position: 200% center; }
         }
+        @keyframes floatBlur {
+          0%, 100% {
+            transform: translate(0, 0) scale(1);
+            opacity: 0.6;
+          }
+          25% {
+            transform: translate(50px, -30px) scale(1.1);
+            opacity: 0.8;
+          }
+          50% {
+            transform: translate(-40px, 40px) scale(0.9);
+            opacity: 0.7;
+          }
+          75% {
+            transform: translate(30px, 20px) scale(1.05);
+            opacity: 0.75;
+          }
+        }
       `}</style>
-      <div className="relative z-10 flex flex-col items-center min-h-screen w-full py-8 pb-[env(safe-area-inset-bottom,24px)]">
+      
+      <div
+        style={{
+          position: 'absolute',
+          width: '400px',
+          height: '400px',
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(0, 217, 160, 0.15) 0%, rgba(120, 100, 255, 0.1) 50%, transparent 100%)',
+          filter: 'blur(60px)',
+          animation: 'floatBlur 12s ease-in-out infinite',
+          zIndex: 0,
+          top: '30%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+        }}
+      />
+      <div className="relative z-10 flex flex-col items-center min-h-screen w-full py-8 pb-[env(safe-area-inset-bottom,24px)]" style={{ marginTop: '80px' }}>
         
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: timing.pageTransition / 1000, ease: easing.smoothDecel }}
-          className="text-center flex flex-col items-center px-6"
-          style={{ paddingTop: '48px' }}
+          className="text-center flex flex-col items-center px-6 w-full"
+          style={{ maxWidth: '440px', margin: '0 auto' }}
         >
           <div
             style={{
@@ -176,7 +210,6 @@ export default function Welcome() {
               letterSpacing: '-0.2px',
               lineHeight: 1.4,
               marginBottom: '48px',
-              textShadow: '0 2px 12px rgba(0, 0, 0, 0.5)',
             }}
           >
             <span style={{ display: 'block' }}>AI-powered. Community-driven.</span>
@@ -242,12 +275,12 @@ export default function Welcome() {
                     />
                   </div>
                   <h3 
-                    className="font-bold mb-1"
+                    className="font-semibold mb-1"
                     style={{ 
                       fontSize: '20px', 
-                      fontWeight: 700, 
+                      fontWeight: 600, 
                       color: 'white',
-                      textShadow: '0 2px 12px rgba(0, 0, 0, 0.4)',
+                      textAlign: 'center',
                     }}
                   >
                     {features[currentCard].title}
@@ -256,7 +289,7 @@ export default function Welcome() {
                     fontSize: '14px', 
                     color: 'rgba(255, 255, 255, 0.85)', 
                     lineHeight: 1.4,
-                    textShadow: '0 1px 8px rgba(0, 0, 0, 0.3)',
+                    textAlign: 'center',
                   }}>
                     {features[currentCard].description}
                   </p>
@@ -323,7 +356,6 @@ export default function Welcome() {
                 textAlign: 'center',
                 lineHeight: 1.4,
                 letterSpacing: '-0.2px',
-                textShadow: '0 2px 12px rgba(0, 0, 0, 0.5)',
                 maxWidth: '360px',
               }}
             >
