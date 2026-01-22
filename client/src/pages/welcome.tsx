@@ -181,7 +181,7 @@ export default function Welcome() {
               maxWidth: '80vw',
               height: '60px',
               overflow: 'hidden',
-              marginBottom: '9px',
+              marginBottom: '12px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -278,7 +278,7 @@ export default function Welcome() {
                   <h3 
                     className="font-semibold mb-1"
                     style={{ 
-                      fontSize: '20px', 
+                      fontSize: '24px', 
                       fontWeight: 600, 
                       color: 'white',
                       textAlign: 'center',
