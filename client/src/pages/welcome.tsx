@@ -212,7 +212,7 @@ export default function Welcome() {
             }}
           >
             <span style={{ display: 'block' }} className="font-semibold">AI-powered. Community-driven.</span>
-            <span style={{ display: 'block' }}>Your driving, rewarded.</span>
+            <span style={{ display: 'block' }} className="font-semibold">Your driving, rewarded.</span>
           </div>
         </motion.div>
 
