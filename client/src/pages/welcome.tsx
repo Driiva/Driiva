@@ -172,7 +172,7 @@ export default function Welcome() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: timing.pageTransition / 1000, ease: easing.smoothDecel }}
-          className="text-center flex flex-col items-center px-6 w-full"
+          className="text-center flex flex-col items-center px-6 w-full text-[20px] font-semibold"
           style={{ maxWidth: '440px', margin: '0 auto' }}
         >
           <div
