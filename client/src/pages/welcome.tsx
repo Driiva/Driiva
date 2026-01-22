@@ -131,6 +131,10 @@ export default function Welcome() {
         @media (prefers-reduced-motion: reduce) {
           .star-particle { animation: none !important; }
         }
+        @keyframes shimmer {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
       `}</style>
       
       <div className="relative z-10 flex flex-col items-center min-h-screen w-full py-8 pb-[env(safe-area-inset-bottom,24px)]">
@@ -140,17 +144,18 @@ export default function Welcome() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: timing.pageTransition / 1000, ease: easing.smoothDecel }}
           className="text-center flex flex-col items-center px-6"
-          style={{ paddingTop: '64px' }}
+          style={{ paddingTop: '48px' }}
         >
           <img 
             src={driivaLogo} 
             alt="Driiva" 
             style={{ 
-              width: '240px',
+              width: '480px',
+              maxWidth: '90vw',
               height: 'auto',
               objectFit: 'contain',
               mixBlendMode: 'screen',
-              marginBottom: '24px',
+              marginBottom: '16px',
             }}
           />
           
@@ -163,7 +168,12 @@ export default function Welcome() {
               fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
               letterSpacing: '-0.3px',
               lineHeight: 1.35,
-              marginBottom: '64px',
+              marginBottom: '56px',
+              background: 'rgba(0, 0, 0, 0.25)',
+              backdropFilter: 'blur(4px)',
+              WebkitBackdropFilter: 'blur(4px)',
+              padding: '12px 24px',
+              borderRadius: '12px',
             }}
           >
             <span style={{ display: 'block' }}>AI-powered. Community-driven.</span>
@@ -203,8 +213,25 @@ export default function Welcome() {
                     borderRadius: '24px',
                     padding: '32px',
                     height: '200px',
+                    position: 'relative',
+                    overflow: 'hidden',
                   }}
                 >
+                  <div 
+                    style={{
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background: 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.08) 50%, transparent 100%)',
+                      backgroundSize: '200% 100%',
+                      animation: 'shimmer 3s ease-in-out infinite',
+                      borderRadius: '24px',
+                      pointerEvents: 'none',
+                    }}
+                  />
                   <div style={{ width: '56px', height: '56px', marginBottom: '16px' }}>
                     <CurrentIcon 
                       className="w-14 h-14" 
@@ -235,11 +262,27 @@ export default function Welcome() {
             </div>
 
             <div 
-              className="flex flex-col items-center"
+              className="flex items-center justify-center gap-4"
               style={{ marginTop: '16px' }}
               role="navigation"
               aria-label="Carousel navigation"
             >
+              <button
+                onClick={handlePrev}
+                className="transition-opacity hover:opacity-100"
+                style={{
+                  color: 'rgba(255, 255, 255, 0.6)',
+                  fontSize: '18px',
+                  textShadow: '0 0 8px rgba(0, 0, 0, 0.4)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '4px 8px',
+                }}
+                aria-label="Previous slide"
+              >
+                ‹
+              </button>
               <div
                 className="rounded-full"
                 style={{
@@ -249,15 +292,22 @@ export default function Welcome() {
                 }}
                 aria-hidden="true"
               />
-              <span 
-                style={{ 
-                  fontSize: '12px', 
-                  color: 'rgba(255, 255, 255, 0.5)',
-                  marginTop: '8px',
+              <button
+                onClick={handleNext}
+                className="transition-opacity hover:opacity-100"
+                style={{
+                  color: 'rgba(255, 255, 255, 0.6)',
+                  fontSize: '18px',
+                  textShadow: '0 0 8px rgba(0, 0, 0, 0.4)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: '4px 8px',
                 }}
+                aria-label="Next slide"
               >
-                {currentCard + 1} of {features.length}
-              </span>
+                ›
+              </button>
             </div>
           </motion.div>
         </div>
