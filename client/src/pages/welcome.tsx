@@ -151,7 +151,6 @@ export default function Welcome() {
           }
         }
       `}</style>
-      
       <div
         style={{
           position: 'absolute',
@@ -212,7 +211,7 @@ export default function Welcome() {
               marginBottom: '48px',
             }}
           >
-            <span style={{ display: 'block' }}>AI-powered. Community-driven.</span>
+            <span style={{ display: 'block' }} className="font-semibold">AI-powered. Community-driven.</span>
             <span style={{ display: 'block' }}>Your driving, rewarded.</span>
           </div>
         </motion.div>
