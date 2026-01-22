@@ -211,7 +211,7 @@ export default function Welcome() {
               marginBottom: '48px',
             }}
           >
-            <span style={{ display: 'block' }} className="font-semibold">AI-Powered. Community-driven.</span>
+            <span style={{ display: 'block' }} className="font-semibold text-[20px]">AI-Powered. Community-driven.</span>
             <span style={{ display: 'block' }} className="font-semibold">Your driving, rewarded.</span>
           </div>
         </motion.div>
