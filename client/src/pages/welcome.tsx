@@ -134,36 +134,36 @@ export default function Welcome() {
         }
         @keyframes floatBlur {
           0%, 100% {
-            transform: translate(0, 0) scale(1);
-            opacity: 0.6;
-          }
-          25% {
-            transform: translate(50px, -30px) scale(1.1);
+            transform: translate(-50%, -50%) translate(0, 0) scale(1);
             opacity: 0.8;
           }
+          25% {
+            transform: translate(-50%, -50%) translate(50px, -30px) scale(1.1);
+            opacity: 1.0;
+          }
           50% {
-            transform: translate(-40px, 40px) scale(0.9);
-            opacity: 0.7;
+            transform: translate(-50%, -50%) translate(-40px, 40px) scale(0.9);
+            opacity: 0.9;
           }
           75% {
-            transform: translate(30px, 20px) scale(1.05);
-            opacity: 0.75;
+            transform: translate(-50%, -50%) translate(30px, 20px) scale(1.05);
+            opacity: 0.95;
           }
         }
       `}</style>
       <div
         style={{
           position: 'absolute',
-          width: '400px',
-          height: '400px',
+          width: '600px',
+          height: '600px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(0, 217, 160, 0.15) 0%, rgba(120, 100, 255, 0.1) 50%, transparent 100%)',
-          filter: 'blur(60px)',
+          background: 'radial-gradient(circle, rgba(0, 217, 160, 0.25) 0%, rgba(120, 100, 255, 0.18) 50%, transparent 100%)',
+          filter: 'blur(80px)',
           animation: 'floatBlur 12s ease-in-out infinite',
           zIndex: 0,
-          top: '30%',
+          top: '50%',
           left: '50%',
-          transform: 'translateX(-50%)',
+          transform: 'translate(-50%, -50%)',
         }}
       />
       <div className="relative z-10 flex flex-col items-center min-h-screen w-full py-8 pb-[env(safe-area-inset-bottom,24px)]" style={{ paddingTop: '80px' }}>
