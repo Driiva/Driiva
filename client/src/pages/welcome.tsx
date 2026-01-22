@@ -214,7 +214,8 @@ export default function Welcome() {
             }}
           >
             <span style={{ display: 'block' }}>AI-powered. Community-driven.</span>
-            <span style={{ display: 'block' }}>Your driving, rewarded.</span>
+            <span style={{ display: 'block' }}>Lower premiums for safer drivers,</span>
+            <span style={{ display: 'block' }}>powered by your data.</span>
           </div>
         </motion.div>
 
