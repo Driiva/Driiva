@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
 import { timing, easing, microInteractions } from "@/lib/animations";
-
+import { supabase } from '../lib/supabase'
 export default function Signup() {
   const [, setLocation] = useLocation();
   const [formData, setFormData] = useState({

@@ -1,65 +1,82 @@
-import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
-import { useLocation } from 'wouter';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { supabase } from "../lib/supabase";
 
-export interface User {
-  id: number;
-  username: string;
-  firstName: string;
-  lastName: string;
+interface User {
+  id: string;
+  name: string;
   email: string;
-  premiumAmount: string;
 }
 
 interface AuthContextType {
   user: User | null;
-  login: (userData: User) => void;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => void;
-  isAuthenticated: boolean;
-  isLoading: boolean;
+  setIsAuthenticated: (value: boolean) => void;
+  setUser: (user: User | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [, navigate] = useLocation();
 
   useEffect(() => {
-    try {
-      const storedUser = localStorage.getItem('driiva_user');
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
+    // Check active session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser({
+          id: session.user.id,
+          email: session.user.email!,
+          name:
+            session.user.user_metadata?.name ||
+            session.user.email!.split("@")[0],
+        });
       }
-    } catch (error) {
-      console.error('Error loading stored user:', error);
-    } finally {
-      setIsLoading(false);
-    }
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser({
+          id: session.user.id,
+          email: session.user.email!,
+          name:
+            session.user.user_metadata?.name ||
+            session.user.email!.split("@")[0],
+        });
+      } else {
+        setUser(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = (userData: User) => {
-    setUser(userData);
-    localStorage.setItem('driiva_user', JSON.stringify(userData));
-    navigate('/dashboard');
+  const login = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) throw error;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut();
     setUser(null);
-    localStorage.removeItem('driiva_user');
-    navigate('/');
-  };
-
-  const value = {
-    user,
-    login,
-    logout,
-    isAuthenticated: !!user,
-    isLoading
   };
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        logout,
+        setIsAuthenticated: () => {},
+        setUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -67,8 +84,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error("useAuth must be used within AuthProvider");
   return context;
 }
