@@ -194,57 +194,70 @@ export default function Welcome() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  transition={{ duration: 0.3, ease: 'easeInOut' }}
-                  className="absolute inset-0 flex flex-col items-start gap-3"
+                  transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+                  className="absolute inset-0 flex flex-col items-center justify-center text-center"
                   style={{
-                    background: 'rgba(255, 255, 255, 0.06)',
-                    backdropFilter: 'blur(20px)',
-                    WebkitBackdropFilter: 'blur(20px)',
-                    border: '1px solid rgba(255, 255, 255, 0.10)',
-                    borderRadius: '16px',
-                    padding: '24px',
-                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+                    background: 'rgba(0, 0, 0, 0.08)',
+                    backdropFilter: 'blur(12px)',
+                    WebkitBackdropFilter: 'blur(12px)',
+                    borderRadius: '24px',
+                    padding: '32px',
+                    height: '200px',
                   }}
                 >
-                  <div style={{ width: '48px', height: '48px' }}>
-                    <CurrentIcon className="w-12 h-12 text-[#00D9A0]" />
+                  <div style={{ width: '56px', height: '56px', marginBottom: '16px' }}>
+                    <CurrentIcon 
+                      className="w-14 h-14" 
+                      style={{ color: 'rgba(0, 217, 160, 0.95)' }} 
+                    />
                   </div>
-                  <div>
-                    <h3 
-                      className="font-semibold mb-2"
-                      style={{ fontSize: '22px', fontWeight: 600, color: 'white' }}
-                    >
-                      {features[currentCard].title}
-                    </h3>
-                    <p style={{ fontSize: '16px', color: 'rgba(255, 255, 255, 0.75)', lineHeight: 1.5 }}>
-                      {features[currentCard].description}
-                    </p>
-                  </div>
+                  <h3 
+                    className="font-bold mb-2"
+                    style={{ 
+                      fontSize: '24px', 
+                      fontWeight: 700, 
+                      color: 'white',
+                      textShadow: '0 2px 12px rgba(0, 0, 0, 0.4)',
+                    }}
+                  >
+                    {features[currentCard].title}
+                  </h3>
+                  <p style={{ 
+                    fontSize: '16px', 
+                    color: 'rgba(255, 255, 255, 0.85)', 
+                    lineHeight: 1.5,
+                    textShadow: '0 1px 8px rgba(0, 0, 0, 0.3)',
+                  }}>
+                    {features[currentCard].description}
+                  </p>
                 </motion.div>
               </AnimatePresence>
             </div>
 
             <div 
-              className="flex items-center gap-3 mt-6"
+              className="flex flex-col items-center"
+              style={{ marginTop: '16px' }}
               role="navigation"
               aria-label="Carousel navigation"
             >
-              {features.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setCurrentCard(idx)}
-                  className="rounded-full transition-all duration-200"
-                  style={{
-                    width: '8px',
-                    height: '8px',
-                    background: idx === currentCard 
-                      ? 'rgba(0, 217, 160, 0.9)' 
-                      : 'rgba(255, 255, 255, 0.3)',
-                  }}
-                  aria-label={`Go to slide ${idx + 1}`}
-                  aria-current={idx === currentCard ? 'true' : undefined}
-                />
-              ))}
+              <div
+                className="rounded-full"
+                style={{
+                  width: '6px',
+                  height: '6px',
+                  background: 'rgba(0, 217, 160, 0.9)',
+                }}
+                aria-hidden="true"
+              />
+              <span 
+                style={{ 
+                  fontSize: '12px', 
+                  color: 'rgba(255, 255, 255, 0.5)',
+                  marginTop: '8px',
+                }}
+              >
+                {currentCard + 1} of {features.length}
+              </span>
             </div>
           </motion.div>
         </div>
