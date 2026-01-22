@@ -175,18 +175,29 @@ export default function Welcome() {
           className="text-center flex flex-col items-center px-6 w-full text-[20px] font-semibold"
           style={{ maxWidth: '440px', margin: '0 auto' }}
         >
-          <img 
-            src={driivaLogo} 
-            alt="Driiva" 
-            style={{ 
-              width: '480px',
-              maxWidth: '90vw',
-              height: 'auto',
-              objectFit: 'contain',
-              imageRendering: 'crisp-edges',
+          <div
+            style={{
+              width: '320px',
+              maxWidth: '80vw',
+              height: '60px',
+              overflow: 'hidden',
               marginBottom: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
-          />
+          >
+            <img 
+              src={driivaLogo} 
+              alt="Driiva" 
+              style={{ 
+                width: '100%',
+                height: 'auto',
+                objectFit: 'contain',
+                imageRendering: 'crisp-edges',
+              }}
+            />
+          </div>
           
           <div 
             className="text-center"
