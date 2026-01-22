@@ -172,7 +172,7 @@ export default function Welcome() {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: timing.pageTransition / 1000, ease: easing.smoothDecel }}
-          className="text-center flex flex-col items-center px-6 w-full text-[20px] font-semibold"
+          className="text-center flex flex-col items-center px-6 w-full"
           style={{ maxWidth: '440px', margin: '0 auto' }}
         >
           <div
@@ -200,19 +200,21 @@ export default function Welcome() {
           </div>
           
           <div 
-            className="text-center"
             style={{ 
-              color: 'rgba(255, 255, 255, 0.95)',
+              color: '#ffffff',
               fontSize: '22px',
               fontWeight: 600,
               fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
               letterSpacing: '-0.2px',
               lineHeight: 1.4,
-              marginBottom: '48px',
+              textAlign: 'center',
+              background: 'transparent',
+              textShadow: 'none',
+              margin: '0 auto 48px',
             }}
           >
-            <span style={{ display: 'block' }} className="font-semibold text-[20px]">AI-Powered. Community-driven.</span>
-            <span style={{ display: 'block' }} className="font-semibold">Your driving, rewarded.</span>
+            <span style={{ display: 'block' }}>AI-powered. Community-driven.</span>
+            <span style={{ display: 'block' }}>Your driving, rewarded.</span>
           </div>
         </motion.div>
 
