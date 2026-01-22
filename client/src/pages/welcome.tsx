@@ -1,32 +1,81 @@
-import { motion } from "framer-motion";
+import { useState, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
 import { timing, easing } from "@/lib/animations";
 import { BarChart3, Wallet, Trophy } from "lucide-react";
 import gradientBackground from "@/assets/gradient-background.png";
-import driivaLogo from "@/assets/driiva-logo.png";
+import driivaLogo from "@/assets/driiva-logo-2.png";
 
-const floatingDots = [
-  { size: 6, left: '10%', delay: 0, duration: 28 },
-  { size: 4, left: '25%', delay: 3, duration: 32 },
-  { size: 8, left: '40%', delay: 7, duration: 24 },
-  { size: 5, left: '55%', delay: 2, duration: 36 },
-  { size: 7, left: '70%', delay: 5, duration: 30 },
-  { size: 4, left: '85%', delay: 8, duration: 26 },
-  { size: 6, left: '15%', delay: 4, duration: 34 },
-  { size: 5, left: '60%', delay: 6, duration: 22 },
-  { size: 8, left: '80%', delay: 1, duration: 38 },
-  { size: 4, left: '35%', delay: 9, duration: 28 },
+const particles = [
+  { size: 3, left: '12%', top: '15%', color: 'rgba(0, 217, 160, 0.12)', animType: 1, delay: 0, duration: 28 },
+  { size: 2, left: '25%', top: '80%', color: 'rgba(255, 255, 255, 0.08)', animType: 2, delay: -3, duration: 35 },
+  { size: 4, left: '40%', top: '25%', color: 'rgba(120, 100, 255, 0.1)', animType: 3, delay: -7, duration: 32 },
+  { size: 3, left: '55%', top: '60%', color: 'rgba(0, 217, 160, 0.12)', animType: 4, delay: -2, duration: 38 },
+  { size: 2, left: '70%', top: '35%', color: 'rgba(255, 255, 255, 0.08)', animType: 1, delay: -5, duration: 30 },
+  { size: 4, left: '85%', top: '70%', color: 'rgba(120, 100, 255, 0.1)', animType: 2, delay: -8, duration: 26 },
+  { size: 3, left: '15%', top: '45%', color: 'rgba(0, 217, 160, 0.12)', animType: 3, delay: -4, duration: 34 },
+  { size: 2, left: '60%', top: '88%', color: 'rgba(255, 255, 255, 0.08)', animType: 4, delay: -6, duration: 40 },
+  { size: 4, left: '80%', top: '20%', color: 'rgba(0, 217, 160, 0.12)', animType: 1, delay: -1, duration: 36 },
+  { size: 3, left: '35%', top: '55%', color: 'rgba(120, 100, 255, 0.1)', animType: 2, delay: -9, duration: 28 },
+  { size: 2, left: '90%', top: '50%', color: 'rgba(255, 255, 255, 0.08)', animType: 3, delay: -12, duration: 33 },
+  { size: 4, left: '20%', top: '70%', color: 'rgba(0, 217, 160, 0.12)', animType: 4, delay: -15, duration: 29 },
+  { size: 3, left: '45%', top: '10%', color: 'rgba(120, 100, 255, 0.1)', animType: 1, delay: -10, duration: 37 },
+  { size: 2, left: '65%', top: '42%', color: 'rgba(255, 255, 255, 0.08)', animType: 2, delay: -18, duration: 31 },
+  { size: 4, left: '30%', top: '85%', color: 'rgba(0, 217, 160, 0.12)', animType: 3, delay: -14, duration: 42 },
+  { size: 3, left: '75%', top: '65%', color: 'rgba(120, 100, 255, 0.1)', animType: 4, delay: -11, duration: 27 },
+  { size: 2, left: '50%', top: '30%', color: 'rgba(255, 255, 255, 0.08)', animType: 1, delay: -16, duration: 39 },
+  { size: 4, left: '10%', top: '90%', color: 'rgba(0, 217, 160, 0.12)', animType: 2, delay: -19, duration: 25 },
+];
+
+const features = [
+  { icon: BarChart3, title: "Track Your Driving", description: "Real-time feedback on every trip" },
+  { icon: Wallet, title: "Earn Refunds", description: "Safe driving = money back at renewal" },
+  { icon: Trophy, title: "Unlock Rewards", description: "Achievements, streaks, and community challenges" },
 ];
 
 export default function Welcome() {
   const [, setLocation] = useLocation();
+  const [currentCard, setCurrentCard] = useState(0);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+
+  const handleNext = useCallback(() => {
+    setCurrentCard((prev) => (prev + 1) % features.length);
+  }, []);
+
+  const handlePrev = useCallback(() => {
+    setCurrentCard((prev) => (prev - 1 + features.length) % features.length);
+  }, []);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStart === null) return;
+    const touchEnd = e.changedTouches[0].clientX;
+    const diff = touchStart - touchEnd;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) handleNext();
+      else handlePrev();
+    }
+    setTouchStart(null);
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') handlePrev();
+      if (e.key === 'ArrowRight') handleNext();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleNext, handlePrev]);
+
+  const CurrentIcon = features[currentCard].icon;
 
   return (
     <div 
-      className="min-h-screen flex flex-col items-center justify-between relative overflow-hidden"
-      style={{
-        filter: 'contrast(0.92) brightness(0.98)',
-      }}
+      className="min-h-screen flex flex-col items-center relative overflow-hidden"
+      style={{ filter: 'contrast(0.92) brightness(0.98)' }}
     >
       <div 
         className="absolute inset-0"
@@ -47,51 +96,47 @@ export default function Welcome() {
       />
 
       <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 1 }}>
-        {floatingDots.map((dot, i) => (
+        {particles.map((p, i) => (
           <div
             key={i}
-            className="absolute rounded-full"
+            className="absolute rounded-full particle-dot"
             style={{
-              width: dot.size,
-              height: dot.size,
-              left: dot.left,
-              top: '100%',
-              background: 'rgba(0, 217, 160, 0.15)',
-              animation: `floatUp ${dot.duration}s linear infinite`,
-              animationDelay: `${dot.delay}s`,
-              willChange: 'transform',
+              width: p.size,
+              height: p.size,
+              left: p.left,
+              top: p.top,
+              background: p.color,
+              animation: `float${p.animType} ${p.duration}s ease-in-out infinite`,
+              animationDelay: `${p.delay}s`,
+              willChange: 'transform, opacity',
             }}
           />
         ))}
       </div>
 
       <style>{`
-        @keyframes floatUp {
-          0% {
-            transform: translateY(0);
-            opacity: 0;
-          }
-          10% {
-            opacity: 1;
-          }
-          90% {
-            opacity: 1;
-          }
-          100% {
-            transform: translateY(-120vh);
-            opacity: 0;
-          }
+        @keyframes float1 {
+          0%, 100% { transform: translate(0, 0); opacity: 0.6; }
+          50% { transform: translate(-40px, -80px); opacity: 1; }
         }
-        .hide-scrollbar::-webkit-scrollbar {
-          display: none;
+        @keyframes float2 {
+          0%, 100% { transform: translate(0, 0); opacity: 0.6; }
+          50% { transform: translate(40px, -60px); opacity: 1; }
         }
-        .hide-scrollbar {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
+        @keyframes float3 {
+          0%, 100% { transform: translate(0, 0); opacity: 0.6; }
+          50% { transform: translate(-30px, 70px); opacity: 1; }
+        }
+        @keyframes float4 {
+          0%, 100% { transform: translate(0, 0); opacity: 0.6; }
+          50% { transform: translate(50px, 50px); opacity: 1; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .particle-dot { animation: none !important; }
         }
       `}</style>
       
-      <div className="relative z-10 flex flex-col items-center justify-between min-h-screen w-full py-8 pb-[env(safe-area-inset-bottom,24px)]">
+      <div className="relative z-10 flex flex-col items-center min-h-screen w-full py-8 pb-[env(safe-area-inset-bottom,24px)]">
         
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -103,64 +148,113 @@ export default function Welcome() {
           <img 
             src={driivaLogo} 
             alt="Driiva" 
-            className="object-contain mb-6"
+            className="object-contain"
             style={{ 
               width: '280px',
               height: 'auto',
               imageRendering: 'auto',
+              marginBottom: '16px',
             }}
           />
           
           <p 
-            className="text-lg leading-relaxed max-w-[80%] mx-auto"
-            style={{ color: 'rgba(255, 255, 255, 0.85)' }}
+            className="text-center"
+            style={{ 
+              color: 'rgba(255, 255, 255, 0.85)',
+              fontSize: '16px',
+              fontWeight: 500,
+              letterSpacing: '0.3px',
+              lineHeight: 1.4,
+              marginBottom: '48px',
+            }}
           >
-            Drive safer. Earn rewards. Join a community that values responsible driving.
+            AI-powered. Community-driven. Your driving, rewarded.
           </p>
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: timing.pageTransition / 1000, ease: easing.smoothDecel }}
-          className="w-full hide-scrollbar"
-          style={{ 
-            marginTop: '32px', 
-            marginBottom: '40px',
-            overflowX: 'scroll',
-            scrollSnapType: 'x mandatory',
-            WebkitOverflowScrolling: 'touch',
-          }}
-        >
-          <div 
-            className="flex gap-4"
-            style={{ 
-              padding: '0 24px',
-            }}
+        <div className="flex-1 flex flex-col items-center justify-center w-full px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: timing.pageTransition / 1000, ease: easing.smoothDecel }}
+            className="w-full flex flex-col items-center"
+            style={{ maxWidth: '380px' }}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+            role="region"
+            aria-label="Feature carousel"
           >
-            <FeatureCard 
-              icon={<BarChart3 className="w-12 h-12 text-[#00D9A0]" />}
-              title="Track Your Driving"
-              description="Real-time feedback on every trip"
-            />
-            <FeatureCard 
-              icon={<Wallet className="w-12 h-12 text-[#00D9A0]" />}
-              title="Earn Refunds"
-              description="Safe driving = money back at renewal"
-            />
-            <FeatureCard 
-              icon={<Trophy className="w-12 h-12 text-[#00D9A0]" />}
-              title="Unlock Rewards"
-              description="Achievements, streaks, and community challenges"
-            />
-          </div>
-        </motion.div>
+            <div 
+              className="relative w-full overflow-hidden"
+              style={{ height: '200px' }}
+              aria-live="polite"
+            >
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentCard}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3, ease: 'easeInOut' }}
+                  className="absolute inset-0 flex flex-col items-start gap-3"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.06)',
+                    backdropFilter: 'blur(20px)',
+                    WebkitBackdropFilter: 'blur(20px)',
+                    border: '1px solid rgba(255, 255, 255, 0.10)',
+                    borderRadius: '16px',
+                    padding: '24px',
+                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+                  }}
+                >
+                  <div style={{ width: '48px', height: '48px' }}>
+                    <CurrentIcon className="w-12 h-12 text-[#00D9A0]" />
+                  </div>
+                  <div>
+                    <h3 
+                      className="font-semibold mb-2"
+                      style={{ fontSize: '22px', fontWeight: 600, color: 'white' }}
+                    >
+                      {features[currentCard].title}
+                    </h3>
+                    <p style={{ fontSize: '16px', color: 'rgba(255, 255, 255, 0.75)', lineHeight: 1.5 }}>
+                      {features[currentCard].description}
+                    </p>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            <div 
+              className="flex items-center gap-3 mt-6"
+              role="navigation"
+              aria-label="Carousel navigation"
+            >
+              {features.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setCurrentCard(idx)}
+                  className="rounded-full transition-all duration-200"
+                  style={{
+                    width: '8px',
+                    height: '8px',
+                    background: idx === currentCard 
+                      ? 'rgba(0, 217, 160, 0.9)' 
+                      : 'rgba(255, 255, 255, 0.3)',
+                  }}
+                  aria-label={`Go to slide ${idx + 1}`}
+                  aria-current={idx === currentCard ? 'true' : undefined}
+                />
+              ))}
+            </div>
+          </motion.div>
+        </div>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: timing.pageTransition / 1000, ease: easing.smoothDecel }}
-          className="w-full max-w-[440px] mx-auto space-y-3 mb-4 px-6"
+          className="w-full max-w-[440px] mx-auto space-y-3 mt-8 px-6"
         >
           <motion.button
             onClick={() => setLocation('/signup')}
@@ -202,47 +296,5 @@ export default function Welcome() {
         </motion.div>
       </div>
     </div>
-  );
-}
-
-function FeatureCard({ icon, title, description }: { 
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-}) {
-  return (
-    <motion.div 
-      className="flex flex-col items-start gap-3 flex-shrink-0"
-      style={{
-        width: '320px',
-        height: '180px',
-        background: 'rgba(255, 255, 255, 0.06)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
-        border: '1px solid rgba(255, 255, 255, 0.10)',
-        borderRadius: '16px',
-        padding: '20px',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
-        scrollSnapAlign: 'center',
-      }}
-      whileHover={{ scale: 1.01 }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ duration: timing.quick / 1000 }}
-    >
-      <div className="flex-shrink-0" style={{ width: '48px', height: '48px' }}>
-        {icon}
-      </div>
-      <div>
-        <h3 
-          className="font-semibold mb-1"
-          style={{ fontSize: '20px', fontWeight: 600, color: 'white' }}
-        >
-          {title}
-        </h3>
-        <p style={{ fontSize: '16px', color: 'rgba(255, 255, 255, 0.75)' }}>
-          {description}
-        </p>
-      </div>
-    </motion.div>
   );
 }
