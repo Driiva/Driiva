@@ -759,6 +759,31 @@ select:focus {
   box-shadow: 0 8px 32px rgba(0,0,0,0.4);
 }
 
+/* Sign-in Header */
+.signin-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.signin-logo {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  filter: drop-shadow(0 4px 12px rgba(0, 217, 160, 0.25));
+}
+
+.signin-tagline {
+  font: 400 16px/1.4 Inter, sans-serif;
+  color: rgba(255, 255, 255, 0.8);
+  text-align: center;
+  margin: 0;
+}
+
 /* Reward Stat Card Styling */
 .reward-stat-card {
   background: rgba(25,28,45,0.85);

@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import DriivaLogo from "@/components/DrivvaLogo";
 import DRIBackgroundView from "@/components/DRIBackgroundView";
+import signinLogo from "@assets/ii_clear_1769111905071.png";
 import { useParallax } from "@/hooks/useParallax";
 import { useAuth } from "../contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
@@ -97,15 +97,6 @@ export default function SignIn() {
     <div className="min-h-screen text-white relative overflow-hidden">
       <DRIBackgroundView variant="welcome" />
       
-      {/* Driiva Logo Background */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-10">
-        <div className="scale-[8] blur-[2px]" style={{
-          filter: 'blur(4px) brightness(0.3)',
-        }}>
-          <DriivaLogo />
-        </div>
-      </div>
-
       {/* Glassmorphism overlay - Darker Tech Aesthetic */}
       <div className="absolute inset-0" style={{
         background: 'radial-gradient(circle at 30% 20%, rgba(30, 58, 95, 0.2) 0%, rgba(51, 65, 85, 0.15) 35%, rgba(15, 23, 42, 0.1) 70%, transparent 100%)',
@@ -134,39 +125,24 @@ export default function SignIn() {
               ...cardParallaxStyle,
             }}>
             <CardContent className="p-4">
-              {/* Logo */}
-              <div className="flex justify-center mb-4">
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{
-                    type: "spring",
-                    stiffness: 400,
-                    damping: 25,
-                    delay: 0.4,
-                  }}
-                >
-                  <DriivaLogo />
-                </motion.div>
-              </div>
-
-              {/* Welcome Text */}
+              {/* Signin Header with Logo */}
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 }}
-                className="text-center mb-4"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{
+                  type: "spring",
+                  stiffness: 400,
+                  damping: 25,
+                  delay: 0.4,
+                }}
+                className="signin-header"
               >
-                <h1 className="text-2xl font-bold mb-2" style={{ 
-                  fontFamily: 'Inter, sans-serif',
-                  textShadow: '1px 1px 3px rgba(0,0,0,0.6)'
-                }}>
-                  Welcome to Driiva
-                </h1>
-                <p className="text-sm text-white/80" style={{ 
-                  fontFamily: 'Inter, sans-serif',
-                  textShadow: '1px 1px 2px rgba(0,0,0,0.5)'
-                }}>
+                <img 
+                  src={signinLogo} 
+                  alt="Driiva" 
+                  className="signin-logo" 
+                />
+                <p className="signin-tagline">
                   Sign in to your telematics insurance account
                 </p>
               </motion.div>
