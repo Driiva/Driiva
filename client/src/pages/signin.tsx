@@ -10,6 +10,7 @@ import DriivaLogo from "@/components/DrivvaLogo";
 import FloatingStardust from "@/components/FloatingStardust";
 import { useParallax } from "@/hooks/useParallax";
 import { useAuth } from "../contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 
 export default function SignIn() {
   const [, setLocation] = useLocation();
@@ -19,7 +20,7 @@ export default function SignIn() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { ref: cardRef, style: cardParallaxStyle } = useParallax({ speed: 0.3 });
-  const { login } = useAuth();
+  const { login, setUser } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,45 +36,31 @@ export default function SignIn() {
     setIsLoading(true);
     
     try {
-      // Try real authentication first
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-      });
-
-      if (response.ok) {
-        const userData = await response.json();
-        login(userData);
-        
+      // Try Supabase authentication first
+      try {
+        await login(username, password);
         toast({
           title: "Welcome back!",
-          description: `Signed in as ${userData.firstName || userData.username}`,
+          description: "Successfully signed in",
         });
-        
         setLocation("/dashboard");
-      } else {
-        // Fallback to demo authentication
+        return;
+      } catch (supabaseError) {
+        // If Supabase fails, try demo fallback
         if (username === "driiva1" && password === "driiva1") {
-          const userData = {
-            id: 8,
-            username: "driiva1",
-            firstName: "Test",
-            lastName: "Driver",
+          setUser({
+            id: "demo-user-8",
             email: "test@driiva.com",
-            premiumAmount: "1840.00"
-          };
-          
-          login(userData);
-          
+            name: "Test Driver",
+          });
+
           toast({
             title: "Welcome back!",
-            description: `Signed in as ${userData.firstName}`,
+            description: "Signed in as Test Driver",
           });
-          
+
           setLocation("/dashboard");
+          return;
         } else {
           throw new Error('Invalid credentials');
         }
