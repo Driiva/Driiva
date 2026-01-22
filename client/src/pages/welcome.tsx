@@ -1,9 +1,22 @@
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
 import { timing, easing } from "@/lib/animations";
-import { BarChart3, Wallet, Trophy, Zap } from "lucide-react";
+import { BarChart3, Wallet, Trophy } from "lucide-react";
 import gradientBackground from "@/assets/gradient-background.png";
 import driivaLogo from "@/assets/driiva-logo.png";
+
+const floatingDots = [
+  { size: 6, left: '10%', delay: 0, duration: 28 },
+  { size: 4, left: '25%', delay: 3, duration: 32 },
+  { size: 8, left: '40%', delay: 7, duration: 24 },
+  { size: 5, left: '55%', delay: 2, duration: 36 },
+  { size: 7, left: '70%', delay: 5, duration: 30 },
+  { size: 4, left: '85%', delay: 8, duration: 26 },
+  { size: 6, left: '15%', delay: 4, duration: 34 },
+  { size: 5, left: '60%', delay: 6, duration: 22 },
+  { size: 8, left: '80%', delay: 1, duration: 38 },
+  { size: 4, left: '35%', delay: 9, duration: 28 },
+];
 
 export default function Welcome() {
   const [, setLocation] = useLocation();
@@ -12,38 +25,89 @@ export default function Welcome() {
     <div 
       className="min-h-screen flex flex-col items-center justify-between relative overflow-hidden"
       style={{
-        backgroundImage: `url(${gradientBackground})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
+        filter: 'contrast(0.92) brightness(0.98)',
       }}
     >
-      <div className="absolute inset-0 bg-black/15 pointer-events-none" />
+      <div 
+        className="absolute inset-0"
+        style={{
+          backgroundImage: `url(${gradientBackground})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          filter: 'blur(3px)',
+        }}
+      />
       
-      <div className="relative z-10 flex flex-col items-center justify-between min-h-screen w-full max-w-[440px] mx-auto px-6 py-8 pb-[env(safe-area-inset-bottom,24px)]">
+      <div 
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.2) 100%)',
+        }}
+      />
+
+      <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 1 }}>
+        {floatingDots.map((dot, i) => (
+          <div
+            key={i}
+            className="absolute rounded-full"
+            style={{
+              width: dot.size,
+              height: dot.size,
+              left: dot.left,
+              top: '100%',
+              background: 'rgba(0, 217, 160, 0.15)',
+              animation: `floatUp ${dot.duration}s linear infinite`,
+              animationDelay: `${dot.delay}s`,
+              willChange: 'transform',
+            }}
+          />
+        ))}
+      </div>
+
+      <style>{`
+        @keyframes floatUp {
+          0% {
+            transform: translateY(0);
+            opacity: 0;
+          }
+          10% {
+            opacity: 1;
+          }
+          90% {
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(-120vh);
+            opacity: 0;
+          }
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+      `}</style>
+      
+      <div className="relative z-10 flex flex-col items-center justify-between min-h-screen w-full py-8 pb-[env(safe-area-inset-bottom,24px)]">
         
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: timing.pageTransition / 1000, ease: easing.smoothDecel }}
-          className="mt-12 text-center flex flex-col items-center"
+          className="text-center flex flex-col items-center px-6"
+          style={{ paddingTop: '48px' }}
         >
-          <div 
-            className="w-20 h-20 bg-gradient-to-br from-[#00D9A0] to-[#00B386] 
-                      rounded-3xl flex items-center justify-center mb-6
-                      shadow-lg shadow-[#00D9A0]/30"
-            aria-label="Driiva App Icon"
-          >
-            <Zap className="w-10 h-10 text-[#1A1F36]" strokeWidth={2.5} />
-          </div>
-          
           <img 
             src={driivaLogo} 
             alt="Driiva" 
-            className="h-16 w-auto object-contain mb-6"
+            className="object-contain mb-6"
             style={{ 
+              width: '280px',
+              height: 'auto',
               imageRendering: 'auto',
-              maxWidth: '280px'
             }}
           />
           
@@ -59,31 +123,44 @@ export default function Welcome() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: timing.pageTransition / 1000, ease: easing.smoothDecel }}
-          className="space-y-4 w-full"
-          style={{ marginTop: '32px', marginBottom: '32px' }}
+          className="w-full hide-scrollbar"
+          style={{ 
+            marginTop: '32px', 
+            marginBottom: '40px',
+            overflowX: 'scroll',
+            scrollSnapType: 'x mandatory',
+            WebkitOverflowScrolling: 'touch',
+          }}
         >
-          <FeatureCard 
-            icon={<BarChart3 className="w-12 h-12 text-[#00D9A0]" />}
-            title="Track Your Driving"
-            description="Real-time feedback on every trip"
-          />
-          <FeatureCard 
-            icon={<Wallet className="w-12 h-12 text-[#00D9A0]" />}
-            title="Earn Refunds"
-            description="Safe driving = money back at renewal"
-          />
-          <FeatureCard 
-            icon={<Trophy className="w-12 h-12 text-[#00D9A0]" />}
-            title="Unlock Rewards"
-            description="Achievements, streaks, and community challenges"
-          />
+          <div 
+            className="flex gap-4"
+            style={{ 
+              padding: '0 24px',
+            }}
+          >
+            <FeatureCard 
+              icon={<BarChart3 className="w-12 h-12 text-[#00D9A0]" />}
+              title="Track Your Driving"
+              description="Real-time feedback on every trip"
+            />
+            <FeatureCard 
+              icon={<Wallet className="w-12 h-12 text-[#00D9A0]" />}
+              title="Earn Refunds"
+              description="Safe driving = money back at renewal"
+            />
+            <FeatureCard 
+              icon={<Trophy className="w-12 h-12 text-[#00D9A0]" />}
+              title="Unlock Rewards"
+              description="Achievements, streaks, and community challenges"
+            />
+          </div>
         </motion.div>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: timing.pageTransition / 1000, ease: easing.smoothDecel }}
-          className="w-full space-y-3 mb-4"
+          className="w-full max-w-[440px] mx-auto space-y-3 mb-4 px-6"
         >
           <motion.button
             onClick={() => setLocation('/signup')}
@@ -135,15 +212,18 @@ function FeatureCard({ icon, title, description }: {
 }) {
   return (
     <motion.div 
-      className="flex items-start gap-4"
+      className="flex flex-col items-start gap-3 flex-shrink-0"
       style={{
-        background: 'rgba(255, 255, 255, 0.12)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-        border: '1px solid rgba(255, 255, 255, 0.18)',
+        width: '320px',
+        height: '180px',
+        background: 'rgba(255, 255, 255, 0.06)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        border: '1px solid rgba(255, 255, 255, 0.10)',
         borderRadius: '16px',
         padding: '20px',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+        scrollSnapAlign: 'center',
       }}
       whileHover={{ scale: 1.01 }}
       whileTap={{ scale: 0.98 }}
