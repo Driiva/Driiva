@@ -50,3 +50,7 @@ args = "npm run dev"
 
 [agent]
 integrations = ["javascript_log_in_with_replit:1.0.0", "javascript_database:1.0.0", "perplexity_v0:1.0.0"]
+
+[userenv]
+
+[userenv.shared]
