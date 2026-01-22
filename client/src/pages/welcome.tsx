@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { timing, easing } from "@/lib/animations";
 import { BarChart3, Wallet, Trophy } from "lucide-react";
 import gradientBackground from "@/assets/gradient-background.png";
-import driivaLogo from "@/assets/driiva-logo-clean.png";
+import driivaLogo from "@/assets/driiva-logo-new.png";
 
 const particles = [
   { size: 4, left: '12%', top: '15%', color: 'rgba(0, 217, 160, 0.08)', animType: 1, delay: 0, duration: 28 },
@@ -166,7 +166,7 @@ export default function Welcome() {
           transform: 'translateX(-50%)',
         }}
       />
-      <div className="relative z-10 flex flex-col items-center min-h-screen w-full py-8 pb-[env(safe-area-inset-bottom,24px)]" style={{ marginTop: '80px' }}>
+      <div className="relative z-10 flex flex-col items-center min-h-screen w-full py-8 pb-[env(safe-area-inset-bottom,24px)]" style={{ paddingTop: '80px' }}>
         
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -175,29 +175,18 @@ export default function Welcome() {
           className="text-center flex flex-col items-center px-6 w-full text-[20px] font-semibold"
           style={{ maxWidth: '440px', margin: '0 auto' }}
         >
-          <div
-            style={{
+          <img 
+            src={driivaLogo} 
+            alt="Driiva" 
+            style={{ 
               width: '480px',
               maxWidth: '90vw',
-              height: '80px',
-              overflow: 'hidden',
-              marginBottom: '16px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              height: 'auto',
+              objectFit: 'contain',
+              imageRendering: 'crisp-edges',
+              marginBottom: '12px',
             }}
-          >
-            <img 
-              src={driivaLogo} 
-              alt="Driiva" 
-              style={{ 
-                width: '100%',
-                height: 'auto',
-                objectFit: 'cover',
-                mixBlendMode: 'screen',
-              }}
-            />
-          </div>
+          />
           
           <div 
             className="text-center"
