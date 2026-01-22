@@ -243,10 +243,10 @@ export default function Welcome() {
                   transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
                   className="absolute inset-0 flex flex-col items-center justify-center text-center"
                   style={{
-                    background: 'rgba(0, 0, 0, 0.08)',
-                    backdropFilter: 'blur(12px)',
-                    WebkitBackdropFilter: 'blur(12px)',
-                    borderRadius: '20px',
+                    background: 'rgba(0, 0, 0, 0.04)',
+                    backdropFilter: 'blur(8px)',
+                    WebkitBackdropFilter: 'blur(8px)',
+                    borderRadius: '16px',
                     padding: '24px',
                     height: '160px',
                     position: 'relative',
@@ -261,10 +261,10 @@ export default function Welcome() {
                       left: 0,
                       right: 0,
                       bottom: 0,
-                      background: 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.08) 50%, transparent 100%)',
+                      background: 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.05) 50%, transparent 100%)',
                       backgroundSize: '200% 100%',
-                      animation: 'shimmer 3s ease-in-out infinite',
-                      borderRadius: '20px',
+                      animation: 'shimmer 8s ease-in-out infinite',
+                      borderRadius: '16px',
                       pointerEvents: 'none',
                     }}
                   />
