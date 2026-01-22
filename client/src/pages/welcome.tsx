@@ -71,6 +71,23 @@ export default function Welcome() {
   return (
     <div className="min-h-screen flex flex-col items-center relative overflow-hidden">
       <DRIBackgroundView variant="welcome" />
+      
+      {/* Star Particles */}
+      <div className="star-particles">
+        <div className="star" style={{ top: '15%', left: '10%' }} />
+        <div className="star" style={{ top: '25%', left: '85%' }} />
+        <div className="star" style={{ top: '35%', left: '20%' }} />
+        <div className="star" style={{ top: '45%', left: '75%' }} />
+        <div className="star" style={{ top: '55%', left: '15%' }} />
+        <div className="star" style={{ top: '65%', left: '88%' }} />
+        <div className="star" style={{ top: '75%', left: '30%' }} />
+        <div className="star" style={{ top: '82%', left: '65%' }} />
+        <div className="star" style={{ top: '18%', left: '50%' }} />
+        <div className="star" style={{ top: '40%', left: '92%' }} />
+        <div className="star" style={{ top: '60%', left: '5%' }} />
+        <div className="star" style={{ top: '70%', left: '45%' }} />
+      </div>
+      
       <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 1 }}>
         {particles.map((p, i) => (
           <div
@@ -158,26 +175,22 @@ export default function Welcome() {
           style={{ maxWidth: '440px', margin: '0 auto' }}
         >
           <div
+            className="logo-container"
             style={{
-              width: '320px',
-              maxWidth: '80vw',
-              height: '60px',
-              overflow: 'hidden',
+              width: '480px',
+              maxWidth: '90%',
+              height: 'auto',
               marginBottom: '12px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              background: 'transparent',
             }}
           >
             <img 
               src={driivaLogo} 
               alt="Driiva" 
-              style={{ 
-                width: '100%',
-                height: 'auto',
-                objectFit: 'contain',
-                imageRendering: 'crisp-edges',
-              }}
+              className="welcome-logo"
             />
           </div>
           

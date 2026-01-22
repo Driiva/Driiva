@@ -784,6 +784,25 @@ select:focus {
   margin: 0;
 }
 
+/* Welcome Page Logo - Soft Edge Blend */
+.welcome-logo {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  mix-blend-mode: screen;
+  filter: brightness(1.15) contrast(1.08);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 60%, transparent 100%);
+  mask-image: radial-gradient(ellipse at center, black 60%, transparent 100%);
+  background: transparent;
+  padding: 0;
+}
+
+.logo-container {
+  background: transparent !important;
+  backdrop-filter: none !important;
+}
+
 /* Reward Stat Card Styling */
 .reward-stat-card {
   background: rgba(25,28,45,0.85);
