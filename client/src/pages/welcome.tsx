@@ -179,14 +179,12 @@ export default function Welcome() {
             style={{
               width: '320px',
               maxWidth: '80vw',
-              height: '50px',
+              height: '60px',
               overflow: 'hidden',
               marginBottom: '12px',
               display: 'flex',
-              alignItems: 'flex-end',
+              alignItems: 'center',
               justifyContent: 'center',
-              maskImage: 'linear-gradient(to right, transparent 0%, black 15%, black 100%)',
-              WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 15%, black 100%)',
             }}
           >
             <img 
