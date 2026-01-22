@@ -696,3 +696,22 @@ select:focus {
   50% { transform: translate(-55%, -45%) scale(0.95); opacity: 0.95; }
   75% { transform: translate(-48%, -52%) scale(1.1); opacity: 0.98; }
 }
+
+/* Page Transitions */
+.page-transition {
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.page-transition-exit {
+  animation: fadeOut 0.3s ease-in forwards;
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(-8px); }
+}

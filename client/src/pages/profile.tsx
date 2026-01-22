@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import DashboardHeader from "@/components/DashboardHeader";
 import BottomNavigation from "@/components/BottomNavigation";
-import { GradientMesh } from "@/components/GradientMesh";
+import DRIBackgroundView from "@/components/DRIBackgroundView";
 import PolicyDownload from "@/components/PolicyDownload";
 import DeleteAccount from "@/components/DeleteAccount";
 import { ChevronDown } from "lucide-react";
@@ -151,8 +151,9 @@ export default function Profile() {
       exit="exit"
       transition={{ duration: timing.pageTransition, ease: easing.button }}
     >
-      <GradientMesh />
-      <DashboardHeader user={userData} />
+      <DRIBackgroundView variant="app" />
+      <div className="page-transition">
+        <DashboardHeader user={userData} />
       
       <div className="px-4 space-y-6">
         {/* Page Title */}
@@ -286,6 +287,7 @@ export default function Profile() {
             </div>
           </div>
         </div>
+      </div>
       </div>
 
       <BottomNavigation />

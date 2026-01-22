@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import DashboardHeader from "@/components/DashboardHeader";
 import BottomNavigation from "@/components/BottomNavigation";
-import { GradientMesh } from "@/components/GradientMesh";
+import DRIBackgroundView from "@/components/DRIBackgroundView";
 import { GlassCard } from "@/components/GlassCard";
 import { Map } from "lucide-react";
 import { pageVariants, container, item, timing, easing, microInteractions } from "@/lib/animations";
@@ -98,8 +98,9 @@ export default function Trips() {
       exit="exit"
       transition={{ duration: timing.pageTransition, ease: easing.button }}
     >
-      <GradientMesh />
-      <DashboardHeader user={user} />
+      <DRIBackgroundView variant="app" />
+      <div className="page-transition">
+        <DashboardHeader user={user} />
       
       <main className="px-4 pb-28">
         <motion.div 
@@ -181,6 +182,7 @@ export default function Trips() {
           ))}
         </motion.div>
       </main>
+      </div>
       
       <BottomNavigation />
     </motion.div>

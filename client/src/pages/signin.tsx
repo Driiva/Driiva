@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import DriivaLogo from "@/components/DrivvaLogo";
 import FloatingStardust from "@/components/FloatingStardust";
+import DRIBackgroundView from "@/components/DRIBackgroundView";
 import { useParallax } from "@/hooks/useParallax";
 import { useAuth } from "../contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
@@ -95,6 +96,8 @@ export default function SignIn() {
 
   return (
     <div className="min-h-screen text-white relative overflow-hidden">
+      <DRIBackgroundView variant="welcome" />
+      
       {/* Enhanced Floating Stardust Background */}
       <FloatingStardust density={150} />
       
@@ -113,7 +116,7 @@ export default function SignIn() {
         backdropFilter: 'blur(2px)',
       }} />
 
-      <div className="relative z-10 min-h-screen flex items-center justify-center px-4">
+      <div className="relative z-10 min-h-screen flex items-center justify-center px-4 page-transition">
         <motion.div
           initial={{ opacity: 0, y: 20, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}

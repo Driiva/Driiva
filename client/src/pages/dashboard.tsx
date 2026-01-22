@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { GradientMesh } from '@/components/GradientMesh';
+import DRIBackgroundView from "@/components/DRIBackgroundView";
 import {
   MemoizedDashboardHeader as DashboardHeader,
   MemoizedLiquidGauge as LiquidGauge,
@@ -88,8 +88,9 @@ export default function Dashboard({ isLoading = false }: DashboardProps) {
       exit="exit"
       transition={{ duration: timing.pageTransition, ease: easing.button }}
     >
-      <GradientMesh />
-      <DashboardHeader user={userData} />
+      <DRIBackgroundView variant="app" />
+      <div className="page-transition">
+        <DashboardHeader user={userData} />
       
       <motion.main 
         className="px-4 pb-28"
@@ -157,6 +158,7 @@ export default function Dashboard({ isLoading = false }: DashboardProps) {
           />
         </motion.div>
       </motion.main>
+      </div>
       
       <BottomNavigation />
     </motion.div>

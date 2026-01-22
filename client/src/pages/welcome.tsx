@@ -3,8 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
 import { timing, easing } from "@/lib/animations";
 import { BarChart3, Wallet, Trophy } from "lucide-react";
-import gradientBackground from "@/assets/gradient-background.png";
 import driivaLogo from "@/assets/driiva-logo-new.png";
+import DRIBackgroundView from "@/components/DRIBackgroundView";
 
 const particles = [
   { size: 4, left: '12%', top: '15%', color: 'rgba(0, 217, 160, 0.08)', animType: 1, delay: 0, duration: 28 },
@@ -69,26 +69,8 @@ export default function Welcome() {
   const CurrentIcon = features[currentCard].icon;
 
   return (
-    <div 
-      className="min-h-screen flex flex-col items-center relative overflow-hidden"
-      style={{ filter: 'contrast(0.92) brightness(0.98)' }}
-    >
-      <div 
-        className="absolute inset-0"
-        style={{
-          backgroundImage: `url(${gradientBackground})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-          filter: 'blur(3px)',
-        }}
-      />
-      <div 
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: 'radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.2) 100%)',
-        }}
-      />
+    <div className="min-h-screen flex flex-col items-center relative overflow-hidden">
+      <DRIBackgroundView variant="welcome" />
       <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 1 }}>
         {particles.map((p, i) => (
           <div
