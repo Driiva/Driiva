@@ -396,7 +396,7 @@ export default function Welcome() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             transition={{ duration: timing.quick / 1000 }}
-            className="w-full font-medium rounded-[28px] transition-all min-h-[56px]"
+            className="w-full font-medium rounded-[28px] transition-all min-h-[56px] shimmer-pulse-btn"
             style={{
               background: 'transparent',
               color: 'rgba(255, 255, 255, 0.9)',
