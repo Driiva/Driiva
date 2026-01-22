@@ -170,17 +170,13 @@ export default function Welcome() {
             className="text-center"
             style={{ 
               color: 'rgba(255, 255, 255, 0.95)',
-              fontSize: '20px',
-              fontWeight: 700,
+              fontSize: '22px',
+              fontWeight: 600,
               fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
-              letterSpacing: '-0.3px',
-              lineHeight: 1.35,
-              marginBottom: '56px',
-              background: 'rgba(0, 0, 0, 0.25)',
-              backdropFilter: 'blur(4px)',
-              WebkitBackdropFilter: 'blur(4px)',
-              padding: '12px 24px',
-              borderRadius: '12px',
+              letterSpacing: '-0.2px',
+              lineHeight: 1.4,
+              marginBottom: '48px',
+              textShadow: '0 2px 12px rgba(0, 0, 0, 0.5)',
             }}
           >
             <span style={{ display: 'block' }}>AI-powered. Community-driven.</span>
@@ -316,6 +312,23 @@ export default function Welcome() {
                 ›
               </button>
             </div>
+            
+            <p
+              style={{
+                marginTop: '24px',
+                fontSize: '22px',
+                fontWeight: 600,
+                fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+                color: 'rgba(255, 255, 255, 0.95)',
+                textAlign: 'center',
+                lineHeight: 1.4,
+                letterSpacing: '-0.2px',
+                textShadow: '0 2px 12px rgba(0, 0, 0, 0.5)',
+                maxWidth: '360px',
+              }}
+            >
+              Lower premiums for safer drivers, powered by your data.
+            </p>
           </motion.div>
         </div>
 
@@ -323,7 +336,8 @@ export default function Welcome() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: timing.pageTransition / 1000, ease: easing.smoothDecel }}
-          className="w-full max-w-[440px] mx-auto space-y-3 mt-8 px-6"
+          className="w-full max-w-[440px] mx-auto space-y-4 px-6"
+          style={{ marginTop: '40px' }}
         >
           <motion.button
             onClick={() => setLocation('/signup')}
