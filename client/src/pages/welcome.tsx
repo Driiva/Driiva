@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { timing, easing } from "@/lib/animations";
 import { BarChart3, Wallet, Trophy } from "lucide-react";
 import gradientBackground from "@/assets/gradient-background.png";
-import driivaLogo from "@/assets/driiva-logo-transparent.png";
+import driivaLogo from "@/assets/driiva-logo-clean.png";
 
 const particles = [
   { size: 4, left: '12%', top: '15%', color: 'rgba(0, 217, 160, 0.08)', animType: 1, delay: 0, duration: 28 },
@@ -140,46 +140,34 @@ export default function Welcome() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: timing.pageTransition / 1000, ease: easing.smoothDecel }}
           className="text-center flex flex-col items-center px-6"
-          style={{ paddingTop: '48px' }}
+          style={{ paddingTop: '64px' }}
         >
-          <div
-            style={{
-              width: '280px',
-              height: '70px',
-              overflow: 'hidden',
-              marginBottom: '20px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+          <img 
+            src={driivaLogo} 
+            alt="Driiva" 
+            style={{ 
+              width: '240px',
+              height: 'auto',
+              objectFit: 'contain',
+              mixBlendMode: 'screen',
+              marginBottom: '24px',
             }}
-          >
-            <img 
-              src={driivaLogo} 
-              alt="Driiva" 
-              style={{ 
-                width: '340px',
-                height: 'auto',
-                objectFit: 'cover',
-                mixBlendMode: 'screen',
-              }}
-            />
-          </div>
+          />
           
           <div 
             className="text-center"
             style={{ 
-              color: 'rgba(255, 255, 255, 0.90)',
-              fontSize: '17px',
+              color: 'rgba(255, 255, 255, 0.95)',
+              fontSize: '20px',
               fontWeight: 700,
-              fontFamily: 'Inter, -apple-system-bold, BlinkMacSystemFont, sans-serif',
-              letterSpacing: '-0.2px',
-              lineHeight: 1.3,
-              marginBottom: '56px',
+              fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+              letterSpacing: '-0.3px',
+              lineHeight: 1.35,
+              marginBottom: '64px',
             }}
           >
-            <span>AI-powered. Community-driven.</span>
-            <br />
-            <span>Your driving, rewarded.</span>
+            <span style={{ display: 'block' }}>AI-powered. Community-driven.</span>
+            <span style={{ display: 'block' }}>Your driving, rewarded.</span>
           </div>
         </motion.div>
 
