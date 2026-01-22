@@ -188,13 +188,13 @@ export default function Welcome() {
           </div>
         </motion.div>
 
-        <div className="flex-1 flex flex-col items-center justify-center w-full px-6 pl-[10px] pr-[10px] pt-[10px] pb-[10px]">
+        <div className="flex flex-col items-center justify-center w-full px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: timing.pageTransition / 1000, ease: easing.smoothDecel }}
             className="w-full flex flex-col items-center"
-            style={{ maxWidth: '380px' }}
+            style={{ maxWidth: '320px' }}
             onTouchStart={handleTouchStart}
             onTouchEnd={handleTouchEnd}
             role="region"
@@ -202,7 +202,7 @@ export default function Welcome() {
           >
             <div 
               className="relative w-full overflow-hidden"
-              style={{ height: '200px' }}
+              style={{ height: '160px' }}
               aria-live="polite"
             >
               <AnimatePresence mode="wait">
@@ -217,9 +217,9 @@ export default function Welcome() {
                     background: 'rgba(0, 0, 0, 0.08)',
                     backdropFilter: 'blur(12px)',
                     WebkitBackdropFilter: 'blur(12px)',
-                    borderRadius: '24px',
-                    padding: '32px',
-                    height: '200px',
+                    borderRadius: '20px',
+                    padding: '24px',
+                    height: '160px',
                     position: 'relative',
                     overflow: 'hidden',
                   }}
@@ -235,20 +235,20 @@ export default function Welcome() {
                       background: 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.08) 50%, transparent 100%)',
                       backgroundSize: '200% 100%',
                       animation: 'shimmer 3s ease-in-out infinite',
-                      borderRadius: '24px',
+                      borderRadius: '20px',
                       pointerEvents: 'none',
                     }}
                   />
-                  <div style={{ width: '56px', height: '56px', marginBottom: '16px' }}>
+                  <div style={{ width: '40px', height: '40px', marginBottom: '12px' }}>
                     <CurrentIcon 
-                      className="w-14 h-14" 
+                      className="w-10 h-10" 
                       style={{ color: 'rgba(0, 217, 160, 0.95)' }} 
                     />
                   </div>
                   <h3 
-                    className="font-bold mb-2"
+                    className="font-bold mb-1"
                     style={{ 
-                      fontSize: '24px', 
+                      fontSize: '20px', 
                       fontWeight: 700, 
                       color: 'white',
                       textShadow: '0 2px 12px rgba(0, 0, 0, 0.4)',
@@ -257,9 +257,9 @@ export default function Welcome() {
                     {features[currentCard].title}
                   </h3>
                   <p style={{ 
-                    fontSize: '16px', 
+                    fontSize: '14px', 
                     color: 'rgba(255, 255, 255, 0.85)', 
-                    lineHeight: 1.5,
+                    lineHeight: 1.4,
                     textShadow: '0 1px 8px rgba(0, 0, 0, 0.3)',
                   }}>
                     {features[currentCard].description}
