@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import DashboardHeader from "@/components/DashboardHeader";
 import BottomNavigation from "@/components/BottomNavigation";
-import { GradientMesh } from "@/components/GradientMesh";
+import DRIBackgroundView from "@/components/DRIBackgroundView";
 import { GlassCard } from "@/components/GlassCard";
 import { Trophy, Award, Star, Target, TrendingUp, Gift, Calendar, Check } from "lucide-react";
 import { pageVariants, container, item, timing, easing, microInteractions } from "@/lib/animations";
@@ -142,8 +142,9 @@ export default function Rewards() {
       exit="exit"
       transition={{ duration: timing.pageTransition, ease: easing.button }}
     >
-      <GradientMesh />
-      <DashboardHeader user={user} />
+      <DRIBackgroundView variant="app" />
+      <div className="page-transition">
+        <DashboardHeader user={user} />
       
       <main className="px-4 pb-28">
         {/* Header Stats */}
@@ -426,6 +427,7 @@ export default function Rewards() {
           </motion.div>
         </AnimatePresence>
       </main>
+      </div>
         
       <BottomNavigation />
     </motion.div>

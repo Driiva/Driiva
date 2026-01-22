@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import DriivaLogo from "@/components/DrivvaLogo";
-import FloatingStardust from "@/components/FloatingStardust";
 import DRIBackgroundView from "@/components/DRIBackgroundView";
 import { useParallax } from "@/hooks/useParallax";
 import { useAuth } from "../contexts/AuthContext";
@@ -97,9 +96,6 @@ export default function SignIn() {
   return (
     <div className="min-h-screen text-white relative overflow-hidden">
       <DRIBackgroundView variant="welcome" />
-      
-      {/* Enhanced Floating Stardust Background */}
-      <FloatingStardust density={150} />
       
       {/* Driiva Logo Background */}
       <div className="absolute inset-0 flex items-center justify-center opacity-10">
