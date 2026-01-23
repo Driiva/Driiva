@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { useLocation } from 'wouter';
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import DRIBackgroundView from "@/components/DRIBackgroundView";
 import {
@@ -14,20 +15,80 @@ import {
 } from "@/components/OptimizedComponents";
 import { MetricUser, CommunityPoolData, DrivingProfile, Achievement, LeaderboardEntry } from "@shared/types";
 import { pageVariants, container, item, timing, easing } from "@/lib/animations";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
+
+interface Profile {
+  id: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  onboarding_complete: boolean;
+}
 
 interface DashboardProps {
   isLoading?: boolean;
 }
 
 export default function Dashboard({ isLoading = false }: DashboardProps) {
-  const [userData] = React.useState<MetricUser>({
+  const [, setLocation] = useLocation();
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [authChecked, setAuthChecked] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function checkAuthAndFetchProfile() {
+      try {
+        if (user) {
+          setAuthChecked(true);
+          setLoading(false);
+          return;
+        }
+
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        
+        if (!authUser) {
+          setLocation('/signin');
+          return;
+        }
+
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', authUser.id)
+          .single();
+
+        if (profileData) {
+          setProfile(profileData);
+        }
+      } catch (error) {
+        console.error('Auth/profile fetch error:', error);
+        if (user) {
+          setAuthChecked(true);
+          setLoading(false);
+          return;
+        }
+        setLocation('/signin');
+      } finally {
+        setAuthChecked(true);
+        setLoading(false);
+      }
+    }
+
+    checkAuthAndFetchProfile();
+  }, [setLocation, user]);
+
+  const displayName = profile?.full_name || user?.name || 'Driver';
+  const nameParts = displayName.split(' ');
+
+  const userData: MetricUser = {
     id: 8,
-    username: "driiva1",
-    firstName: "Test",
-    lastName: "Driver",
-    email: "test@driiva.com",
+    username: user?.email?.split('@')[0] || "driver",
+    firstName: nameParts[0] || "Test",
+    lastName: nameParts[1] || "Driver",
+    email: user?.email || "test@driiva.com",
     premiumAmount: "1840.00"
-  });
+  };
 
   const [userProfile] = React.useState<Partial<DrivingProfile>>({
     currentScore: 72,
@@ -75,7 +136,7 @@ export default function Dashboard({ isLoading = false }: DashboardProps) {
     }
   ]);
 
-  if (isLoading) {
+  if (isLoading || loading || !authChecked) {
     return <LoadingSpinner />;
   }
 
