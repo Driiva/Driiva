@@ -54,3 +54,4 @@ integrations = ["javascript_log_in_with_replit:1.0.0", "javascript_database:1.0.
 [userenv]
 
 [userenv.shared]
+VITE_SUPABASE_URL = "https://nozseltdiqbmzvlpwpbd.supabase.co"

@@ -77,17 +77,29 @@ export default function SignIn() {
         return;
       }
 
-      // Try Supabase authentication
+      // Try Supabase authentication with timeout
       console.log('[SignIn] Calling supabase.auth.signInWithPassword');
-      const { data, error } = await supabase.auth.signInWithPassword({
+      
+      // Create a timeout promise
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Connection timeout - please try again')), 15000);
+      });
+
+      // Race between auth and timeout
+      const authPromise = supabase.auth.signInWithPassword({
         email: username,
         password: password,
       });
 
+      const result = await Promise.race([authPromise, timeoutPromise]) as Awaited<typeof authPromise>;
+      const { data, error } = result;
+
       console.log('[SignIn] Supabase response:', { 
         hasUser: !!data?.user, 
         hasError: !!error,
-        errorMessage: error?.message 
+        errorMessage: error?.message,
+        errorName: (error as any)?.name,
+        errorStatus: (error as any)?.status
       });
 
       if (!error && data.user) {
@@ -173,11 +185,15 @@ export default function SignIn() {
       // Supabase failed - show error
       console.error('[SignIn] Authentication failed:', error);
       let errorMessage = error?.message || "Invalid email or password";
+      const errorName = (error as any)?.name || '';
       
       // Provide more helpful error messages
-      if (error?.message?.includes('Invalid API key') || error?.message?.includes('401')) {
+      if (errorName === 'AuthRetryableFetchError' || error?.message?.includes('Load failed') || (error as any)?.status === 0) {
+        errorMessage = "Network error - please check your connection and try again";
+        console.error('[SignIn] Network error - Supabase may be unreachable');
+      } else if (error?.message?.includes('Invalid API key') || error?.message?.includes('401')) {
         errorMessage = "Configuration error: Invalid API key. Please check Supabase settings.";
-        console.error('[SignIn] API key error - check VITE_SUPABASE_ANON_KEY in client/.env');
+        console.error('[SignIn] API key error - check VITE_SUPABASE_ANON_KEY');
       } else if (error?.message?.includes('Invalid login') || error?.message?.includes('Invalid credentials')) {
         errorMessage = "Invalid email or password";
       } else if (error?.message?.includes('Email not confirmed')) {
@@ -190,14 +206,19 @@ export default function SignIn() {
         description: errorMessage,
         variant: "destructive",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('[SignIn] Unexpected error:', error);
       let errorMessage = error instanceof Error ? error.message : "Invalid email or password";
       
-      // Check for API key issues in catch block too
-      if (errorMessage.includes('Invalid API key') || errorMessage.includes('401')) {
+      // Check for network/fetch errors
+      if (error?.name === 'AuthRetryableFetchError' || error?.message?.includes('Load failed') || error?.status === 0) {
+        errorMessage = "Network error - please check your connection and try again";
+        console.error('[SignIn] Network error - Supabase may be unreachable');
+      } else if (error?.message?.includes('timeout')) {
+        errorMessage = "Connection timeout - please try again";
+      } else if (errorMessage.includes('Invalid API key') || errorMessage.includes('401')) {
         errorMessage = "Configuration error: Invalid API key. Please check Supabase settings.";
-        console.error('[SignIn] API key error - check VITE_SUPABASE_ANON_KEY in client/.env');
+        console.error('[SignIn] API key error');
       }
       
       setLoginError(errorMessage);
