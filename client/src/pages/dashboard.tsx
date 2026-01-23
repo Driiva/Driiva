@@ -13,14 +13,49 @@ interface Profile {
   onboarding_complete: boolean;
 }
 
+interface DemoUser {
+  id: string;
+  email: string;
+  name?: string;
+  first_name?: string;
+  last_name?: string;
+  premium_amount?: number;
+  personal_score?: number;
+  community_score?: number;
+  overall_score?: number;
+}
+
 export default function Dashboard() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [demoUser, setDemoUser] = useState<DemoUser | null>(null);
+  const [isDemoMode, setIsDemoMode] = useState(false);
 
   useEffect(() => {
+    const demoModeActive = localStorage.getItem('driiva-demo-mode') === 'true';
+    if (demoModeActive) {
+      const demoUserData = localStorage.getItem('driiva-demo-user');
+      if (demoUserData) {
+        try {
+          const parsedUser = JSON.parse(demoUserData);
+          console.log('📊 Demo mode active, loading mock data:', parsedUser);
+          setDemoUser(parsedUser);
+          setIsDemoMode(true);
+          setAuthChecked(true);
+          setLoading(false);
+        } catch (e) {
+          console.error('Failed to parse demo user data:', e);
+        }
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isDemoMode) return;
+
     async function checkAuthAndFetchProfile() {
       try {
         if (user) {
@@ -60,9 +95,27 @@ export default function Dashboard() {
     }
 
     checkAuthAndFetchProfile();
-  }, [setLocation, user]);
+  }, [setLocation, user, isDemoMode]);
 
-  const displayName = profile?.full_name || user?.name || 'Driver';
+  const displayName = isDemoMode 
+    ? (demoUser?.first_name && demoUser?.last_name 
+        ? `${demoUser.first_name} ${demoUser.last_name}` 
+        : demoUser?.name || 'Driver')
+    : (profile?.full_name || user?.name || 'Driver');
+
+  const drivingScore = isDemoMode ? (demoUser?.overall_score || 85) : 85;
+  const premiumAmount = isDemoMode ? (demoUser?.premium_amount || 1500) : 1500;
+  
+  const calculateSurplus = (score: number, premium: number): number => {
+    if (score < 70) return 0;
+    const scoreRange = Math.max(0, score - 70);
+    const baseRefund = 5;
+    const additionalRefund = (scoreRange / 30) * 10;
+    const totalPercentage = Math.min(baseRefund + additionalRefund, 15);
+    return Math.round((totalPercentage / 100) * premium);
+  };
+
+  const surplusProjection = calculateSurplus(drivingScore, premiumAmount);
 
   if (loading || !authChecked) {
     return (
@@ -88,6 +141,11 @@ export default function Dashboard() {
         >
           <p className="text-white/60 text-sm">Welcome back,</p>
           <h1 className="text-2xl font-bold text-white">{displayName}</h1>
+          {isDemoMode && (
+            <span className="inline-block mt-1 px-2 py-0.5 text-xs bg-emerald-500/20 text-emerald-400 rounded-full border border-emerald-500/30">
+              Demo Mode
+            </span>
+          )}
         </motion.div>
 
         <motion.div
@@ -101,14 +159,20 @@ export default function Dashboard() {
             <TrendingUp className="w-5 h-5 text-emerald-400" />
           </div>
           <div className="flex items-end gap-2">
-            <span className="text-5xl font-bold text-white">85</span>
+            <span className="text-5xl font-bold text-white">{drivingScore}</span>
             <span className="text-xl text-white/60 mb-1">/100</span>
           </div>
-          <p className="text-sm text-white/60 mt-2">Great driving! Keep it up to maximise your refund.</p>
+          <p className="text-sm text-white/60 mt-2">
+            {drivingScore >= 80 
+              ? "Great driving! Keep it up to maximise your refund."
+              : drivingScore >= 70 
+                ? "Good progress! A few more safe trips will boost your score."
+                : "Keep practising safe driving to unlock rewards."}
+          </p>
           <div className="mt-4 h-2 bg-white/10 rounded-full overflow-hidden">
             <div 
-              className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full"
-              style={{ width: '85%' }}
+              className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-500"
+              style={{ width: `${drivingScore}%` }}
             />
           </div>
         </motion.div>
@@ -140,12 +204,14 @@ export default function Dashboard() {
         >
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-white">Surplus Projection</h2>
-            <span className="text-emerald-400 font-bold text-xl">£0</span>
+            <span className="text-emerald-400 font-bold text-xl">£{surplusProjection}</span>
           </div>
           <p className="text-white/60 text-sm">
-            Drive more to unlock rewards. Safe drivers earn a share of the community surplus at renewal.
+            {surplusProjection > 0 
+              ? `Based on your ${drivingScore}% score and £${premiumAmount.toLocaleString()} premium.`
+              : "Drive more to unlock rewards. Safe drivers earn a share of the community surplus at renewal."}
           </p>
-          <div className="mt-4 flex items-center gap-2 text-emerald-400 text-sm">
+          <div className="mt-4 flex items-center gap-2 text-emerald-400 text-sm cursor-pointer hover:text-emerald-300 transition-colors">
             <span>Learn how it works</span>
             <ChevronRight className="w-4 h-4" />
           </div>
