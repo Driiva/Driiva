@@ -783,18 +783,256 @@ select:focus {
   margin: 0;
 }
 
-/* Welcome Page Logo - Soft Edge Blend */
-.welcome-logo {
-  width: 280px;
+/* ============================================
+   WELCOME PAGE - Production Quality Redesign
+   ============================================ */
+
+.welcome-page-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: env(safe-area-inset-top) 24px env(safe-area-inset-bottom);
+}
+
+.welcome-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  background: 
+    radial-gradient(ellipse 120% 80% at 15% 20%, #9d1b30 0%, transparent 50%),
+    radial-gradient(ellipse 100% 100% at 85% 80%, #6b46c1 0%, transparent 50%),
+    radial-gradient(ellipse 80% 60% at 50% 50%, rgba(139, 92, 246, 0.4) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 30% 70%, rgba(255,107,53,0.15) 0%, transparent 50%),
+    linear-gradient(160deg, #7a1528 0%, #5e1020 30%, #4c1d5c 60%, #4a2875 100%);
+}
+
+.welcome-noise {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  opacity: 0.04;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+}
+
+.welcome-content {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 400px;
+  gap: 0;
+}
+
+.welcome-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin-top: 40px;
+}
+
+.welcome-logo-new {
+  width: 320px;
+  max-width: 85%;
   height: auto;
-  object-fit: cover;
-  object-position: center;
+  object-fit: contain;
   display: block;
-  margin: 0 auto;
+}
+
+.welcome-subheader-1 {
+  margin-top: 16px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.welcome-subheader-2 {
+  margin-top: 8px;
+  font-size: 20px;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.welcome-carousel-section {
+  margin-top: 32px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.welcome-card-new {
+  width: 100%;
+  height: 140px;
+  position: relative;
+  overflow: hidden;
+  border-radius: 32px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 
+    0 0 40px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.welcome-card-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+}
+
+.welcome-card-icon {
+  width: 32px;
+  height: 32px;
+  color: #10b981;
+  margin-bottom: 10px;
+}
+
+.welcome-card-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 6px;
+}
+
+.welcome-card-desc {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.3;
+}
+
+.welcome-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+  height: 24px;
+}
+
+.welcome-nav-arrow {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+}
+
+.welcome-nav-arrow:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.welcome-nav-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  border: none;
   padding: 0;
-  clip-path: inset(25% 0% 25% 0%);
-  filter: brightness(1.1) contrast(1.05);
-  background: transparent;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.welcome-nav-dot.active {
+  width: 8px;
+  height: 8px;
+  background: #10b981;
+}
+
+.welcome-buttons {
+  margin-top: 24px;
+  width: 80%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.welcome-btn-primary {
+  width: 100%;
+  height: 56px;
+  background: #10b981;
+  border: none;
+  border-radius: 16px;
+  color: white;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.welcome-btn-primary:hover {
+  background: #059669;
+  transform: scale(1.02);
+}
+
+.welcome-btn-primary:active {
+  transform: scale(0.98);
+}
+
+.welcome-btn-secondary {
+  width: 100%;
+  height: 56px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  color: white;
+  font-size: 17px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.welcome-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: scale(1.02);
+}
+
+.welcome-btn-secondary:active {
+  transform: scale(0.98);
+}
+
+/* Hide global gradient when welcome page is active */
+body:has(.welcome-page-container) .driiva-gradient-bg,
+body:has(.welcome-page-container) .animated-bg-container {
+  display: none !important;
+}
+
+/* Legacy classes - keep for compatibility */
+.welcome-logo {
+  display: none;
 }
 
 .logo-container {
@@ -813,7 +1051,7 @@ select:focus {
 }
 
 /* ============================================
-   ANIMATED BACKGROUND - Premium iOS Aesthetic
+   ANIMATED BACKGROUND - For non-welcome pages
    ============================================ */
 
 .animated-bg-container {
@@ -833,7 +1071,11 @@ select:focus {
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, rgba(217, 119, 6, 0.3) 0%, #c41e3a 25%, #991b1b 45%, #6b21a8 70%, #8b5cf6 100%);
+  background: 
+    radial-gradient(ellipse 120% 80% at 15% 20%, #9d1b30 0%, transparent 50%),
+    radial-gradient(ellipse 100% 100% at 85% 80%, #6b46c1 0%, transparent 50%),
+    radial-gradient(ellipse 80% 60% at 50% 50%, rgba(139, 92, 246, 0.4) 0%, transparent 60%),
+    linear-gradient(160deg, #7a1528 0%, #5e1020 30%, #4c1d5c 60%, #4a2875 100%);
 }
 
 .animated-bg-orb {
@@ -846,7 +1088,7 @@ select:focus {
 .animated-bg-orb-1 {
   width: 300px;
   height: 300px;
-  background: radial-gradient(circle, rgba(196, 30, 58, 0.6) 0%, transparent 30%);
+  background: radial-gradient(circle, rgba(196, 30, 58, 0.5) 0%, transparent 30%);
   top: 10%;
   left: 5%;
   animation: floatOrb 20s infinite ease-in-out;
@@ -855,7 +1097,7 @@ select:focus {
 .animated-bg-orb-2 {
   width: 400px;
   height: 400px;
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.5) 0%, transparent 30%);
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.4) 0%, transparent 30%);
   top: 40%;
   right: -80px;
   animation: floatOrb 25s infinite ease-in-out reverse;
@@ -864,7 +1106,7 @@ select:focus {
 .animated-bg-orb-3 {
   width: 350px;
   height: 350px;
-  background: radial-gradient(circle, rgba(168, 85, 247, 0.45) 0%, transparent 30%);
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.35) 0%, transparent 30%);
   bottom: 5%;
   left: 30%;
   animation: floatOrb 22s infinite ease-in-out;
@@ -896,103 +1138,6 @@ select:focus {
   .animated-bg-orb {
     animation: none !important;
   }
-}
-
-/* ============================================
-   WELCOME PAGE - Premium Glassmorphism Cards
-   ============================================ */
-
-.welcome-glass-card {
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-top: 1px solid rgba(255, 255, 255, 0.25);
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.3),
-    0 2px 8px rgba(255, 255, 255, 0.1) inset;
-  border-radius: 24px;
-  position: relative;
-  overflow: hidden;
-}
-
-.welcome-glass-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.15) 50%,
-    transparent 100%
-  );
-  animation: shimmer 3s infinite;
-  pointer-events: none;
-}
-
-@keyframes shimmer {
-  0% { left: -100%; }
-  100% { left: 100%; }
-}
-
-.welcome-cta-primary {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  box-shadow: 0 4px 24px rgba(16, 185, 129, 0.4);
-  border: none;
-  border-radius: 24px;
-  color: white;
-  font-weight: 600;
-  font-size: 17px;
-  min-height: 56px;
-  width: 100%;
-  cursor: pointer;
-  transition: transform 0.2s ease, filter 0.2s ease;
-}
-
-.welcome-cta-primary:hover {
-  transform: scale(1.02);
-  filter: brightness(1.1);
-}
-
-.welcome-cta-primary:active {
-  transform: scale(0.98);
-}
-
-.welcome-cta-secondary {
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.3),
-    0 2px 8px rgba(255, 255, 255, 0.1) inset;
-  border-radius: 24px;
-  color: rgba(255, 255, 255, 0.9);
-  font-weight: 500;
-  font-size: 17px;
-  min-height: 56px;
-  width: 100%;
-  cursor: pointer;
-  transition: transform 0.2s ease, background 0.2s ease;
-}
-
-.welcome-cta-secondary:hover {
-  transform: scale(1.02);
-  background: rgba(255, 255, 255, 0.12);
-}
-
-.welcome-cta-secondary:active {
-  transform: scale(0.98);
-}
-
-/* Hide global gradient when welcome page is active */
-.welcome-page-container ~ .driiva-gradient-bg,
-.welcome-page-container + .driiva-gradient-bg,
-body:has(.welcome-page-container) .driiva-gradient-bg {
-  display: none !important;
 }
 
 /* ============================================

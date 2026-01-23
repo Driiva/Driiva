@@ -1,9 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
-import { BarChart3, Wallet, Trophy } from "lucide-react";
-import driivaLogo from "@/assets/driiva-logo-new.png";
-import AnimatedBackground from "@/components/AnimatedBackground";
+import { BarChart3, Wallet, Trophy, ChevronLeft, ChevronRight } from "lucide-react";
+import driivaLogo from "@assets/driiva_logo_CLEAR_FINAL_1769199433106.png";
 
 const features = [
   { icon: BarChart3, title: "Track Your Driving", description: "Real-time feedback on every trip" },
@@ -56,148 +55,92 @@ export default function Welcome() {
   const CurrentIcon = features[currentCard].icon;
 
   return (
-    <div 
-      className="h-screen flex flex-col items-center justify-center relative overflow-hidden welcome-page-container"
-      style={{ 
-        paddingTop: 'env(safe-area-inset-top)', 
-        paddingBottom: 'env(safe-area-inset-bottom)',
-        maxHeight: '100vh',
-      }}
-    >
-      <AnimatedBackground variant="welcome" />
+    <div className="welcome-page-container">
+      <div className="welcome-bg" />
+      <div className="welcome-noise" />
 
-      <div 
-        className="relative z-10 flex flex-col items-center justify-center w-full"
-        style={{ 
-          maxWidth: '480px', 
-          margin: '0 auto', 
-          padding: '16px',
-        }}
-      >
+      <div className="welcome-content">
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1, duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-          className="text-center flex flex-col items-center w-full"
+          transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+          className="welcome-header"
         >
           <img 
             src={driivaLogo} 
             alt="Driiva" 
-            className="welcome-logo md:w-[320px]"
-            style={{
-              width: '280px',
-              maxWidth: '90%',
-            }}
+            className="welcome-logo-new"
           />
 
-          <p 
-            style={{ 
-              marginTop: '8px',
-              color: 'rgba(255,255,255,0.9)',
-              fontSize: '18px',
-              fontWeight: 400,
-              lineHeight: 1.4,
-              textAlign: 'center',
-              letterSpacing: '-0.01em',
-              fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
-            }}
-          >
-            AI-powered, community-driven.<br />
-            Your driving, rewarded.
-          </p>
+          <p className="welcome-subheader-1">AI-powered, community-driven.</p>
+          <p className="welcome-subheader-2">Your driving, rewarded.</p>
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-          className="w-full flex flex-col items-center"
-          style={{ marginTop: '32px', maxWidth: '320px' }}
+          transition={{ delay: 0.2, duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+          className="welcome-carousel-section"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
           role="region"
           aria-label="Feature carousel"
         >
-          <div 
-            className="relative w-full overflow-hidden welcome-glass-card"
-            style={{ height: '140px', padding: '20px' }}
-            aria-live="polite"
-          >
+          <div className="welcome-card-new" aria-live="polite">
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentCard}
-                initial={{ opacity: 0, x: 20 }}
+                initial={{ opacity: 0, x: 15 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-                className="absolute inset-0 flex flex-col items-center justify-center text-center p-5"
+                exit={{ opacity: 0, x: -15 }}
+                transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
+                className="welcome-card-content"
               >
-                <div style={{ width: '36px', height: '36px', marginBottom: '8px' }}>
-                  <CurrentIcon 
-                    className="w-9 h-9" 
-                    style={{ color: '#10b981' }} 
-                  />
-                </div>
-                <h3 
-                  style={{ 
-                    fontSize: '20px', 
-                    fontWeight: 600, 
-                    color: 'white',
-                    marginBottom: '4px',
-                    fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
-                  }}
-                >
-                  {features[currentCard].title}
-                </h3>
-                <p style={{ 
-                  fontSize: '14px', 
-                  color: 'rgba(255, 255, 255, 0.8)', 
-                  lineHeight: 1.3,
-                  fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
-                }}>
-                  {features[currentCard].description}
-                </p>
+                <CurrentIcon className="welcome-card-icon" />
+                <h3 className="welcome-card-title">{features[currentCard].title}</h3>
+                <p className="welcome-card-desc">{features[currentCard].description}</p>
               </motion.div>
             </AnimatePresence>
           </div>
 
-          <div 
-            className="flex items-center justify-center gap-2"
-            style={{ marginTop: '12px' }}
-            role="navigation"
-            aria-label="Carousel indicators"
-          >
+          <div className="welcome-nav" role="navigation" aria-label="Carousel indicators">
+            <button 
+              onClick={handlePrev}
+              className="welcome-nav-arrow"
+              aria-label="Previous slide"
+            >
+              <ChevronLeft size={14} />
+            </button>
+            
             {features.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentCard(index)}
-                className="transition-all duration-300"
-                style={{
-                  width: currentCard === index ? '24px' : '8px',
-                  height: '8px',
-                  borderRadius: '4px',
-                  background: currentCard === index ? '#10b981' : 'rgba(255, 255, 255, 0.3)',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: 0,
-                }}
+                className={`welcome-nav-dot ${currentCard === index ? 'active' : ''}`}
                 aria-label={`Go to slide ${index + 1}`}
                 aria-current={currentCard === index ? 'true' : 'false'}
               />
             ))}
+            
+            <button 
+              onClick={handleNext}
+              className="welcome-nav-arrow"
+              aria-label="Next slide"
+            >
+              <ChevronRight size={14} />
+            </button>
           </div>
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
-          className="w-full flex flex-col gap-3"
-          style={{ marginTop: '32px', maxWidth: '320px' }}
+          transition={{ delay: 0.35, duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+          className="welcome-buttons"
         >
           <button
             onClick={() => setLocation('/signup')}
-            className="welcome-cta-primary"
+            className="welcome-btn-primary"
             aria-label="Get Started with Driiva"
           >
             Get Started
@@ -205,7 +148,7 @@ export default function Welcome() {
 
           <button
             onClick={() => setLocation('/signin')}
-            className="welcome-cta-secondary"
+            className="welcome-btn-secondary"
             aria-label="Sign in to existing account"
           >
             I Already Have an Account
