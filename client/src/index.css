@@ -1010,3 +1010,39 @@ body:has(.welcome-page-container) .driiva-gradient-bg {
     0 8px 32px rgba(0, 0, 0, 0.3),
     0 2px 8px rgba(255, 255, 255, 0.05) inset;
 }
+
+/* ============================================
+   ONBOARDING - Form Input Styling
+   ============================================ */
+
+.onboarding-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 12px 16px;
+  color: white;
+  font-size: 16px;
+  min-height: 48px;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.onboarding-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.onboarding-input:focus {
+  outline: none;
+  border-color: #10b981;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.onboarding-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.onboarding-input option {
+  background: #1e293b;
+  color: white;
+}
