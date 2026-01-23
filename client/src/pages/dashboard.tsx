@@ -1,20 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useLocation } from 'wouter';
-import { LoadingSpinner } from "@/components/LoadingSpinner";
-import DRIBackgroundView from "@/components/DRIBackgroundView";
-import {
-  MemoizedDashboardHeader as DashboardHeader,
-  MemoizedLiquidGauge as LiquidGauge,
-  MemoizedMetricsGrid as MetricsGrid,
-  MemoizedCommunityPool as CommunityPool,
-  MemoizedRefundSimulator as RefundSimulator,
-  MemoizedGamification as Gamification,
-  MemoizedBottomNavigation as BottomNavigation,
-  MemoizedPolicyStatusWidget as PolicyStatusWidget
-} from "@/components/OptimizedComponents";
-import { MetricUser, CommunityPoolData, DrivingProfile, Achievement, LeaderboardEntry } from "@shared/types";
-import { pageVariants, container, item, timing, easing } from "@/lib/animations";
+import { Car, FileText, AlertCircle, TrendingUp, ChevronRight } from 'lucide-react';
+import AnimatedBackground from "@/components/AnimatedBackground";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 
@@ -25,11 +13,7 @@ interface Profile {
   onboarding_complete: boolean;
 }
 
-interface DashboardProps {
-  isLoading?: boolean;
-}
-
-export default function Dashboard({ isLoading = false }: DashboardProps) {
+export default function Dashboard() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -79,149 +63,152 @@ export default function Dashboard({ isLoading = false }: DashboardProps) {
   }, [setLocation, user]);
 
   const displayName = profile?.full_name || user?.name || 'Driver';
-  const nameParts = displayName.split(' ');
 
-  const userData: MetricUser = {
-    id: 8,
-    username: user?.email?.split('@')[0] || "driver",
-    firstName: nameParts[0] || "Test",
-    lastName: nameParts[1] || "Driver",
-    email: user?.email || "test@driiva.com",
-    premiumAmount: "1840.00"
-  };
-
-  const [userProfile] = React.useState<Partial<DrivingProfile>>({
-    currentScore: 72,
-    projectedRefund: 100.80,
-    totalMiles: 1107.70,
-    totalTrips: 26,
-    hardBrakingScore: 3,
-    accelerationScore: 2,
-    speedAdherenceScore: 1,
-    nightDrivingScore: 5
-  });
-
-  const [communityPoolData] = React.useState<CommunityPoolData>({
-    poolAmount: 105000,
-    safetyFactor: 0.85,
-    participantCount: 1000,
-    safeDriverCount: 800,
-    averageScore: 82
-  });
-
-  const [achievementsData] = React.useState<Achievement[]>([
-    {
-      id: 1,
-      name: "Long Distance Driver",
-      description: "Drove over 1000 miles",
-      iconUrl: "🚗",
-      unlockedAt: "2025-07-20"
-    },
-    {
-      id: 2,
-      name: "Consistent Driver", 
-      description: "30 days of safe driving",
-      iconUrl: "⭐",
-      unlockedAt: "2025-07-25"
-    }
-  ]);
-
-  const [leaderboardData] = React.useState<LeaderboardEntry[]>([
-    {
-      id: 1,
-      userId: 8,
-      rank: 14,
-      score: 72,
-      weeklyScore: 74
-    }
-  ]);
-
-  if (isLoading || loading || !authChecked) {
-    return <LoadingSpinner />;
+  if (loading || !authChecked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <AnimatedBackground variant="welcome" />
+        <div className="relative z-10">
+          <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+        </div>
+      </div>
+    );
   }
 
   return (
-    <motion.div 
-      className="min-h-screen text-white"
-      variants={pageVariants}
-      initial="initial"
-      animate="animate"
-      exit="exit"
-      transition={{ duration: timing.pageTransition, ease: easing.button }}
-    >
-      <DRIBackgroundView variant="app" />
-      <div className="page-transition">
-        <DashboardHeader user={userData} />
+    <div className="min-h-screen text-white relative">
+      <AnimatedBackground variant="welcome" />
       
-      <motion.main 
-        className="px-4 pb-28"
-        variants={container}
-        initial="hidden"
-        animate="show"
-      >
-        {/* Policy Status Widget */}
-        <motion.div className="pt-4 mb-6" variants={item}>
-          <PolicyStatusWidget user={userData} />
+      <div className="relative z-10 px-4 py-6 pb-32 max-w-lg mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-8"
+        >
+          <p className="text-white/60 text-sm">Welcome back,</p>
+          <h1 className="text-2xl font-bold text-white">{displayName}</h1>
         </motion.div>
 
-        {/* Driving Score Gauge */}
-        <motion.div className="mb-6" variants={item}>
-          <LiquidGauge 
-            score={userProfile.currentScore || 72}
-            projectedRefund={userProfile.projectedRefund || 100.80}
-            premiumAmount={Number(userData.premiumAmount)}
-          />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.5 }}
+          className="dashboard-glass-card mb-4"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-white">Driving Score</h2>
+            <TrendingUp className="w-5 h-5 text-emerald-400" />
+          </div>
+          <div className="flex items-end gap-2">
+            <span className="text-5xl font-bold text-white">85</span>
+            <span className="text-xl text-white/60 mb-1">/100</span>
+          </div>
+          <p className="text-sm text-white/60 mt-2">Great driving! Keep it up to maximise your refund.</p>
+          <div className="mt-4 h-2 bg-white/10 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full"
+              style={{ width: '85%' }}
+            />
+          </div>
         </motion.div>
 
-        {/* Metrics Grid */}
-        <motion.div className="mb-6" variants={item}>
-          <MetricsGrid profile={{
-            hardBrakingScore: userProfile.hardBrakingScore || 3,
-            accelerationScore: userProfile.accelerationScore || 2,
-            speedAdherenceScore: userProfile.speedAdherenceScore || 1,
-            nightDrivingScore: userProfile.nightDrivingScore || 5
-          }} />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+          className="dashboard-glass-card mb-4"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-white">Your Trips</h2>
+            <Car className="w-5 h-5 text-white/60" />
+          </div>
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-4">
+              <Car className="w-8 h-8 text-white/40" />
+            </div>
+            <p className="text-white/60 text-sm">Start driving to see your trips</p>
+            <p className="text-white/40 text-xs mt-1">Your journey data will appear here</p>
+          </div>
         </motion.div>
 
-        {/* Community Pool */}
-        <motion.div className="mb-6" variants={item}>
-          <CommunityPool 
-            pool={{
-              poolAmount: communityPoolData.poolAmount,
-              safetyFactor: communityPoolData.safetyFactor,
-              participantCount: communityPoolData.participantCount,
-              safeDriverCount: communityPoolData.safeDriverCount
-            }}
-          />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
+          className="dashboard-glass-card mb-6"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-white">Surplus Projection</h2>
+            <span className="text-emerald-400 font-bold text-xl">£0</span>
+          </div>
+          <p className="text-white/60 text-sm">
+            Drive more to unlock rewards. Safe drivers earn a share of the community surplus at renewal.
+          </p>
+          <div className="mt-4 flex items-center gap-2 text-emerald-400 text-sm">
+            <span>Learn how it works</span>
+            <ChevronRight className="w-4 h-4" />
+          </div>
         </motion.div>
 
-        {/* Gamification */}
-        <motion.div className="mb-6" variants={item}>
-          <Gamification 
-            achievements={achievementsData}
-            leaderboard={leaderboardData}
-            currentUser={userData}
-            profile={{
-              currentScore: userProfile.currentScore || 72,
-              projectedRefund: userProfile.projectedRefund || 100.80,
-              totalMiles: userProfile.totalMiles || 1107.70
-            }}
-            premiumAmount={Number(userData.premiumAmount)}
-          />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.5 }}
+          className="grid grid-cols-2 gap-3"
+        >
+          <button
+            onClick={() => setLocation('/policy')}
+            className="dashboard-glass-card flex items-center justify-center gap-2 py-4 hover:bg-white/15 transition-colors"
+          >
+            <FileText className="w-5 h-5 text-white" />
+            <span className="font-medium text-white">View Policy</span>
+          </button>
+          
+          <button
+            onClick={() => {}}
+            className="dashboard-glass-card flex items-center justify-center gap-2 py-4 hover:bg-white/15 transition-colors"
+          >
+            <AlertCircle className="w-5 h-5 text-white" />
+            <span className="font-medium text-white">Report Claim</span>
+          </button>
         </motion.div>
-
-        {/* Refund Simulator */}
-        <motion.div className="mb-8" variants={item}>
-          <RefundSimulator 
-            currentScore={userProfile.currentScore || 72}
-            premiumAmount={Number(userData.premiumAmount)}
-            poolSafetyFactor={communityPoolData.safetyFactor}
-          />
-        </motion.div>
-      </motion.main>
       </div>
-      
-      <BottomNavigation />
-    </motion.div>
+
+      <nav className="fixed bottom-0 left-0 right-0 z-20">
+        <div 
+          className="flex items-center justify-around py-4 px-4 mx-4 mb-4 rounded-2xl"
+          style={{
+            background: 'rgba(0, 0, 0, 0.6)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+          }}
+        >
+          <button className="flex flex-col items-center gap-1 text-emerald-400">
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span className="text-xs">Home</span>
+          </button>
+          <button onClick={() => setLocation('/trips')} className="flex flex-col items-center gap-1 text-white/60 hover:text-white transition-colors">
+            <Car className="w-6 h-6" />
+            <span className="text-xs">Trips</span>
+          </button>
+          <button onClick={() => setLocation('/rewards')} className="flex flex-col items-center gap-1 text-white/60 hover:text-white transition-colors">
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="text-xs">Rewards</span>
+          </button>
+          <button onClick={() => setLocation('/profile')} className="flex flex-col items-center gap-1 text-white/60 hover:text-white transition-colors">
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+            <span className="text-xs">Profile</span>
+          </button>
+        </div>
+      </nav>
+    </div>
   );
 }
