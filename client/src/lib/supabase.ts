@@ -3,28 +3,33 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
 
-// Check if Supabase is properly configured
-export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey && supabaseUrl.includes('supabase'))
+// DEBUG: Log the credentials (safely)
+console.log('🔍 Supabase Config Check:', {
+  urlExists: !!supabaseUrl,
+  urlLength: supabaseUrl.length,
+  urlPreview: supabaseUrl.slice(0, 30) + '...',
+  keyExists: !!supabaseAnonKey,
+  keyLength: supabaseAnonKey.length,
+  keyPreview: supabaseAnonKey.slice(0, 20) + '...',
+});
 
-// Singleton pattern to prevent multiple client instances
+// Check if config is valid
+export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey && 
+  supabaseUrl.includes('supabase.co'));
+
+if (!isSupabaseConfigured) {
+  console.error('❌ Supabase not configured! Check your .env file');
+  console.error('Expected format:');
+  console.error('VITE_SUPABASE_URL=https://xxxxx.supabase.co');
+  console.error('VITE_SUPABASE_ANON_KEY=eyJxxx...');
+}
+
 let supabaseInstance: SupabaseClient | null = null
 
 function getSupabaseClient(): SupabaseClient {
   if (supabaseInstance) {
     return supabaseInstance
   }
-
-  if (!isSupabaseConfigured) {
-    console.warn('[Supabase] Not configured - using placeholder client');
-    supabaseInstance = createClient('https://placeholder.supabase.co', 'placeholder-key')
-    return supabaseInstance
-  }
-
-  console.log('[Supabase] Initializing client:', {
-    url: supabaseUrl,
-    keyPrefix: supabaseAnonKey.substring(0, 20) + '...',
-    keyLength: supabaseAnonKey.length
-  })
 
   supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
@@ -35,8 +40,8 @@ function getSupabaseClient(): SupabaseClient {
     }
   })
 
+  console.log('✓ Supabase client created');
   return supabaseInstance
 }
 
-export const supabase: SupabaseClient = getSupabaseClient()
-
+export const supabase = getSupabaseClient()
