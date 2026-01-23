@@ -811,3 +811,158 @@ select:focus {
   padding: 24px;
   box-shadow: 0 4px 24px rgba(0,0,0,0.3);
 }
+
+/* ============================================
+   ANIMATED BACKGROUND - Premium iOS Aesthetic
+   ============================================ */
+
+.animated-bg-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.animated-bg-gradient {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, #d97706 0%, #dc2626 35%, #7c2d12 55%, #581c87 75%, #3b0764 100%);
+}
+
+.animated-bg-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  will-change: transform;
+}
+
+.animated-bg-orb-1 {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(251, 146, 60, 0.4) 0%, transparent 70%);
+  top: -100px;
+  left: -100px;
+  animation: floatOrb 20s infinite ease-in-out;
+}
+
+.animated-bg-orb-2 {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(236, 72, 153, 0.35) 0%, transparent 70%);
+  top: 30%;
+  right: -150px;
+  animation: floatOrb 25s infinite ease-in-out reverse;
+}
+
+.animated-bg-orb-3 {
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.3) 0%, transparent 70%);
+  bottom: -50px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: floatOrb 22s infinite ease-in-out;
+}
+
+@keyframes floatOrb {
+  0%, 100% { 
+    transform: translate3d(0, 0, 0) scale(1); 
+  }
+  33% { 
+    transform: translate3d(30px, -40px, 0) scale(1.1); 
+  }
+  66% { 
+    transform: translate3d(-30px, 40px, 0) scale(0.9); 
+  }
+}
+
+.animated-bg-vignette {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at center, transparent 40%, rgba(0,0,0,0.3) 100%);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animated-bg-orb {
+    animation: none !important;
+  }
+}
+
+/* ============================================
+   WELCOME PAGE - Premium Glassmorphism Cards
+   ============================================ */
+
+.welcome-glass-card {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+  border-radius: 16px;
+}
+
+.welcome-cta-primary {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 4px 24px rgba(16, 185, 129, 0.4);
+  border: none;
+  border-radius: 28px;
+  color: white;
+  font-weight: 600;
+  font-size: 17px;
+  min-height: 56px;
+  width: 100%;
+  cursor: pointer;
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.welcome-cta-primary:hover {
+  transform: scale(1.02);
+  filter: brightness(1.1);
+}
+
+.welcome-cta-primary:active {
+  transform: scale(0.98);
+}
+
+.welcome-cta-secondary {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+  border-radius: 28px;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+  font-size: 17px;
+  min-height: 56px;
+  width: 100%;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.welcome-cta-secondary:hover {
+  transform: scale(1.02);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.welcome-cta-secondary:active {
+  transform: scale(0.98);
+}
+
+/* Hide global gradient when welcome page is active */
+.welcome-page-container ~ .driiva-gradient-bg,
+.welcome-page-container + .driiva-gradient-bg,
+body:has(.welcome-page-container) .driiva-gradient-bg {
+  display: none !important;
+}

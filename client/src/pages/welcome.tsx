@@ -1,27 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
-import { timing, easing } from "@/lib/animations";
 import { BarChart3, Wallet, Trophy } from "lucide-react";
 import driivaLogo from "@/assets/driiva-logo-new.png";
-import DRIBackgroundView from "@/components/DRIBackgroundView";
-
-const particles = [
-  { size: 4, left: '12%', top: '15%', color: 'rgba(0, 217, 160, 0.12)', animType: 1, delay: 0, duration: 28 },
-  { size: 3, left: '25%', top: '80%', color: 'rgba(255, 255, 255, 0.08)', animType: 2, delay: -3, duration: 35 },
-  { size: 5, left: '40%', top: '25%', color: 'rgba(120, 100, 255, 0.11)', animType: 3, delay: -7, duration: 32 },
-  { size: 4, left: '55%', top: '60%', color: 'rgba(0, 217, 160, 0.12)', animType: 4, delay: -2, duration: 38 },
-  { size: 3, left: '70%', top: '35%', color: 'rgba(255, 255, 255, 0.08)', animType: 1, delay: -5, duration: 30 },
-  { size: 5, left: '85%', top: '70%', color: 'rgba(120, 100, 255, 0.11)', animType: 2, delay: -8, duration: 26 },
-  { size: 4, left: '15%', top: '45%', color: 'rgba(0, 217, 160, 0.12)', animType: 3, delay: -4, duration: 34 },
-  { size: 3, left: '60%', top: '88%', color: 'rgba(255, 255, 255, 0.08)', animType: 4, delay: -6, duration: 40 },
-  { size: 5, left: '80%', top: '20%', color: 'rgba(0, 217, 160, 0.12)', animType: 1, delay: -1, duration: 36 },
-  { size: 4, left: '35%', top: '55%', color: 'rgba(120, 100, 255, 0.11)', animType: 2, delay: -9, duration: 28 },
-  { size: 3, left: '90%', top: '50%', color: 'rgba(255, 255, 255, 0.08)', animType: 3, delay: -12, duration: 33 },
-  { size: 5, left: '20%', top: '70%', color: 'rgba(0, 217, 160, 0.12)', animType: 4, delay: -15, duration: 29 },
-  { size: 4, left: '45%', top: '10%', color: 'rgba(120, 100, 255, 0.11)', animType: 1, delay: -10, duration: 37 },
-  { size: 3, left: '65%', top: '42%', color: 'rgba(255, 255, 255, 0.08)', animType: 2, delay: -18, duration: 31 },
-];
+import AnimatedBackground from "@/components/AnimatedBackground";
 
 const features = [
   { icon: BarChart3, title: "Track Your Driving", description: "Real-time feedback on every trip" },
@@ -66,344 +48,168 @@ export default function Welcome() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleNext, handlePrev]);
 
+  useEffect(() => {
+    const interval = setInterval(handleNext, 5000);
+    return () => clearInterval(interval);
+  }, [handleNext]);
+
   const CurrentIcon = features[currentCard].icon;
 
   return (
-    <div className="min-h-screen flex flex-col items-center relative overflow-hidden">
-      <DRIBackgroundView variant="welcome" />
+    <div 
+      className="h-screen flex flex-col items-center justify-center relative overflow-hidden welcome-page-container"
+      style={{ 
+        paddingTop: 'env(safe-area-inset-top)', 
+        paddingBottom: 'env(safe-area-inset-bottom)',
+        maxHeight: '100vh',
+      }}
+    >
+      <AnimatedBackground variant="welcome" />
 
-      {/* Star Particles */}
-      <div className="star-particles">
-        <div className="star" style={{ top: '15%', left: '10%' }} />
-        <div className="star" style={{ top: '25%', left: '85%' }} />
-        <div className="star" style={{ top: '35%', left: '20%' }} />
-        <div className="star" style={{ top: '45%', left: '75%' }} />
-        <div className="star" style={{ top: '55%', left: '15%' }} />
-        <div className="star" style={{ top: '65%', left: '88%' }} />
-        <div className="star" style={{ top: '75%', left: '30%' }} />
-        <div className="star" style={{ top: '82%', left: '65%' }} />
-        <div className="star" style={{ top: '18%', left: '50%' }} />
-        <div className="star" style={{ top: '40%', left: '92%' }} />
-        <div className="star" style={{ top: '60%', left: '5%' }} />
-        <div className="star" style={{ top: '70%', left: '45%' }} />
-      </div>
-
-      <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 1 }}>
-        {particles.map((p, i) => (
-          <div
-            key={i}
-            className="absolute star-particle"
-            style={{
-              width: p.size,
-              height: p.size,
-              left: p.left,
-              top: p.top,
-              background: p.color,
-              clipPath: 'polygon(50% 0%, 65% 35%, 100% 50%, 65% 65%, 50% 100%, 35% 65%, 0% 50%, 35% 35%)',
-              animation: `float${p.animType} ${p.duration}s ease-in-out infinite`,
-              animationDelay: `${p.delay}s`,
-              willChange: 'transform, opacity',
-            }}
-          />
-        ))}
-      </div>
-      <style>{`
-        @keyframes float1 {
-          0%, 100% { transform: translate(0, 0); opacity: 0.7; }
-          50% { transform: translate(-40px, -80px); opacity: 1; }
-        }
-        @keyframes float2 {
-          0%, 100% { transform: translate(0, 0); opacity: 0.7; }
-          50% { transform: translate(40px, -60px); opacity: 1; }
-        }
-        @keyframes float3 {
-          0%, 100% { transform: translate(0, 0); opacity: 0.7; }
-          50% { transform: translate(-30px, 70px); opacity: 1; }
-        }
-        @keyframes float4 {
-          0%, 100% { transform: translate(0, 0); opacity: 0.7; }
-          50% { transform: translate(50px, 50px); opacity: 1; }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .star-particle { animation: none !important; }
-        }
-        @keyframes shimmer {
-          0% { background-position: -200% center; }
-          100% { background-position: 200% center; }
-        }
-        @keyframes floatBlur {
-          0%, 100% {
-            transform: translate(-50%, -50%) translate(0, 0) scale(1);
-            opacity: 0.9;
-          }
-          25% {
-            transform: translate(-50%, -50%) translate(50px, -30px) scale(1.1);
-            opacity: 1.0;
-          }
-          50% {
-            transform: translate(-50%, -50%) translate(-40px, 40px) scale(0.9);
-            opacity: 0.95;
-          }
-          75% {
-            transform: translate(-50%, -50%) translate(30px, 20px) scale(1.05);
-            opacity: 0.98;
-          }
-        }
-      `}</style>
-      <div
-        style={{
-          position: 'absolute',
-          width: '600px',
-          height: '600px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(0, 217, 160, 0.35) 0%, rgba(120, 100, 255, 0.28) 50%, transparent 100%)',
-          filter: 'blur(80px)',
-          animation: 'floatBlur 12s ease-in-out infinite',
-          zIndex: 0,
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
+      <div 
+        className="relative z-10 flex flex-col items-center justify-center w-full"
+        style={{ 
+          maxWidth: '480px', 
+          margin: '0 auto', 
+          padding: '16px',
         }}
-      />
-      <div className="relative z-10 flex flex-col items-center min-h-screen w-full py-8 pb-[env(safe-area-inset-bottom,24px)]" style={{ paddingTop: '80px' }}>
-
+      >
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: timing.pageTransition / 1000, ease: easing.smoothDecel }}
-          className="text-center flex flex-col items-center px-6 w-full"
-          style={{ maxWidth: '440px', margin: '0 auto' }}
+          transition={{ delay: 0.1, duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+          className="text-center flex flex-col items-center w-full"
         >
-          <div
-            className="logo-container"
+          <img 
+            src={driivaLogo} 
+            alt="Driiva" 
+            className="welcome-logo md:w-[320px]"
             style={{
-              width: '480px',
+              width: '280px',
               maxWidth: '90%',
-              height: 'auto',
-              marginBottom: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'transparent',
             }}
-          >
-            <img 
-              src={driivaLogo} 
-              alt="Driiva" 
-              className="welcome-logo"
-            />
-          </div>
+          />
 
-          <div 
+          <p 
             style={{ 
-              color: '#ffffff',
-              fontSize: '22px',
-              fontWeight: 700,
-              fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
-              letterSpacing: '-0.2px',
-              lineHeight: 1.3,
+              marginTop: '8px',
+              color: 'rgba(255,255,255,0.9)',
+              fontSize: '18px',
+              fontWeight: 400,
+              lineHeight: 1.4,
               textAlign: 'center',
-              background: 'transparent',
-              textShadow: 'none',
-              margin: '0 auto 48px',
+              letterSpacing: '-0.01em',
+              fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
             }}
           >
-            <span style={{ display: 'block' }}>AI-powered, community-driven.</span>
-            <span style={{ display: 'block' }}>Your driving, rewarded.</span>
-          </div>
+            AI-powered, community-driven.<br />
+            Your driving, rewarded.
+          </p>
         </motion.div>
-
-        <div className="flex flex-col items-center justify-center w-full px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: timing.pageTransition / 1000, ease: easing.smoothDecel }}
-            className="w-full flex flex-col items-center"
-            style={{ maxWidth: '320px' }}
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-            role="region"
-            aria-label="Feature carousel"
-          >
-            <div 
-              className="relative w-full overflow-hidden"
-              style={{ height: '160px' }}
-              aria-live="polite"
-            >
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={currentCard}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
-                  className="absolute inset-0 flex flex-col items-center justify-center text-center"
-                  style={{
-                    background: 'rgba(0, 0, 0, 0.04)',
-                    backdropFilter: 'blur(8px)',
-                    WebkitBackdropFilter: 'blur(8px)',
-                    borderRadius: '16px',
-                    padding: '24px',
-                    height: '160px',
-                    position: 'relative',
-                    overflow: 'hidden',
-                  }}
-                >
-                  <div 
-                    style={{
-                      content: '""',
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      background: 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.05) 50%, transparent 100%)',
-                      backgroundSize: '200% 100%',
-                      animation: 'shimmer 8s ease-in-out infinite',
-                      borderRadius: '16px',
-                      pointerEvents: 'none',
-                    }}
-                  />
-                  <div style={{ width: '40px', height: '40px', marginBottom: '12px' }}>
-                    <CurrentIcon 
-                      className="w-10 h-10" 
-                      style={{ color: 'rgba(0, 217, 160, 0.95)' }} 
-                    />
-                  </div>
-                  <h3 
-                    className="font-semibold mb-1"
-                    style={{ 
-                      fontSize: '24px', 
-                      fontWeight: 600, 
-                      color: 'white',
-                      textAlign: 'center',
-                    }}
-                  >
-                    {features[currentCard].title}
-                  </h3>
-                  <p style={{ 
-                    fontSize: '14px', 
-                    color: 'rgba(255, 255, 255, 0.85)', 
-                    lineHeight: 1.4,
-                    textAlign: 'center',
-                  }}>
-                    {features[currentCard].description}
-                  </p>
-                </motion.div>
-              </AnimatePresence>
-            </div>
-
-            <div 
-              className="flex items-center justify-center gap-4"
-              style={{ marginTop: '16px' }}
-              role="navigation"
-              aria-label="Carousel navigation"
-            >
-              <button
-                onClick={handlePrev}
-                className="transition-opacity hover:opacity-100"
-                style={{
-                  color: 'rgba(255, 255, 255, 0.6)',
-                  fontSize: '18px',
-                  textShadow: '0 0 8px rgba(0, 0, 0, 0.4)',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: '4px 8px',
-                }}
-                aria-label="Previous slide"
-              >
-                ‹
-              </button>
-              <div
-                className="rounded-full"
-                style={{
-                  width: '6px',
-                  height: '6px',
-                  background: 'rgba(0, 217, 160, 0.9)',
-                }}
-                aria-hidden="true"
-              />
-              <button
-                onClick={handleNext}
-                className="transition-opacity hover:opacity-100"
-                style={{
-                  color: 'rgba(255, 255, 255, 0.6)',
-                  fontSize: '18px',
-                  textShadow: '0 0 8px rgba(0, 0, 0, 0.4)',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  padding: '4px 8px',
-                }}
-                aria-label="Next slide"
-              >
-                ›
-              </button>
-            </div>
-
-            <p
-              style={{
-                marginTop: '24px',
-                fontSize: '22px',
-                fontWeight: 600,
-                fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
-                color: 'rgba(255, 255, 255, 0.95)',
-                textAlign: 'center',
-                lineHeight: 1.4,
-                letterSpacing: '-0.2px',
-                maxWidth: '360px',
-              }}
-            >
-              Lower premiums for safer drivers, powered by your data.
-            </p>
-          </motion.div>
-        </div>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6, duration: timing.pageTransition / 1000, ease: easing.smoothDecel }}
-          className="w-full max-w-[440px] mx-auto space-y-4 px-6"
-          style={{ marginTop: '40px' }}
+          transition={{ delay: 0.3, duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+          className="w-full flex flex-col items-center"
+          style={{ marginTop: '32px', maxWidth: '320px' }}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          role="region"
+          aria-label="Feature carousel"
         >
-          <motion.button
+          <div 
+            className="relative w-full overflow-hidden welcome-glass-card"
+            style={{ height: '140px', padding: '20px' }}
+            aria-live="polite"
+          >
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentCard}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+                className="absolute inset-0 flex flex-col items-center justify-center text-center p-5"
+              >
+                <div style={{ width: '36px', height: '36px', marginBottom: '8px' }}>
+                  <CurrentIcon 
+                    className="w-9 h-9" 
+                    style={{ color: '#10b981' }} 
+                  />
+                </div>
+                <h3 
+                  style={{ 
+                    fontSize: '20px', 
+                    fontWeight: 600, 
+                    color: 'white',
+                    marginBottom: '4px',
+                    fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+                  }}
+                >
+                  {features[currentCard].title}
+                </h3>
+                <p style={{ 
+                  fontSize: '14px', 
+                  color: 'rgba(255, 255, 255, 0.8)', 
+                  lineHeight: 1.3,
+                  fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif',
+                }}>
+                  {features[currentCard].description}
+                </p>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          <div 
+            className="flex items-center justify-center gap-2"
+            style={{ marginTop: '12px' }}
+            role="navigation"
+            aria-label="Carousel indicators"
+          >
+            {features.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentCard(index)}
+                className="transition-all duration-300"
+                style={{
+                  width: currentCard === index ? '24px' : '8px',
+                  height: '8px',
+                  borderRadius: '4px',
+                  background: currentCard === index ? '#10b981' : 'rgba(255, 255, 255, 0.3)',
+                  border: 'none',
+                  cursor: 'pointer',
+                  padding: 0,
+                }}
+                aria-label={`Go to slide ${index + 1}`}
+                aria-current={currentCard === index ? 'true' : 'false'}
+              />
+            ))}
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+          className="w-full flex flex-col gap-3"
+          style={{ marginTop: '32px', maxWidth: '320px' }}
+        >
+          <button
             onClick={() => setLocation('/signup')}
-            whileHover={{ scale: 1.02, filter: 'brightness(1.1)' }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ duration: timing.quick / 1000 }}
-            className="w-full font-semibold rounded-[28px] transition-all min-h-[56px]"
-            style={{
-              background: '#00D9A0',
-              color: '#1A1F36',
-              fontSize: '18px',
-              fontWeight: 600,
-              height: '56px',
-              boxShadow: '0 4px 16px rgba(0, 217, 160, 0.3)',
-            }}
+            className="welcome-cta-primary"
             aria-label="Get Started with Driiva"
           >
             Get Started
-          </motion.button>
+          </button>
 
-          <motion.button
+          <button
             onClick={() => setLocation('/signin')}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ duration: timing.quick / 1000 }}
-            className="w-full font-medium rounded-[28px] transition-all min-h-[56px] shimmer-pulse-btn"
-            style={{
-              background: 'transparent',
-              color: 'rgba(255, 255, 255, 0.9)',
-              fontSize: '18px',
-              fontWeight: 500,
-              height: '56px',
-              border: '1px solid rgba(255, 255, 255, 0.3)',
-            }}
+            className="welcome-cta-secondary"
             aria-label="Sign in to existing account"
           >
             I Already Have an Account
-          </motion.button>
+          </button>
         </motion.div>
       </div>
     </div>
