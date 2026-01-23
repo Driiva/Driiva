@@ -1191,3 +1191,8 @@ body:has(.welcome-page-container) .animated-bg-container {
   background: #1e293b;
   color: white;
 }
+
+@keyframes shimmer-btn {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}

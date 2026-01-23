@@ -164,8 +164,7 @@ export default function Onboarding() {
 
   if (authChecking) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <AnimatedBackground variant="welcome" />
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 flex items-center justify-center">
         <div className="relative z-10">
           <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin" />
         </div>
@@ -174,8 +173,7 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col relative">
-      <AnimatedBackground variant="welcome" />
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 flex flex-col relative">
       
       <div className="relative z-10 flex-1 flex flex-col p-6 max-w-lg mx-auto w-full">
         <div className="flex items-center justify-between mb-6">

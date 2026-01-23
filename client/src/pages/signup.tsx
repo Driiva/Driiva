@@ -132,7 +132,7 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0F172A] flex flex-col p-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 flex flex-col p-6">
       <div className="flex items-center justify-between mb-8">
         <motion.button
           onClick={handleBack}

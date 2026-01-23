@@ -2,11 +2,9 @@ import { useState } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, LogIn, User, Lock, ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import DRIBackgroundView from "@/components/DRIBackgroundView";
 import signinLogo from "@assets/ii_clear_1769111905071.png";
 import { useParallax } from "@/hooks/useParallax";
 import { useAuth } from "../contexts/AuthContext";
@@ -33,10 +31,10 @@ export default function SignIn() {
     
     if (!username.trim() || !password.trim()) {
       console.log('[SignIn] Missing credentials');
-      setLoginError('Please enter both email and password');
+      setLoginError('Please enter both email/username and password');
       toast({
         title: "Missing credentials",
-        description: "Please enter both email and password",
+        description: "Please enter both email/username and password",
         variant: "destructive",
       });
       return;
@@ -235,8 +233,7 @@ export default function SignIn() {
 
 
   return (
-    <div className="min-h-screen text-white relative overflow-hidden">
-      <DRIBackgroundView variant="welcome" />
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 text-white relative overflow-hidden">
 
       <div className="relative z-10 min-h-screen flex items-center justify-center px-4 page-transition">
         {/* Back Button */}
@@ -281,14 +278,14 @@ export default function SignIn() {
                   damping: 25,
                   delay: 0.4,
                 }}
-                className="signin-header"
+                className="flex flex-col items-center mb-2 mt-4"
               >
                 <img 
                   src={signinLogo} 
                   alt="Driiva" 
-                  className="signin-logo" 
+                  className="h-12 w-auto mb-0" 
                 />
-                <p className="signin-tagline">
+                <p className="mt-1 mb-1 text-center text-white/80 text-sm">
                   Sign in to your telematics insurance account
                 </p>
               </motion.div>
@@ -302,30 +299,30 @@ export default function SignIn() {
                 onSubmit={handleSubmit}
                 className="space-y-3"
               >
-                {/* Email Field */}
+                {/* Email or Username Field */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-white/90" style={{ 
                     fontFamily: 'Inter, sans-serif'
                   }}>
-                    Email
+                    Email or Username
                   </label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/60" />
                     <Input
-                      type="email"
+                      type="text"
                       value={username}
                       onChange={(e) => {
                         setUsername(e.target.value);
-                        setLoginError(null); // Clear error when user types
+                        setLoginError(null);
                       }}
                       className="pl-10 bg-white/10 border-white/20 text-white placeholder-white/50"
                       style={{
                         backdropFilter: 'blur(10px)',
                         fontFamily: 'Inter, sans-serif'
                       }}
-                      placeholder="Enter your email"
+                      placeholder="Email or Username"
                       required
-                      autoComplete="email"
+                      autoComplete="username"
                     />
                   </div>
                 </div>

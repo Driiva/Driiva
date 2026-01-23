@@ -119,8 +119,7 @@ export default function Dashboard() {
 
   if (loading || !authChecked) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <AnimatedBackground variant="welcome" />
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 flex items-center justify-center">
         <div className="relative z-10">
           <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin" />
         </div>
@@ -129,8 +128,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen text-white relative">
-      <AnimatedBackground variant="welcome" />
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 text-white relative">
       
       <div className="relative z-10 px-4 py-6 pb-32 max-w-lg mx-auto">
         <motion.div
