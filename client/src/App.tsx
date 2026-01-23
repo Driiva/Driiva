@@ -5,6 +5,7 @@ import ScrollGradient from './components/ScrollGradient';
 import Welcome from './pages/welcome';
 import Signup from './pages/signup';
 import Permissions from './pages/permissions';
+import Onboarding from './pages/onboarding';
 import Dashboard from './pages/dashboard';
 import Trips from './pages/trips';
 import Rewards from './pages/rewards';
@@ -41,6 +42,7 @@ export default function App() {
               <Route path="/signin" component={SignIn} />
               <Route path="/signup" component={Signup} />
               <Route path="/permissions" component={Permissions} />
+              <Route path="/onboarding" component={Onboarding} />
               
               <Route path="/dashboard"><Dashboard /></Route>
               <Route path="/trips" component={Trips} />
