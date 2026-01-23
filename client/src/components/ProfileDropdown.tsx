@@ -38,7 +38,7 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
   const handleSignOut = () => {
     setIsOpen(false);
     logout();
-    setLocation("/signin");
+    setLocation("/welcome");
   };
 
   return (

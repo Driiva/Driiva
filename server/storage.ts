@@ -23,7 +23,7 @@ import {
   type Leaderboard
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, asc, and } from "drizzle-orm";
+import { eq, desc, asc, and, gte, lte, sql } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -60,6 +60,10 @@ export interface IStorage {
   // Leaderboard operations
   getLeaderboard(period?: string, limit?: number): Promise<Leaderboard[]>;
   updateLeaderboard(userId: number, score: number, period?: string): Promise<Leaderboard>;
+  
+  // Time-series optimized queries
+  getTripsByDateRange(userId: number, startDate: Date, endDate: Date, limit?: number): Promise<Trip[]>;
+  getTripsForDuplicateCheck(userId: number, startTime: Date, endTime: Date, distance: number): Promise<Trip[]>;
   
   // GDPR operations
   exportUserData(userId: number): Promise<any>;
@@ -117,11 +121,62 @@ export class DatabaseStorage implements IStorage {
   async getUserTrips(userId: number, limit: number = 10, offset: number = 0): Promise<Trip[]> {
     const query = db.select().from(trips)
       .where(eq(trips.userId, userId))
-      .orderBy(desc(trips.createdAt))
+      .orderBy(desc(trips.startTime)) // Use startTime for time-series optimization
       .limit(limit)
       .offset(offset);
     
     return await query;
+  }
+
+  /**
+   * Optimized query for time-series data by date range
+   * Uses index on startTime for better performance
+   */
+  async getTripsByDateRange(
+    userId: number,
+    startDate: Date,
+    endDate: Date,
+    limit: number = 1000
+  ): Promise<Trip[]> {
+    return await db.select().from(trips)
+      .where(
+        and(
+          eq(trips.userId, userId),
+          gte(trips.startTime, startDate),
+          lte(trips.endTime, endDate)
+        )
+      )
+      .orderBy(desc(trips.startTime))
+      .limit(limit);
+  }
+
+  /**
+   * Check for duplicate trips - optimized for time-series duplicate detection
+   */
+  async getTripsForDuplicateCheck(
+    userId: number,
+    startTime: Date,
+    endTime: Date,
+    distance: number
+  ): Promise<Trip[]> {
+    // Check for trips within 5 minutes and similar distance
+    const timeWindow = 5 * 60 * 1000; // 5 minutes in ms
+    const distanceTolerance = 0.5; // 500m tolerance
+    
+    const checkStart = new Date(startTime.getTime() - timeWindow);
+    const checkEnd = new Date(endTime.getTime() + timeWindow);
+    
+    return await db.select().from(trips)
+      .where(
+        and(
+          eq(trips.userId, userId),
+          gte(trips.startTime, checkStart),
+          lte(trips.endTime, checkEnd),
+          // Distance check using SQL
+          sql`ABS(${trips.distance}::numeric - ${distance}) < ${distanceTolerance}`
+        )
+      )
+      .limit(10);
   }
 
   async getTripById(id: number): Promise<Trip | undefined> {

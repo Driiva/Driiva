@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, LogIn, User, Lock } from "lucide-react";
+import { Eye, EyeOff, LogIn, User, Lock, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,7 +10,7 @@ import DRIBackgroundView from "@/components/DRIBackgroundView";
 import signinLogo from "@assets/ii_clear_1769111905071.png";
 import { useParallax } from "@/hooks/useParallax";
 import { useAuth } from "../contexts/AuthContext";
-import { supabase } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
 export default function SignIn() {
   const [, setLocation] = useLocation();
@@ -18,48 +18,38 @@ export default function SignIn() {
   const [password, setPassword] = useState("driiva1");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const { toast } = useToast();
   const { ref: cardRef, style: cardParallaxStyle } = useParallax({ speed: 0.3 });
   const { setUser } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
+    console.log('[SignIn] handleSubmit called', { username, password: '***' });
     e.preventDefault();
+    e.stopPropagation();
+    
+    // Clear previous errors
+    setLoginError(null);
+    
     if (!username.trim() || !password.trim()) {
+      console.log('[SignIn] Missing credentials');
+      setLoginError('Please enter both email and password');
       toast({
         title: "Missing credentials",
-        description: "Please enter both username and password",
+        description: "Please enter both email and password",
         variant: "destructive",
       });
       return;
     }
 
+    console.log('[SignIn] Starting authentication...');
     setIsLoading(true);
+    setLoginError(null);
     
     try {
-      // Try Supabase authentication first
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: username,
-        password: password,
-      });
-
-      if (!error && data.user) {
-        // Supabase auth succeeded - populate user data
-        setUser({
-          id: data.user.id,
-          email: data.user.email || username,
-          name: data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'User',
-        });
-
-        toast({
-          title: "Welcome back!",
-          description: "Successfully signed in",
-        });
-        setLocation("/dashboard");
-        return;
-      }
-
-      // If Supabase fails, try demo fallback
+      // Check for demo credentials first (bypass Supabase)
       if (username === "driiva1" && password === "driiva1") {
+        console.log('[SignIn] Using demo credentials');
         setUser({
           id: "demo-user-8",
           email: "test@driiva.com",
@@ -75,20 +65,150 @@ export default function SignIn() {
         return;
       }
 
-      // Both failed - show error
+      // Only try Supabase if properly configured
+      if (!isSupabaseConfigured) {
+        console.log('[SignIn] Supabase not configured, showing error');
+        setLoginError('Invalid credentials. Use demo account: driiva1 / driiva1');
+        toast({
+          title: "Sign in failed",
+          description: "Invalid credentials. Use demo account: driiva1 / driiva1",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Try Supabase authentication
+      console.log('[SignIn] Calling supabase.auth.signInWithPassword');
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: username,
+        password: password,
+      });
+
+      console.log('[SignIn] Supabase response:', { 
+        hasUser: !!data?.user, 
+        hasError: !!error,
+        errorMessage: error?.message 
+      });
+
+      if (!error && data.user) {
+        console.log('[SignIn] Authentication successful, user:', data.user.id);
+        
+        // Ensure profile exists - check and create if needed
+        try {
+          console.log('[SignIn] Checking for existing profile...');
+          
+          // Check if profile exists (try both id and user_id patterns)
+          const { data: existingProfile, error: profileCheckError } = await supabase
+            .from('profiles')
+            .select('id')
+            .or(`id.eq.${data.user.id},user_id.eq.${data.user.id}`)
+            .maybeSingle();
+
+          if (profileCheckError && profileCheckError.code !== 'PGRST116') {
+            console.warn('[SignIn] Profile check error (non-fatal):', profileCheckError);
+          }
+
+          if (!existingProfile) {
+            // Profile doesn't exist, create it
+            console.log('[SignIn] Profile not found, creating...');
+            
+            // Try with id as primary key (standard Supabase pattern)
+            const profileData: any = {
+              email: data.user.email || username,
+              full_name: data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'User',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            };
+
+            // Try id first (most common Supabase pattern)
+            const { error: insertError } = await supabase
+              .from('profiles')
+              .insert({
+                id: data.user.id,
+                ...profileData,
+              });
+
+            if (insertError) {
+              // If id fails, try user_id instead
+              console.log('[SignIn] Insert with id failed, trying user_id...', insertError.message);
+              const { error: insertByUserIdError } = await supabase
+                .from('profiles')
+                .insert({
+                  user_id: data.user.id,
+                  ...profileData,
+                });
+
+              if (insertByUserIdError) {
+                console.error('[SignIn] Failed to create profile with both methods:', insertByUserIdError);
+              } else {
+                console.log('[SignIn] Profile created successfully with user_id');
+              }
+            } else {
+              console.log('[SignIn] Profile created successfully with id');
+            }
+          } else {
+            console.log('[SignIn] Profile already exists');
+          }
+        } catch (profileErr) {
+          console.error('[SignIn] Profile check/create error:', profileErr);
+          // Don't block login if profile creation fails
+        }
+
+        // Supabase auth succeeded - populate user data
+        setUser({
+          id: data.user.id,
+          email: data.user.email || username,
+          name: data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'User',
+        });
+
+        toast({
+          title: "Welcome back!",
+          description: "Successfully signed in",
+        });
+        console.log('[SignIn] Redirecting to dashboard');
+        setLocation("/dashboard");
+        return;
+      }
+
+      // Supabase failed - show error
+      console.error('[SignIn] Authentication failed:', error);
+      let errorMessage = error?.message || "Invalid email or password";
+      
+      // Provide more helpful error messages
+      if (error?.message?.includes('Invalid API key') || error?.message?.includes('401')) {
+        errorMessage = "Configuration error: Invalid API key. Please check Supabase settings.";
+        console.error('[SignIn] API key error - check VITE_SUPABASE_ANON_KEY in client/.env');
+      } else if (error?.message?.includes('Invalid login') || error?.message?.includes('Invalid credentials')) {
+        errorMessage = "Invalid email or password";
+      } else if (error?.message?.includes('Email not confirmed')) {
+        errorMessage = "Please confirm your email before signing in";
+      }
+      
+      setLoginError(errorMessage);
       toast({
         title: "Sign in failed",
-        description: error?.message || "Invalid username or password",
+        description: errorMessage,
         variant: "destructive",
       });
     } catch (error) {
+      console.error('[SignIn] Unexpected error:', error);
+      let errorMessage = error instanceof Error ? error.message : "Invalid email or password";
+      
+      // Check for API key issues in catch block too
+      if (errorMessage.includes('Invalid API key') || errorMessage.includes('401')) {
+        errorMessage = "Configuration error: Invalid API key. Please check Supabase settings.";
+        console.error('[SignIn] API key error - check VITE_SUPABASE_ANON_KEY in client/.env');
+      }
+      
+      setLoginError(errorMessage);
       toast({
         title: "Sign in failed",
-        description: "Invalid username or password",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
+      console.log('[SignIn] handleSubmit completed');
     }
   };
 
@@ -96,14 +216,19 @@ export default function SignIn() {
   return (
     <div className="min-h-screen text-white relative overflow-hidden">
       <DRIBackgroundView variant="welcome" />
-      
-      {/* Glassmorphism overlay - Darker Tech Aesthetic */}
-      <div className="absolute inset-0" style={{
-        background: 'radial-gradient(circle at 30% 20%, rgba(30, 58, 95, 0.2) 0%, rgba(51, 65, 85, 0.15) 35%, rgba(15, 23, 42, 0.1) 70%, transparent 100%)',
-        backdropFilter: 'blur(2px)',
-      }} />
 
       <div className="relative z-10 min-h-screen flex items-center justify-center px-4 page-transition">
+        {/* Back Button */}
+        <motion.button
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.1, duration: 0.3 }}
+          onClick={() => setLocation("/welcome")}
+          className="absolute top-6 left-4 z-20 flex items-center justify-center w-10 h-10 rounded-full backdrop-blur-xl bg-white/10 border border-white/20 hover:bg-white/20 transition-all duration-200"
+          aria-label="Back to welcome"
+        >
+          <ArrowLeft className="w-5 h-5 text-white/90" />
+        </motion.button>
         <motion.div
           initial={{ opacity: 0, y: 20, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -156,26 +281,30 @@ export default function SignIn() {
                 onSubmit={handleSubmit}
                 className="space-y-3"
               >
-                {/* Username Field */}
+                {/* Email Field */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-white/90" style={{ 
                     fontFamily: 'Inter, sans-serif'
                   }}>
-                    Username
+                    Email
                   </label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/60" />
                     <Input
-                      type="text"
+                      type="email"
                       value={username}
-                      onChange={(e) => setUsername(e.target.value)}
+                      onChange={(e) => {
+                        setUsername(e.target.value);
+                        setLoginError(null); // Clear error when user types
+                      }}
                       className="pl-10 bg-white/10 border-white/20 text-white placeholder-white/50"
                       style={{
                         backdropFilter: 'blur(10px)',
                         fontFamily: 'Inter, sans-serif'
                       }}
-                      placeholder="Enter your username"
+                      placeholder="Enter your email"
                       required
+                      autoComplete="email"
                     />
                   </div>
                 </div>
@@ -192,7 +321,10 @@ export default function SignIn() {
                     <Input
                       type={showPassword ? "text" : "password"}
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        setLoginError(null); // Clear error when user types
+                      }}
                       className="pl-10 pr-10 bg-white/10 border-white/20 text-white placeholder-white/50"
                       style={{
                         backdropFilter: 'blur(10px)',
@@ -235,29 +367,48 @@ export default function SignIn() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 1.2 }}
                 >
-                  <Button
+                  <motion.button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full bg-gradient-to-r from-[#8B4513] via-[#B87333] to-[#7B1FA2] hover:from-[#A0522D] hover:via-[#CD853F] hover:to-[#8B5A96] text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 active:scale-95"
-                    style={{
-                      boxShadow: '0 8px 32px rgba(139, 69, 19, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1)',
-                      backdropFilter: 'blur(10px)',
-                      fontFamily: 'Inter, sans-serif'
+                    onClick={() => {
+                      console.log('[SignIn] Button clicked', { isLoading, hasUsername: !!username, hasPassword: !!password });
                     }}
+                    whileHover={{ scale: isLoading ? 1 : 1.02 }}
+                    whileTap={{ scale: isLoading ? 1 : 0.98 }}
+                    transition={{ duration: 0.2 }}
+                    className="w-full font-medium rounded-[28px] transition-all min-h-[56px] shimmer-pulse-btn"
+                    style={{
+                      background: loginError ? 'rgba(220, 38, 38, 0.2)' : 'transparent',
+                      color: loginError ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.9)',
+                      fontSize: '18px',
+                      fontWeight: 500,
+                      height: '56px',
+                      border: loginError 
+                        ? '1px solid rgba(220, 38, 38, 0.5)' 
+                        : '1px solid rgba(255, 255, 255, 0.3)',
+                      cursor: isLoading ? 'not-allowed' : 'pointer',
+                      opacity: isLoading ? 0.7 : 1,
+                    }}
+                    aria-label="Sign in to account"
                   >
                     {isLoading ? (
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                        className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
-                      />
+                      <div className="flex items-center justify-center space-x-2">
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                          className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
+                        />
+                        <span>Signing in...</span>
+                      </div>
+                    ) : loginError ? (
+                      <span>⚠️ Log in failed!</span>
                     ) : (
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center justify-center space-x-2">
                         <LogIn className="w-4 h-4" />
                         <span>Sign In</span>
                       </div>
                     )}
-                  </Button>
+                  </motion.button>
                 </motion.div>
               </motion.form>
             </CardContent>

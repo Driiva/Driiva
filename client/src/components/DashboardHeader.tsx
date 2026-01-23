@@ -47,7 +47,7 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
     setMenuOpen(false);
     setTimeout(() => {
       logout();
-      setLocation("/signin");
+      setLocation("/welcome");
     }, 100);
   };
 

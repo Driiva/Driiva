@@ -2,8 +2,9 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { crypto } from "./lib/crypto";
-import { telematicsProcessor, TelematicsData } from "./lib/telematics";
+import { telematicsProcessor, TelematicsData, TripJSON } from "./lib/telematics";
 import { aiInsightsEngine } from "./lib/aiInsights";
+import { scoreAggregation } from "./lib/scoreAggregation";
 import { insertTripSchema, insertIncidentSchema } from "@shared/schema";
 import { z } from "zod";
 import { authService } from "./auth";
@@ -214,14 +215,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Submit trip data with rate limiting
   app.post("/api/trips", tripDataLimiter, async (req, res) => {
     try {
+      // Support both TelematicsData and TripJSON formats
       const tripData = insertTripSchema.parse(req.body);
-      const telematicsData: TelematicsData = req.body.telematicsData;
+      const telematicsDataOrJSON: TelematicsData | TripJSON = req.body.telematicsData || req.body;
       const userId = tripData.userId;
 
-      // Process telematics data with AI models
-      const metrics = await telematicsProcessor.processTrip(telematicsData, userId);
+      // Get existing trips for duplicate detection (last 24 hours)
+      const checkStart = new Date();
+      checkStart.setHours(checkStart.getHours() - 24);
+      const existingTrips = await storage.getTripsByDateRange(
+        userId,
+        checkStart,
+        new Date(),
+        100
+      );
 
-      // Create trip with processed metrics
+      // Convert to format needed for duplicate check
+      const existingTripsForCheck = existingTrips.map(t => ({
+        startTime: new Date(t.startTime),
+        endTime: new Date(t.endTime),
+        distance: Number(t.distance)
+      }));
+
+      // Process telematics data with anomaly detection
+      const metrics = await telematicsProcessor.processTrip(
+        telematicsDataOrJSON,
+        userId,
+        existingTripsForCheck
+      );
+
+      // Log anomalies if detected
+      if (metrics.anomalies.hasImpossibleSpeed || metrics.anomalies.hasGPSJumps || metrics.anomalies.isDuplicate) {
+        console.warn(`Trip anomalies detected for user ${userId}:`, {
+          impossibleSpeed: metrics.anomalies.hasImpossibleSpeed,
+          gpsJumps: metrics.anomalies.hasGPSJumps,
+          duplicate: metrics.anomalies.isDuplicate,
+          anomalyScore: metrics.anomalies.anomalyScore
+        });
+      }
+
+      // Create trip with processed metrics (distance in km)
       const trip = await storage.createTrip({
         ...tripData,
         score: metrics.score,
@@ -230,9 +263,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         speedViolations: metrics.speedViolations,
         nightDriving: metrics.nightDriving,
         sharpCorners: metrics.sharpCorners,
-        distance: metrics.distance.toString(),
+        distance: metrics.distanceKm.toString(), // Store in km
         duration: metrics.duration,
-        telematicsData: crypto.encrypt(JSON.stringify(telematicsData), process.env.ENCRYPTION_KEY || 'default-key')
+        telematicsData: crypto.encrypt(
+          JSON.stringify(telematicsDataOrJSON),
+          process.env.ENCRYPTION_KEY || 'default-key'
+        )
       });
 
       // Update user's driving profile
@@ -250,14 +286,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           nightDrivingScore: (profile.nightDrivingScore || 0) + (metrics.nightDriving ? 1 : 0),
           corneringScore: (profile.corneringScore || 0) + metrics.sharpCorners,
           totalTrips: totalTrips + 1,
-          totalMiles: (Number(profile.totalMiles) + metrics.distance).toString()
+          totalMiles: (Number(profile.totalMiles) + metrics.distanceKm).toString() // Add km
         });
 
         // Update leaderboard
         await storage.updateLeaderboard(tripData.userId, newCurrentScore);
       }
 
-      res.json({ trip, metrics });
+      res.json({
+        trip,
+        metrics: {
+          ...metrics,
+          distance_km: metrics.distanceKm,
+          avg_speed: metrics.avgSpeed,
+          harsh_braking_count: metrics.harshBrakingCount
+        },
+        anomalies: metrics.anomalies
+      });
     } catch (error: any) {
       res.status(500).json({ message: "Error processing trip: " + error.message });
     }
@@ -269,10 +314,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = parseInt(req.params.userId);
       const limit = parseInt(req.query.limit as string) || 20;
       const offset = parseInt(req.query.offset as string) || 0;
+      
+      // Support date range filtering for time-series optimization
+      if (req.query.startDate && req.query.endDate) {
+        const startDate = new Date(req.query.startDate as string);
+        const endDate = new Date(req.query.endDate as string);
+        const trips = await storage.getTripsByDateRange(userId, startDate, endDate, limit);
+        return res.json(trips);
+      }
+      
       const trips = await storage.getUserTrips(userId, limit, offset);
       res.json(trips);
     } catch (error: any) {
       res.status(500).json({ message: "Error fetching trips: " + error.message });
+    }
+  });
+
+  // Get aggregated weekly score
+  app.get("/api/scores/weekly/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const weekStart = req.query.weekStart 
+        ? new Date(req.query.weekStart as string)
+        : undefined;
+      
+      const score = await scoreAggregation.getWeeklyScore(userId, weekStart);
+      if (!score) {
+        return res.status(404).json({ message: "No trips found for this week" });
+      }
+      res.json(score);
+    } catch (error: any) {
+      res.status(500).json({ message: "Error fetching weekly score: " + error.message });
+    }
+  });
+
+  // Get aggregated monthly score
+  app.get("/api/scores/monthly/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const monthStart = req.query.monthStart 
+        ? new Date(req.query.monthStart as string)
+        : undefined;
+      
+      const score = await scoreAggregation.getMonthlyScore(userId, monthStart);
+      if (!score) {
+        return res.status(404).json({ message: "No trips found for this month" });
+      }
+      res.json(score);
+    } catch (error: any) {
+      res.status(500).json({ message: "Error fetching monthly score: " + error.message });
+    }
+  });
+
+  // Get time-series data
+  app.get("/api/scores/timeseries/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const startDate = new Date(req.query.startDate as string || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
+      const endDate = new Date(req.query.endDate as string || new Date().toISOString());
+      const granularity = (req.query.granularity as 'daily' | 'weekly' | 'monthly') || 'daily';
+      
+      const data = await scoreAggregation.getTimeSeriesData(userId, startDate, endDate, granularity);
+      res.json(data);
+    } catch (error: any) {
+      res.status(500).json({ message: "Error fetching time-series data: " + error.message });
+    }
+  });
+
+  // Get score trend
+  app.get("/api/scores/trend/:userId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const period = (req.query.period as 'weekly' | 'monthly') || 'weekly';
+      
+      const trend = await scoreAggregation.getScoreTrend(userId, period);
+      res.json(trend);
+    } catch (error: any) {
+      res.status(500).json({ message: "Error fetching score trend: " + error.message });
     }
   });
 
