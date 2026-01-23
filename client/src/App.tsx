@@ -15,6 +15,7 @@ import SignIn from './pages/signin';
 import TripRecording from './pages/trip-recording';
 import LeaderboardPage from './pages/leaderboard';
 import PolicyPage from './pages/policy';
+import AuthTest from './pages/auth-test';
 
 import { AuthProvider } from './contexts/AuthContext';
 
@@ -52,6 +53,7 @@ export default function App() {
               <Route path="/trip-recording" component={TripRecording} />
               <Route path="/leaderboard" component={LeaderboardPage} />
               <Route path="/policy" component={PolicyPage} />
+              <Route path="/auth-test" component={AuthTest} />
               
               <Route>{() => <Redirect to="/" />}</Route>
             </Switch>
