@@ -7,20 +7,20 @@ import driivaLogo from "@/assets/driiva-logo-new.png";
 import DRIBackgroundView from "@/components/DRIBackgroundView";
 
 const particles = [
-  { size: 4, left: '12%', top: '15%', color: 'rgba(0, 217, 160, 0.08)', animType: 1, delay: 0, duration: 28 },
-  { size: 3, left: '25%', top: '80%', color: 'rgba(255, 255, 255, 0.05)', animType: 2, delay: -3, duration: 35 },
-  { size: 5, left: '40%', top: '25%', color: 'rgba(120, 100, 255, 0.07)', animType: 3, delay: -7, duration: 32 },
-  { size: 4, left: '55%', top: '60%', color: 'rgba(0, 217, 160, 0.08)', animType: 4, delay: -2, duration: 38 },
-  { size: 3, left: '70%', top: '35%', color: 'rgba(255, 255, 255, 0.05)', animType: 1, delay: -5, duration: 30 },
-  { size: 5, left: '85%', top: '70%', color: 'rgba(120, 100, 255, 0.07)', animType: 2, delay: -8, duration: 26 },
-  { size: 4, left: '15%', top: '45%', color: 'rgba(0, 217, 160, 0.08)', animType: 3, delay: -4, duration: 34 },
-  { size: 3, left: '60%', top: '88%', color: 'rgba(255, 255, 255, 0.05)', animType: 4, delay: -6, duration: 40 },
-  { size: 5, left: '80%', top: '20%', color: 'rgba(0, 217, 160, 0.08)', animType: 1, delay: -1, duration: 36 },
-  { size: 4, left: '35%', top: '55%', color: 'rgba(120, 100, 255, 0.07)', animType: 2, delay: -9, duration: 28 },
-  { size: 3, left: '90%', top: '50%', color: 'rgba(255, 255, 255, 0.05)', animType: 3, delay: -12, duration: 33 },
-  { size: 5, left: '20%', top: '70%', color: 'rgba(0, 217, 160, 0.08)', animType: 4, delay: -15, duration: 29 },
-  { size: 4, left: '45%', top: '10%', color: 'rgba(120, 100, 255, 0.07)', animType: 1, delay: -10, duration: 37 },
-  { size: 3, left: '65%', top: '42%', color: 'rgba(255, 255, 255, 0.05)', animType: 2, delay: -18, duration: 31 },
+  { size: 4, left: '12%', top: '15%', color: 'rgba(0, 217, 160, 0.12)', animType: 1, delay: 0, duration: 28 },
+  { size: 3, left: '25%', top: '80%', color: 'rgba(255, 255, 255, 0.08)', animType: 2, delay: -3, duration: 35 },
+  { size: 5, left: '40%', top: '25%', color: 'rgba(120, 100, 255, 0.11)', animType: 3, delay: -7, duration: 32 },
+  { size: 4, left: '55%', top: '60%', color: 'rgba(0, 217, 160, 0.12)', animType: 4, delay: -2, duration: 38 },
+  { size: 3, left: '70%', top: '35%', color: 'rgba(255, 255, 255, 0.08)', animType: 1, delay: -5, duration: 30 },
+  { size: 5, left: '85%', top: '70%', color: 'rgba(120, 100, 255, 0.11)', animType: 2, delay: -8, duration: 26 },
+  { size: 4, left: '15%', top: '45%', color: 'rgba(0, 217, 160, 0.12)', animType: 3, delay: -4, duration: 34 },
+  { size: 3, left: '60%', top: '88%', color: 'rgba(255, 255, 255, 0.08)', animType: 4, delay: -6, duration: 40 },
+  { size: 5, left: '80%', top: '20%', color: 'rgba(0, 217, 160, 0.12)', animType: 1, delay: -1, duration: 36 },
+  { size: 4, left: '35%', top: '55%', color: 'rgba(120, 100, 255, 0.11)', animType: 2, delay: -9, duration: 28 },
+  { size: 3, left: '90%', top: '50%', color: 'rgba(255, 255, 255, 0.08)', animType: 3, delay: -12, duration: 33 },
+  { size: 5, left: '20%', top: '70%', color: 'rgba(0, 217, 160, 0.12)', animType: 4, delay: -15, duration: 29 },
+  { size: 4, left: '45%', top: '10%', color: 'rgba(120, 100, 255, 0.11)', animType: 1, delay: -10, duration: 37 },
+  { size: 3, left: '65%', top: '42%', color: 'rgba(255, 255, 255, 0.08)', animType: 2, delay: -18, duration: 31 },
 ];
 
 const features = [
@@ -71,7 +71,7 @@ export default function Welcome() {
   return (
     <div className="min-h-screen flex flex-col items-center relative overflow-hidden">
       <DRIBackgroundView variant="welcome" />
-      
+
       {/* Star Particles */}
       <div className="star-particles">
         <div className="star" style={{ top: '15%', left: '10%' }} />
@@ -87,7 +87,7 @@ export default function Welcome() {
         <div className="star" style={{ top: '60%', left: '5%' }} />
         <div className="star" style={{ top: '70%', left: '45%' }} />
       </div>
-      
+
       <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 1 }}>
         {particles.map((p, i) => (
           <div
@@ -109,19 +109,19 @@ export default function Welcome() {
       </div>
       <style>{`
         @keyframes float1 {
-          0%, 100% { transform: translate(0, 0); opacity: 0.6; }
+          0%, 100% { transform: translate(0, 0); opacity: 0.7; }
           50% { transform: translate(-40px, -80px); opacity: 1; }
         }
         @keyframes float2 {
-          0%, 100% { transform: translate(0, 0); opacity: 0.6; }
+          0%, 100% { transform: translate(0, 0); opacity: 0.7; }
           50% { transform: translate(40px, -60px); opacity: 1; }
         }
         @keyframes float3 {
-          0%, 100% { transform: translate(0, 0); opacity: 0.6; }
+          0%, 100% { transform: translate(0, 0); opacity: 0.7; }
           50% { transform: translate(-30px, 70px); opacity: 1; }
         }
         @keyframes float4 {
-          0%, 100% { transform: translate(0, 0); opacity: 0.6; }
+          0%, 100% { transform: translate(0, 0); opacity: 0.7; }
           50% { transform: translate(50px, 50px); opacity: 1; }
         }
         @media (prefers-reduced-motion: reduce) {
@@ -134,7 +134,7 @@ export default function Welcome() {
         @keyframes floatBlur {
           0%, 100% {
             transform: translate(-50%, -50%) translate(0, 0) scale(1);
-            opacity: 0.8;
+            opacity: 0.9;
           }
           25% {
             transform: translate(-50%, -50%) translate(50px, -30px) scale(1.1);
@@ -142,11 +142,11 @@ export default function Welcome() {
           }
           50% {
             transform: translate(-50%, -50%) translate(-40px, 40px) scale(0.9);
-            opacity: 0.9;
+            opacity: 0.95;
           }
           75% {
             transform: translate(-50%, -50%) translate(30px, 20px) scale(1.05);
-            opacity: 0.95;
+            opacity: 0.98;
           }
         }
       `}</style>
@@ -156,7 +156,7 @@ export default function Welcome() {
           width: '600px',
           height: '600px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(0, 217, 160, 0.25) 0%, rgba(120, 100, 255, 0.18) 50%, transparent 100%)',
+          background: 'radial-gradient(circle, rgba(0, 217, 160, 0.35) 0%, rgba(120, 100, 255, 0.28) 50%, transparent 100%)',
           filter: 'blur(80px)',
           animation: 'floatBlur 12s ease-in-out infinite',
           zIndex: 0,
@@ -166,7 +166,7 @@ export default function Welcome() {
         }}
       />
       <div className="relative z-10 flex flex-col items-center min-h-screen w-full py-8 pb-[env(safe-area-inset-bottom,24px)]" style={{ paddingTop: '80px' }}>
-        
+
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -193,7 +193,7 @@ export default function Welcome() {
               className="welcome-logo"
             />
           </div>
-          
+
           <div 
             style={{ 
               color: '#ffffff',
@@ -341,7 +341,7 @@ export default function Welcome() {
                 ›
               </button>
             </div>
-            
+
             <p
               style={{
                 marginTop: '24px',
@@ -385,7 +385,7 @@ export default function Welcome() {
           >
             Get Started
           </motion.button>
-          
+
           <motion.button
             onClick={() => setLocation('/signin')}
             whileHover={{ scale: 1.02 }}
