@@ -203,8 +203,8 @@ export default function Onboarding() {
                 transition={{ duration: 0.3 }}
                 className="flex-1"
               >
-                <h1 className="text-2xl font-bold text-white mb-2">Personal Details</h1>
-                <p className="text-white/60 mb-6">Tell us a bit about yourself</p>
+                <h1 className="text-2xl font-bold text-white mt-1 mb-1">Personal Details</h1>
+                <p className="text-white/60 mt-0 mb-6">Tell us a bit about yourself</p>
 
                 <div className="space-y-4">
                   <div>
@@ -258,8 +258,8 @@ export default function Onboarding() {
                 transition={{ duration: 0.3 }}
                 className="flex-1"
               >
-                <h1 className="text-2xl font-bold text-white mb-2">Vehicle Details</h1>
-                <p className="text-white/60 mb-6">Tell us about your car</p>
+                <h1 className="text-2xl font-bold text-white mt-1 mb-1">Vehicle Details</h1>
+                <p className="text-white/60 mt-0 mb-6">Tell us about your car</p>
 
                 <div className="space-y-4">
                   <div>
@@ -330,8 +330,8 @@ export default function Onboarding() {
                 transition={{ duration: 0.3 }}
                 className="flex-1"
               >
-                <h1 className="text-2xl font-bold text-white mb-2">Driving History</h1>
-                <p className="text-white/60 mb-6">Help us understand your experience</p>
+                <h1 className="text-2xl font-bold text-white mt-1 mb-1">Driving History</h1>
+                <p className="text-white/60 mt-0 mb-6">Help us understand your experience</p>
 
                 <div className="space-y-4">
                   <div>
@@ -392,8 +392,8 @@ export default function Onboarding() {
                 transition={{ duration: 0.3 }}
                 className="flex-1"
               >
-                <h1 className="text-2xl font-bold text-white mb-2">Terms & Conditions</h1>
-                <p className="text-white/60 mb-6">Please review and accept to continue</p>
+                <h1 className="text-2xl font-bold text-white mt-1 mb-1">Terms & Conditions</h1>
+                <p className="text-white/60 mt-0 mb-6">Please review and accept to continue</p>
 
                 {error && (
                   <div className="bg-red-500/20 border border-red-500/30 rounded-xl p-4 mb-6">
