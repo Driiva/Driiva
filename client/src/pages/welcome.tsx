@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
 import { BarChart3, Wallet, Trophy, ChevronLeft, ChevronRight } from "lucide-react";
 import driivaLogo from "@assets/driiva_logo_CLEAR_FINAL_1769199433106.png";
+import { useAuth } from "../contexts/AuthContext";
 
 const features = [
   { icon: BarChart3, title: "Track Your Driving", description: "Real-time feedback on every trip" },
@@ -12,8 +13,33 @@ const features = [
 
 export default function Welcome() {
   const [, setLocation] = useLocation();
+  const { setUser } = useAuth();
   const [currentCard, setCurrentCard] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
+
+  const launchDemoMode = () => {
+    const mockUser = {
+      id: 'demo-user-123',
+      email: 'demo@driiva.co.uk',
+      name: 'Alex Driver',
+    };
+    
+    localStorage.setItem('driiva-demo-mode', 'true');
+    localStorage.setItem('driiva-demo-user', JSON.stringify({
+      ...mockUser,
+      first_name: 'Alex',
+      last_name: 'Driver',
+      premium_amount: 1500.00,
+      personal_score: 85,
+      community_score: 78,
+      overall_score: 82,
+      created_at: new Date().toISOString()
+    }));
+    localStorage.setItem('driiva-auth-token', 'demo-token-' + Date.now());
+    
+    setUser(mockUser);
+    setLocation('/dashboard');
+  };
 
   const handleNext = useCallback(() => {
     setCurrentCard((prev) => (prev + 1) % features.length);
@@ -139,11 +165,11 @@ export default function Welcome() {
           className="welcome-buttons"
         >
           <button
-            onClick={() => setLocation('/signup')}
+            onClick={launchDemoMode}
             className="welcome-btn-primary"
-            aria-label="Get Started with Driiva"
+            aria-label="See Driiva Demo"
           >
-            Get Started
+            See Driiva
           </button>
 
           <button

@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, Loader2, Info } from "lucide-react";
 import { timing, easing, microInteractions } from "@/lib/animations";
-import { supabase } from "../lib/supabase";
+import { supabase, isSupabaseConfigured, DEMO_CREDENTIALS } from "../lib/supabase";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function Signup() {
   const [, setLocation] = useLocation();
+  const { setUser } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -14,6 +16,7 @@ export default function Signup() {
   });
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showDemoHint, setShowDemoHint] = useState(false);
 
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -50,18 +53,43 @@ export default function Signup() {
     setIsLoading(true);
 
     try {
-      const { data, error: signUpError } = await supabase.auth.signUp({
+      // Check if Supabase is properly configured
+      if (!isSupabaseConfigured) {
+        console.log('[Signup] Supabase not configured, showing demo mode hint');
+        setError("Account creation is currently unavailable. Please use the demo account to explore the app.");
+        setShowDemoHint(true);
+        return;
+      }
+
+      // Create timeout for the request
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Connection timeout')), 15000);
+      });
+
+      const signupPromise = supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
       });
 
+      const result = await Promise.race([signupPromise, timeoutPromise]) as Awaited<typeof signupPromise>;
+      const { data, error: signUpError } = result;
+
       if (signUpError) {
+        console.error('[Signup] Error:', signUpError);
+        
+        // Handle specific error types
         if (signUpError.message.includes("already registered")) {
           setError("This email is already registered. Please sign in instead.");
         } else if (signUpError.message.includes("password")) {
           setError("Password is too weak. Use at least 8 characters with a mix of letters and numbers.");
-        } else if (signUpError.message.includes("network") || signUpError.message.includes("fetch")) {
-          setError("Network error. Please check your connection and try again.");
+        } else if (
+          signUpError.message.includes("network") || 
+          signUpError.message.includes("fetch") ||
+          signUpError.message.includes("Load failed") ||
+          (signUpError as any)?.name === 'AuthRetryableFetchError'
+        ) {
+          setError("Network error. The service may be temporarily unavailable. Try the demo account instead.");
+          setShowDemoHint(true);
         } else {
           setError(signUpError.message);
         }
@@ -69,14 +97,34 @@ export default function Signup() {
       }
 
       if (data.user) {
+        console.log('[Signup] Success, redirecting to onboarding');
         setLocation("/onboarding");
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Signup error:", err);
-      setError("Something went wrong. Please try again.");
+      
+      if (err.message?.includes('timeout')) {
+        setError("Connection timeout. The service may be temporarily unavailable. Try the demo account instead.");
+        setShowDemoHint(true);
+      } else if (err.message?.includes('Load failed') || err.message?.includes('network')) {
+        setError("Network error. Please check your connection or try the demo account.");
+        setShowDemoHint(true);
+      } else {
+        setError("Something went wrong. Please try again or use the demo account.");
+        setShowDemoHint(true);
+      }
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleDemoLogin = () => {
+    setUser({
+      id: "demo-user-8",
+      email: "test@driiva.com",
+      name: "Test Driver",
+    });
+    setLocation("/dashboard");
   };
 
   const handleBack = () => {
@@ -116,14 +164,41 @@ export default function Signup() {
             <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-red-300 text-sm">{error}</p>
-              {error.includes("Network") && (
+              {(error.includes("Network") || error.includes("timeout")) && (
                 <button
-                  onClick={handleSubmit}
+                  onClick={() => {
+                    setError(null);
+                    setShowDemoHint(true);
+                  }}
                   className="text-red-400 text-sm underline mt-1"
                 >
-                  Try again
+                  Try demo mode instead
                 </button>
               )}
+            </div>
+          </motion.div>
+        )}
+
+        {showDemoHint && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-emerald-500/20 border border-emerald-500/30 rounded-xl p-4 mb-6"
+          >
+            <div className="flex items-start gap-3">
+              <Info className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-emerald-300 text-sm font-medium">Try Demo Mode</p>
+                <p className="text-emerald-300/80 text-sm mt-1">
+                  Explore Driiva with our demo account: <span className="font-mono">{DEMO_CREDENTIALS.username} / {DEMO_CREDENTIALS.password}</span>
+                </p>
+                <button
+                  onClick={handleDemoLogin}
+                  className="mt-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium rounded-lg transition-colors"
+                >
+                  Enter Demo Mode
+                </button>
+              </div>
             </div>
           </motion.div>
         )}

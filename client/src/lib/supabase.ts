@@ -3,25 +3,20 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
 
-// DEBUG: Log the credentials (safely)
-console.log('🔍 Supabase Config Check:', {
-  urlExists: !!supabaseUrl,
-  urlLength: supabaseUrl.length,
-  urlPreview: supabaseUrl.slice(0, 30) + '...',
-  keyExists: !!supabaseAnonKey,
-  keyLength: supabaseAnonKey.length,
-  keyPreview: supabaseAnonKey.slice(0, 20) + '...',
-});
+// DEBUG: Log config status (only in development, no sensitive data)
+if (import.meta.env.DEV) {
+  console.log('🔍 Supabase Config Check:', {
+    urlConfigured: !!supabaseUrl && supabaseUrl.includes('supabase.co'),
+    keyConfigured: !!supabaseAnonKey && supabaseAnonKey.length > 50,
+  });
+}
 
 // Check if config is valid
 export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey && 
   supabaseUrl.includes('supabase.co'));
 
-if (!isSupabaseConfigured) {
-  console.error('❌ Supabase not configured! Check your .env file');
-  console.error('Expected format:');
-  console.error('VITE_SUPABASE_URL=https://xxxxx.supabase.co');
-  console.error('VITE_SUPABASE_ANON_KEY=eyJxxx...');
+if (!isSupabaseConfigured && import.meta.env.DEV) {
+  console.warn('⚠️ Supabase not fully configured - demo mode available');
 }
 
 let supabaseInstance: SupabaseClient | null = null
@@ -31,7 +26,11 @@ function getSupabaseClient(): SupabaseClient {
     return supabaseInstance
   }
 
-  supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
+  // Create client even if not fully configured (allows graceful degradation)
+  const url = isSupabaseConfigured ? supabaseUrl : 'https://placeholder.supabase.co'
+  const key = isSupabaseConfigured ? supabaseAnonKey : 'placeholder-key'
+
+  supabaseInstance = createClient(url, key, {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
@@ -40,8 +39,52 @@ function getSupabaseClient(): SupabaseClient {
     }
   })
 
-  console.log('✓ Supabase client created');
+  if (import.meta.env.DEV) {
+    console.log('✓ Supabase client created');
+  }
   return supabaseInstance
 }
 
 export const supabase = getSupabaseClient()
+
+// Helper function to test Supabase connectivity
+export async function testSupabaseConnection(): Promise<{ connected: boolean; error?: string }> {
+  if (!isSupabaseConfigured) {
+    return { connected: false, error: 'Supabase not configured' }
+  }
+
+  try {
+    // Race between auth check and timeout
+    const timeoutPromise = new Promise<{ timeout: true }>((resolve) => {
+      setTimeout(() => resolve({ timeout: true }), 5000)
+    })
+    
+    const authPromise = supabase.auth.getSession().then(result => ({ ...result, timeout: false as const }))
+    
+    const result = await Promise.race([authPromise, timeoutPromise])
+    
+    if ('timeout' in result && result.timeout) {
+      return { connected: false, error: 'Connection timeout' }
+    }
+    
+    if ('error' in result && result.error) {
+      return { connected: false, error: result.error.message }
+    }
+    
+    return { connected: true }
+  } catch (err: any) {
+    return { connected: false, error: err.message || 'Unknown error' }
+  }
+}
+
+// Demo user data for fallback mode
+export const DEMO_USER = {
+  id: 'demo-user-8',
+  email: 'test@driiva.com',
+  name: 'Test Driver',
+}
+
+export const DEMO_CREDENTIALS = {
+  username: 'driiva1',
+  password: 'driiva1',
+}
