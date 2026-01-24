@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useLocation } from 'wouter';
 import { Car, FileText, AlertCircle, TrendingUp, ChevronRight } from 'lucide-react';
-import AnimatedBackground from "@/components/AnimatedBackground";
+import { PageWrapper } from '../components/PageWrapper';
+import { BottomNav } from '../components/BottomNav';
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 
@@ -119,18 +120,17 @@ export default function Dashboard() {
 
   if (loading || !authChecked) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 flex items-center justify-center">
-        <div className="relative z-10">
+      <PageWrapper>
+        <div className="flex items-center justify-center min-h-[80vh]">
           <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin" />
         </div>
-      </div>
+      </PageWrapper>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 text-white relative">
-      
-      <div className="relative z-10 px-4 py-6 pb-32 max-w-lg mx-auto">
+    <PageWrapper>
+      <div className="pb-24 text-white">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -239,40 +239,7 @@ export default function Dashboard() {
         </motion.div>
       </div>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-20">
-        <div 
-          className="flex items-center justify-around py-4 px-4 mx-4 mb-4 rounded-2xl"
-          style={{
-            background: 'rgba(0, 0, 0, 0.6)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-          }}
-        >
-          <button className="flex flex-col items-center gap-1 text-emerald-400">
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-            </svg>
-            <span className="text-xs">Home</span>
-          </button>
-          <button onClick={() => setLocation('/trips')} className="flex flex-col items-center gap-1 text-white/60 hover:text-white transition-colors">
-            <Car className="w-6 h-6" />
-            <span className="text-xs">Trips</span>
-          </button>
-          <button onClick={() => setLocation('/rewards')} className="flex flex-col items-center gap-1 text-white/60 hover:text-white transition-colors">
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className="text-xs">Rewards</span>
-          </button>
-          <button onClick={() => setLocation('/profile')} className="flex flex-col items-center gap-1 text-white/60 hover:text-white transition-colors">
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-            <span className="text-xs">Profile</span>
-          </button>
-        </div>
-      </nav>
-    </div>
+      <BottomNav />
+    </PageWrapper>
   );
 }

@@ -1,12 +1,11 @@
 import { motion, AnimatePresence } from "framer-motion";
-import DashboardHeader from "@/components/DashboardHeader";
-import BottomNavigation from "@/components/BottomNavigation";
-import DRIBackgroundView from "@/components/DRIBackgroundView";
+import { PageWrapper } from '../components/PageWrapper';
+import { BottomNav } from '../components/BottomNav';
 import PolicyDownload from "@/components/PolicyDownload";
 import DeleteAccount from "@/components/DeleteAccount";
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
-import { pageVariants, timing, easing } from "@/lib/animations";
+import { timing, easing } from "@/lib/animations";
 
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
@@ -143,20 +142,8 @@ export default function Profile() {
   };
 
   return (
-    <motion.div 
-      className="min-h-screen bg-[#0F172A] text-white pb-24"
-      variants={pageVariants}
-      initial="initial"
-      animate="animate"
-      exit="exit"
-      transition={{ duration: timing.pageTransition, ease: easing.button }}
-    >
-      <DRIBackgroundView variant="app" />
-      <div className="page-transition">
-        <DashboardHeader user={userData} />
-      
-      <div className="px-4 space-y-6">
-        {/* Page Title */}
+    <PageWrapper>
+      <div className="pb-24 text-white space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-semibold text-white">Profile</h1>
           <div className="px-3 py-1.5 bg-emerald-500/20 border border-emerald-500/30 rounded-full">
@@ -164,7 +151,6 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* User Info Card */}
         <div className="backdrop-blur-xl bg-white/[0.04] border border-white/[0.08] rounded-2xl p-6">
           <div className="flex flex-col items-center text-center mb-6">
             <div 
@@ -190,7 +176,6 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* Account Details Card */}
         <div className="backdrop-blur-xl bg-white/[0.04] border border-white/[0.08] rounded-2xl p-4">
           <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
             <span>📋</span>
@@ -206,10 +191,8 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* Coverage Type - Expandable */}
         <CoverageTypeSection currentScore={profileData.currentScore} />
 
-        {/* Driving Statistics */}
         <div className="backdrop-blur-xl bg-white/[0.04] border border-white/[0.08] rounded-2xl p-4">
           <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
             <span>🚗</span>
@@ -224,7 +207,6 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* Preferences */}
         <div className="backdrop-blur-xl bg-white/[0.04] border border-white/[0.08] rounded-2xl p-4">
           <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
             <span>⚙️</span>
@@ -273,7 +255,6 @@ export default function Profile() {
           </div>
         </div>
 
-        {/* Privacy & Data */}
         <div className="backdrop-blur-xl bg-white/[0.04] border border-white/[0.08] rounded-2xl p-4">
           <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
             <span>🔒</span>
@@ -288,9 +269,8 @@ export default function Profile() {
           </div>
         </div>
       </div>
-      </div>
 
-      <BottomNavigation />
-    </motion.div>
+      <BottomNav />
+    </PageWrapper>
   );
 }

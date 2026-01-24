@@ -2,7 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
 import { BarChart3, Wallet, Trophy } from "lucide-react";
-import driivaLogo from "@assets/driiva_logo_CLEAR_FINAL_1769199433106.png";
+import { PageWrapper } from '../components/PageWrapper';
+import { DriivaLogo } from '../components/DriivaLogo';
 import { useAuth } from "../contexts/AuthContext";
 
 const features = [
@@ -81,20 +82,15 @@ export default function Welcome() {
   const CurrentIcon = features[currentCard].icon;
 
   return (
-    <div className="welcome-page-container min-h-screen bg-gradient-to-br from-black via-gray-900 to-purple-950">
-
-      <div className="welcome-content">
+    <PageWrapper showNav={false}>
+      <div className="min-h-[calc(100vh-3rem)] flex flex-col text-white">
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-          className="flex flex-col items-center mb-2 mt-4"
+          className="flex flex-col items-center mb-2"
         >
-          <img 
-            src={driivaLogo} 
-            alt="Driiva" 
-            className="h-12 w-auto mb-0"
-          />
+          <DriivaLogo size="xl" />
 
           <p className="mt-1 mb-1 text-white/80 text-base">AI-powered, community-driven.</p>
           <p className="mt-0 mb-1 text-white/90 text-lg font-semibold">Your driving, rewarded.</p>
@@ -104,7 +100,7 @@ export default function Welcome() {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-          className="welcome-carousel-section"
+          className="flex-1 flex flex-col items-center justify-center"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
           role="region"
@@ -152,11 +148,11 @@ export default function Welcome() {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.35, duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-          className="welcome-buttons"
+          className="space-y-4 mt-auto pb-8"
         >
           <button
             onClick={launchDemoMode}
-            className="relative w-full max-w-md px-8 py-4 text-lg font-semibold text-white rounded-xl overflow-hidden group"
+            className="relative w-full px-8 py-4 text-lg font-semibold text-white rounded-xl overflow-hidden group"
             style={{
               background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.3), rgba(59, 130, 246, 0.3), rgba(6, 182, 212, 0.3))',
               backdropFilter: 'blur(10px)',
@@ -177,13 +173,13 @@ export default function Welcome() {
 
           <button
             onClick={() => setLocation('/signin')}
-            className="welcome-btn-secondary"
+            className="w-full px-8 py-4 text-base font-medium text-white/70 hover:text-white rounded-xl border border-white/20 hover:border-white/40 transition-colors"
             aria-label="Sign in to existing account"
           >
             I Already Have an Account
           </button>
         </motion.div>
       </div>
-    </div>
+    </PageWrapper>
   );
 }

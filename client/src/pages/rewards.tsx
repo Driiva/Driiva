@@ -1,11 +1,10 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import DashboardHeader from "@/components/DashboardHeader";
-import BottomNavigation from "@/components/BottomNavigation";
-import DRIBackgroundView from "@/components/DRIBackgroundView";
+import { PageWrapper } from '../components/PageWrapper';
+import { BottomNav } from '../components/BottomNav';
 import { GlassCard } from "@/components/GlassCard";
-import { Trophy, Award, Star, Target, TrendingUp, Gift, Calendar, Check } from "lucide-react";
-import { pageVariants, container, item, timing, easing, microInteractions } from "@/lib/animations";
+import { Gift, TrendingUp, Check } from "lucide-react";
+import { container, item, timing, easing, microInteractions } from "@/lib/animations";
 
 interface Achievement {
   id: number;
@@ -31,14 +30,6 @@ interface Reward {
 
 export default function Rewards() {
   const [activeTab, setActiveTab] = useState<"achievements" | "rewards" | "progress">("achievements");
-
-  const user = {
-    firstName: "Test",
-    lastName: "Driver",
-    username: "driiva1",
-    email: "test@driiva.com",
-    premiumAmount: "1840.00"
-  };
 
   const achievements: Achievement[] = [
     {
@@ -134,22 +125,10 @@ export default function Rewards() {
   };
 
   return (
-    <motion.div 
-      className="min-h-screen text-white"
-      variants={pageVariants}
-      initial="initial"
-      animate="animate"
-      exit="exit"
-      transition={{ duration: timing.pageTransition, ease: easing.button }}
-    >
-      <DRIBackgroundView variant="app" />
-      <div className="page-transition">
-        <DashboardHeader user={user} />
-      
-      <main className="px-4 pb-28">
-        {/* Header Stats */}
+    <PageWrapper>
+      <div className="pb-24 text-white">
         <motion.div 
-          className="pt-6 mb-6"
+          className="mb-6"
           variants={item}
           initial="hidden"
           animate="show"
@@ -186,7 +165,6 @@ export default function Rewards() {
           </GlassCard>
         </motion.div>
 
-        {/* Tab Navigation */}
         <motion.div 
           className="mb-6"
           initial={{ opacity: 0, y: 10 }}
@@ -211,7 +189,6 @@ export default function Rewards() {
           </GlassCard>
         </motion.div>
 
-        {/* Content */}
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -354,7 +331,6 @@ export default function Rewards() {
                 initial="hidden"
                 animate="show"
               >
-                {/* Weekly Progress */}
                 <motion.div variants={item}>
                   <GlassCard className="p-6">
                     <h3 className="font-semibold text-white text-sm mb-4 flex items-center gap-2">
@@ -395,7 +371,6 @@ export default function Rewards() {
                   </GlassCard>
                 </motion.div>
 
-                {/* Monthly Summary */}
                 <motion.div variants={item}>
                   <GlassCard className="p-6">
                     <h3 className="font-semibold text-white text-sm mb-4">Monthly Summary</h3>
@@ -426,10 +401,9 @@ export default function Rewards() {
             )}
           </motion.div>
         </AnimatePresence>
-      </main>
       </div>
         
-      <BottomNavigation />
-    </motion.div>
+      <BottomNav />
+    </PageWrapper>
   );
 }

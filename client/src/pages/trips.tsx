@@ -1,10 +1,9 @@
 import { motion } from "framer-motion";
-import DashboardHeader from "@/components/DashboardHeader";
-import BottomNavigation from "@/components/BottomNavigation";
-import DRIBackgroundView from "@/components/DRIBackgroundView";
+import { PageWrapper } from '../components/PageWrapper';
+import { BottomNav } from '../components/BottomNav';
 import { GlassCard } from "@/components/GlassCard";
 import { Map } from "lucide-react";
-import { pageVariants, container, item, timing, easing, microInteractions } from "@/lib/animations";
+import { container, item, timing, microInteractions } from "@/lib/animations";
 
 interface Trip {
   id: number;
@@ -81,30 +80,11 @@ export default function Trips() {
     }
   ];
 
-  const user = {
-    firstName: "Test",
-    lastName: "Driver",
-    username: "driiva1",
-    email: "test@driiva.com",
-    premiumAmount: "1840.00"
-  };
-
   return (
-    <motion.div 
-      className="min-h-screen text-white"
-      variants={pageVariants}
-      initial="initial"
-      animate="animate"
-      exit="exit"
-      transition={{ duration: timing.pageTransition, ease: easing.button }}
-    >
-      <DRIBackgroundView variant="app" />
-      <div className="page-transition">
-        <DashboardHeader user={user} />
-      
-      <main className="px-4 pb-28">
+    <PageWrapper>
+      <div className="pb-24 text-white">
         <motion.div 
-          className="pt-6 mb-6"
+          className="mb-6"
           variants={item}
           initial="hidden"
           animate="show"
@@ -181,10 +161,9 @@ export default function Trips() {
             </motion.div>
           ))}
         </motion.div>
-      </main>
       </div>
       
-      <BottomNavigation />
-    </motion.div>
+      <BottomNav />
+    </PageWrapper>
   );
 }
