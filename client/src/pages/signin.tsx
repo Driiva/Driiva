@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, LogIn, User, Lock, ArrowLeft } from "lucide-react";
@@ -8,9 +8,10 @@ import { useToast } from "@/hooks/use-toast";
 import signinLogo from "@assets/ii_clear_1769111905071.png";
 import { useParallax } from "@/hooks/useParallax";
 import { useAuth } from "../contexts/AuthContext";
-import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import { supabase, isSupabaseConfigured, getDemoAccount, DEMO_ACCOUNTS, testSupabaseConnection } from "@/lib/supabase";
 
 export default function SignIn() {
+  const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'demo-only'>('checking');
   const [, setLocation] = useLocation();
   const [username, setUsername] = useState("driiva1");
   const [password, setPassword] = useState("driiva1");
@@ -20,6 +21,20 @@ export default function SignIn() {
   const { toast } = useToast();
   const { ref: cardRef, style: cardParallaxStyle } = useParallax({ speed: 0.3 });
   const { setUser } = useAuth();
+
+  // Check Supabase connection status on mount
+  useEffect(() => {
+    async function checkConnection() {
+      if (!isSupabaseConfigured) {
+        setConnectionStatus('demo-only');
+        return;
+      }
+      
+      const result = await testSupabaseConnection();
+      setConnectionStatus(result.connected ? 'connected' : 'demo-only');
+    }
+    checkConnection();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     console.log('[SignIn] handleSubmit called', { username, password: '***' });
@@ -45,18 +60,25 @@ export default function SignIn() {
     setLoginError(null);
     
     try {
-      // Check for demo credentials first (bypass Supabase)
-      if (username === "driiva1" && password === "driiva1") {
-        console.log('[SignIn] Using demo credentials');
+      // Check for demo credentials first (bypass Supabase - works offline)
+      const demoAccount = getDemoAccount(username, password);
+      if (demoAccount) {
+        console.log('[SignIn] Using demo account:', demoAccount.name);
+        
+        // Store demo user data for dashboard
+        localStorage.setItem('driiva-demo-mode', 'true');
+        localStorage.setItem('driiva-demo-user', JSON.stringify(demoAccount));
+        
         setUser({
-          id: "demo-user-8",
-          email: "test@driiva.com",
-          name: "Test Driver",
+          id: demoAccount.id,
+          email: demoAccount.email,
+          name: demoAccount.name,
+          onboardingComplete: true,
         });
 
         toast({
           title: "Welcome back!",
-          description: "Signed in as Test Driver",
+          description: `Signed in as ${demoAccount.name}`,
         });
 
         setLocation("/dashboard");
@@ -66,10 +88,10 @@ export default function SignIn() {
       // Only try Supabase if properly configured
       if (!isSupabaseConfigured) {
         console.log('[SignIn] Supabase not configured, showing error');
-        setLoginError('Invalid credentials. Use demo account: driiva1 / driiva1');
+        setLoginError('Invalid credentials. Try one of the demo accounts below.');
         toast({
           title: "Sign in failed",
-          description: "Invalid credentials. Use demo account: driiva1 / driiva1",
+          description: "Invalid credentials. Try one of the demo accounts listed below.",
           variant: "destructive",
         });
         return;
@@ -185,7 +207,7 @@ export default function SignIn() {
       
       // Provide more helpful error messages
       if (errorName === 'AuthRetryableFetchError' || error?.message?.includes('Load failed') || (error as any)?.status === 0) {
-        errorMessage = "Network error - please check your connection and try again";
+        errorMessage = "Network error - try one of the demo accounts below";
         console.error('[SignIn] Network error - Supabase may be unreachable');
       } else if (error?.message?.includes('Invalid API key') || error?.message?.includes('401')) {
         errorMessage = "Configuration error: Invalid API key. Please check Supabase settings.";
@@ -286,6 +308,18 @@ export default function SignIn() {
                 <p className="mt-1 mb-1 text-center text-white/80 text-sm">
                   Sign in to your telematics insurance account
                 </p>
+                
+                {/* Connection Status Indicator */}
+                {connectionStatus === 'demo-only' && (
+                  <div className="mt-2 px-3 py-1.5 rounded-full text-xs bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                    Demo Mode Only
+                  </div>
+                )}
+                {connectionStatus === 'connected' && (
+                  <div className="mt-2 px-3 py-1.5 rounded-full text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    Connected
+                  </div>
+                )}
               </motion.div>
 
 
@@ -359,22 +393,29 @@ export default function SignIn() {
                   </div>
                 </div>
 
-                {/* Demo Account Info */}
+                {/* Demo Accounts Info */}
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 1.0 }}
-                  className="text-center p-2 rounded-lg"
+                  className="p-3 rounded-lg"
                   style={{
                     background: 'rgba(255, 255, 255, 0.05)',
                     border: '1px solid rgba(255, 255, 255, 0.1)',
                   }}
                 >
-                  <p className="text-xs text-white/70" style={{ 
+                  <p className="text-xs text-white/70 mb-2 text-center" style={{ 
                     fontFamily: 'Inter, sans-serif'
                   }}>
-                    Demo Account: <span className="font-mono text-white/90">driiva1 / driiva1</span>
+                    Beta Demo Accounts:
                   </p>
+                  <div className="grid grid-cols-2 gap-1 text-xs">
+                    <div className="text-white/60">driiva1 / driiva1</div>
+                    <div className="text-white/60">alex / alex123</div>
+                    <div className="text-white/60">sarah / sarah123</div>
+                    <div className="text-white/60">james / james123</div>
+                    <div className="text-white/60 col-span-2 text-center">test / test123</div>
+                  </div>
                 </motion.div>
 
                 {/* Sign In Button */}

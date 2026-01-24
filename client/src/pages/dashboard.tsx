@@ -21,9 +21,13 @@ interface DemoUser {
   first_name?: string;
   last_name?: string;
   premium_amount?: number;
+  premiumAmount?: number;
   personal_score?: number;
   community_score?: number;
   overall_score?: number;
+  drivingScore?: number;
+  totalMiles?: number;
+  projectedRefund?: number;
 }
 
 export default function Dashboard() {
@@ -122,8 +126,9 @@ export default function Dashboard() {
         : demoUser?.name || 'Driver')
     : (profile?.full_name || user?.name || 'Driver');
 
-  const drivingScore = isDemoMode ? (demoUser?.overall_score || 85) : 85;
-  const premiumAmount = isDemoMode ? (demoUser?.premium_amount || 1500) : 1500;
+  const drivingScore = isDemoMode ? (demoUser?.drivingScore || demoUser?.overall_score || 85) : 85;
+  const premiumAmount = isDemoMode ? (demoUser?.premiumAmount || demoUser?.premium_amount || 1500) : 1500;
+  const totalMiles = isDemoMode ? (demoUser?.totalMiles || 0) : 0;
   
   const calculateSurplus = (score: number, premium: number): number => {
     if (score < 70) return 0;
@@ -134,7 +139,10 @@ export default function Dashboard() {
     return Math.round((totalPercentage / 100) * premium);
   };
 
-  const surplusProjection = calculateSurplus(drivingScore, premiumAmount);
+  // Use demo projectedRefund if available, otherwise calculate
+  const surplusProjection = isDemoMode && demoUser?.projectedRefund 
+    ? demoUser.projectedRefund 
+    : calculateSurplus(drivingScore, premiumAmount);
 
   if (loading || !authChecked) {
     return (
@@ -203,13 +211,29 @@ export default function Dashboard() {
             <h2 className="text-lg font-semibold text-white">Your Trips</h2>
             <Car className="w-5 h-5 text-white/60" />
           </div>
-          <div className="flex flex-col items-center justify-center py-8 text-center">
-            <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-4">
-              <Car className="w-8 h-8 text-white/40" />
+          {totalMiles > 0 ? (
+            <div className="py-4">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-white/60 text-sm">Total Miles</span>
+                <span className="text-white font-semibold">{totalMiles.toLocaleString()} mi</span>
+              </div>
+              <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"
+                  style={{ width: `${Math.min((totalMiles / 3000) * 100, 100)}%` }}
+                />
+              </div>
+              <p className="text-white/40 text-xs mt-2">Track record since joining Driiva</p>
             </div>
-            <p className="text-white/60 text-sm">Start driving to see your trips</p>
-            <p className="text-white/40 text-xs mt-1">Your journey data will appear here</p>
-          </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-8 text-center">
+              <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-4">
+                <Car className="w-8 h-8 text-white/40" />
+              </div>
+              <p className="text-white/60 text-sm">Start driving to see your trips</p>
+              <p className="text-white/40 text-xs mt-1">Your journey data will appear here</p>
+            </div>
+          )}
         </motion.div>
 
         <motion.div

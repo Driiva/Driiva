@@ -77,14 +77,83 @@ export async function testSupabaseConnection(): Promise<{ connected: boolean; er
   }
 }
 
-// Demo user data for fallback mode
-export const DEMO_USER = {
-  id: 'demo-user-8',
-  email: 'test@driiva.com',
-  name: 'Test Driver',
-}
+// Demo accounts for beta users (works without Supabase)
+export const DEMO_ACCOUNTS: Record<string, {
+  id: string;
+  email: string;
+  name: string;
+  password: string;
+  drivingScore: number;
+  premiumAmount: number;
+  totalMiles: number;
+  projectedRefund: number;
+}> = {
+  'driiva1': {
+    id: 'demo-user-1',
+    email: 'demo@driiva.co.uk',
+    name: 'Demo Driver',
+    password: 'driiva1',
+    drivingScore: 85,
+    premiumAmount: 1500,
+    totalMiles: 1247,
+    projectedRefund: 150,
+  },
+  'alex': {
+    id: 'demo-user-2',
+    email: 'alex@driiva.co.uk',
+    name: 'Alex Thompson',
+    password: 'alex123',
+    drivingScore: 92,
+    premiumAmount: 1200,
+    totalMiles: 2340,
+    projectedRefund: 180,
+  },
+  'sarah': {
+    id: 'demo-user-3',
+    email: 'sarah@driiva.co.uk',
+    name: 'Sarah Mitchell',
+    password: 'sarah123',
+    drivingScore: 78,
+    premiumAmount: 1800,
+    totalMiles: 890,
+    projectedRefund: 126,
+  },
+  'james': {
+    id: 'demo-user-4',
+    email: 'james@driiva.co.uk',
+    name: 'James Wilson',
+    password: 'james123',
+    drivingScore: 88,
+    premiumAmount: 1400,
+    totalMiles: 1650,
+    projectedRefund: 154,
+  },
+  'test': {
+    id: 'demo-user-5',
+    email: 'test@driiva.co.uk',
+    name: 'Test User',
+    password: 'test123',
+    drivingScore: 72,
+    premiumAmount: 1840,
+    totalMiles: 560,
+    projectedRefund: 100,
+  },
+};
+
+// Legacy exports for backward compatibility
+export const DEMO_USER = DEMO_ACCOUNTS['driiva1'];
 
 export const DEMO_CREDENTIALS = {
   username: 'driiva1',
   password: 'driiva1',
+};
+
+// Helper to check if credentials match a demo account
+export function getDemoAccount(username: string, password: string) {
+  const normalizedUsername = username.toLowerCase().replace('@driiva.co.uk', '').trim();
+  const account = DEMO_ACCOUNTS[normalizedUsername];
+  if (account && account.password === password) {
+    return account;
+  }
+  return null;
 }
