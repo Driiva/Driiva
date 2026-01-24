@@ -1,6 +1,7 @@
 export const theme = {
   gradients: {
-    page: 'bg-gradient-to-br from-[#0a0a1a] via-[#1a1a3a] to-[#0a1628]',
+    page: 'bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900',
+    auth: 'bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900',
     card: 'bg-gradient-to-br from-white/5 to-white/10',
   },
   

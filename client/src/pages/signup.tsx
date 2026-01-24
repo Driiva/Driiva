@@ -97,7 +97,35 @@ export default function Signup() {
       }
 
       if (data.user) {
-        console.log('[Signup] Success, redirecting to onboarding');
+        console.log('[Signup] Success, creating profile and redirecting to onboarding');
+        
+        // Create profile for the new user
+        try {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert({
+              id: data.user.id,
+              email: data.user.email || formData.email,
+              full_name: data.user.email?.split('@')[0] || 'User',
+              onboarding_complete: false,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            });
+          
+          if (profileError) {
+            console.warn('[Signup] Profile creation error (non-fatal):', profileError);
+          }
+        } catch (profileErr) {
+          console.warn('[Signup] Profile creation failed (non-fatal):', profileErr);
+        }
+        
+        // Set user in auth context
+        setUser({
+          id: data.user.id,
+          email: data.user.email || formData.email,
+          name: data.user.email?.split('@')[0] || 'User',
+        });
+        
         setLocation("/onboarding");
       }
     } catch (err: any) {

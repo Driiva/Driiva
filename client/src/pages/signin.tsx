@@ -103,68 +103,59 @@ export default function SignIn() {
       if (!error && data.user) {
         console.log('[SignIn] Authentication successful, user:', data.user.id);
         
-        // Ensure profile exists - check and create if needed
+        // Check if profile exists and get onboarding status
+        let onboardingComplete = false;
+        let profileExists = false;
+        
         try {
           console.log('[SignIn] Checking for existing profile...');
           
-          // Check if profile exists (try both id and user_id patterns)
+          // Check if profile exists and get onboarding status
           const { data: existingProfile, error: profileCheckError } = await supabase
             .from('profiles')
-            .select('id')
-            .or(`id.eq.${data.user.id},user_id.eq.${data.user.id}`)
+            .select('id, onboarding_complete')
+            .eq('id', data.user.id)
             .maybeSingle();
 
           if (profileCheckError && profileCheckError.code !== 'PGRST116') {
             console.warn('[SignIn] Profile check error (non-fatal):', profileCheckError);
           }
 
-          if (!existingProfile) {
-            // Profile doesn't exist, create it
+          if (existingProfile) {
+            profileExists = true;
+            onboardingComplete = existingProfile.onboarding_complete === true;
+            console.log('[SignIn] Profile found, onboarding_complete:', onboardingComplete);
+          } else {
+            // Profile doesn't exist, create it with onboarding_complete = false
             console.log('[SignIn] Profile not found, creating...');
             
-            // Try with id as primary key (standard Supabase pattern)
-            const profileData: any = {
+            const profileData = {
+              id: data.user.id,
               email: data.user.email || username,
               full_name: data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'User',
+              onboarding_complete: false,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
             };
 
-            // Try id first (most common Supabase pattern)
             const { error: insertError } = await supabase
               .from('profiles')
-              .insert({
-                id: data.user.id,
-                ...profileData,
-              });
+              .insert(profileData);
 
             if (insertError) {
-              // If id fails, try user_id instead
-              console.log('[SignIn] Insert with id failed, trying user_id...', insertError.message);
-              const { error: insertByUserIdError } = await supabase
-                .from('profiles')
-                .insert({
-                  user_id: data.user.id,
-                  ...profileData,
-                });
-
-              if (insertByUserIdError) {
-                console.error('[SignIn] Failed to create profile with both methods:', insertByUserIdError);
-              } else {
-                console.log('[SignIn] Profile created successfully with user_id');
-              }
+              console.error('[SignIn] Failed to create profile:', insertError);
             } else {
-              console.log('[SignIn] Profile created successfully with id');
+              console.log('[SignIn] Profile created successfully');
+              profileExists = true;
+              onboardingComplete = false;
             }
-          } else {
-            console.log('[SignIn] Profile already exists');
           }
         } catch (profileErr) {
           console.error('[SignIn] Profile check/create error:', profileErr);
-          // Don't block login if profile creation fails
+          // Don't block login if profile check fails, default to dashboard
         }
 
-        // Supabase auth succeeded - populate user data
+        // Set user in auth context
         setUser({
           id: data.user.id,
           email: data.user.email || username,
@@ -175,8 +166,15 @@ export default function SignIn() {
           title: "Welcome back!",
           description: "Successfully signed in",
         });
-        console.log('[SignIn] Redirecting to dashboard');
-        setLocation("/dashboard");
+
+        // Route based on onboarding status
+        if (onboardingComplete) {
+          console.log('[SignIn] Redirecting to dashboard (onboarding complete)');
+          setLocation("/dashboard");
+        } else {
+          console.log('[SignIn] Redirecting to onboarding (onboarding not complete)');
+          setLocation("/onboarding");
+        }
         return;
       }
 

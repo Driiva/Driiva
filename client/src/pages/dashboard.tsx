@@ -59,30 +59,48 @@ export default function Dashboard() {
 
     async function checkAuthAndFetchProfile() {
       try {
-        if (user) {
-          setAuthChecked(true);
-          setLoading(false);
-          return;
-        }
-
         const { data: { user: authUser } } = await supabase.auth.getUser();
         
         if (!authUser) {
+          // No Supabase session - check if we have a context user (demo mode)
+          if (user) {
+            setAuthChecked(true);
+            setLoading(false);
+            return;
+          }
+          console.log('[Dashboard] No session, redirecting to signin');
           setLocation('/signin');
           return;
         }
 
-        const { data: profileData } = await supabase
+        // Fetch profile and check onboarding status
+        const { data: profileData, error: profileError } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', authUser.id)
-          .single();
+          .maybeSingle();
+
+        if (profileError) {
+          console.error('[Dashboard] Profile fetch error:', profileError);
+        }
 
         if (profileData) {
           setProfile(profileData);
+          
+          // If onboarding not complete, redirect to onboarding
+          if (!profileData.onboarding_complete) {
+            console.log('[Dashboard] Onboarding not complete, redirecting to onboarding');
+            setLocation('/onboarding');
+            return;
+          }
+        } else {
+          // No profile exists, redirect to onboarding
+          console.log('[Dashboard] No profile found, redirecting to onboarding');
+          setLocation('/onboarding');
+          return;
         }
       } catch (error) {
-        console.error('Auth/profile fetch error:', error);
+        console.error('[Dashboard] Auth/profile fetch error:', error);
         if (user) {
           setAuthChecked(true);
           setLoading(false);
