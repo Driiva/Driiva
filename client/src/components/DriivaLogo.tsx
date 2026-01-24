@@ -1,0 +1,28 @@
+import driivaLogoPath from '@assets/driiva_logo_CLEAR_FINAL_1769199433106.png';
+
+interface DriivaLogoProps {
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+}
+
+export const DriivaLogo: React.FC<DriivaLogoProps> = ({ size = 'lg' }) => {
+  const sizeClasses = {
+    sm: 'h-8',
+    md: 'h-12',
+    lg: 'h-24',
+    xl: 'h-32',
+  };
+  
+  return (
+    <div className="flex flex-col items-center mt-4 mb-2">
+      <img 
+        src={driivaLogoPath}
+        alt="Driiva"
+        className={`${sizeClasses[size]} w-auto object-contain object-center`}
+        style={{ 
+          imageRendering: 'crisp-edges',
+          objectFit: 'contain',
+        }}
+      />
+    </div>
+  );
+};
