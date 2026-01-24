@@ -202,11 +202,27 @@ Key architectural decisions favor real-time user experience, data privacy, and s
   - API connectivity verified (200 OK responses)
   - Ready for demo presentation
 
-### Test User Data
-**Username:** driiva1  
-**Password:** driiva1  
-**Premium:** £500/year  
-**Current Score:** 89/100  
-**Projected Annual Refund:** £50.06 (10% of premium)  
-**Total Miles:** 1,107.70  
-**Achievements:** Long Distance Driver, Consistent Driver
+### January 24, 2026 - Beta Ready Demo Accounts
+- ✅ **DEMO ACCOUNTS SYSTEM**: Added 5 demo accounts for beta users (work without Supabase)
+  - driiva1 / driiva1 - Demo Driver (Score: 85, Miles: 1,247, Refund: £150)
+  - alex / alex123 - Alex Thompson (Score: 92, Miles: 2,340, Refund: £180)
+  - sarah / sarah123 - Sarah Mitchell (Score: 78, Miles: 890, Refund: £126)
+  - james / james123 - James Wilson (Score: 88, Miles: 1,650, Refund: £154)
+  - test / test123 - Test User (Score: 72, Miles: 560, Refund: £100)
+- ✅ **CONNECTION STATUS INDICATOR**: Added user-facing Supabase status on signin page
+  - "Demo Mode Only" (amber badge) when Supabase unavailable
+  - "Connected" (green badge) when Supabase connected
+- ✅ **DASHBOARD IMPROVEMENTS**: Demo data fully wired
+  - Total Miles displayed with progress bar
+  - Projected Refund using demo account data
+  - Driving Score with appropriate messaging
+- ✅ **ERROR MESSAGING**: Updated to direct users to demo accounts when Supabase unreachable
+
+### Beta Demo Accounts (Works Offline)
+| Username | Password | Name | Score | Miles | Refund |
+|----------|----------|------|-------|-------|--------|
+| driiva1 | driiva1 | Demo Driver | 85 | 1,247 | £150 |
+| alex | alex123 | Alex Thompson | 92 | 2,340 | £180 |
+| sarah | sarah123 | Sarah Mitchell | 78 | 890 | £126 |
+| james | james123 | James Wilson | 88 | 1,650 | £154 |
+| test | test123 | Test User | 72 | 560 | £100 |
