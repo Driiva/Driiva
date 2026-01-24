@@ -1,4 +1,4 @@
-import driivaLogoPath from '@assets/driiva_logo_CLEAR_FINAL_1769199433106.png';
+import driivaLogoPath from '@assets/driiva_logo_CLEAR_FINAL_1769213316951.png';
 
 interface DriivaLogoProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
@@ -17,10 +17,11 @@ export const DriivaLogo: React.FC<DriivaLogoProps> = ({ size = 'lg' }) => {
       <img 
         src={driivaLogoPath}
         alt="Driiva"
-        className={`${sizeClasses[size]} w-auto object-contain object-center`}
+        className={`${sizeClasses[size]} w-auto`}
         style={{ 
-          imageRendering: 'crisp-edges',
           objectFit: 'contain',
+          clipPath: 'inset(35% 5% 35% 5%)',
+          transform: 'scale(1.6)',
         }}
       />
     </div>

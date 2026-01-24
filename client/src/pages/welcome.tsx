@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
 import { BarChart3, Wallet, Trophy } from "lucide-react";
-import { PageWrapper } from '../components/PageWrapper';
 import { DriivaLogo } from '../components/DriivaLogo';
 import { useAuth } from "../contexts/AuthContext";
 
@@ -82,18 +81,17 @@ export default function Welcome() {
   const CurrentIcon = features[currentCard].icon;
 
   return (
-    <PageWrapper showNav={false}>
-      <div className="min-h-[calc(100vh-3rem)] flex flex-col text-white">
+    <div className="min-h-screen bg-gradient-to-br from-[#050510] via-[#0a0a20] to-[#0a1525]">
+      <div className="max-w-md mx-auto px-4 py-6 min-h-screen flex flex-col text-white">
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-          className="flex flex-col items-center mb-2"
+          className="flex flex-col items-center gap-1"
         >
           <DriivaLogo size="xl" />
-
-          <p className="mt-1 mb-1 text-white/80 text-base">AI-powered, community-driven.</p>
-          <p className="mt-0 mb-1 text-white/90 text-lg font-semibold">Your driving, rewarded.</p>
+          <h1 className="text-xl font-bold text-white mt-0">AI-powered, community-driven</h1>
+          <p className="text-cyan-400 text-sm">Your driving, rewarded.</p>
         </motion.div>
 
         <motion.div
@@ -152,34 +150,28 @@ export default function Welcome() {
         >
           <button
             onClick={launchDemoMode}
-            className="relative w-full px-8 py-4 text-lg font-semibold text-white rounded-xl overflow-hidden group"
+            className="relative w-full max-w-xs mx-auto block px-8 py-4 text-lg font-semibold text-white rounded-xl overflow-hidden group transition-all duration-300 hover:scale-105"
             style={{
-              background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.3), rgba(59, 130, 246, 0.3), rgba(6, 182, 212, 0.3))',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(6, 182, 212, 0.4)',
-              boxShadow: '0 8px 32px rgba(6, 182, 212, 0.2)',
+              background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(59, 130, 246, 0.3))',
+              backdropFilter: 'blur(12px)',
+              border: '1px solid rgba(6, 182, 212, 0.3)',
+              boxShadow: '0 0 30px rgba(6, 182, 212, 0.15), inset 0 1px 0 rgba(255,255,255,0.1)',
             }}
             aria-label="See Driiva Demo"
           >
             <span className="relative z-10">See Driiva</span>
-            <div
-              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-              style={{
-                background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent)',
-                animation: 'shimmer-btn 2s infinite',
-              }}
-            ></div>
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
           </button>
 
           <button
             onClick={() => setLocation('/signin')}
-            className="w-full px-8 py-4 text-base font-medium text-white/70 hover:text-white rounded-xl border border-white/20 hover:border-white/40 transition-colors"
+            className="w-full max-w-xs mx-auto block px-8 py-4 text-base font-medium text-white/70 hover:text-white rounded-xl border border-white/20 hover:border-white/40 transition-colors"
             aria-label="Sign in to existing account"
           >
             I Already Have an Account
           </button>
         </motion.div>
       </div>
-    </PageWrapper>
+    </div>
   );
 }

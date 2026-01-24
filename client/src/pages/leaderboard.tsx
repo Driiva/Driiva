@@ -1,10 +1,10 @@
-import React from 'react';
 import { Link } from 'wouter';
 import { ArrowLeft, Trophy, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { PageWrapper } from '../components/PageWrapper';
+import { BottomNav } from '../components/BottomNav';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function LeaderboardPage() {
-  // Extended leaderboard data with GDPR-compliant usernames and weekly changes
   const fullLeaderboard = [
     { rank: 1, username: "speedracer42", score: 87, weeklyChange: -2, changeType: "down" },
     { rank: 2, username: "safejenny", score: 85, weeklyChange: +3, changeType: "up" },
@@ -47,33 +47,31 @@ export default function LeaderboardPage() {
   };
 
   return (
-    <div className="min-h-screen text-white">
-      {/* Header */}
-      <header className="sticky top-0 z-40 glass-morphism">
-        <div className="px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Link href="/">
-              <button className="w-10 h-10 glass-morphism rounded-full flex items-center justify-center hover:bg-white/20 transition-all duration-200">
-                <ArrowLeft className="w-5 h-5 text-white" />
-              </button>
-            </Link>
-            <div>
-              <h1 className="text-lg font-semibold text-white">Community Leaderboard</h1>
-              <p className="text-xs text-gray-300">All Driivas • This Week</p>
+    <PageWrapper>
+      <div className="pb-24 text-white">
+        <header className="mb-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Link href="/dashboard">
+                <button className="w-10 h-10 backdrop-blur-xl bg-white/10 border border-white/10 rounded-full flex items-center justify-center hover:bg-white/20 transition-all duration-200">
+                  <ArrowLeft className="w-5 h-5 text-white" />
+                </button>
+              </Link>
+              <div>
+                <h1 className="text-lg font-semibold text-white">Community Leaderboard</h1>
+                <p className="text-xs text-gray-300">All Driivas • This Week</p>
+              </div>
+            </div>
+            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#06B6D4] to-[#3B82F6] flex items-center justify-center">
+              <Trophy className="w-5 h-5 text-white" />
             </div>
           </div>
-          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#06B6D4] to-[#3B82F6] flex items-center justify-center">
-            <Trophy className="w-5 h-5 text-white" />
-          </div>
-        </div>
-      </header>
+        </header>
 
-      <main className="px-4 pb-20">
-        {/* Weekly Summary */}
-        <div className="pt-4 mb-6">
-          <Card className="glass-morphism border-gray-700">
+        <div className="mb-6">
+          <Card className="backdrop-blur-xl bg-white/[0.04] border border-white/[0.08]">
             <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
+              <CardTitle className="flex items-center space-x-2 text-white">
                 <Trophy className="w-5 h-5 text-yellow-400" />
                 <span>Weekly Challenge</span>
               </CardTitle>
@@ -97,10 +95,9 @@ export default function LeaderboardPage() {
           </Card>
         </div>
 
-        {/* Leaderboard */}
-        <Card className="glass-morphism border-gray-700">
+        <Card className="backdrop-blur-xl bg-white/[0.04] border border-white/[0.08]">
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
+            <CardTitle className="flex items-center justify-between text-white">
               <span>Rankings</span>
               <div className="text-xs text-gray-400">Score • Change</div>
             </CardTitle>
@@ -150,10 +147,9 @@ export default function LeaderboardPage() {
             </div>
           </CardContent>
         </Card>
+      </div>
 
-        {/* Bottom padding for safe area */}
-        <div className="h-8" />
-      </main>
-    </div>
+      <BottomNav />
+    </PageWrapper>
   );
 }
