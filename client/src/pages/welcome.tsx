@@ -161,26 +161,27 @@ export default function Welcome() {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.35, duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-          className="space-y-4 mt-auto pb-8"
+          className="flex flex-col items-center gap-3 mt-auto pb-8"
         >
           <button
             onClick={launchDemoMode}
-            className="relative w-full max-w-xs mx-auto block px-8 py-4 text-lg font-semibold text-white rounded-xl overflow-hidden group transition-all duration-300 hover:scale-105"
-            style={{
-              background: 'linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(59, 130, 246, 0.3))',
-              backdropFilter: 'blur(12px)',
-              border: '1px solid rgba(6, 182, 212, 0.3)',
-              boxShadow: '0 0 30px rgba(6, 182, 212, 0.15), inset 0 1px 0 rgba(255,255,255,0.1)',
-            }}
+            className="hero-cta-primary hero-cta-green"
+            aria-label="Get Started"
+          >
+            Get Started
+          </button>
+
+          <button
+            onClick={launchDemoMode}
+            className="hero-cta-primary hero-cta-blue"
             aria-label="See Driiva Demo"
           >
-            <span className="relative z-10">See Driiva</span>
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+            See Driiva
           </button>
 
           <button
             onClick={() => setLocation('/signin')}
-            className="w-full max-w-xs mx-auto block px-8 py-4 text-base font-medium text-white/70 hover:text-white rounded-xl border border-white/20 hover:border-white/40 transition-colors"
+            className="hero-cta-tertiary"
             aria-label="Sign in to existing account"
           >
             I Already Have an Account

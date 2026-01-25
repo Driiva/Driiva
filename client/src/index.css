@@ -885,17 +885,17 @@ select:focus {
 
 .welcome-card-new {
   width: 100%;
-  height: 140px;
+  height: 110px;
   position: relative;
   overflow: hidden;
-  border-radius: 32px;
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  background: rgba(20, 20, 30, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 
-    0 0 40px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    0 4px 24px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .welcome-card-content {
@@ -906,27 +906,93 @@ select:focus {
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 20px;
+  padding: 16px;
 }
 
 .welcome-card-icon {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   color: #10b981;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .welcome-card-title {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 600;
   color: white;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .welcome-card-desc {
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.75);
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
   line-height: 1.3;
+}
+
+.hero-cta-primary {
+  width: 100%;
+  max-width: 320px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  border-radius: 14px;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-cta-primary:active {
+  transform: scale(0.97);
+}
+
+.hero-cta-blue {
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #1e3a8a 100%);
+  box-shadow: 0 4px 16px rgba(59, 130, 246, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.hero-cta-blue:hover {
+  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #1e40af 100%);
+}
+
+.hero-cta-green {
+  background: linear-gradient(135deg, #065f46 0%, #059669 50%, #047857 100%);
+  box-shadow: 0 4px 16px rgba(5, 150, 105, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.hero-cta-green:hover {
+  background: linear-gradient(135deg, #047857 0%, #10b981 50%, #065f46 100%);
+}
+
+.hero-cta-tertiary {
+  width: 100%;
+  max-width: 320px;
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  cursor: pointer;
+  transition: transform 0.15s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.hero-cta-tertiary:hover {
+  color: rgba(255, 255, 255, 0.9);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.hero-cta-tertiary:active {
+  transform: scale(0.97);
 }
 
 .welcome-nav {
