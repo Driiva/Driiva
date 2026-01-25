@@ -136,7 +136,7 @@ export default function Welcome() {
             </AnimatePresence>
           </div>
 
-          <div className="flex items-center justify-center gap-4 mt-6">
+          <div className="flex items-center justify-center gap-4 mt-5">
             <button
               onClick={handlePrev}
               className="text-white/60 hover:text-white text-2xl transition-colors"
@@ -161,7 +161,8 @@ export default function Welcome() {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.35, duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-          className="flex flex-col items-center gap-3 mt-auto pb-8"
+          className="flex flex-col items-center gap-3 pb-8"
+          style={{ marginTop: 18 }}
         >
           <button
             onClick={launchDemoMode}
