@@ -6,32 +6,32 @@ interface DriivaLogoProps {
 
 export const DriivaLogo: React.FC<DriivaLogoProps> = ({ size = 'lg' }) => {
   const sizeConfig = {
-    sm: { height: 32, containerHeight: 20 },
-    md: { height: 48, containerHeight: 30 },
-    lg: { height: 96, containerHeight: 60 },
-    xl: { height: 140, containerHeight: 90 },
+    sm: { width: 100 },
+    md: { width: 140 },
+    lg: { width: 180 },
+    xl: { width: 220 },
   };
   
   const config = sizeConfig[size];
   
   return (
     <div 
-      className="flex items-center justify-center overflow-hidden"
+      className="flex items-center justify-center"
       style={{ 
-        height: config.containerHeight,
-        marginTop: 16,
-        marginBottom: 3,
+        marginTop: 32,
+        marginBottom: 14,
+        display: 'block',
+        lineHeight: 0,
       }}
     >
       <img 
         src={driivaLogoPath}
         alt="Driiva"
         style={{ 
-          height: config.height,
-          width: 'auto',
+          width: config.width,
+          height: 'auto',
           objectFit: 'contain',
-          objectPosition: 'center',
-          transform: 'scale(1.85)',
+          display: 'block',
         }}
       />
     </div>

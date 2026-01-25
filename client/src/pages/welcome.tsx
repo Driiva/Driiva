@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { BarChart3, Wallet, Trophy } from "lucide-react";
 import { DriivaLogo } from '../components/DriivaLogo';
 import { useAuth } from "../contexts/AuthContext";
-import heroBackground from '@assets/hero-background.png';
+import heroBackground from '../assets/hero-background.png';
 
 const features = [
   { icon: BarChart3, title: "Track Your Driving", description: "Real-time feedback on every trip" },
@@ -105,7 +105,7 @@ export default function Welcome() {
           className="flex flex-col items-center"
         >
           <DriivaLogo size="xl" />
-          <h1 className="text-xl font-bold text-white" style={{ marginTop: 12 }}>AI-powered, community-driven.</h1>
+          <h1 className="text-xl font-bold text-white" style={{ marginTop: 0 }}>AI-powered, community-driven.</h1>
           <p className="text-cyan-400 text-sm mt-1">Your driving, rewarded.</p>
         </motion.div>
 
