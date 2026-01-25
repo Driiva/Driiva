@@ -4,6 +4,7 @@ import { useLocation } from "wouter";
 import { BarChart3, Wallet, Trophy } from "lucide-react";
 import { DriivaLogo } from '../components/DriivaLogo';
 import { useAuth } from "../contexts/AuthContext";
+import heroBackground from '@assets/hero-background.png';
 
 const features = [
   { icon: BarChart3, title: "Track Your Driving", description: "Real-time feedback on every trip" },
@@ -81,17 +82,31 @@ export default function Welcome() {
   const CurrentIcon = features[currentCard].icon;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900">
-      <div className="max-w-md mx-auto px-4 py-6 min-h-screen flex flex-col text-white">
+    <div className="relative min-h-screen overflow-hidden">
+      <div 
+        className="absolute inset-0 z-0"
+        style={{
+          backgroundImage: `url(${heroBackground})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
+      />
+      
+      <div className="hero-orb hero-orb-1" />
+      <div className="hero-orb hero-orb-2" />
+      <div className="hero-orb hero-orb-3" />
+      
+      <div className="relative z-10 max-w-md mx-auto px-4 py-6 min-h-screen flex flex-col text-white">
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-          className="flex flex-col items-center gap-1"
+          className="flex flex-col items-center"
         >
           <DriivaLogo size="xl" />
-          <h1 className="text-xl font-bold text-white mt-0">AI-powered, community-driven</h1>
-          <p className="text-cyan-400 text-sm">Your driving, rewarded.</p>
+          <h1 className="text-xl font-bold text-white" style={{ marginTop: 12 }}>AI-powered, community-driven.</h1>
+          <p className="text-cyan-400 text-sm mt-1">Your driving, rewarded.</p>
         </motion.div>
 
         <motion.div

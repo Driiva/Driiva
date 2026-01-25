@@ -1196,3 +1196,89 @@ body:has(.welcome-page-container) .animated-bg-container {
   0% { transform: translateX(-100%); }
   100% { transform: translateX(100%); }
 }
+
+/* ============================================
+   HERO ORB ANIMATIONS - Welcome Page
+   ============================================ */
+
+.hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.35;
+  pointer-events: none;
+  z-index: 1;
+  will-change: transform;
+}
+
+.hero-orb-1 {
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(circle, rgba(255, 120, 50, 0.6) 0%, rgba(200, 80, 40, 0.3) 50%, transparent 70%);
+  top: 8%;
+  left: -5%;
+  animation: heroOrbFloat1 22s ease-in-out infinite;
+}
+
+.hero-orb-2 {
+  width: 320px;
+  height: 320px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.5) 0%, rgba(88, 28, 135, 0.3) 50%, transparent 70%);
+  top: 45%;
+  right: -10%;
+  animation: heroOrbFloat2 26s ease-in-out infinite;
+}
+
+.hero-orb-3 {
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(220, 90, 70, 0.45) 0%, rgba(139, 92, 246, 0.25) 50%, transparent 70%);
+  bottom: 15%;
+  left: 10%;
+  animation: heroOrbFloat3 20s ease-in-out infinite;
+}
+
+@keyframes heroOrbFloat1 {
+  0%, 100% { 
+    transform: translate(0, 0) scale(1);
+  }
+  33% { 
+    transform: translate(25px, 30px) scale(1.08);
+  }
+  66% { 
+    transform: translate(-15px, -20px) scale(0.95);
+  }
+}
+
+@keyframes heroOrbFloat2 {
+  0%, 100% { 
+    transform: translate(0, 0) scale(1);
+  }
+  25% { 
+    transform: translate(-30px, 40px) scale(1.1);
+  }
+  50% { 
+    transform: translate(20px, -30px) scale(0.92);
+  }
+  75% { 
+    transform: translate(-10px, 20px) scale(1.05);
+  }
+}
+
+@keyframes heroOrbFloat3 {
+  0%, 100% { 
+    transform: translate(0, 0) scale(1);
+  }
+  40% { 
+    transform: translate(35px, -25px) scale(1.12);
+  }
+  70% { 
+    transform: translate(-20px, 15px) scale(0.9);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-orb {
+    animation: none !important;
+  }
+}

@@ -5,23 +5,33 @@ interface DriivaLogoProps {
 }
 
 export const DriivaLogo: React.FC<DriivaLogoProps> = ({ size = 'lg' }) => {
-  const sizeClasses = {
-    sm: 'h-8',
-    md: 'h-12',
-    lg: 'h-24',
-    xl: 'h-32',
+  const sizeConfig = {
+    sm: { height: 32, containerHeight: 20 },
+    md: { height: 48, containerHeight: 30 },
+    lg: { height: 96, containerHeight: 60 },
+    xl: { height: 140, containerHeight: 90 },
   };
   
+  const config = sizeConfig[size];
+  
   return (
-    <div className="flex flex-col items-center mt-4 mb-2">
+    <div 
+      className="flex items-center justify-center overflow-hidden"
+      style={{ 
+        height: config.containerHeight,
+        marginTop: 16,
+        marginBottom: 3,
+      }}
+    >
       <img 
         src={driivaLogoPath}
         alt="Driiva"
-        className={`${sizeClasses[size]} w-auto`}
         style={{ 
+          height: config.height,
+          width: 'auto',
           objectFit: 'contain',
-          clipPath: 'inset(35% 5% 35% 5%)',
-          transform: 'scale(1.6)',
+          objectPosition: 'center',
+          transform: 'scale(1.85)',
         }}
       />
     </div>
