@@ -255,7 +255,7 @@ export default function SignIn() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 text-white relative overflow-hidden">
 
-      <div className="relative z-10 min-h-screen flex items-center justify-center px-4 page-transition">
+      <div className="relative z-10 min-h-screen flex items-center justify-center px-5 py-12">
         {/* Back Button */}
         <motion.button
           initial={{ opacity: 0, x: -20 }}
@@ -276,18 +276,20 @@ export default function SignIn() {
             damping: 30,
             delay: 0.2,
           }}
+          className="w-full max-w-sm"
         >
           <Card 
             ref={cardRef}
-            className="w-full max-w-md mx-auto parallax-content" 
+            className="w-full parallax-content" 
             style={{
-              background: 'rgba(255, 255, 255, 0.08)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
+              background: 'rgba(20, 20, 30, 0.7)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
               backdropFilter: 'blur(20px)',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1)',
+              borderRadius: '20px',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
               ...cardParallaxStyle,
             }}>
-            <CardContent className="p-4">
+            <CardContent className="px-5 py-5">
               {/* Signin Header with Logo */}
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
@@ -298,25 +300,25 @@ export default function SignIn() {
                   damping: 25,
                   delay: 0.4,
                 }}
-                className="flex flex-col items-center mb-2 mt-4"
+                className="flex flex-col items-center mb-4"
               >
                 <img 
                   src={signinLogo} 
                   alt="Driiva" 
-                  className="h-12 w-auto mb-0" 
+                  className="h-10 w-auto mb-2" 
                 />
-                <p className="mt-1 mb-1 text-center text-white/80 text-sm">
+                <p className="text-center text-white/70 text-sm">
                   Sign in to your telematics insurance account
                 </p>
                 
                 {/* Connection Status Indicator */}
                 {connectionStatus === 'demo-only' && (
-                  <div className="mt-2 px-3 py-1.5 rounded-full text-xs bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  <div className="mt-3 px-3 py-1 rounded-full text-xs bg-amber-500/20 text-amber-300 border border-amber-500/30">
                     Demo Mode Only
                   </div>
                 )}
                 {connectionStatus === 'connected' && (
-                  <div className="mt-2 px-3 py-1.5 rounded-full text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  <div className="mt-3 px-3 py-1 rounded-full text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                     Connected
                   </div>
                 )}
@@ -327,19 +329,17 @@ export default function SignIn() {
               <motion.form
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.8 }}
+                transition={{ delay: 0.6 }}
                 onSubmit={handleSubmit}
-                className="space-y-3"
+                className="space-y-4"
               >
                 {/* Email or Username Field */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-white/90" style={{ 
-                    fontFamily: 'Inter, sans-serif'
-                  }}>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-white/80">
                     Email or Username
                   </label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/60" />
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/50" />
                     <Input
                       type="text"
                       value={username}
@@ -347,11 +347,7 @@ export default function SignIn() {
                         setUsername(e.target.value);
                         setLoginError(null);
                       }}
-                      className="pl-10 bg-white/10 border-white/20 text-white placeholder-white/50"
-                      style={{
-                        backdropFilter: 'blur(10px)',
-                        fontFamily: 'Inter, sans-serif'
-                      }}
+                      className="signin-input pl-10"
                       placeholder="Email or Username"
                       required
                       autoComplete="username"
@@ -360,113 +356,93 @@ export default function SignIn() {
                 </div>
 
                 {/* Password Field */}
-                <div className="space-y-1">
-                  <label className="text-sm font-medium text-white/90" style={{ 
-                    fontFamily: 'Inter, sans-serif'
-                  }}>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-white/80">
                     Password
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/60" />
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/50" />
                     <Input
                       type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => {
                         setPassword(e.target.value);
-                        setLoginError(null); // Clear error when user types
+                        setLoginError(null);
                       }}
-                      className="pl-10 pr-10 bg-white/10 border-white/20 text-white placeholder-white/50"
-                      style={{
-                        backdropFilter: 'blur(10px)',
-                        fontFamily: 'Inter, sans-serif'
-                      }}
+                      className="signin-input pl-10 pr-10"
                       placeholder="Enter your password"
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/60 hover:text-white/80 transition-colors"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/50 hover:text-white/70 transition-colors"
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                 </div>
 
+                {/* Error Banner */}
+                {loginError && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center gap-2 px-3 py-2.5 rounded-xl"
+                    style={{
+                      background: 'rgba(220, 38, 38, 0.15)',
+                      border: '1px solid rgba(220, 38, 38, 0.3)',
+                    }}
+                  >
+                    <span className="text-red-400 text-sm flex-shrink-0">⚠</span>
+                    <span className="text-red-300 text-sm">{loginError}</span>
+                  </motion.div>
+                )}
+
                 {/* Demo Accounts Info */}
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 1.0 }}
-                  className="p-3 rounded-lg"
+                <div 
+                  className="px-3 py-2.5 rounded-xl"
                   style={{
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    background: 'rgba(255, 255, 255, 0.04)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
                   }}
                 >
-                  <p className="text-xs text-white/70 mb-2 text-center" style={{ 
-                    fontFamily: 'Inter, sans-serif'
-                  }}>
+                  <p className="text-xs text-white/60 mb-1.5 text-center">
                     Beta Demo Accounts:
                   </p>
-                  <div className="grid grid-cols-2 gap-1 text-xs">
-                    <div className="text-white/60">driiva1 / driiva1</div>
-                    <div className="text-white/60">alex / alex123</div>
-                    <div className="text-white/60">sarah / sarah123</div>
-                    <div className="text-white/60">james / james123</div>
-                    <div className="text-white/60 col-span-2 text-center">test / test123</div>
+                  <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-xs text-white/50">
+                    <div>driiva1 / driiva1</div>
+                    <div>alex / alex123</div>
+                    <div>sarah / sarah123</div>
+                    <div>james / james123</div>
+                    <div className="col-span-2 text-center">test / test123</div>
                   </div>
-                </motion.div>
+                </div>
 
                 {/* Sign In Button */}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 1.2 }}
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="hero-cta-primary hero-cta-blue w-full"
+                  style={{ maxWidth: '100%' }}
+                  aria-label="Sign in to account"
                 >
-                  <motion.button
-                    type="submit"
-                    disabled={isLoading}
-                    onClick={() => {
-                      console.log('[SignIn] Button clicked', { isLoading, hasUsername: !!username, hasPassword: !!password });
-                    }}
-                    whileHover={{ scale: isLoading ? 1 : 1.02 }}
-                    whileTap={{ scale: isLoading ? 1 : 0.98 }}
-                    transition={{ duration: 0.2 }}
-                    className="w-full font-medium rounded-[28px] transition-all min-h-[56px] shimmer-pulse-btn"
-                    style={{
-                      background: loginError ? 'rgba(220, 38, 38, 0.2)' : 'transparent',
-                      color: loginError ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.9)',
-                      fontSize: '18px',
-                      fontWeight: 500,
-                      height: '56px',
-                      border: loginError 
-                        ? '1px solid rgba(220, 38, 38, 0.5)' 
-                        : '1px solid rgba(255, 255, 255, 0.3)',
-                      cursor: isLoading ? 'not-allowed' : 'pointer',
-                      opacity: isLoading ? 0.7 : 1,
-                    }}
-                    aria-label="Sign in to account"
-                  >
-                    {isLoading ? (
-                      <div className="flex items-center justify-center space-x-2">
-                        <motion.div
-                          animate={{ rotate: 360 }}
-                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                          className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
-                        />
-                        <span>Signing in...</span>
-                      </div>
-                    ) : loginError ? (
-                      <span>⚠️ Log in failed!</span>
-                    ) : (
-                      <div className="flex items-center justify-center space-x-2">
-                        <LogIn className="w-4 h-4" />
-                        <span>Sign In</span>
-                      </div>
-                    )}
-                  </motion.button>
-                </motion.div>
+                  {isLoading ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+                      />
+                      <span>Signing in...</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center gap-2">
+                      <LogIn className="w-4 h-4" />
+                      <span>Sign In</span>
+                    </div>
+                  )}
+                </button>
               </motion.form>
             </CardContent>
           </Card>

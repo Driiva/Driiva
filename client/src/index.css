@@ -995,6 +995,27 @@ select:focus {
   transform: scale(0.97);
 }
 
+.signin-input {
+  width: 100%;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  color: white;
+  font-size: 15px;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.signin-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.signin-input:focus {
+  outline: none;
+  border-color: rgba(59, 130, 246, 0.5);
+  background: rgba(255, 255, 255, 0.1);
+}
+
 .welcome-nav {
   display: flex;
   align-items: center;
