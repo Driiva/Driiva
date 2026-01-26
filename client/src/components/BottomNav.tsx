@@ -5,9 +5,9 @@ export const BottomNav: React.FC = () => {
   const [location] = useLocation();
   
   const navItems = [
-    { icon: Home, label: 'Home', path: '/dashboard' },
+    { icon: Home, label: 'Home', path: '/home' },
     { icon: Map, label: 'Trips', path: '/trips' },
-    { icon: TrendingUp, label: 'Score', path: '/rewards' },
+    { icon: TrendingUp, label: 'Dashboard', path: '/dashboard' },
     { icon: User, label: 'Profile', path: '/profile' },
   ];
   

@@ -15,10 +15,21 @@ html {
 }
 
 .driiva-gradient-bg {
-  background: linear-gradient(to bottom right, #1e293b, #1e40af, #7c3aed);
   position: fixed;
   inset: 0;
   z-index: -1;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
+.driiva-gradient-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.2);
+  pointer-events: none;
 }
 
 .glass-card {

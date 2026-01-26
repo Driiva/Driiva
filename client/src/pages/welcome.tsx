@@ -3,8 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
 import { BarChart3, Wallet, Trophy } from "lucide-react";
 import { DriivaLogo } from '../components/DriivaLogo';
-import { useAuth } from "../contexts/AuthContext";
-import heroBackground from '../assets/hero-background.png';
 
 const features = [
   { icon: BarChart3, title: "Track Your Driving", description: "Real-time feedback on every trip" },
@@ -14,32 +12,11 @@ const features = [
 
 export default function Welcome() {
   const [, setLocation] = useLocation();
-  const { setUser } = useAuth();
   const [currentCard, setCurrentCard] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
 
-  const launchDemoMode = () => {
-    const mockUser = {
-      id: 'demo-user-123',
-      email: 'demo@driiva.co.uk',
-      name: 'Alex Driver',
-    };
-    
-    localStorage.setItem('driiva-demo-mode', 'true');
-    localStorage.setItem('driiva-demo-user', JSON.stringify({
-      ...mockUser,
-      first_name: 'Alex',
-      last_name: 'Driver',
-      premium_amount: 1500.00,
-      personal_score: 85,
-      community_score: 78,
-      overall_score: 82,
-      created_at: new Date().toISOString()
-    }));
-    localStorage.setItem('driiva-auth-token', 'demo-token-' + Date.now());
-    
-    setUser(mockUser);
-    setLocation('/dashboard');
+  const goToDemo = () => {
+    setLocation('/demo');
   };
 
   const handleNext = useCallback(() => {
@@ -83,16 +60,6 @@ export default function Welcome() {
 
   return (
     <div className="relative min-h-screen overflow-hidden">
-      <div 
-        className="absolute inset-0 z-0"
-        style={{
-          backgroundImage: `url(${heroBackground})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-        }}
-      />
-      
       <div className="hero-orb hero-orb-1" />
       <div className="hero-orb hero-orb-2" />
       <div className="hero-orb hero-orb-3" />
@@ -165,7 +132,7 @@ export default function Welcome() {
           style={{ marginTop: 18 }}
         >
           <button
-            onClick={launchDemoMode}
+            onClick={() => setLocation('/signup')}
             className="hero-cta-primary hero-cta-green"
             aria-label="Get Started"
           >
@@ -173,7 +140,7 @@ export default function Welcome() {
           </button>
 
           <button
-            onClick={launchDemoMode}
+            onClick={goToDemo}
             className="hero-cta-primary hero-cta-blue"
             aria-label="See Driiva Demo"
           >

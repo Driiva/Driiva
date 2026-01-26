@@ -6,10 +6,10 @@ interface DriivaLogoProps {
 
 export const DriivaLogo: React.FC<DriivaLogoProps> = ({ size = 'lg' }) => {
   const sizeConfig = {
-    sm: { width: 100, containerHeight: 28 },
-    md: { width: 140, containerHeight: 36 },
-    lg: { width: 180, containerHeight: 48 },
-    xl: { width: 240, containerHeight: 56 },
+    sm: { width: 100 },
+    md: { width: 140 },
+    lg: { width: 180 },
+    xl: { width: 240 },
   };
   
   const config = sizeConfig[size];
@@ -18,9 +18,7 @@ export const DriivaLogo: React.FC<DriivaLogoProps> = ({ size = 'lg' }) => {
     <div 
       style={{ 
         marginTop: 28,
-        marginBottom: 8,
-        height: config.containerHeight,
-        overflow: 'hidden',
+        marginBottom: 12,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -32,9 +30,7 @@ export const DriivaLogo: React.FC<DriivaLogoProps> = ({ size = 'lg' }) => {
         style={{ 
           width: config.width,
           height: 'auto',
-          objectFit: 'cover',
-          objectPosition: 'center',
-          transform: 'scale(1.6)',
+          objectFit: 'contain',
         }}
       />
     </div>

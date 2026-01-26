@@ -1,9 +1,13 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Router, Route, Switch, Redirect } from 'wouter';
 import ScrollGradient from './components/ScrollGradient';
+import heroBackground from './assets/hero-background.png';
+import { ProtectedRoute, PublicOnlyRoute } from './components/ProtectedRoute';
 
 import Welcome from './pages/welcome';
 import Signup from './pages/signup';
+import Home from './pages/home';
+import Demo from './pages/demo';
 import Permissions from './pages/permissions';
 import Onboarding from './pages/onboarding';
 import Dashboard from './pages/dashboard';
@@ -15,6 +19,8 @@ import SignIn from './pages/signin';
 import TripRecording from './pages/trip-recording';
 import LeaderboardPage from './pages/leaderboard';
 import PolicyPage from './pages/policy';
+import Terms from './pages/terms';
+import Privacy from './pages/privacy';
 import AuthTest from './pages/auth-test';
 
 import { AuthProvider } from './contexts/AuthContext';
@@ -35,24 +41,68 @@ export default function App() {
       <Router>
         <AuthProvider>
           <div className="App">
-            <div className="driiva-gradient-bg" />
+            <div 
+              className="driiva-gradient-bg" 
+              style={{ backgroundImage: `url(${heroBackground})` }}
+            />
             <ScrollGradient />
             <Switch>
+              {/* Public routes */}
               <Route path="/" component={Welcome} />
               <Route path="/welcome" component={Welcome} />
-              <Route path="/signin" component={SignIn} />
-              <Route path="/signup" component={Signup} />
+              <Route path="/demo" component={Demo} />
+              <Route path="/terms" component={Terms} />
+              <Route path="/privacy" component={Privacy} />
+              
+              {/* Auth routes - redirect to home if already logged in */}
+              <Route path="/signin">
+                <PublicOnlyRoute redirectTo="/home">
+                  <SignIn />
+                </PublicOnlyRoute>
+              </Route>
+              <Route path="/login">
+                <PublicOnlyRoute redirectTo="/home">
+                  <SignIn />
+                </PublicOnlyRoute>
+              </Route>
+              <Route path="/signup">
+                <PublicOnlyRoute redirectTo="/home">
+                  <Signup />
+                </PublicOnlyRoute>
+              </Route>
+              
+              {/* Semi-protected routes (onboarding flow) */}
               <Route path="/permissions" component={Permissions} />
               <Route path="/onboarding" component={Onboarding} />
               
-              <Route path="/dashboard"><Dashboard /></Route>
-              <Route path="/trips" component={Trips} />
-              <Route path="/rewards" component={Rewards} />
-              <Route path="/profile" component={Profile} />
-              <Route path="/support" component={Support} />
-              <Route path="/trip-recording" component={TripRecording} />
-              <Route path="/leaderboard" component={LeaderboardPage} />
-              <Route path="/policy" component={PolicyPage} />
+              {/* Protected routes - require authentication */}
+              <Route path="/home">
+                <ProtectedRoute><Home /></ProtectedRoute>
+              </Route>
+              <Route path="/dashboard">
+                <ProtectedRoute><Dashboard /></ProtectedRoute>
+              </Route>
+              <Route path="/trips">
+                <ProtectedRoute><Trips /></ProtectedRoute>
+              </Route>
+              <Route path="/rewards">
+                <ProtectedRoute><Rewards /></ProtectedRoute>
+              </Route>
+              <Route path="/profile">
+                <ProtectedRoute><Profile /></ProtectedRoute>
+              </Route>
+              <Route path="/support">
+                <ProtectedRoute><Support /></ProtectedRoute>
+              </Route>
+              <Route path="/trip-recording">
+                <ProtectedRoute><TripRecording /></ProtectedRoute>
+              </Route>
+              <Route path="/leaderboard">
+                <ProtectedRoute><LeaderboardPage /></ProtectedRoute>
+              </Route>
+              <Route path="/policy">
+                <ProtectedRoute><PolicyPage /></ProtectedRoute>
+              </Route>
               <Route path="/auth-test" component={AuthTest} />
               
               <Route>{() => <Redirect to="/" />}</Route>

@@ -253,7 +253,7 @@ export default function SignIn() {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 text-white relative overflow-hidden">
+    <div className="min-h-screen text-white relative overflow-hidden">
 
       <div className="relative z-10 min-h-screen flex items-center justify-center px-5 py-12">
         {/* Back Button */}

@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driiva - AI-Powered Telematics Insurance</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sf-pro': ['-apple-system', 'BlinkMacSystemFont', 'SF Pro Display', 'system-ui', 'sans-serif']
+                    },
+                    colors: {
+                        'driiva-dark': '#0F172A',
+                        'driiva-slate': '#1E293B',
+                        'driiva-cyan': '#06B6D4',
+                        'driiva-blue': '#3B82F6',
+                        'driiva-purple': '#A855F7',
+                        'driiva-success': '#10B981',
+                        'driiva-warning': '#F59E0B',
+                        'driiva-error': '#EF4444'
+                    },
+                    backgroundImage: {
+                        'driiva-gradient': 'radial-gradient(circle at center, #1E293B 0%, #0F172A 100%)',
+                        'glass-border': 'conic-gradient(from 0deg, #06B6D4, #3B82F6, #A855F7, #06B6D4)'
+                    },
+                    backdropBlur: {
+                        'glass': '60px'
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'bounce-subtle': 'bounce 2s infinite',
+                        'spin-slow': 'spin 8s linear infinite',
+                        'float': 'float 6s ease-in-out infinite'
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-10px)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/feather-icons@4.29.0/dist/feather.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <style>
+        .glass-morphism {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(60px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 
+                inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                0 12px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .glass-border {
+            position: relative;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(60px);
+        }
+        
+        .glass-border::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            padding: 1px;
+            background: conic-gradient(from 0deg, #06B6D4, #3B82F6, #A855F7, #06B6D4);
+            border-radius: inherit;
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+            animation: spin-slow 8s linear infinite;
+        }
+        
+        .liquid-fill {
+            transform-origin: bottom;
+            transition: transform 0.5s ease-in-out;
+        }
+        
+        .haptic-button:active {
+            transform: scale(0.97);
+            transition: transform 0.08s ease-out;
+        }
+        
+        .skeleton-shimmer {
+            background: linear-gradient(90deg, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        
+        .floating-action {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 50;
+        }
+        
+        .safe-area {
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
+        }
+        
+        .progress-ring {
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        
+        .progress-ring-circle {
+            stroke-linecap: round;
+            stroke-dasharray: 283;
+            stroke-dashoffset: 283;
+            transition: stroke-dashoffset 0.5s ease-in-out;
+        }
+        
+        @media (prefers-reduced-motion: no-preference) {
+            .spring-transition {
+                transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            }
+        }
+    </style>
+</head>
+<body class="font-sf-pro bg-driiva-gradient min-h-screen text-white safe-area">
+    <!-- @COMPONENT: Header [Navigation with profile and notifications] -->
+    <header class="sticky top-0 z-40 glass-morphism">
+        <div class="px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-r from-driiva-cyan to-driiva-blue flex items-center justify-center">
+                    <i data-feather="zap" class="w-5 h-5 text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-semibold text-white">Driiva</h1>
+                    <p class="text-xs text-gray-300" data-bind="user.greeting">Good morning, Alex</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button class="w-10 h-10 glass-morphism rounded-full flex items-center justify-center haptic-button">
+                    <i data-feather="bell" class="w-5 h-5 text-gray-300"></i>
+                </button>
+                <button class="w-10 h-10 glass-morphism rounded-full flex items-center justify-center haptic-button">
+                    <!-- Profile avatar showing current user -->
+                    <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=40&h=40" alt="Profile Avatar" class="w-8 h-8 rounded-full object-cover" data-mock="true">
+                </button>
+            </div>
+        </div>
+    </header>
+    <!-- @END_COMPONENT: Header -->
+
+    <main class="px-4 pb-20">
+        <!-- @COMPONENT: HeroSection [Main dashboard overview with key metrics] -->
+        <section class="py-6">
+            <div class="glass-border rounded-3xl p-6 mb-6">
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl font-bold mb-2">Your Driving Score</h2>
+                    <p class="text-gray-300 text-sm">Based on last 30 days of driving</p>
+                </div>
+                
+                <!-- Liquid Fill Gauge for Driving Score -->
+                <div class="relative w-48 h-48 mx-auto mb-6">
+                    <svg class="w-full h-full progress-ring" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="45" stroke="rgba(255,255,255,0.1)" stroke-width="8" fill="none"/>
+                        <circle cx="50" cy="50" r="45" stroke="url(#gradientStroke)" stroke-width="8" fill="none" 
+                                class="progress-ring-circle" style="stroke-dashoffset: 70;"
+                                data-bind="drivingScore.strokeOffset" data-mock="true"/>
+                        <defs>
+                            <linearGradient id="gradientStroke" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:#06B6D4;stop-opacity:1" />
+                                <stop offset="50%" style="stop-color:#3B82F6;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#A855F7;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="text-center">
+                            <div class="text-4xl font-bold text-white" data-bind="drivingScore.value" data-mock="true">85</div>
+                            <div class="text-sm text-gray-300">out of 100</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Score Breakdown -->
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="text-center">
+                        <div class="text-lg font-semibold text-driiva-cyan" data-bind="personalScore" data-mock="true">85%</div>
+                        <div class="text-xs text-gray-400">Personal Score</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-lg font-semibold text-driiva-purple" data-bind="poolScore" data-mock="true">80%</div>
+                        <div class="text-xs text-gray-400">Pool Score</div>
+                    </div>
+                </div>
+
+                <!-- Projected Refund -->
+                <div class="text-center p-4 glass-morphism rounded-2xl">
+                    <div class="text-xs text-gray-400 mb-1">Projected Annual Refund</div>
+                    <div class="text-2xl font-bold text-driiva-success" data-bind="projectedRefund" data-mock="true">£62.50</div>
+                    <div class="text-xs text-gray-400">12.5% of £500 premium</div>
+                </div>
+            </div>
+        </section>
+        <!-- @END_COMPONENT: HeroSection -->
+
+        <!-- @COMPONENT: MetricsGrid [Individual driving metrics breakdown] -->
+        <section class="mb-6">
+            <h3 class="text-lg font-semibold mb-4">Driving Metrics</h3>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="glass-morphism rounded-2xl p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center space-x-2">
+                            <i data-feather="truck" class="w-4 h-4 text-driiva-error"></i>
+                            <span class="text-sm font-medium">Hard Braking</span>
+                        </div>
+                        <span class="text-xs text-gray-400">25% weight</span>
+                    </div>
+                    <div class="text-2xl font-bold text-driiva-success" data-bind="metrics.hardBraking" data-mock="true">3</div>
+                    <div class="text-xs text-gray-400">incidents this month</div>
+                </div>
+
+                <div class="glass-morphism rounded-2xl p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center space-x-2">
+                            <i data-feather="trending-up" class="w-4 h-4 text-driiva-warning"></i>
+                            <span class="text-sm font-medium">Acceleration</span>
+                        </div>
+                        <span class="text-xs text-gray-400">20% weight</span>
+                    </div>
+                    <div class="text-2xl font-bold text-driiva-success" data-bind="metrics.acceleration" data-mock="true">1</div>
+                    <div class="text-xs text-gray-400">harsh events</div>
+                </div>
+
+                <div class="glass-morphism rounded-2xl p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center space-x-2">
+                            <i data-feather="gauge" class="w-4 h-4 text-driiva-blue"></i>
+                            <span class="text-sm font-medium">Speed</span>
+                        </div>
+                        <span class="text-xs text-gray-400">20% weight</span>
+                    </div>
+                    <div class="text-2xl font-bold text-driiva-success" data-bind="metrics.speed" data-mock="true">92%</div>
+                    <div class="text-xs text-gray-400">adherence rate</div>
+                </div>
+
+                <div class="glass-morphism rounded-2xl p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center space-x-2">
+                            <i data-feather="moon" class="w-4 h-4 text-driiva-purple"></i>
+                            <span class="text-sm font-medium">Night Driving</span>
+                        </div>
+                        <span class="text-xs text-gray-400">15% weight</span>
+                    </div>
+                    <div class="text-2xl font-bold text-driiva-success" data-bind="metrics.nightDriving" data-mock="true">2.5</div>
+                    <div class="text-xs text-gray-400">hours this month</div>
+                </div>
+            </div>
+        </section>
+        <!-- @END_COMPONENT: MetricsGrid -->
+
+        <!-- @COMPONENT: CommunityPool [Shared risk pool status and community metrics] -->
+        <section class="mb-6">
+            <div class="glass-border rounded-3xl p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold">Community Pool</h3>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-2 h-2 bg-driiva-success rounded-full animate-pulse"></div>
+                        <span class="text-xs text-gray-400">Live</span>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm text-gray-400">Pool Safety Factor</span>
+                        <span class="text-sm font-semibold text-driiva-cyan" data-bind="poolSafetyFactor" data-mock="true">80%</span>
+                    </div>
+                    <div class="w-full bg-gray-700 rounded-full h-2">
+                        <div class="bg-gradient-to-r from-driiva-cyan to-driiva-blue h-2 rounded-full" style="width: 80%" data-bind="poolSafetyFactorWidth" data-mock="true"></div>
+                    </div>
+                    <div class="text-xs text-gray-400 mt-1">800 of 1000 drivers meet safety thresholds</div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="text-center">
+                        <div class="text-lg font-bold text-white" data-bind="totalPool" data-mock="true">£105,000</div>
+                        <div class="text-xs text-gray-400">Total Pool</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-lg font-bold text-driiva-success" data-bind="yourShare" data-mock="true">£62.50</div>
+                        <div class="text-xs text-gray-400">Your Share</div>
+                    </div>
+                </div>
+
+                <div class="mt-4 p-3 bg-driiva-success bg-opacity-10 rounded-xl border border-driiva-success border-opacity-20">
+                    <div class="flex items-center space-x-2">
+                        <i data-feather="trending-up" class="w-4 h-4 text-driiva-success"></i>
+                        <span class="text-sm text-driiva-success font-medium">Pool performing +5% above target</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- @END_COMPONENT: CommunityPool -->
+
+        <!-- @COMPONENT: RefundSimulator [Interactive refund calculation tool] -->
+        <section class="mb-6">
+            <div class="glass-morphism rounded-3xl p-6">
+                <h3 class="text-lg font-semibold mb-4">Refund Simulator</h3>
+                <p class="text-sm text-gray-400 mb-6">See how improvements could boost your refund</p>
+
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-sm font-medium">Personal Score</label>
+                            <span class="text-sm text-driiva-cyan" data-bind="simulator.personalScore" data-mock="true">85</span>
+                        </div>
+                        <input type="range" min="60" max="100" value="85" 
+                               class="w-full h-2 bg-gray-700 rounded-lg appearance-none slider" 
+                               data-event="input:updateSimulation" data-mock="true">
+                    </div>
+
+                    <div class="p-4 glass-border rounded-2xl">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <div class="text-sm text-gray-400">Potential Refund</div>
+                                <div class="text-xl font-bold text-driiva-success" data-bind="simulator.potentialRefund" data-mock="true">£62.50</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-sm text-gray-400">Improvement</div>
+                                <div class="text-lg font-semibold text-driiva-warning" data-bind="simulator.improvement" data-mock="true">+£0</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- @END_COMPONENT: RefundSimulator -->
+
+        <!-- @COMPONENT: RecentTrips [Recent driving trips with scores] -->
+        <section class="mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold">Recent Trips</h3>
+                <button class="text-driiva-cyan text-sm font-medium haptic-button" data-event="click:viewAllTrips">View All</button>
+            </div>
+
+            <div class="space-y-3">
+                <!-- @MAP: recentTrips.map(trip => ( -->
+                <div class="glass-morphism rounded-2xl p-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <!-- Modern car dashboard with digital speedometer display -->
+                            <img src="https://pixabay.com/get/gcd9592858a118e5324e7c223cf75a7999d15845ebb3d1b8e03ddc6869eef7665fbcfbe706cadd812db0bd94d1b07106d1c8aa83c78ef87c60a964f122f3b0452_1280.jpg" alt="Car dashboard" class="w-12 h-12 rounded-xl object-cover" data-mock="true">
+                            <div>
+                                <div class="font-medium text-white" data-bind="trip.destination" data-mock="true">City Centre</div>
+                                <div class="text-sm text-gray-400" data-bind="trip.duration" data-mock="true">25 min • 8.2 miles</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-lg font-bold text-driiva-success" data-bind="trip.score" data-mock="true">92</div>
+                            <div class="text-xs text-gray-400">Score</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-morphism rounded-2xl p-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <!-- Peaceful suburban driving scene with safe distance between cars -->
+                            <img src="https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?ixlib=rb-4.0.3&auto=format&fit=crop&w=60&h=60" alt="Safe driving scene" class="w-12 h-12 rounded-xl object-cover" data-mock="true">
+                            <div>
+                                <div class="font-medium text-white" data-bind="trip.destination" data-mock="true">Home to Work</div>
+                                <div class="text-sm text-gray-400" data-bind="trip.duration" data-mock="true">18 min • 12.4 miles</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-lg font-bold text-driiva-success" data-bind="trip.score" data-mock="true">88</div>
+                            <div class="text-xs text-gray-400">Score</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-morphism rounded-2xl p-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <!-- Highway driving with proper lane discipline and safe following distance -->
+                            <img src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?ixlib=rb-4.0.3&auto=format&fit=crop&w=60&h=60" alt="Highway safe driving" class="w-12 h-12 rounded-xl object-cover" data-mock="true">
+                            <div>
+                                <div class="font-medium text-white" data-bind="trip.destination" data-mock="true">Weekend Shopping</div>
+                                <div class="text-sm text-gray-400" data-bind="trip.duration" data-mock="true">35 min • 15.7 miles</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-lg font-bold text-driiva-warning" data-bind="trip.score" data-mock="true">76</div>
+                            <div class="text-xs text-gray-400">Score</div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_MAP )) -->
+            </div>
+        </section>
+        <!-- @END_COMPONENT: RecentTrips -->
+
+        <!-- @COMPONENT: Gamification [Badges, achievements, and leaderboard] -->
+        <section class="mb-6">
+            <h3 class="text-lg font-semibold mb-4">Achievements</h3>
+            
+            <div class="grid grid-cols-3 gap-3 mb-6">
+                <div class="glass-morphism rounded-2xl p-4 text-center">
+                    <div class="w-12 h-12 bg-gradient-to-r from-driiva-success to-driiva-cyan rounded-full flex items-center justify-center mx-auto mb-2">
+                        <i data-feather="award" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div class="text-xs font-medium text-white">Safe Driver</div>
+                    <div class="text-xs text-gray-400">30 days</div>
+                </div>
+
+                <div class="glass-morphism rounded-2xl p-4 text-center">
+                    <div class="w-12 h-12 bg-gradient-to-r from-driiva-blue to-driiva-purple rounded-full flex items-center justify-center mx-auto mb-2">
+                        <i data-feather="zap" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <div class="text-xs font-medium text-white">Speed Master</div>
+                    <div class="text-xs text-gray-400">No violations</div>
+                </div>
+
+                <div class="glass-morphism rounded-2xl p-4 text-center opacity-50">
+                    <div class="w-12 h-12 bg-gray-600 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <i data-feather="star" class="w-6 h-6 text-gray-400"></i>
+                    </div>
+                    <div class="text-xs font-medium text-gray-400">Night Owl</div>
+                    <div class="text-xs text-gray-400">Locked</div>
+                </div>
+            </div>
+
+            <div class="glass-border rounded-2xl p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <h4 class="font-medium">Community Leaderboard</h4>
+                    <div class="text-xs text-gray-400">This Week</div>
+                </div>
+                
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center text-xs font-bold text-black">1</div>
+                            <span class="text-sm font-medium" data-bind="leaderboard.first.name" data-mock="true">Sarah M.</span>
+                        </div>
+                        <span class="text-sm text-driiva-success" data-bind="leaderboard.first.score" data-mock="true">98</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-6 h-6 bg-gray-400 rounded-full flex items-center justify-center text-xs font-bold text-black">2</div>
+                            <span class="text-sm font-medium" data-bind="leaderboard.second.name" data-mock="true">John D.</span>
+                        </div>
+                        <span class="text-sm text-driiva-success" data-bind="leaderboard.second.score" data-mock="true">95</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center text-xs font-bold text-black">3</div>
+                            <span class="text-sm font-medium" data-bind="leaderboard.third.name" data-mock="true">Emma K.</span>
+                        </div>
+                        <span class="text-sm text-driiva-success" data-bind="leaderboard.third.score" data-mock="true">93</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between border-t border-gray-600 pt-3">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-6 h-6 bg-driiva-blue rounded-full flex items-center justify-center text-xs font-bold text-white">12</div>
+                            <span class="text-sm font-medium text-driiva-cyan">You</span>
+                        </div>
+                        <span class="text-sm text-driiva-cyan" data-bind="leaderboard.user.score" data-mock="true">85</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- @END_COMPONENT: Gamification -->
+
+        <!-- @COMPONENT: QuickActions [Action buttons for common tasks] -->
+        <section class="mb-6">
+            <h3 class="text-lg font-semibold mb-4">Quick Actions</h3>
+            
+            <div class="grid grid-cols-2 gap-4">
+                <button class="glass-morphism rounded-2xl p-4 text-left haptic-button spring-transition hover:scale-105" data-event="click:reportIncident">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-driiva-error bg-opacity-20 rounded-xl flex items-center justify-center">
+                            <i data-feather="alert-triangle" class="w-5 h-5 text-driiva-error"></i>
+                        </div>
+                        <div>
+                            <div class="font-medium text-white">Report Incident</div>
+                            <div class="text-xs text-gray-400">FNOL & Claims</div>
+                        </div>
+                    </div>
+                </button>
+
+                <button class="glass-morphism rounded-2xl p-4 text-left haptic-button spring-transition hover:scale-105" data-event="click:viewDocuments">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-driiva-blue bg-opacity-20 rounded-xl flex items-center justify-center">
+                            <i data-feather="file-text" class="w-5 h-5 text-driiva-blue"></i>
+                        </div>
+                        <div>
+                            <div class="font-medium text-white">Documents</div>
+                            <div class="text-xs text-gray-400">Policy & Certificates</div>
+                        </div>
+                    </div>
+                </button>
+
+                <button class="glass-morphism rounded-2xl p-4 text-left haptic-button spring-transition hover:scale-105" data-event="click:contactSupport">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-driiva-purple bg-opacity-20 rounded-xl flex items-center justify-center">
+                            <i data-feather="message-circle" class="w-5 h-5 text-driiva-purple"></i>
+                        </div>
+                        <div>
+                            <div class="font-medium text-white">Support</div>
+                            <div class="text-xs text-gray-400">Chat & Help</div>
+                        </div>
+                    </div>
+                </button>
+
+                <button class="glass-morphism rounded-2xl p-4 text-left haptic-button spring-transition hover:scale-105" data-event="click:exportData">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-driiva-cyan bg-opacity-20 rounded-xl flex items-center justify-center">
+                            <i data-feather="download" class="w-5 h-5 text-driiva-cyan"></i>
+                        </div>
+                        <div>
+                            <div class="font-medium text-white">Export Data</div>
+                            <div class="text-xs text-gray-400">GDPR Compliance</div>
+                        </div>
+                    </div>
+                </button>
+            </div>
+        </section>
+        <!-- @END_COMPONENT: QuickActions -->
+    </main>
+
+    <!-- @COMPONENT: FloatingActionButton [Simulate trip/crash reporting] -->
+    <div class="floating-action">
+        <button class="w-14 h-14 bg-gradient-to-r from-driiva-cyan to-driiva-blue rounded-full flex items-center justify-center shadow-2xl haptic-button spring-transition hover:scale-110 animate-float" data-event="click:simulateTrip">
+            <i data-feather="plus" class="w-6 h-6 text-white"></i>
+        </button>
+    </div>
+    <!-- @END_COMPONENT: FloatingActionButton -->
+
+    <!-- @COMPONENT: BottomSheet [Modal for crash reporting - initially hidden] -->
+    <div id="bottomSheet" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden" data-event="click:closeBottomSheet">
+        <div class="absolute bottom-0 left-0 right-0 bg-driiva-slate rounded-t-3xl p-6 transform translate-y-full transition-transform duration-300">
+            <div class="w-12 h-1 bg-gray-400 rounded-full mx-auto mb-6"></div>
+            <h3 class="text-xl font-bold mb-4">Report Incident</h3>
+            <p class="text-gray-400 mb-6">Emergency services will be contacted automatically if needed.</p>
+            
+            <div class="space-y-4">
+                <button class="w-full glass-morphism rounded-2xl p-4 text-left" data-event="click:reportCrash">
+                    <div class="flex items-center space-x-3">
+                        <i data-feather="alert-triangle" class="w-6 h-6 text-driiva-error"></i>
+                        <div>
+                            <div class="font-medium">Crash/Collision</div>
+                            <div class="text-sm text-gray-400">Immediate assistance required</div>
+                        </div>
+                    </div>
+                </button>
+                
+                <button class="w-full glass-morphism rounded-2xl p-4 text-left" data-event="click:reportBreakdown">
+                    <div class="flex items-center space-x-3">
+                        <i data-feather="tool" class="w-6 h-6 text-driiva-warning"></i>
+                        <div>
+                            <div class="font-medium">Vehicle Breakdown</div>
+                            <div class="text-sm text-gray-400">Roadside assistance</div>
+                        </div>
+                    </div>
+                </button>
+                
+                <button class="w-full glass-morphism rounded-2xl p-4 text-left" data-event="click:reportTheft">
+                    <div class="flex items-center space-x-3">
+                        <i data-feather="shield-off" class="w-6 h-6 text-driiva-purple"></i>
+                        <div>
+                            <div class="font-medium">Theft/Vandalism</div>
+                            <div class="text-sm text-gray-400">Property damage claim</div>
+                        </div>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: BottomSheet -->
+
+    <!-- @COMPONENT: BottomNavigation [Main app navigation] -->
+    <nav class="fixed bottom-0 left-0 right-0 glass-morphism safe-area">
+        <div class="flex items-center justify-around py-2">
+            <button class="flex flex-col items-center py-2 px-4 haptic-button" data-event="click:navigateHome">
+                <i data-feather="home" class="w-5 h-5 text-driiva-cyan mb-1"></i>
+                <span class="text-xs text-driiva-cyan font-medium">Home</span>
+            </button>
+            
+            <button class="flex flex-col items-center py-2 px-4 haptic-button" data-event="click:navigateTrips">
+                <i data-feather="map" class="w-5 h-5 text-gray-400 mb-1"></i>
+                <span class="text-xs text-gray-400">Trips</span>
+            </button>
+            
+            <button class="flex flex-col items-center py-2 px-4 haptic-button" data-event="click:navigateRewards">
+                <i data-feather="gift" class="w-5 h-5 text-gray-400 mb-1"></i>
+                <span class="text-xs text-gray-400">Rewards</span>
+            </button>
+            
+            <button class="flex flex-col items-center py-2 px-4 haptic-button" data-event="click:navigateProfile">
+                <i data-feather="user" class="w-5 h-5 text-gray-400 mb-1"></i>
+                <span class="text-xs text-gray-400">Profile</span>
+            </button>
+        </div>
+    </nav>
+    <!-- @END_COMPONENT: BottomNavigation -->
+
+    <script>
+        // Initialize Feather icons
+        feather.replace();
+        
+        // IIFE to scope JavaScript and avoid global namespace pollution
+        (function() {
+            // TODO: Implement actual business logic, API calls, and state management
+            
+            // Simulate haptic feedback for supported devices
+            function simulateHapticFeedback() {
+                if (navigator.vibrate) {
+                    navigator.vibrate(10);
+                }
+            }
+            
+            // Add haptic feedback to all buttons
+            document.querySelectorAll('.haptic-button').forEach(button => {
+                button.addEventListener('click', simulateHapticFeedback);
+            });
+            
+            // Bottom sheet modal functionality
+            const bottomSheet = document.getElementById('bottomSheet');
+            const floatingButton = document.querySelector('.floating-action button');
+            
+            if (floatingButton && bottomSheet) {
+                floatingButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    bottomSheet.classList.remove('hidden');
+                    setTimeout(() => {
+                        bottomSheet.querySelector('.absolute').style.transform = 'translateY(0)';
+                    }, 10);
+                });
+                
+                bottomSheet.addEventListener('click', function(e) {
+                    if (e.target === bottomSheet) {
+                        closeBottomSheet();
+                    }
+                });
+            }
+            
+            function closeBottomSheet() {
+                if (bottomSheet) {
+                    bottomSheet.querySelector('.absolute').style.transform = 'translateY(100%)';
+                    setTimeout(() => {
+                        bottomSheet.classList.add('hidden');
+                    }, 300);
+                }
+            }
+            
+            // Simulate range slider updates for refund simulator
+            const rangeSlider = document.querySelector('input[type="range"]');
+            if (rangeSlider) {
+                rangeSlider.addEventListener('input', function() {
+                    // TODO: Implement actual refund calculation logic
+                    const personalScore = parseInt(this.value);
+                    const poolScore = 80; // Mock pool score
+                    const maxRefund = 500 * 0.15; // 15% of £500 premium
+                    const refundPercentage = (personalScore * 0.8 + poolScore * 0.2) / 100;
+                    const calculatedRefund = (maxRefund * refundPercentage).toFixed(2);
+                    
+                    // Update UI elements (in real app, this would use state management)
+                    console.log('Updated refund calculation:', calculatedRefund);
+                });
+            }
+            
+            // Pull-to-refresh simulation (would integrate with actual data fetching)
+            let startY = 0;
+            let currentY = 0;
+            let pullDistance = 0;
+            const pullThreshold = 60;
+            
+            document.addEventListener('touchstart', function(e) {
+                startY = e.touches[0].clientY;
+            }, { passive: true });
+            
+            document.addEventListener('touchmove', function(e) {
+                currentY = e.touches[0].clientY;
+                pullDistance = Math.max(0, currentY - startY);
+                
+                if (pullDistance > pullThreshold && window.scrollY === 0) {
+                    // TODO: Trigger data refresh
+                    console.log('Pull to refresh triggered');
+                }
+            }, { passive: true });
+            
+            // Simulate real-time updates (would connect to WebSocket in production)
+            function simulateRealTimeUpdates() {
+                // TODO: Connect to real-time data stream
+                setInterval(() => {
+                    console.log('Checking for real-time updates...');
+                }, 30000); // Check every 30 seconds
+            }
+            
+            simulateRealTimeUpdates();
+            
+        })();
+    </script>
+</body>
+</html>
