@@ -7,7 +7,6 @@ import { ProtectedRoute, PublicOnlyRoute } from './components/ProtectedRoute';
 import Welcome from './pages/welcome';
 import Signup from './pages/signup';
 import Home from './pages/home';
-import Demo from './pages/demo';
 import Permissions from './pages/permissions';
 import Onboarding from './pages/onboarding';
 import Dashboard from './pages/dashboard';
@@ -21,7 +20,7 @@ import LeaderboardPage from './pages/leaderboard';
 import PolicyPage from './pages/policy';
 import Terms from './pages/terms';
 import Privacy from './pages/privacy';
-import AuthTest from './pages/auth-test';
+import Demo from './pages/demo';
 
 import { AuthProvider } from './contexts/AuthContext';
 
@@ -50,7 +49,6 @@ export default function App() {
               {/* Public routes */}
               <Route path="/" component={Welcome} />
               <Route path="/welcome" component={Welcome} />
-              <Route path="/demo" component={Demo} />
               <Route path="/terms" component={Terms} />
               <Route path="/privacy" component={Privacy} />
               
@@ -103,7 +101,7 @@ export default function App() {
               <Route path="/policy">
                 <ProtectedRoute><PolicyPage /></ProtectedRoute>
               </Route>
-              <Route path="/auth-test" component={AuthTest} />
+              <Route path="/demo" component={Demo} />
               
               <Route>{() => <Redirect to="/" />}</Route>
             </Switch>

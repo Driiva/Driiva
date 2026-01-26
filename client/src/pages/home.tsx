@@ -11,68 +11,13 @@ import {
   Users,
   Trophy,
   Target,
-  FileText,
-  Gift
+  Gift,
+  Car,
+  TrendingUp
 } from "lucide-react";
 import { PageWrapper } from '../components/PageWrapper';
 import { BottomNav } from '../components/BottomNav';
 import { useAuth } from '../contexts/AuthContext';
-
-// Circular Progress Component for Driving Score
-const CircularProgress = ({ score, size = 120 }: { score: number; size?: number }) => {
-  const strokeWidth = 8;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = radius * 2 * Math.PI;
-  const progress = (score / 100) * circumference;
-  const offset = circumference - progress;
-
-  return (
-    <div className="relative" style={{ width: size, height: size }}>
-      <svg width={size} height={size} className="transform -rotate-90">
-        {/* Background circle */}
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke="rgba(255,255,255,0.1)"
-          strokeWidth={strokeWidth}
-        />
-        {/* Progress circle with gradient */}
-        <defs>
-          <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#F97316" />
-            <stop offset="100%" stopColor="#A855F7" />
-          </linearGradient>
-        </defs>
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke="url(#scoreGradient)"
-          strokeWidth={strokeWidth}
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
-          className="transition-all duration-1000 ease-out"
-        />
-      </svg>
-      {/* Score text in center */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-3xl font-bold text-white">{score}</span>
-        <span className="text-sm text-white/60">/100</span>
-      </div>
-    </div>
-  );
-};
-
-// Glassmorphic Card Component
-const GlassCard = ({ children, className = "" }: { children: React.ReactNode; className?: string }) => (
-  <div className={`backdrop-blur-xl bg-[#1a1a2e]/80 border border-white/10 rounded-2xl p-6 ${className}`}>
-    {children}
-  </div>
-);
 
 export default function Home() {
   const [, setLocation] = useLocation();
@@ -80,7 +25,7 @@ export default function Home() {
   const [showDropdown, setShowDropdown] = useState(false);
 
   // Demo data
-  const drivingScore = 79;
+  const drivingScore = 82;
   const policyNumber = "DRV-2025-000001";
 
   // Only 2 trips as specified
@@ -102,45 +47,48 @@ export default function Home() {
     setLocation("/");
   };
 
+  // Card styling - glassmorphic
+  const cardStyle = "backdrop-blur-xl bg-purple-500/10 border border-white/5 rounded-2xl p-6";
+
   return (
     <PageWrapper>
-      <div className="pb-24 text-white">
-        {/* Header */}
+      <div className="pb-24 text-white space-y-6">
+        
+        {/* ===== 1. HEADER ===== */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="flex items-start justify-between mb-6"
+          className="flex items-center justify-between"
         >
-          {/* Left side - Logo and greeting */}
-          <div className="flex items-start gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/30 to-purple-700/30 border border-white/10 flex items-center justify-center overflow-hidden">
-              <img src="/logo.png" alt="Driiva" className="w-full h-full object-cover" />
+          {/* Left - Logo and greeting */}
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-purple-500/40 to-purple-700/40 border border-white/10 flex items-center justify-center">
+              <span className="text-white font-bold text-lg">Driiva</span>
             </div>
-            <div style={{ marginTop: '2px' }}>
-              <h1 className="text-xl font-bold text-white">Driiva</h1>
-              <p className="text-sm text-white/50">{getGreeting()}, Driver</p>
+            <div>
+              <p className="text-sm text-gray-400">{getGreeting()},</p>
+              <h1 className="text-lg font-semibold text-white">Driver</h1>
             </div>
           </div>
 
-          {/* Right side - Bell and avatar with dropdown */}
+          {/* Right - Bell and Avatar */}
           <div className="flex items-center gap-3 relative">
             <button className="p-2 rounded-full hover:bg-white/5 transition-colors">
               <Bell className="w-5 h-5 text-white/60" />
             </button>
             
-            {/* User Avatar with 'd' inside teal circle */}
             <button 
               onClick={() => setShowDropdown(!showDropdown)}
               className="flex items-center gap-1"
             >
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center">
-                <span className="text-white font-bold text-lg italic">d</span>
+                <span className="text-white font-bold text-lg">D</span>
               </div>
               <ChevronDown className={`w-4 h-4 text-white/50 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
             </button>
 
-            {/* Dropdown Menu */}
+            {/* Dropdown */}
             <AnimatePresence>
               {showDropdown && (
                 <>
@@ -177,214 +125,214 @@ export default function Home() {
           </div>
         </motion.div>
 
-        {/* 1. Policy Status Card - Compact */}
+        {/* ===== 2. POLICY STATUS CARD ===== */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05, duration: 0.5 }}
-          className="mb-6"
+          className={`${cardStyle} max-w-[400px]`}
+          style={{ padding: '16px' }}
         >
-          <GlassCard className="!p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
-                  <Shield className="w-5 h-5 text-purple-400" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-white font-semibold text-sm">Policy Status</h3>
-                    <span className="bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded text-xs font-medium">Active</span>
-                  </div>
-                  <p className="text-xs text-white/50 mt-0.5">{policyNumber} • £1,650/yr</p>
-                </div>
-              </div>
-              <button 
-                onClick={() => setLocation('/policy')}
-                className="text-teal-400 hover:text-teal-300 text-sm transition-colors"
-              >
-                View →
-              </button>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Shield className="w-5 h-5 text-purple-400" />
+              <h2 className="text-lg font-semibold text-white">Policy Status</h2>
             </div>
-          </GlassCard>
+            <span className="bg-emerald-500/20 text-emerald-400 px-2.5 py-1 rounded-full text-xs font-medium">Active</span>
+          </div>
+          
+          <p className="text-white font-bold text-lg mb-1">Comprehensive Telematics</p>
+          <p className="text-gray-400 text-sm mb-4">Policy No: {policyNumber}</p>
+          
+          <div className="flex items-center gap-6 mb-4 text-sm">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-gray-400" />
+              <span className="text-gray-400">Start Date: Jul 01, 2025</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-gray-400" />
+              <span className="text-gray-400">Renewal Date: Jul 01, 2026</span>
+            </div>
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CreditCard className="w-4 h-4 text-gray-400" />
+              <span className="text-gray-400 text-sm">Annual Premium: <span className="text-white font-semibold">£1,840</span></span>
+            </div>
+            <button className="text-blue-400 hover:text-blue-300 text-sm transition-colors">
+              View Details
+            </button>
+          </div>
         </motion.div>
 
-        {/* 2. Driving Score Card */}
+        {/* ===== 3. DRIVING SCORE CARD ===== */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, duration: 0.5 }}
-          className="mb-6"
+          className={cardStyle}
         >
-          <GlassCard>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-white">Driving Score</h2>
-            </div>
-            
-            <div className="flex items-center gap-6">
-              {/* Circular Progress on Left */}
-              <CircularProgress score={drivingScore} size={100} />
-              
-              {/* Message on Right */}
-              <div className="flex-1">
-                <p className="text-sm text-white/70 leading-relaxed">
-                  Your driva score is keeping the community pool up. Great show on the road!
-                </p>
-                {/* Green progress bar */}
-                <div className="mt-3 h-2 bg-white/10 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full"
-                    style={{ width: `${drivingScore}%` }}
-                  />
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-white">Driving Score</h2>
+            <TrendingUp className="w-5 h-5 text-teal-400" />
+          </div>
+          
+          <div className="flex items-center justify-center mb-4">
+            <div className="relative">
+              <svg className="w-32 h-32 -rotate-90">
+                <circle 
+                  cx="64" 
+                  cy="64" 
+                  r="56" 
+                  stroke="url(#gradient)" 
+                  strokeWidth="8" 
+                  strokeDasharray="351.86" 
+                  strokeDashoffset="63.33" 
+                  fill="none" 
+                />
+                <defs>
+                  <linearGradient id="gradient">
+                    <stop offset="0%" stopColor="#f97316" />
+                    <stop offset="100%" stopColor="#a855f7" />
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-center">
+                  <span className="text-3xl font-bold text-white">{drivingScore}</span>
+                  <div className="text-xs text-gray-400">/100</div>
                 </div>
               </div>
             </div>
-          </GlassCard>
+          </div>
+          
+          <p className="text-gray-400 text-sm text-center">Great driving! Keep it up to maximise your refund.</p>
         </motion.div>
 
-        {/* 3. Your Trips Card - Only 2 trips */}
+        {/* ===== 4. YOUR TRIPS CARD ===== */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15, duration: 0.5 }}
-          className="mb-6"
+          className={cardStyle}
         >
-          <GlassCard>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-white">Your Trips</h2>
-            </div>
-            
-            <div className="space-y-3">
-              {trips.map((trip) => (
-                <div
-                  key={trip.id}
-                  className="flex items-center justify-between py-3 border-b border-white/5 last:border-b-0"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
-                      <Map className="w-5 h-5 text-white/70" />
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-white text-sm">
-                        {trip.from} → {trip.to}
-                      </h3>
-                    </div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-white">Your Trips</h2>
+            <Car className="w-5 h-5 text-gray-400" />
+          </div>
+          
+          <div className="space-y-4">
+            {trips.map((trip) => (
+              <div key={trip.id} className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+                    <Map className="w-5 h-5 text-white/70" />
                   </div>
-                  <div className="text-right">
-                    <div className="text-xl font-bold text-teal-400">{trip.score}</div>
-                    <div className="text-xs text-white/50">{trip.distance} mi</div>
+                  <div>
+                    <p className="text-white font-medium">{trip.from} → {trip.to}</p>
+                    <p className="text-gray-400 text-sm">{trip.distance} mi</p>
                   </div>
                 </div>
-              ))}
-            </div>
+                <span className="text-2xl font-bold text-teal-400">{trip.score}</span>
+              </div>
+            ))}
+          </div>
 
-            {/* View all trips link */}
-            <button 
-              onClick={() => setLocation('/trips')}
-              className="w-full mt-4 pt-4 border-t border-white/5 text-sm text-teal-400 hover:text-teal-300 transition-colors text-center"
-            >
-              View all trips →
-            </button>
-          </GlassCard>
+          <button 
+            onClick={() => setLocation('/trips')}
+            className="w-full mt-4 pt-4 border-t border-white/5 text-sm text-teal-400 hover:text-teal-300 transition-colors text-center"
+          >
+            View all trips →
+          </button>
         </motion.div>
 
-        {/* 4. Community Pool Card */}
+        {/* ===== 5. COMMUNITY POOL CARD ===== */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
-          className="mb-6"
+          className={cardStyle}
         >
-          <GlassCard>
-            {/* Header */}
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Users className="w-5 h-5 text-purple-400" />
-                <h2 className="text-lg font-semibold text-white">Community Pool</h2>
-              </div>
-              <div className="flex items-center gap-1.5 bg-emerald-500/20 px-2 py-1 rounded-full">
-                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-                <span className="text-emerald-400 text-xs font-medium">Live</span>
-              </div>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-purple-400" />
+              <h2 className="text-lg font-semibold text-white">Community Pool</h2>
             </div>
+            <div className="flex items-center gap-1.5 bg-emerald-500/20 px-2.5 py-1 rounded-full">
+              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+              <span className="text-emerald-400 text-xs font-medium">Live</span>
+            </div>
+          </div>
 
-            {/* Pool Safety Factor */}
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm text-white/60">Pool Safety Factor</span>
-              <span className="text-2xl font-bold text-white">85%</span>
-            </div>
-            
-            {/* Orange progress bar */}
-            <div className="h-2 bg-white/10 rounded-full overflow-hidden mb-2">
-              <div className="h-full bg-gradient-to-r from-orange-500 to-orange-400 rounded-full" style={{ width: '85%' }} />
-            </div>
-            <p className="text-xs text-white/50 mb-4">800 of 1000 drivers meet safety thresholds</p>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm text-gray-400">Pool Safety Factor</span>
+            <span className="text-2xl font-bold text-white">85%</span>
+          </div>
+          
+          <div className="h-2 bg-white/10 rounded-full overflow-hidden mb-2">
+            <div className="h-full bg-gradient-to-r from-orange-500 to-amber-400 rounded-full" style={{ width: '85%' }} />
+          </div>
+          <p className="text-xs text-gray-400 mb-4">800 of 1000 drivers meet safety thresholds</p>
 
-            {/* Two columns - Total Pool and Your Share */}
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <p className="text-xs text-white/50 mb-1">Total Pool</p>
-                <p className="text-2xl font-bold text-white">£105,000</p>
-              </div>
-              <div>
-                <p className="text-xs text-white/50 mb-1">Your Share</p>
-                <p className="text-2xl font-bold text-teal-400">£62.50</p>
-              </div>
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div>
+              <p className="text-xs text-gray-400 mb-1">Total Pool</p>
+              <p className="text-2xl font-bold text-white">£105,000</p>
             </div>
+            <div>
+              <p className="text-xs text-gray-400 mb-1">Your Share</p>
+              <p className="text-2xl font-bold text-teal-400">£62.50</p>
+            </div>
+          </div>
 
-            {/* Status banner */}
-            <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-3 py-2">
-              <p className="text-sm text-emerald-400">📈 Pool performing +5% above target</p>
-            </div>
-          </GlassCard>
+          <div className="bg-purple-500/20 border border-purple-500/20 rounded-lg px-3 py-2">
+            <p className="text-sm text-teal-400">📈 Pool performing +5% above target</p>
+          </div>
         </motion.div>
 
-        {/* 5. Achievements & Goals Section */}
+        {/* ===== 6. ACHIEVEMENTS & GOALS CARD ===== */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25, duration: 0.5 }}
-          className="mb-6"
+          className={cardStyle}
         >
-          <GlassCard>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Trophy className="w-5 h-5 text-yellow-400" />
-                <h2 className="text-lg font-semibold text-white">Achievements & Goals</h2>
-              </div>
-              <button 
-                onClick={() => setLocation('/dashboard')}
-                className="flex items-center gap-1.5 bg-orange-500/20 hover:bg-orange-500/30 px-3 py-2 rounded-lg transition-colors"
-              >
-                <Gift className="w-4 h-4 text-orange-400" />
-                <span className="text-orange-400 text-sm font-medium">View Achievements</span>
-              </button>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Trophy className="w-5 h-5 text-yellow-400" />
+              <h2 className="text-lg font-semibold text-white">Achievements & Goals</h2>
             </div>
-          </GlassCard>
+            <button 
+              onClick={() => setLocation('/dashboard')}
+              className="flex items-center gap-1.5 bg-orange-500 hover:bg-orange-600 px-3 py-2 rounded-lg transition-colors"
+            >
+              <Gift className="w-4 h-4 text-white" />
+              <span className="text-white text-sm font-medium">View Achievements</span>
+            </button>
+          </div>
         </motion.div>
 
-        {/* 6. Refund Goals Card */}
+        {/* ===== 7. REFUND GOALS CARD ===== */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.5 }}
-          className="mb-6"
+          className={cardStyle}
         >
-          <GlassCard>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Target className="w-5 h-5 text-blue-400" />
-                <h2 className="text-lg font-semibold text-white">Refund Goals</h2>
-              </div>
-              <span className="text-sm text-white/50">Current: 72/100</span>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Target className="w-5 h-5 text-blue-400" />
+              <h2 className="text-lg font-semibold text-white">Refund Goals</h2>
             </div>
-            
-            {/* Progress placeholder */}
-            <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full" style={{ width: '72%' }} />
-            </div>
-            <p className="text-xs text-white/50 mt-2">Keep driving safely to reach your refund goals</p>
-          </GlassCard>
+            <span className="text-sm text-gray-400">Current: 72/100</span>
+          </div>
+          
+          <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full" style={{ width: '72%' }} />
+          </div>
         </motion.div>
+
       </div>
 
       <BottomNav />

@@ -71,9 +71,39 @@ export default function Welcome() {
           transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
           className="flex flex-col items-center"
         >
-          <DriivaLogo size="xl" />
-          <h1 className="text-xl font-bold text-white" style={{ marginTop: 0 }}>AI-powered, community-driven.</h1>
-          <p className="text-cyan-400 text-sm mt-1">Your driving, rewarded.</p>
+          <h1 className="text-2xl font-bold text-white mb-2">Driiva</h1>
+          <p className="text-cyan-400 text-sm">AI-powered, community-driven.</p>
+          <p className="text-white/80 text-sm mt-1">Your driving, rewarded.</p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+          className="flex justify-center mt-4"
+        >
+          <div className="flex gap-4 text-sm">
+            <button 
+              onClick={() => window.open('/terms', '_blank')}
+              className="text-white/60 hover:text-white transition-colors"
+            >
+              Policy
+            </button>
+            <span className="text-white/40">|</span>
+            <button 
+              onClick={() => setLocation('/signin')}
+              className="text-white/60 hover:text-white transition-colors"
+            >
+              FAQs
+            </button>
+            <span className="text-white/40">|</span>
+            <button 
+              onClick={() => setLocation('/signin')}
+              className="text-white/60 hover:text-white transition-colors"
+            >
+              Settings
+            </button>
+          </div>
         </motion.div>
 
         <motion.div
@@ -142,9 +172,9 @@ export default function Welcome() {
           <button
             onClick={goToDemo}
             className="hero-cta-primary hero-cta-blue"
-            aria-label="See Driiva Demo"
+            aria-label="Test Driiva"
           >
-            See Driiva
+            Test Driiva
           </button>
 
           <button
