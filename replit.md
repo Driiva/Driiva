@@ -39,13 +39,15 @@ Mobile sensors collect encrypted trip data, which is processed client-side for s
 
 ### Navigation Flow
 - **Homepage (/)**: Welcome page with three CTAs:
-  - "Get Started" → /signup
-  - "Test Driiva" → /demo-dashboard (public preview with mock data)
-  - "I Already Have an Account" → /signin
-- **After Signup**: Redirects to /dashboard with success toast
-- **After Login**: Redirects to /dashboard
-- **Dashboard**: Shows driving score (default 71.75), trips section, surplus projection, Profile and Settings buttons
-- **Demo Accounts**: driiva1/driiva1, alex/alex123, sarah/sarah123, james/james123, test/test123
+  - "Get Started" → /signup → /quick-onboarding → /dashboard
+  - "Test Driiva" → /dashboard (demo mode with full mock data: score 82, trips, pool)
+  - "I Already Have an Account" → /signin → /dashboard
+- **Quick Onboarding (/quick-onboarding)**: 3-step flow with GPS permission, app install prompt, and tutorial. Skip sets onboarding_complete=true.
+- **Unified Dashboard (/dashboard)**: Adapts based on user type:
+  - Demo mode: Full mock data (score 82, trip cards, community pool £105k, achievements)
+  - New user: Empty state with prompts to start driving
+  - Returning user: Real Supabase data with trips, pool share, and achievements
+- **Demo Accounts**: driiva1/driiva1 (score 82), alex/alex123 (score 92), sarah/sarah123 (score 78), james/james123 (score 88), test/test123 (score 72)
 
 ## External Dependencies
 
