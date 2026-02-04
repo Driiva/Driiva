@@ -1,7 +1,7 @@
 import { useEffect, useState, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'wouter';
-import { Car, FileText, AlertCircle, TrendingUp, ChevronRight, Bell, ChevronDown, MapPin } from 'lucide-react';
+import { Car, FileText, AlertCircle, TrendingUp, ChevronRight, Bell, ChevronDown, MapPin, Users, Trophy, Target } from 'lucide-react';
 import { PageWrapper } from '../components/PageWrapper';
 import { BottomNav } from '../components/BottomNav';
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,6 +15,15 @@ interface Profile {
   full_name: string | null;
   avatar_url: string | null;
   onboarding_complete: boolean;
+}
+
+interface Trip {
+  id: number;
+  from: string;
+  to: string;
+  score: number;
+  distance: number;
+  date: string;
 }
 
 interface DemoUser {
@@ -31,6 +40,10 @@ interface DemoUser {
   drivingScore?: number;
   totalMiles?: number;
   projectedRefund?: number;
+  trips?: Trip[];
+  poolTotal?: number;
+  poolShare?: number;
+  safetyFactor?: number;
 }
 
 export default function Dashboard() {
@@ -109,16 +122,16 @@ export default function Dashboard() {
         if (profileData) {
           setProfile(profileData);
           
-          // If onboarding not complete, redirect to onboarding
+          // If onboarding not complete, redirect to quick-onboarding
           if (!profileData.onboarding_complete) {
-            console.log('[Dashboard] Onboarding not complete, redirecting to onboarding');
-            setLocation('/onboarding');
+            console.log('[Dashboard] Onboarding not complete, redirecting to quick-onboarding');
+            setLocation('/quick-onboarding');
             return;
           }
         } else {
-          // No profile exists, redirect to onboarding
-          console.log('[Dashboard] No profile found, redirecting to onboarding');
-          setLocation('/onboarding');
+          // No profile exists, redirect to quick-onboarding
+          console.log('[Dashboard] No profile found, redirecting to quick-onboarding');
+          setLocation('/quick-onboarding');
           return;
         }
       } catch (error) {
@@ -144,9 +157,14 @@ export default function Dashboard() {
         : demoUser?.name || 'Driver')
     : (profile?.full_name || user?.name || 'Driver');
 
-  const drivingScore = isDemoMode ? (demoUser?.drivingScore || demoUser?.overall_score || 71.75) : 71.75;
+  const drivingScore = isDemoMode ? (demoUser?.drivingScore || demoUser?.overall_score || 82) : 0;
   const premiumAmount = isDemoMode ? (demoUser?.premiumAmount || demoUser?.premium_amount || 1500) : 1500;
   const totalMiles = isDemoMode ? (demoUser?.totalMiles || 0) : 0;
+  const trips = isDemoMode ? (demoUser?.trips || []) : [];
+  const poolTotal = isDemoMode ? (demoUser?.poolTotal || 105000) : 105000;
+  const poolShare = isDemoMode ? (demoUser?.poolShare || 0) : 0;
+  const safetyFactor = isDemoMode ? (demoUser?.safetyFactor || 0.85) : 0.85;
+  const isNewUser = !isDemoMode && drivingScore === 0;
   
   const calculateSurplus = (score: number, premium: number): number => {
     if (score < 70) return 0;
@@ -313,26 +331,35 @@ export default function Dashboard() {
             <h2 className="text-lg font-semibold text-white">Your Trips</h2>
             <Car className="w-5 h-5 text-white/60" />
           </div>
-          {totalMiles > 0 ? (
-            <div className="py-4">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-white/60 text-sm">Total Miles</span>
-                <span className="text-white font-semibold">{totalMiles.toLocaleString()} mi</span>
+          {trips.length > 0 ? (
+            <div className="space-y-3">
+              {trips.map((trip) => (
+                <div key={trip.id} className="bg-white/5 rounded-xl p-3 border border-white/10">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-white font-medium">{trip.from} → {trip.to}</span>
+                    <span className={`text-sm font-bold ${trip.score >= 90 ? 'text-emerald-400' : trip.score >= 80 ? 'text-blue-400' : 'text-amber-400'}`}>
+                      {trip.score}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-white/50">
+                    <span>{trip.distance} mi</span>
+                    <span>{trip.date}</span>
+                  </div>
+                </div>
+              ))}
+              <div className="pt-2 border-t border-white/10">
+                <div className="flex items-center justify-between">
+                  <span className="text-white/60 text-sm">Total Miles</span>
+                  <span className="text-white font-semibold">{totalMiles.toLocaleString()} mi</span>
+                </div>
               </div>
-              <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"
-                  style={{ width: `${Math.min((totalMiles / 3000) * 100, 100)}%` }}
-                />
-              </div>
-              <p className="text-white/40 text-xs mt-2">Track record since joining Driiva</p>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-4">
                 <Car className="w-8 h-8 text-white/40" />
               </div>
-              <p className="text-white/60 text-sm">Start driving to see your trips</p>
+              <p className="text-white/60 text-sm">Start driving to see your first trip!</p>
               <p className="text-white/40 text-xs mt-1">Your journey data will appear here</p>
             </div>
           )}
@@ -341,22 +368,99 @@ export default function Dashboard() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25, duration: 0.5 }}
+          className="dashboard-glass-card mb-4"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-white">Community Pool</h2>
+            <Users className="w-5 h-5 text-purple-400" />
+          </div>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-white/60 text-sm">Total Pool</span>
+              <span className="text-white font-semibold">£{poolTotal.toLocaleString()}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-white/60 text-sm">Your Share</span>
+              <span className="text-emerald-400 font-bold">£{poolShare.toFixed(2)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-white/60 text-sm">Safety Factor</span>
+              <span className="text-white font-semibold">{Math.round(safetyFactor * 100)}%</span>
+            </div>
+            <div className="h-2 bg-white/10 rounded-full overflow-hidden mt-2">
+              <div 
+                className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"
+                style={{ width: `${safetyFactor * 100}%` }}
+              />
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.5 }}
+          className="dashboard-glass-card mb-4"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-white">Refund Goals</h2>
+            <Target className="w-5 h-5 text-amber-400" />
+          </div>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-white/60 text-sm">Current Refund</span>
+              <span className="text-emerald-400 font-bold text-xl">£{surplusProjection}</span>
+            </div>
+            <div className="flex items-center justify-between text-xs text-white/50">
+              <span>Based on {drivingScore}% score</span>
+              <span>Max £{Math.round(premiumAmount * 0.15)}</span>
+            </div>
+            <div className="h-3 bg-white/10 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 rounded-full transition-all duration-500"
+                style={{ width: `${Math.min((surplusProjection / (premiumAmount * 0.15)) * 100, 100)}%` }}
+              />
+            </div>
+            {isNewUser && (
+              <p className="text-white/50 text-xs text-center mt-2">
+                Drive safely to unlock refunds up to 15% of your premium!
+              </p>
+            )}
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35, duration: 0.5 }}
           className="dashboard-glass-card mb-6"
         >
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-white">Surplus Projection</h2>
-            <span className="text-emerald-400 font-bold text-xl">£{surplusProjection}</span>
+            <h2 className="text-lg font-semibold text-white">Achievements</h2>
+            <Trophy className="w-5 h-5 text-amber-400" />
           </div>
-          <p className="text-white/60 text-sm">
-            {surplusProjection > 0 
-              ? `Based on your ${drivingScore}% score and £${premiumAmount.toLocaleString()} premium.`
-              : "Drive more to unlock rewards. Safe drivers earn a share of the community surplus at renewal."}
-          </p>
-          <div className="mt-4 flex items-center gap-2 text-emerald-400 text-sm cursor-pointer hover:text-emerald-300 transition-colors">
-            <span>Learn how it works</span>
-            <ChevronRight className="w-4 h-4" />
-          </div>
+          {isDemoMode ? (
+            <div className="flex gap-3 overflow-x-auto pb-2">
+              <div className="flex-shrink-0 w-16 h-16 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/20 border border-amber-500/30 flex items-center justify-center">
+                <Trophy className="w-8 h-8 text-amber-400" />
+              </div>
+              <div className="flex-shrink-0 w-16 h-16 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/20 border border-emerald-500/30 flex items-center justify-center">
+                <Car className="w-8 h-8 text-emerald-400" />
+              </div>
+              <div className="flex-shrink-0 w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/20 border border-blue-500/30 flex items-center justify-center">
+                <Target className="w-8 h-8 text-blue-400" />
+              </div>
+              <div className="flex-shrink-0 w-16 h-16 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+                <span className="text-white/30 text-2xl">?</span>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-6 text-center">
+              <Trophy className="w-10 h-10 text-white/20 mb-3" />
+              <p className="text-white/50 text-sm">Complete trips to unlock achievements!</p>
+            </div>
+          )}
         </motion.div>
 
         <motion.div

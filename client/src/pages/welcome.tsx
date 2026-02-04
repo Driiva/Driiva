@@ -16,7 +16,25 @@ export default function Welcome() {
   const [touchStart, setTouchStart] = useState<number | null>(null);
 
   const goToDemo = () => {
-    setLocation('/demo-dashboard');
+    localStorage.setItem('driiva-demo-mode', 'true');
+    const demoAccount = {
+      id: 'demo-user-1',
+      email: 'demo@driiva.co.uk',
+      name: 'Demo Driver',
+      drivingScore: 82,
+      premiumAmount: 1500,
+      totalMiles: 1247,
+      projectedRefund: 62.50,
+      trips: [
+        { id: 1, from: 'Home', to: 'Office', score: 92, distance: 12.4, date: '2026-02-04' },
+        { id: 2, from: 'Office', to: 'Grocery', score: 88, distance: 3.2, date: '2026-02-03' }
+      ],
+      poolTotal: 105000,
+      poolShare: 62.50,
+      safetyFactor: 0.85,
+    };
+    localStorage.setItem('driiva-demo-user', JSON.stringify(demoAccount));
+    setLocation('/dashboard');
   };
 
   const handleNext = useCallback(() => {

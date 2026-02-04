@@ -117,7 +117,7 @@ export default function Signup() {
       }
 
       if (data.user) {
-        console.log('[Signup] Success, creating profile and redirecting to dashboard');
+        console.log('[Signup] Success, creating profile and redirecting to onboarding');
         
         // Create profile for the new user
         try {
@@ -127,7 +127,7 @@ export default function Signup() {
               id: data.user.id,
               email: data.user.email || formData.email,
               full_name: formData.fullName || data.user.email?.split('@')[0] || 'User',
-              onboarding_complete: true,
+              onboarding_complete: false,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
             });
@@ -146,14 +146,14 @@ export default function Signup() {
           name: formData.fullName || data.user.email?.split('@')[0] || 'User',
         });
         
-        // Show success message briefly then redirect to dashboard
+        // Show success message briefly then redirect to onboarding
         toast({
           title: "Account created!",
-          description: "Welcome to Driiva. Redirecting to your dashboard...",
+          description: "Welcome to Driiva! Let's get you set up.",
         });
         
         setTimeout(() => {
-          setLocation("/dashboard");
+          setLocation("/quick-onboarding");
         }, 1500);
       }
     } catch (err: any) {
