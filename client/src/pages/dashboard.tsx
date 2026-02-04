@@ -1,11 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'wouter';
-import { Car, FileText, AlertCircle, TrendingUp, ChevronRight, Bell, ChevronDown } from 'lucide-react';
+import { Car, FileText, AlertCircle, TrendingUp, ChevronRight, Bell, ChevronDown, MapPin } from 'lucide-react';
 import { PageWrapper } from '../components/PageWrapper';
 import { BottomNav } from '../components/BottomNav';
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
+import MapLoader from '../components/MapLoader';
+
+const LeafletMap = lazy(() => import('../components/LeafletMap'));
 
 interface Profile {
   id: string;
@@ -277,6 +280,27 @@ export default function Dashboard() {
               style={{ width: `${drivingScore}%` }}
             />
           </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15, duration: 0.5 }}
+          className="dashboard-glass-card mb-4"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-white">GPS Location</h2>
+            <MapPin className="w-5 h-5 text-emerald-400" />
+          </div>
+          <Suspense fallback={<MapLoader />}>
+            <LeafletMap 
+              location={{ lat: 51.5074, lng: -0.1278, label: 'London, UK' }}
+              className="border border-white/10"
+            />
+          </Suspense>
+          <p className="text-white/40 text-xs mt-3 text-center">
+            Live GPS tracking enabled
+          </p>
         </motion.div>
 
         <motion.div
