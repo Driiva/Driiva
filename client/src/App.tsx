@@ -21,6 +21,8 @@ import PolicyPage from './pages/policy';
 import Terms from './pages/terms';
 import Privacy from './pages/privacy';
 import Demo from './pages/demo';
+import DemoDashboard from './pages/demo-dashboard';
+import Settings from './pages/settings';
 
 import { AuthProvider } from './contexts/AuthContext';
 
@@ -102,6 +104,10 @@ export default function App() {
                 <ProtectedRoute><PolicyPage /></ProtectedRoute>
               </Route>
               <Route path="/demo" component={Demo} />
+              <Route path="/demo-dashboard" component={DemoDashboard} />
+              <Route path="/settings">
+                <ProtectedRoute><Settings /></ProtectedRoute>
+              </Route>
               
               <Route>{() => <Redirect to="/" />}</Route>
             </Switch>

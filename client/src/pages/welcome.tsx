@@ -16,7 +16,7 @@ export default function Welcome() {
   const [touchStart, setTouchStart] = useState<number | null>(null);
 
   const goToDemo = () => {
-    setLocation('/demo');
+    setLocation('/demo-dashboard');
   };
 
   const handleNext = useCallback(() => {

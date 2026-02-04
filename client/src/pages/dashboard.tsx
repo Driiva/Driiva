@@ -141,7 +141,7 @@ export default function Dashboard() {
         : demoUser?.name || 'Driver')
     : (profile?.full_name || user?.name || 'Driver');
 
-  const drivingScore = isDemoMode ? (demoUser?.drivingScore || demoUser?.overall_score || 85) : 85;
+  const drivingScore = isDemoMode ? (demoUser?.drivingScore || demoUser?.overall_score || 71.75) : 71.75;
   const premiumAmount = isDemoMode ? (demoUser?.premiumAmount || demoUser?.premium_amount || 1500) : 1500;
   const totalMiles = isDemoMode ? (demoUser?.totalMiles || 0) : 0;
   
@@ -342,19 +342,19 @@ export default function Dashboard() {
           className="grid grid-cols-2 gap-3"
         >
           <button
-            onClick={() => setLocation('/policy')}
+            onClick={() => setLocation('/profile')}
             className="dashboard-glass-card flex items-center justify-center gap-2 py-4 hover:bg-white/15 transition-colors"
           >
             <FileText className="w-5 h-5 text-white" />
-            <span className="font-medium text-white">View Policy</span>
+            <span className="font-medium text-white">Profile</span>
           </button>
           
           <button
-            onClick={() => {}}
+            onClick={() => setLocation('/settings')}
             className="dashboard-glass-card flex items-center justify-center gap-2 py-4 hover:bg-white/15 transition-colors"
           >
             <AlertCircle className="w-5 h-5 text-white" />
-            <span className="font-medium text-white">Report Claim</span>
+            <span className="font-medium text-white">Settings</span>
           </button>
         </motion.div>
       </div>

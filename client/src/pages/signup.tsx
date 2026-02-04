@@ -8,11 +8,13 @@ import { useAuth } from "../contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { useParallax } from "@/hooks/useParallax";
+import { useToast } from "@/hooks/use-toast";
 import signinLogo from "@assets/ii_clear_1769111905071.png";
 
 export default function Signup() {
   const [, setLocation] = useLocation();
   const { setUser } = useAuth();
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -115,7 +117,7 @@ export default function Signup() {
       }
 
       if (data.user) {
-        console.log('[Signup] Success, creating profile and redirecting to onboarding');
+        console.log('[Signup] Success, creating profile and redirecting to dashboard');
         
         // Create profile for the new user
         try {
@@ -125,7 +127,7 @@ export default function Signup() {
               id: data.user.id,
               email: data.user.email || formData.email,
               full_name: formData.fullName || data.user.email?.split('@')[0] || 'User',
-              onboarding_complete: false,
+              onboarding_complete: true,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
             });
@@ -144,7 +146,15 @@ export default function Signup() {
           name: formData.fullName || data.user.email?.split('@')[0] || 'User',
         });
         
-        setLocation("/onboarding");
+        // Show success message briefly then redirect to dashboard
+        toast({
+          title: "Account created!",
+          description: "Welcome to Driiva. Redirecting to your dashboard...",
+        });
+        
+        setTimeout(() => {
+          setLocation("/dashboard");
+        }, 1500);
       }
     } catch (err: any) {
       console.error("Signup error:", err);

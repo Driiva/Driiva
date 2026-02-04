@@ -93,10 +93,10 @@ export const DEMO_ACCOUNTS: Record<string, {
     email: 'demo@driiva.co.uk',
     name: 'Demo Driver',
     password: 'driiva1',
-    drivingScore: 85,
+    drivingScore: 71.75,
     premiumAmount: 1500,
-    totalMiles: 1247,
-    projectedRefund: 150,
+    totalMiles: 0,
+    projectedRefund: 84,
   },
   'alex': {
     id: 'demo-user-2',
