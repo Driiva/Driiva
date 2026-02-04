@@ -37,6 +37,16 @@ Visual preferences:
 ### Data Flow
 Mobile sensors collect encrypted trip data, which is processed client-side for safety metrics and then synchronized with the backend. The server aggregates this data for community analysis and determines refund amounts, with real-time UI updates via TanStack Query.
 
+### Navigation Flow
+- **Homepage (/)**: Welcome page with three CTAs:
+  - "Get Started" → /signup
+  - "Test Driiva" → /demo-dashboard (public preview with mock data)
+  - "I Already Have an Account" → /signin
+- **After Signup**: Redirects to /dashboard with success toast
+- **After Login**: Redirects to /dashboard
+- **Dashboard**: Shows driving score (default 71.75), trips section, surplus projection, Profile and Settings buttons
+- **Demo Accounts**: driiva1/driiva1, alex/alex123, sarah/sarah123, james/james123, test/test123
+
 ## External Dependencies
 
 ### Core Infrastructure
