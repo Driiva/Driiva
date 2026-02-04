@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { supabase, isSupabaseConfigured } from "../lib/supabase";
+import { auth, db, isFirebaseConfigured } from "../lib/firebase";
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut, User as FirebaseUser } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 
 interface User {
   id: string;
@@ -27,7 +29,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     async function initAuth() {
       try {
-        // Check for demo mode first
         const demoModeActive = localStorage.getItem('driiva-demo-mode') === 'true';
         if (demoModeActive) {
           const demoUserData = localStorage.getItem('driiva-demo-user');
@@ -48,79 +49,63 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
 
-        if (!isSupabaseConfigured) {
-          console.log('[AuthContext] Supabase not configured, skipping session check');
+        if (!isFirebaseConfigured) {
+          console.log('[AuthContext] Firebase not configured, skipping session check');
           setLoading(false);
           return;
         }
-
-        // Check active Supabase session
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
-          // Fetch profile to get onboarding status
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('full_name, onboarding_complete')
-            .eq('id', session.user.id)
-            .maybeSingle();
-
-          setUser({
-            id: session.user.id,
-            email: session.user.email!,
-            name: profile?.full_name || session.user.user_metadata?.name || session.user.email!.split("@")[0],
-            onboardingComplete: profile?.onboarding_complete === true,
-          });
-        }
       } catch (error) {
         console.error('[AuthContext] Init error:', error);
-      } finally {
         setLoading(false);
       }
     }
 
     initAuth();
 
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
-        // Fetch profile to get onboarding status
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('full_name, onboarding_complete')
-          .eq('id', session.user.id)
-          .maybeSingle();
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
+        try {
+          const userDocRef = doc(db, 'users', firebaseUser.uid);
+          const userDoc = await getDoc(userDocRef);
+          const userData = userDoc.data();
 
-        setUser({
-          id: session.user.id,
-          email: session.user.email!,
-          name: profile?.full_name || session.user.user_metadata?.name || session.user.email!.split("@")[0],
-          onboardingComplete: profile?.onboarding_complete === true,
-        });
+          setUser({
+            id: firebaseUser.uid,
+            email: firebaseUser.email!,
+            name: userData?.fullName || firebaseUser.displayName || firebaseUser.email!.split("@")[0],
+            onboardingComplete: userData?.onboardingComplete === true,
+          });
+        } catch (error) {
+          console.error('[AuthContext] Error fetching user profile:', error);
+          setUser({
+            id: firebaseUser.uid,
+            email: firebaseUser.email!,
+            name: firebaseUser.displayName || firebaseUser.email!.split("@")[0],
+            onboardingComplete: false,
+          });
+        }
       } else {
-        setUser(null);
+        const demoModeActive = localStorage.getItem('driiva-demo-mode') === 'true';
+        if (!demoModeActive) {
+          setUser(null);
+        }
       }
+      setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => unsubscribe();
   }, []);
 
   const login = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (error) throw error;
+    await signInWithEmailAndPassword(auth, email, password);
   };
 
   const logout = async () => {
-    // Clear demo mode data
     localStorage.removeItem('driiva-demo-mode');
     localStorage.removeItem('driiva-demo-user');
     localStorage.removeItem('driiva-auth-token');
     
-    await supabase.auth.signOut();
+    await signOut(auth);
     setUser(null);
   };
 
@@ -128,13 +113,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!user) return false;
     
     try {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('onboarding_complete')
-        .eq('id', user.id)
-        .maybeSingle();
+      const userDocRef = doc(db, 'users', user.id);
+      const userDoc = await getDoc(userDocRef);
+      const userData = userDoc.data();
       
-      return profile?.onboarding_complete === true;
+      return userData?.onboardingComplete === true;
     } catch {
       return false;
     }

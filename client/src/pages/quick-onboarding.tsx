@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'wouter';
 import { MapPin, Smartphone, Car, ChevronRight, Check, X } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { auth, db } from '../lib/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
 
 const TOTAL_STEPS = 3;
 
@@ -41,12 +42,13 @@ export default function QuickOnboarding() {
   const handleComplete = async () => {
     setIsLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = auth.currentUser;
       if (user) {
-        await supabase
-          .from('profiles')
-          .update({ onboarding_complete: true })
-          .eq('id', user.id);
+        const userDocRef = doc(db, 'users', user.uid);
+        await updateDoc(userDocRef, { 
+          onboardingComplete: true,
+          updatedAt: new Date().toISOString(),
+        });
       }
     } catch (err) {
       console.error('Failed to update onboarding status:', err);
@@ -57,12 +59,13 @@ export default function QuickOnboarding() {
 
   const handleSkip = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = auth.currentUser;
       if (user) {
-        await supabase
-          .from('profiles')
-          .update({ onboarding_complete: true })
-          .eq('id', user.id);
+        const userDocRef = doc(db, 'users', user.uid);
+        await updateDoc(userDocRef, { 
+          onboardingComplete: true,
+          updatedAt: new Date().toISOString(),
+        });
       }
     } catch (err) {
       console.error('Failed to update onboarding status:', err);

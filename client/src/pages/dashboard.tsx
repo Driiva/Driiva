@@ -5,7 +5,9 @@ import { Car, FileText, AlertCircle, TrendingUp, ChevronRight, Bell, ChevronDown
 import { PageWrapper } from '../components/PageWrapper';
 import { BottomNav } from '../components/BottomNav';
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/lib/supabase";
+import { auth, db, isFirebaseConfigured } from "@/lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 import MapLoader from '../components/MapLoader';
 
 const LeafletMap = lazy(() => import('../components/LeafletMap'));
@@ -92,12 +94,9 @@ export default function Dashboard() {
   useEffect(() => {
     if (isDemoMode) return;
 
-    async function checkAuthAndFetchProfile() {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       try {
-        const { data: { user: authUser } } = await supabase.auth.getUser();
-        
-        if (!authUser) {
-          // No Supabase session - check if we have a context user (demo mode)
+        if (!firebaseUser) {
           if (user) {
             setAuthChecked(true);
             setLoading(false);
@@ -108,28 +107,24 @@ export default function Dashboard() {
           return;
         }
 
-        // Fetch profile and check onboarding status
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', authUser.id)
-          .maybeSingle();
+        const userDocRef = doc(db, 'users', firebaseUser.uid);
+        const userDoc = await getDoc(userDocRef);
+        const userData = userDoc.data();
 
-        if (profileError) {
-          console.error('[Dashboard] Profile fetch error:', profileError);
-        }
-
-        if (profileData) {
-          setProfile(profileData);
+        if (userData) {
+          setProfile({
+            id: firebaseUser.uid,
+            full_name: userData.fullName || null,
+            avatar_url: userData.avatarUrl || null,
+            onboarding_complete: userData.onboardingComplete === true,
+          });
           
-          // If onboarding not complete, redirect to quick-onboarding
-          if (!profileData.onboarding_complete) {
+          if (!userData.onboardingComplete) {
             console.log('[Dashboard] Onboarding not complete, redirecting to quick-onboarding');
             setLocation('/quick-onboarding');
             return;
           }
         } else {
-          // No profile exists, redirect to quick-onboarding
           console.log('[Dashboard] No profile found, redirecting to quick-onboarding');
           setLocation('/quick-onboarding');
           return;
@@ -146,9 +141,9 @@ export default function Dashboard() {
         setAuthChecked(true);
         setLoading(false);
       }
-    }
+    });
 
-    checkAuthAndFetchProfile();
+    return () => unsubscribe();
   }, [setLocation, user, isDemoMode]);
 
   const displayName = isDemoMode 

@@ -3,7 +3,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
 import { Loader2, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import AnimatedBackground from "@/components/AnimatedBackground";
-import { supabase } from "../lib/supabase";
+import { auth, db } from "../lib/firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { doc, updateDoc } from "firebase/firestore";
 
 const TOTAL_STEPS = 4;
 
@@ -44,21 +46,13 @@ export default function Onboarding() {
   });
 
   useEffect(() => {
-    async function checkAuth() {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          setLocation("/signin");
-          return;
-        }
-      } catch (err) {
-        console.error("Auth check error:", err);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!user) {
         setLocation("/signin");
-      } finally {
-        setAuthChecking(false);
       }
-    }
-    checkAuth();
+      setAuthChecking(false);
+    });
+    return () => unsubscribe();
   }, [setLocation]);
 
   const updateField = (field: keyof FormData, value: string | boolean) => {
@@ -118,37 +112,30 @@ export default function Onboarding() {
     setError(null);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = auth.currentUser;
       
       if (!user) {
         setLocation("/signin");
         return;
       }
 
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update({
-          full_name: formData.fullName,
-          date_of_birth: formData.dateOfBirth,
-          phone: formData.phone,
-          vehicle_registration: formData.vehicleRegistration.toUpperCase(),
-          vehicle_make: formData.vehicleMake,
-          vehicle_model: formData.vehicleModel,
-          vehicle_year: parseInt(formData.vehicleYear),
-          years_driving: parseInt(formData.yearsDriving),
-          claims_last_5_years: parseInt(formData.claimsLast5Years),
-          annual_mileage: parseInt(formData.annualMileage),
-          terms_accepted: true,
-          privacy_accepted: true,
-          onboarding_complete: true,
-        })
-        .eq("id", user.id);
-
-      if (updateError) {
-        console.error("Profile update error:", updateError);
-        setError("Could not save your details. Please try again.");
-        return;
-      }
+      const userDocRef = doc(db, 'users', user.uid);
+      await updateDoc(userDocRef, {
+        fullName: formData.fullName,
+        dateOfBirth: formData.dateOfBirth,
+        phone: formData.phone,
+        vehicleRegistration: formData.vehicleRegistration.toUpperCase(),
+        vehicleMake: formData.vehicleMake,
+        vehicleModel: formData.vehicleModel,
+        vehicleYear: parseInt(formData.vehicleYear),
+        yearsDriving: parseInt(formData.yearsDriving),
+        claimsLast5Years: parseInt(formData.claimsLast5Years),
+        annualMileage: parseInt(formData.annualMileage),
+        termsAccepted: true,
+        privacyAccepted: true,
+        onboardingComplete: true,
+        updatedAt: new Date().toISOString(),
+      });
 
       setLocation("/dashboard");
     } catch (err) {

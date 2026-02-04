@@ -46,17 +46,18 @@ Mobile sensors collect encrypted trip data, which is processed client-side for s
 - **Unified Dashboard (/dashboard)**: Adapts based on user type:
   - Demo mode: Full mock data (score 82, trip cards, community pool £105k, achievements)
   - New user: Empty state with prompts to start driving
-  - Returning user: Real Supabase data with trips, pool share, and achievements
+  - Returning user: Real Firestore data with trips, pool share, and achievements
 - **Demo Accounts**: driiva1/driiva1 (score 82), alex/alex123 (score 92), sarah/sarah123 (score 78), james/james123 (score 88), test/test123 (score 72)
 
 ## External Dependencies
 
 ### Core Infrastructure
-- **Neon Database**: Serverless PostgreSQL hosting.
+- **Firebase Auth**: User authentication with email/password and session management.
+- **Firestore**: NoSQL database for user profiles (/users/{uid}), daily scores, and rolling averages.
+- **Neon Database**: Serverless PostgreSQL hosting for backend data.
 - **Stripe Integration**: Planned for payment processing and subscription management.
 - **WebSocket Support**: For real-time data streaming.
 - **Python FastAPI**: For refund calculation, pool statistics, and driver management.
-- **Firestore**: Used for storing daily scores and rolling averages, requiring `GOOGLE_APPLICATION_CREDENTIALS`.
 
 ### Development Tools
 - **Drizzle Kit**: Database migrations and schema management.

@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { supabase } from '@/lib/supabase';
+import { auth } from '@/lib/firebase';
+import { signOut } from 'firebase/auth';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface AuthHeaderProps {
@@ -24,26 +25,19 @@ export const AuthHeader: React.FC<AuthHeaderProps> = ({
     setIsLoggingOut(true);
     
     try {
-      // Clear all local storage auth data
       localStorage.removeItem('driiva-demo-mode');
       localStorage.removeItem('driiva-demo-user');
       localStorage.removeItem('driiva-auth-token');
-      localStorage.removeItem('sb-auth-token');
       
-      // Clear all session storage
       sessionStorage.clear();
       
-      // Sign out from Supabase (clears Supabase session)
-      await supabase.auth.signOut();
+      await signOut(auth);
       
-      // Clear auth context
       setUser(null);
       
-      // Redirect to homepage
       setLocation('/');
     } catch (error) {
       console.error('[AuthHeader] Logout error:', error);
-      // Still clear and redirect even if signOut fails
       localStorage.clear();
       sessionStorage.clear();
       setUser(null);

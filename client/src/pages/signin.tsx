@@ -8,7 +8,25 @@ import { useToast } from "@/hooks/use-toast";
 import signinLogo from "@assets/ii_clear_1769111905071.png";
 import { useParallax } from "@/hooks/useParallax";
 import { useAuth } from "../contexts/AuthContext";
-import { supabase, isSupabaseConfigured, getDemoAccount, DEMO_ACCOUNTS, testSupabaseConnection } from "@/lib/supabase";
+import { auth, db, isFirebaseConfigured } from "@/lib/firebase";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+
+const DEMO_ACCOUNTS: Record<string, { id: string; email: string; name: string; password: string; drivingScore: number; }> = {
+  'driiva1': { id: 'demo-user-1', email: 'demo@driiva.co.uk', name: 'Demo Driver', password: 'driiva1', drivingScore: 82 },
+  'alex': { id: 'demo-user-2', email: 'alex@driiva.co.uk', name: 'Alex Thompson', password: 'alex123', drivingScore: 92 },
+  'sarah': { id: 'demo-user-3', email: 'sarah@driiva.co.uk', name: 'Sarah Williams', password: 'sarah123', drivingScore: 78 },
+  'james': { id: 'demo-user-4', email: 'james@driiva.co.uk', name: 'James Miller', password: 'james123', drivingScore: 88 },
+  'test': { id: 'demo-user-5', email: 'test@driiva.co.uk', name: 'Test User', password: 'test123', drivingScore: 72 },
+};
+
+function getDemoAccount(username: string, password: string) {
+  const account = DEMO_ACCOUNTS[username.toLowerCase()];
+  if (account && account.password === password) {
+    return account;
+  }
+  return null;
+}
 
 export default function SignIn() {
   const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'demo-only'>('checking');
@@ -22,18 +40,12 @@ export default function SignIn() {
   const { ref: cardRef, style: cardParallaxStyle } = useParallax({ speed: 0.3 });
   const { setUser } = useAuth();
 
-  // Check Supabase connection status on mount
   useEffect(() => {
-    async function checkConnection() {
-      if (!isSupabaseConfigured) {
-        setConnectionStatus('demo-only');
-        return;
-      }
-      
-      const result = await testSupabaseConnection();
-      setConnectionStatus(result.connected ? 'connected' : 'demo-only');
+    if (!isFirebaseConfigured) {
+      setConnectionStatus('demo-only');
+    } else {
+      setConnectionStatus('connected');
     }
-    checkConnection();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,7 +53,6 @@ export default function SignIn() {
     e.preventDefault();
     e.stopPropagation();
     
-    // Clear previous errors
     setLoginError(null);
     
     if (!username.trim() || !password.trim()) {
@@ -60,12 +71,10 @@ export default function SignIn() {
     setLoginError(null);
     
     try {
-      // Check for demo credentials first (bypass Supabase - works offline)
       const demoAccount = getDemoAccount(username, password);
       if (demoAccount) {
         console.log('[SignIn] Using demo account:', demoAccount.name);
         
-        // Store demo user data for dashboard
         localStorage.setItem('driiva-demo-mode', 'true');
         localStorage.setItem('driiva-demo-user', JSON.stringify(demoAccount));
         
@@ -85,9 +94,8 @@ export default function SignIn() {
         return;
       }
 
-      // Only try Supabase if properly configured
-      if (!isSupabaseConfigured) {
-        console.log('[SignIn] Supabase not configured, showing error');
+      if (!isFirebaseConfigured) {
+        console.log('[SignIn] Firebase not configured, showing error');
         setLoginError('Invalid credentials. Try one of the demo accounts below.');
         toast({
           title: "Sign in failed",
@@ -97,148 +105,70 @@ export default function SignIn() {
         return;
       }
 
-      // Try Supabase authentication with timeout
-      console.log('[SignIn] Calling supabase.auth.signInWithPassword');
+      console.log('[SignIn] Calling Firebase signInWithEmailAndPassword');
+      const userCredential = await signInWithEmailAndPassword(auth, username, password);
+      const user = userCredential.user;
+
+      console.log('[SignIn] Authentication successful, user:', user.uid);
+
+      let onboardingComplete = false;
       
-      // Create a timeout promise
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Connection timeout - please try again')), 15000);
-      });
-
-      // Race between auth and timeout
-      const authPromise = supabase.auth.signInWithPassword({
-        email: username,
-        password: password,
-      });
-
-      const result = await Promise.race([authPromise, timeoutPromise]) as Awaited<typeof authPromise>;
-      const { data, error } = result;
-
-      console.log('[SignIn] Supabase response:', { 
-        hasUser: !!data?.user, 
-        hasError: !!error,
-        errorMessage: error?.message,
-        errorName: (error as any)?.name,
-        errorStatus: (error as any)?.status
-      });
-
-      if (!error && data.user) {
-        console.log('[SignIn] Authentication successful, user:', data.user.id);
+      try {
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
         
-        // Check if profile exists and get onboarding status
-        let onboardingComplete = false;
-        let profileExists = false;
-        
-        try {
-          console.log('[SignIn] Checking for existing profile...');
-          
-          // Check if profile exists and get onboarding status
-          const { data: existingProfile, error: profileCheckError } = await supabase
-            .from('profiles')
-            .select('id, onboarding_complete')
-            .eq('id', data.user.id)
-            .maybeSingle();
-
-          if (profileCheckError && profileCheckError.code !== 'PGRST116') {
-            console.warn('[SignIn] Profile check error (non-fatal):', profileCheckError);
-          }
-
-          if (existingProfile) {
-            profileExists = true;
-            onboardingComplete = existingProfile.onboarding_complete === true;
-            console.log('[SignIn] Profile found, onboarding_complete:', onboardingComplete);
-          } else {
-            // Profile doesn't exist, create it with onboarding_complete = false
-            console.log('[SignIn] Profile not found, creating...');
-            
-            const profileData = {
-              id: data.user.id,
-              email: data.user.email || username,
-              full_name: data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'User',
-              onboarding_complete: false,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            };
-
-            const { error: insertError } = await supabase
-              .from('profiles')
-              .insert(profileData);
-
-            if (insertError) {
-              console.error('[SignIn] Failed to create profile:', insertError);
-            } else {
-              console.log('[SignIn] Profile created successfully');
-              profileExists = true;
-              onboardingComplete = false;
-            }
-          }
-        } catch (profileErr) {
-          console.error('[SignIn] Profile check/create error:', profileErr);
-          // Don't block login if profile check fails, default to dashboard
-        }
-
-        // Set user in auth context
-        setUser({
-          id: data.user.id,
-          email: data.user.email || username,
-          name: data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || 'User',
-        });
-
-        toast({
-          title: "Welcome back!",
-          description: "Successfully signed in",
-        });
-
-        // Route based on onboarding status
-        if (onboardingComplete) {
-          console.log('[SignIn] Redirecting to dashboard (onboarding complete)');
-          setLocation("/dashboard");
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          onboardingComplete = userData?.onboardingComplete === true;
+          console.log('[SignIn] Profile found, onboardingComplete:', onboardingComplete);
         } else {
-          console.log('[SignIn] Redirecting to onboarding (onboarding not complete)');
-          setLocation("/onboarding");
+          console.log('[SignIn] Profile not found, creating...');
+          await setDoc(userDocRef, {
+            uid: user.uid,
+            email: user.email || username,
+            fullName: user.displayName || user.email?.split('@')[0] || 'User',
+            onboardingComplete: false,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          });
         }
-        return;
+      } catch (profileErr) {
+        console.error('[SignIn] Profile check/create error:', profileErr);
       }
 
-      // Supabase failed - show error
-      console.error('[SignIn] Authentication failed:', error);
-      let errorMessage = error?.message || "Invalid email or password";
-      const errorName = (error as any)?.name || '';
-      
-      // Provide more helpful error messages
-      if (errorName === 'AuthRetryableFetchError' || error?.message?.includes('Load failed') || (error as any)?.status === 0) {
-        errorMessage = "Network error - try one of the demo accounts below";
-        console.error('[SignIn] Network error - Supabase may be unreachable');
-      } else if (error?.message?.includes('Invalid API key') || error?.message?.includes('401')) {
-        errorMessage = "Configuration error: Invalid API key. Please check Supabase settings.";
-        console.error('[SignIn] API key error - check VITE_SUPABASE_ANON_KEY');
-      } else if (error?.message?.includes('Invalid login') || error?.message?.includes('Invalid credentials')) {
-        errorMessage = "Invalid email or password";
-      } else if (error?.message?.includes('Email not confirmed')) {
-        errorMessage = "Please confirm your email before signing in";
-      }
-      
-      setLoginError(errorMessage);
-      toast({
-        title: "Sign in failed",
-        description: errorMessage,
-        variant: "destructive",
+      setUser({
+        id: user.uid,
+        email: user.email || username,
+        name: user.displayName || user.email?.split('@')[0] || 'User',
       });
-    } catch (error: any) {
-      console.error('[SignIn] Unexpected error:', error);
-      let errorMessage = error instanceof Error ? error.message : "Invalid email or password";
-      
-      // Check for network/fetch errors
-      if (error?.name === 'AuthRetryableFetchError' || error?.message?.includes('Load failed') || error?.status === 0) {
-        errorMessage = "Network error - please check your connection and try again";
-        console.error('[SignIn] Network error - Supabase may be unreachable');
-      } else if (error?.message?.includes('timeout')) {
-        errorMessage = "Connection timeout - please try again";
-      } else if (errorMessage.includes('Invalid API key') || errorMessage.includes('401')) {
-        errorMessage = "Configuration error: Invalid API key. Please check Supabase settings.";
-        console.error('[SignIn] API key error');
+
+      toast({
+        title: "Welcome back!",
+        description: "Successfully signed in",
+      });
+
+      if (onboardingComplete) {
+        console.log('[SignIn] Redirecting to dashboard (onboarding complete)');
+        setLocation("/dashboard");
+      } else {
+        console.log('[SignIn] Redirecting to quick-onboarding');
+        setLocation("/quick-onboarding");
       }
-      
+
+    } catch (error: any) {
+      console.error('[SignIn] Authentication failed:', error);
+      let errorMessage = "Invalid email or password";
+
+      if (error.code === 'auth/invalid-email') {
+        errorMessage = "Invalid email address format";
+      } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        errorMessage = "Invalid email or password";
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = "Too many failed attempts. Please try again later.";
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = "Network error - try one of the demo accounts below";
+      }
+
       setLoginError(errorMessage);
       toast({
         title: "Sign in failed",
@@ -251,12 +181,9 @@ export default function SignIn() {
     }
   };
 
-
   return (
     <div className="min-h-screen text-white relative overflow-hidden">
-
       <div className="relative z-10 min-h-screen flex items-center justify-center px-5 py-12">
-        {/* Back Button */}
         <motion.button
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -290,7 +217,6 @@ export default function SignIn() {
               ...cardParallaxStyle,
             }}>
             <CardContent className="px-5 py-5">
-              {/* Signin Header with Logo */}
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -311,7 +237,6 @@ export default function SignIn() {
                   Sign in to your telematics insurance account
                 </p>
                 
-                {/* Connection Status Indicator */}
                 {connectionStatus === 'demo-only' && (
                   <div className="mt-3 px-3 py-1 rounded-full text-xs bg-amber-500/20 text-amber-300 border border-amber-500/30">
                     Demo Mode Only
@@ -324,8 +249,6 @@ export default function SignIn() {
                 )}
               </motion.div>
 
-
-              {/* Sign In Form */}
               <motion.form
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -333,7 +256,6 @@ export default function SignIn() {
                 onSubmit={handleSubmit}
                 className="space-y-4"
               >
-                {/* Email or Username Field */}
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-white/80">
                     Email or Username
@@ -355,7 +277,6 @@ export default function SignIn() {
                   </div>
                 </div>
 
-                {/* Password Field */}
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-white/80">
                     Password
@@ -383,7 +304,6 @@ export default function SignIn() {
                   </div>
                 </div>
 
-                {/* Error Banner */}
                 {loginError && (
                   <motion.div
                     initial={{ opacity: 0, y: -5 }}
@@ -399,7 +319,6 @@ export default function SignIn() {
                   </motion.div>
                 )}
 
-                {/* Demo Accounts Info */}
                 <div 
                   className="px-3 py-2.5 rounded-xl"
                   style={{
@@ -419,7 +338,6 @@ export default function SignIn() {
                   </div>
                 </div>
 
-                {/* Sign In Button */}
                 <button
                   type="submit"
                   disabled={isLoading}

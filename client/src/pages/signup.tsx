@@ -3,7 +3,9 @@ import { motion } from "framer-motion";
 import { useLocation } from "wouter";
 import { AlertCircle, Loader2, Info, Eye, EyeOff, ArrowLeft, User, Mail, Lock } from "lucide-react";
 import { timing, easing, microInteractions } from "@/lib/animations";
-import { supabase, isSupabaseConfigured, DEMO_CREDENTIALS } from "../lib/supabase";
+import { auth, db, isFirebaseConfigured } from "../lib/firebase";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 import { useAuth } from "../contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -68,105 +70,65 @@ export default function Signup() {
     setIsLoading(true);
 
     try {
-      // Check if Supabase is properly configured
-      if (!isSupabaseConfigured) {
-        console.log('[Signup] Supabase not configured, showing demo mode hint');
+      if (!isFirebaseConfigured) {
+        console.log('[Signup] Firebase not configured, showing demo mode hint');
         setError("Account creation is currently unavailable. Please use the demo account to explore the app.");
         setShowDemoHint(true);
         return;
       }
 
-      // Create timeout for the request
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Connection timeout')), 15000);
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        formData.email,
+        formData.password
+      );
+
+      const user = userCredential.user;
+
+      await updateProfile(user, {
+        displayName: formData.fullName,
       });
 
-      const signupPromise = supabase.auth.signUp({
+      await setDoc(doc(db, 'users', user.uid), {
+        uid: user.uid,
         email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            full_name: formData.fullName,
-          },
-        },
+        fullName: formData.fullName,
+        onboardingComplete: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       });
 
-      const result = await Promise.race([signupPromise, timeoutPromise]) as Awaited<typeof signupPromise>;
-      const { data, error: signUpError } = result;
+      console.log('[Signup] Success, user created:', user.uid);
 
-      if (signUpError) {
-        console.error('[Signup] Error:', signUpError);
-        
-        // Handle specific error types
-        if (signUpError.message.includes("already registered")) {
-          setError("This email is already registered. Please sign in instead.");
-        } else if (signUpError.message.includes("password")) {
-          setError("Password is too weak. Use at least 8 characters with a mix of letters and numbers.");
-        } else if (
-          signUpError.message.includes("network") || 
-          signUpError.message.includes("fetch") ||
-          signUpError.message.includes("Load failed") ||
-          (signUpError as any)?.name === 'AuthRetryableFetchError'
-        ) {
-          setError("Network error. The service may be temporarily unavailable. Try the demo account instead.");
-          setShowDemoHint(true);
-        } else {
-          setError(signUpError.message);
-        }
-        return;
-      }
+      setUser({
+        id: user.uid,
+        email: user.email || formData.email,
+        name: formData.fullName,
+      });
 
-      if (data.user) {
-        console.log('[Signup] Success, creating profile and redirecting to onboarding');
-        
-        // Create profile for the new user
-        try {
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .insert({
-              id: data.user.id,
-              email: data.user.email || formData.email,
-              full_name: formData.fullName || data.user.email?.split('@')[0] || 'User',
-              onboarding_complete: false,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            });
-          
-          if (profileError) {
-            console.warn('[Signup] Profile creation error (non-fatal):', profileError);
-          }
-        } catch (profileErr) {
-          console.warn('[Signup] Profile creation failed (non-fatal):', profileErr);
-        }
-        
-        // Set user in auth context
-        setUser({
-          id: data.user.id,
-          email: data.user.email || formData.email,
-          name: formData.fullName || data.user.email?.split('@')[0] || 'User',
-        });
-        
-        // Show success message briefly then redirect to onboarding
-        toast({
-          title: "Account created!",
-          description: "Welcome to Driiva! Let's get you set up.",
-        });
-        
-        setTimeout(() => {
-          setLocation("/quick-onboarding");
-        }, 1500);
-      }
+      toast({
+        title: "Account created!",
+        description: "Welcome to Driiva! Let's get you set up.",
+      });
+
+      setTimeout(() => {
+        setLocation("/quick-onboarding");
+      }, 1500);
+
     } catch (err: any) {
       console.error("Signup error:", err);
-      
-      if (err.message?.includes('timeout')) {
-        setError("Connection timeout. The service may be temporarily unavailable. Try the demo account instead.");
-        setShowDemoHint(true);
-      } else if (err.message?.includes('Load failed') || err.message?.includes('network')) {
+
+      if (err.code === 'auth/email-already-in-use') {
+        setError("This email is already registered. Please sign in instead.");
+      } else if (err.code === 'auth/weak-password') {
+        setError("Password is too weak. Use at least 8 characters with a mix of letters and numbers.");
+      } else if (err.code === 'auth/invalid-email') {
+        setError("Invalid email address format.");
+      } else if (err.code === 'auth/network-request-failed') {
         setError("Network error. Please check your connection or try the demo account.");
         setShowDemoHint(true);
       } else {
-        setError("Something went wrong. Please try again or use the demo account.");
+        setError(err.message || "Something went wrong. Please try again.");
         setShowDemoHint(true);
       }
     } finally {
@@ -175,6 +137,13 @@ export default function Signup() {
   };
 
   const handleDemoLogin = () => {
+    localStorage.setItem('driiva-demo-mode', 'true');
+    localStorage.setItem('driiva-demo-user', JSON.stringify({
+      id: "demo-user-8",
+      email: "test@driiva.com",
+      name: "Test Driver",
+      drivingScore: 82,
+    }));
     setUser({
       id: "demo-user-8",
       email: "test@driiva.com",
@@ -239,126 +208,108 @@ export default function Signup() {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-emerald-500/20 border border-emerald-500/30 rounded-xl p-4 mb-6"
+            className="bg-blue-500/20 border border-blue-500/30 rounded-xl p-4 mb-6 flex items-start gap-3"
           >
-            <div className="flex items-start gap-3">
-              <Info className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="text-emerald-300 text-sm font-medium">Try Demo Mode</p>
-                <p className="text-emerald-300/80 text-sm mt-1">
-                  Explore Driiva with our demo account: <span className="font-mono">{DEMO_CREDENTIALS.username} / {DEMO_CREDENTIALS.password}</span>
-                </p>
-                <button
-                  onClick={handleDemoLogin}
-                  className="mt-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium rounded-lg transition-colors"
-                >
-                  Enter Demo Mode
-                </button>
-              </div>
+            <Info className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-blue-300 text-sm font-medium">Try Demo Mode</p>
+              <p className="text-blue-200/80 text-sm mt-1">
+                Explore Driiva with our demo account to see all features.
+              </p>
+              <button
+                onClick={handleDemoLogin}
+                className="mt-2 px-4 py-2 bg-blue-500/30 hover:bg-blue-500/40 
+                         rounded-lg text-blue-200 text-sm transition-colors"
+              >
+                Enter Demo Mode
+              </button>
             </div>
           </motion.div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Full Name Field */}
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-white/80">
-              Full Name
-            </label>
+          <div>
+            <label className="text-sm text-white/70 mb-2 block">Full Name</label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/50" />
+              <User className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/40" />
               <Input
                 type="text"
+                placeholder="Enter your full name"
                 value={formData.fullName}
                 onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                className="signin-input pl-10"
-                placeholder="Enter your full name"
-                required
-                disabled={isLoading}
+                className="pl-12 h-14 bg-white/5 border-white/10 text-white placeholder:text-white/40 
+                         rounded-xl focus:border-orange-400/50 focus:ring-orange-400/20"
               />
             </div>
           </div>
 
-          {/* Email Field */}
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-white/80">
-              Email
-            </label>
+          <div>
+            <label className="text-sm text-white/70 mb-2 block">Email</label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/50" />
+              <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/40" />
               <Input
                 type="email"
+                placeholder="Enter your email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="signin-input pl-10"
-                placeholder="you@example.com"
-                required
-                disabled={isLoading}
+                className="pl-12 h-14 bg-white/5 border-white/10 text-white placeholder:text-white/40 
+                         rounded-xl focus:border-orange-400/50 focus:ring-orange-400/20"
               />
             </div>
           </div>
 
-          {/* Password Field */}
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-white/80">
-              Password
-            </label>
+          <div>
+            <label className="text-sm text-white/70 mb-2 block">Password</label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/50" />
+              <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/40" />
               <Input
                 type={showPassword ? "text" : "password"}
+                placeholder="Create a password"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="signin-input pl-10 pr-10"
-                placeholder="Minimum 8 characters"
-                required
-                disabled={isLoading}
+                className="pl-12 pr-12 h-14 bg-white/5 border-white/10 text-white placeholder:text-white/40 
+                         rounded-xl focus:border-orange-400/50 focus:ring-orange-400/20"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/50 hover:text-white/70 transition-colors"
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/40 hover:text-white/60"
               >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
-            <p className="text-white/40 text-xs mt-1">At least 8 characters</p>
           </div>
 
-          {/* Confirm Password Field */}
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-white/80">
-              Confirm Password
-            </label>
+          <div>
+            <label className="text-sm text-white/70 mb-2 block">Confirm Password</label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/50" />
+              <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/40" />
               <Input
                 type={showConfirmPassword ? "text" : "password"}
+                placeholder="Confirm your password"
                 value={formData.confirmPassword}
                 onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                className="signin-input pl-10 pr-10"
-                placeholder="Re-enter your password"
-                required
-                disabled={isLoading}
+                className="pl-12 pr-12 h-14 bg-white/5 border-white/10 text-white placeholder:text-white/40 
+                         rounded-xl focus:border-orange-400/50 focus:ring-orange-400/20"
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/50 hover:text-white/70 transition-colors"
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/40 hover:text-white/60"
               >
-                {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
             </div>
           </div>
 
           <motion.button
             type="submit"
-            whileTap={!isLoading ? microInteractions.tap : undefined}
-            transition={{ duration: timing.quick / 1000 }}
             disabled={isLoading}
-            className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-500/50 
-                     text-white font-semibold py-4 rounded-xl transition-colors mt-6 min-h-[56px]
-                     flex items-center justify-center gap-2"
+            whileTap={microInteractions.tap}
+            className="w-full h-14 bg-gradient-to-r from-orange-500 to-orange-600 
+                     hover:from-orange-600 hover:to-orange-700 text-white font-semibold 
+                     rounded-xl transition-all duration-200 flex items-center justify-center gap-2
+                     disabled:opacity-50 disabled:cursor-not-allowed mt-6"
           >
             {isLoading ? (
               <>
@@ -371,22 +322,17 @@ export default function Signup() {
           </motion.button>
         </form>
 
-        <p className="text-center text-sm text-white/50 mt-6">
-          Already have an account?{" "}
-          <button
-            onClick={() => setLocation("/signin")}
-            className="text-emerald-400 hover:underline"
-          >
-            Sign in
-          </button>
-        </p>
-
-        <p className="text-center text-sm text-white/50 mt-4">
-          By continuing, you agree to our{" "}
-          <a href="#" className="text-emerald-400 hover:underline">Terms</a>
-          {" "}and{" "}
-          <a href="#" className="text-emerald-400 hover:underline">Privacy Policy</a>
-        </p>
+        <div className="mt-8 text-center">
+          <p className="text-white/50 text-sm">
+            Already have an account?{" "}
+            <button
+              onClick={() => setLocation("/signin")}
+              className="text-orange-400 hover:text-orange-300 font-medium"
+            >
+              Sign in
+            </button>
+          </p>
+        </div>
       </motion.div>
     </div>
   );
