@@ -27,12 +27,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Firestore client (will be initialized if credentials are available)
-db = None
+# Firestore client (will be initialized lazily if credentials are available)
+_db = None
+_firestore_initialized = False
 
-def init_firestore():
-    """Initialize Firestore client if credentials are available."""
-    global db
+def get_db():
+    """Get Firestore client, initializing lazily if needed."""
+    global _db, _firestore_initialized
+    
+    if _firestore_initialized:
+        return _db
+    
+    _firestore_initialized = True
+    
     try:
         import firebase_admin
         from firebase_admin import credentials, firestore
@@ -47,17 +54,17 @@ def init_firestore():
                 cred = credentials.Certificate(service_account_path)
                 firebase_admin.initialize_app(cred)
             else:
-                # Try default credentials (for Replit with secrets)
-                firebase_admin.initialize_app()
+                # No credentials available
+                print("Firestore credentials not found")
+                return None
         
-        db = firestore.client()
+        _db = firestore.client()
         print("Firestore initialized successfully")
     except Exception as e:
-        print(f"Firestore not initialized: {e}")
-        db = None
-
-# Try to initialize Firestore on startup
-init_firestore()
+        print(f"Firestore not available: {e}")
+        _db = None
+    
+    return _db
 
 
 # ============ Pydantic Models ============
@@ -208,7 +215,7 @@ async def root():
         "status": "healthy",
         "service": "Driiva Refund Calculator API",
         "version": "1.0.0",
-        "firestore_connected": db is not None
+        "firestore_connected": get_db() is not None
     }
 
 
@@ -301,6 +308,7 @@ async def store_driver_score(driver: DriverScore):
     - **personal_score**: Driver's annual driving score (0-100)
     - **annual_premium**: Driver's yearly premium in GBP
     """
+    db = get_db()
     if db is None:
         raise HTTPException(
             status_code=503, 
@@ -324,6 +332,7 @@ async def get_driver_score(driver_id: str):
     """
     Retrieve a driver's score from Firestore.
     """
+    db = get_db()
     if db is None:
         raise HTTPException(
             status_code=503,
@@ -347,6 +356,7 @@ async def list_all_drivers():
     """
     List all drivers from Firestore.
     """
+    db = get_db()
     if db is None:
         raise HTTPException(
             status_code=503,
@@ -367,6 +377,7 @@ async def delete_driver(driver_id: str):
     """
     Delete a driver from Firestore.
     """
+    db = get_db()
     if db is None:
         raise HTTPException(
             status_code=503,
@@ -397,6 +408,7 @@ async def get_pool_statistics():
     - Pool safety factor (percentage of drivers with score >= 80)
     - Average score across all drivers
     """
+    db = get_db()
     if db is None:
         raise HTTPException(
             status_code=503,
@@ -442,6 +454,7 @@ async def calculate_refunds_from_firestore(surplus_ratio: float = 0.5):
     
     - **surplus_ratio**: Total surplus / Target refund pool (capped at 1)
     """
+    db = get_db()
     if db is None:
         raise HTTPException(
             status_code=503,
@@ -512,4 +525,5 @@ async def calculate_refunds_from_firestore(surplus_ratio: float = 0.5):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=5000)
+    port = int(os.environ.get("PORT", "5000"))
+    uvicorn.run(app, host="0.0.0.0", port=port)

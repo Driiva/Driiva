@@ -226,3 +226,43 @@ Key architectural decisions favor real-time user experience, data privacy, and s
 | sarah | sarah123 | Sarah Mitchell | 78 | 890 | £126 |
 | james | james123 | James Wilson | 88 | 1,650 | £154 |
 | test | test123 | Test User | 72 | 560 | £100 |
+
+### February 4, 2026 - Python Refund Calculator API
+- ✅ **FASTAPI REFUND CALCULATOR**: Created Python FastAPI API at `/api/main.py`
+  - POST `/calculate-refund`: Single driver refund calculation
+  - POST `/calculate-pool-refunds`: Batch refund calculation for multiple drivers
+  - POST `/calculate-pool-refunds-from-firestore`: Calculate from stored Firestore data
+  - GET `/pool-stats`: Real-time pool statistics
+  - CRUD endpoints for driver management (`/drivers`)
+
+#### Refund Algorithm Implementation:
+```
+refund_rate = min(0.15, ((0.7 * personal_score/100) + (0.3 * pool_safety_factor)) * surplus_ratio)
+refund_amount = annual_premium * refund_rate
+```
+
+#### Business Rules:
+- Eligibility: personal_score >= 70
+- Maximum refund rate: 15% (0.15)
+- pool_safety_factor: Percentage of drivers with score >= 80
+- surplus_ratio: Capped at 1.0
+
+#### API Endpoints:
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/` | GET | Health check |
+| `/docs` | GET | Swagger UI documentation |
+| `/redoc` | GET | ReDoc documentation |
+| `/calculate-refund` | POST | Single driver refund |
+| `/calculate-pool-refunds` | POST | Batch refund calculation |
+| `/drivers` | GET, POST | List/create drivers |
+| `/drivers/{id}` | GET, DELETE | Get/delete driver |
+| `/pool-stats` | GET | Pool statistics |
+
+#### Running the API:
+```bash
+python -m uvicorn api.main:app --host 0.0.0.0 --port 5000
+```
+
+#### Firestore Integration:
+Set `GOOGLE_APPLICATION_CREDENTIALS` environment variable to the path of your Firebase service account JSON file.
