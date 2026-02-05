@@ -49,6 +49,30 @@ Mobile sensors collect encrypted trip data, which is processed client-side for s
   - Returning user: Real Firestore data with trips, pool share, and achievements
 - **Demo Accounts**: driiva1/driiva1 (score 82), alex/alex123 (score 92), sarah/sarah123 (score 78), james/james123 (score 88), test/test123 (score 72)
 
+## Firebase Configuration
+
+### Required Environment Variables (Replit Secrets)
+The following secrets must be set in Replit Secrets (lock icon in sidebar):
+
+| Secret Name | Description | Example Value |
+|-------------|-------------|---------------|
+| `VITE_FIREBASE_API_KEY` | Firebase Web API Key | `AIzaSyC...` |
+| `VITE_FIREBASE_PROJECT_ID` | Firebase Project ID | `driiva` |
+| `VITE_FIREBASE_APP_ID` | Firebase App ID | `1:123456789:web:abc123` |
+
+### Firebase Health Checklist
+1. ✓ All three VITE_FIREBASE_* secrets are set in Replit Secrets
+2. ✓ Console shows: `✓ Firebase initialized with projectId=driiva`
+3. ✓ No "auth/configuration-not-found" or "api-key-not-valid" errors
+4. ✓ User can sign up with email/password
+5. ✓ User can sign in with existing account
+6. ✓ Demo accounts (driiva1/driiva1, etc.) work without Firebase
+
+### Firebase Config Location
+- **Single source of truth**: `client/src/lib/firebase.ts`
+- Hard-coded authDomain: `driiva.firebaseapp.com`
+- All auth components import from this single file
+
 ## External Dependencies
 
 ### Core Infrastructure
