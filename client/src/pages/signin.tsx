@@ -116,14 +116,9 @@ export default function SignIn() {
         description: "Successfully signed in",
       });
 
-      // Navigate to home (driver dashboard) - same destination as signup
-      if (onboardingComplete) {
-        console.log('[SignIn] Redirecting to /home (onboarding complete)');
-        setLocation("/home");
-      } else {
-        console.log('[SignIn] Redirecting to quick-onboarding');
-        setLocation("/quick-onboarding");
-      }
+      // Navigate to dashboard after successful signin
+      console.log('[SignIn] Redirecting to /dashboard');
+      setLocation("/dashboard");
 
     } catch (error: any) {
       console.error('[SignIn] Authentication failed:', error);

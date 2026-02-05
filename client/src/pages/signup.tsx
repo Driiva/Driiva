@@ -119,9 +119,9 @@ export default function Signup() {
         description: "Welcome to Driiva!",
       });
 
-      // Navigate to home (driver dashboard) - same destination as signin
+      // Navigate to dashboard after successful signup
       setTimeout(() => {
-        setLocation("/home");
+        setLocation("/dashboard");
       }, 1000);
 
     } catch (err: any) {
