@@ -341,7 +341,7 @@ export default function Achievements() {
                         </div>
                         <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                           <div
-                            className={`h-full bg-gradient-to-r ${achievement.bgColor.replace('/20', '/60')} rounded-full`}
+                            className={`h-full bg-gradient-to-r ${achievement.bgColor.replace(/\/20/g, '/60')} rounded-full`}
                             style={{ width: `${(achievement.progress / achievement.maxProgress) * 100}%` }}
                           />
                         </div>
