@@ -2,16 +2,42 @@
 @tailwind components;
 @tailwind utilities;
 
+/* iOS Safe Area Support */
+@supports (padding: env(safe-area-inset-top)) {
+  .pb-safe { 
+    padding-bottom: env(safe-area-inset-bottom); 
+  }
+  .pt-safe { 
+    padding-top: env(safe-area-inset-top); 
+  }
+  .pl-safe {
+    padding-left: env(safe-area-inset-left);
+  }
+  .pr-safe {
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* iOS Touch Optimizations */
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  -webkit-tap-highlight-color: transparent;
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background: linear-gradient(180deg, #F9FAFB 0%, #F3F4F6 100%);
+  touch-action: manipulation;
 }
 
-html {
-  scroll-behavior: smooth;
+/* Touch optimizations for all interactive elements */
+button, a, input, select, textarea, [role="button"] {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .driiva-gradient-bg {
@@ -505,6 +531,11 @@ body, h1, h2, h3, h4, h5, h6, p, span, div, button, input, select, textarea, a {
 @keyframes pulse-glow {
   0%, 100% { box-shadow: 0 0 10px rgba(139, 92, 246, 0.3); }
   50% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.5); }
+}
+
+@keyframes float-subtle {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
 }
 
 .animate-fade-in {

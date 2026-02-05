@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
 import { BarChart3, Wallet, Trophy } from "lucide-react";
-import { DriivaLogo } from '../components/DriivaLogo';
+import driivaLogo from '@/assets/driiva-logo-CLEAR-FINAL.png';
 
 const features = [
   { icon: BarChart3, title: "Track Your Driving", description: "Real-time feedback on every trip" },
@@ -72,39 +72,13 @@ export default function Welcome() {
           transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
           className="flex flex-col items-center"
         >
-          <h1 className="text-2xl font-bold text-white mb-2">Driiva</h1>
+          <img 
+            src={driivaLogo} 
+            alt="Driiva" 
+            className="w-64 h-auto mx-auto mb-2" 
+          />
           <p className="text-cyan-400 text-sm">AI-powered, community-driven.</p>
           <p className="text-white/80 text-sm mt-1">Your driving, rewarded.</p>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-          className="flex justify-center mt-4"
-        >
-          <div className="flex gap-4 text-sm">
-            <button 
-              onClick={() => window.open('/terms', '_blank')}
-              className="text-white/60 hover:text-white transition-colors"
-            >
-              Policy
-            </button>
-            <span className="text-white/40">|</span>
-            <button 
-              onClick={() => setLocation('/signin')}
-              className="text-white/60 hover:text-white transition-colors"
-            >
-              FAQs
-            </button>
-            <span className="text-white/40">|</span>
-            <button 
-              onClick={() => setLocation('/signin')}
-              className="text-white/60 hover:text-white transition-colors"
-            >
-              Settings
-            </button>
-          </div>
         </motion.div>
 
         <motion.div
@@ -117,7 +91,11 @@ export default function Welcome() {
           role="region"
           aria-label="Feature carousel"
         >
-          <div className="welcome-card-new" aria-live="polite">
+          <div 
+            className="welcome-card-new backdrop-blur-md bg-white/20 border border-white/10 rounded-3xl animate-[float-subtle_6s_ease-in-out_infinite]" 
+            style={{ boxShadow: '0 0 60px rgba(139, 92, 246, 0.15), 0 0 120px rgba(236, 72, 153, 0.08)' }}
+            aria-live="polite"
+          >
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentCard}
@@ -159,7 +137,7 @@ export default function Welcome() {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.35, duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-          className="flex flex-col items-center gap-3 pb-8"
+          className="flex flex-col items-center gap-3 pb-20"
           style={{ marginTop: 18 }}
         >
           <button
@@ -187,6 +165,32 @@ export default function Welcome() {
           </button>
         </motion.div>
       </div>
+
+      {/* Fixed Footer Navigation */}
+      <footer className="fixed bottom-0 left-0 right-0 z-50 pb-safe">
+        <div className="flex items-center justify-center gap-6 py-3">
+          <button 
+            onClick={() => setLocation('/policy')} 
+            className="text-white/60 hover:text-white text-sm transition"
+          >
+            Policy
+          </button>
+          <span className="text-white/20">|</span>
+          <button 
+            onClick={() => setLocation('/support')} 
+            className="text-white/60 hover:text-white text-sm transition"
+          >
+            FAQs
+          </button>
+          <span className="text-white/20">|</span>
+          <button 
+            onClick={() => setLocation('/settings')} 
+            className="text-white/60 hover:text-white text-sm transition"
+          >
+            Settings
+          </button>
+        </div>
+      </footer>
     </div>
   );
 }
