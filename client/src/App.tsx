@@ -23,6 +23,7 @@ import Privacy from './pages/privacy';
 import Demo from './pages/demo';
 import QuickOnboarding from './pages/quick-onboarding';
 import Settings from './pages/settings';
+import Achievements from './pages/achievements';
 
 import { AuthProvider } from './contexts/AuthContext';
 
@@ -107,6 +108,9 @@ export default function App() {
               <Route path="/quick-onboarding" component={QuickOnboarding} />
               <Route path="/settings">
                 <ProtectedRoute><Settings /></ProtectedRoute>
+              </Route>
+              <Route path="/achievements">
+                <ProtectedRoute><Achievements /></ProtectedRoute>
               </Route>
               
               <Route>{() => <Redirect to="/" />}</Route>
