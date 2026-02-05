@@ -18,6 +18,7 @@ export const COLLECTION_NAMES = {
   USERS: 'users',
   TRIPS: 'trips',
   TRIP_POINTS: 'tripPoints',
+  TRIP_SEGMENTS: 'tripSegments',
   POLICIES: 'policies',
   COMMUNITY_POOL: 'communityPool',
   POOL_SHARES: 'poolShares',
@@ -101,6 +102,9 @@ export interface TripDocument {
   createdAt: Timestamp;
   createdBy: string;
   pointsCount: number;
+  
+  // Optional: Populated by Stop-Go-Classifier
+  segmentation?: TripSegmentationSummary;
 }
 
 export interface RecentTripSummary {
@@ -244,4 +248,118 @@ export interface LeaderboardDocument {
   medianScore: number;
   calculatedAt: Timestamp;
   nextCalculationAt: Timestamp;
+}
+
+// ============================================================================
+// TRIP POINTS
+// ============================================================================
+
+/**
+ * Single GPS/sensor data point (compressed format)
+ */
+export interface TripPoint {
+  t: number;                      // Timestamp offset in ms from trip start
+  lat: number;
+  lng: number;
+  spd: number;                    // Speed in m/s * 100 (integer)
+  hdg: number;                    // Heading 0-360
+  acc: number;                    // Accuracy in meters
+  
+  // Optional sensor data
+  ax?: number;                    // Accelerometer X
+  ay?: number;                    // Accelerometer Y
+  az?: number;                    // Accelerometer Z
+  gx?: number;                    // Gyroscope X
+  gy?: number;                    // Gyroscope Y
+  gz?: number;                    // Gyroscope Z
+}
+
+/**
+ * Trip points document
+ * Collection: tripPoints/{tripId}
+ */
+export interface TripPointsDocument {
+  tripId: string;
+  userId: string;
+  points: TripPoint[];
+  samplingRateHz: number;
+  totalPoints: number;
+  compressedSize: number;
+  createdAt: Timestamp;
+}
+
+/**
+ * Computed trip metrics from GPS points
+ */
+export interface ComputedTripMetrics {
+  distanceMeters: number;
+  durationSeconds: number;
+  avgSpeedMps: number;            // meters per second
+  maxSpeedMps: number;
+  score: number;
+  scoreBreakdown: ScoreBreakdown;
+  events: TripEvents;
+}
+
+// ============================================================================
+// TRIP SEGMENTATION (Stop-Go-Classifier)
+// ============================================================================
+
+/**
+ * Detected stop interval from GPS trajectory analysis
+ */
+export interface DetectedStop {
+  startTime: number;              // Epoch seconds
+  endTime: number;                // Epoch seconds
+  durationSeconds: number;
+  centerX: number;                // Planar X coordinate (meters)
+  centerY: number;                // Planar Y coordinate (meters)
+  centerLat?: number;             // Optional lat (reverse projected)
+  centerLng?: number;             // Optional lng (reverse projected)
+}
+
+/**
+ * Detected trip segment from GPS trajectory analysis
+ */
+export interface DetectedTripSegment {
+  startTime: number;              // Epoch seconds
+  endTime: number;                // Epoch seconds
+  durationSeconds: number;
+}
+
+/**
+ * Classification summary
+ */
+export interface ClassificationSummary {
+  totalPoints: number;
+  totalStops: number;
+  totalTrips: number;
+  classificationSuccess: boolean;
+  centerLat?: number;
+  centerLng?: number;
+  error?: string;
+}
+
+/**
+ * Trip segmentation document
+ * Collection: tripSegments/{tripId}
+ */
+export interface TripSegmentsDocument {
+  tripId: string;
+  userId: string;
+  stops: DetectedStop[];
+  trips: DetectedTripSegment[];
+  summary: ClassificationSummary;
+  classifiedAt: Timestamp;
+  classifierVersion: string;
+}
+
+/**
+ * Embedded segmentation summary on trip document
+ */
+export interface TripSegmentationSummary {
+  totalStops: number;
+  totalSegments: number;
+  classifiedAt: Timestamp;
+  hasSignificantStops: boolean;
 }

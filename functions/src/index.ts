@@ -4,14 +4,23 @@
  * Firebase Cloud Functions for Driiva telematics app.
  * 
  * Triggers:
- *   - onTripCreate: Process and enrich new trips
- *   - onTripComplete: Update driver profile and pool share
- *   - onPolicyChange: Sync policy to user document
- *   - onPoolShareUpdate: Sync pool share to user document
+ *   - onTripCreate: Initial trip validation and enrichment
+ *   - onTripStatusChange: 
+ *       • recording → processing: Finalize trip (compute metrics from GPS points)
+ *       • processing → completed: Manual approval (update driver profile)
+ *   - onPolicyWrite: Sync policy to user document
+ *   - onPoolShareWrite: Sync pool share to user document
  * 
  * Scheduled:
  *   - updateLeaderboards: Every 15 minutes
  *   - finalizePoolPeriod: 1st of each month
+ * 
+ * HTTP Callable:
+ *   - initializePool: Admin-only pool setup
+ *   - addPoolContribution: Add premium contribution to pool
+ *   - cancelTrip: Cancel an in-progress trip
+ *   - classifyTrip: Classify trip stops/segments (Stop-Go-Classifier)
+ *   - batchClassifyTrips: Admin batch classification
  */
 
 import * as admin from 'firebase-admin';
@@ -38,7 +47,14 @@ export { updateLeaderboards } from './scheduled/leaderboard';
 export { finalizePoolPeriod, recalculatePoolShares } from './scheduled/pool';
 
 // ============================================================================
-// HTTP FUNCTIONS (Optional - for admin/testing)
+// HTTP CALLABLE FUNCTIONS
 // ============================================================================
 
+// Admin functions
 export { initializePool } from './http/admin';
+
+// User-callable functions (require admin SDK for protected collection writes)
+export { addPoolContribution, cancelTrip } from './http/admin';
+
+// Trip classification (Stop-Go-Classifier integration)
+export { classifyTrip, batchClassifyTrips } from './http/classifier';

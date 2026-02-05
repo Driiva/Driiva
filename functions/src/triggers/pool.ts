@@ -52,12 +52,12 @@ export const onPoolShareWrite = functions.firestore
         return;
       }
       
-      // Build pool share summary
+      // Build pool share summary (use share.updatedAt so denormalized lastUpdatedAt stays in sync)
       const poolShareSummary: PoolShareSummary = {
         currentShareCents: share.projectedRefundCents,
         contributionCents: share.contributionCents,
         sharePercentage: Math.round(share.sharePercentage * 100) / 100, // 2 decimal places
-        lastUpdatedAt: admin.firestore.Timestamp.now(),
+        lastUpdatedAt: share.updatedAt ?? admin.firestore.Timestamp.now(),
       };
       
       await userRef.update({

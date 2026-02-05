@@ -1,12 +1,18 @@
 /**
- * ADMIN HTTP FUNCTIONS
- * ====================
- * HTTP callable functions for admin operations.
+ * ADMIN & CALLABLE HTTP FUNCTIONS
+ * ================================
+ * HTTP callable functions for admin operations and
+ * client operations that require admin SDK (writes to protected collections).
  */
 
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
-import { COLLECTION_NAMES, CommunityPoolDocument } from '../types';
+import { 
+  COLLECTION_NAMES, 
+  CommunityPoolDocument,
+  PoolShareDocument,
+} from '../types';
+import { getCurrentPoolPeriod, getShareId } from '../utils/helpers';
 
 const db = admin.firestore();
 
@@ -107,3 +113,281 @@ function getPoolPeriodDates(periodType: 'monthly' | 'quarterly'): {
     end: admin.firestore.Timestamp.fromDate(endDate),
   };
 }
+
+// ============================================================================
+// TRIP OPERATIONS (Callable by authenticated users)
+// ============================================================================
+
+/**
+ * Cancel a trip (mark as failed)
+ * 
+ * This is a callable function because:
+ * - Trip documents cannot be updated by clients (security rules: allow update: if false)
+ * - Only the admin SDK can update trip status
+ */
+export const cancelTrip = functions.https.onCall(async (data, context) => {
+  // Verify authentication
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      'unauthenticated',
+      'Must be authenticated to cancel a trip'
+    );
+  }
+  
+  const userId = context.auth.uid;
+  const tripId = data?.tripId;
+  
+  // Validate input
+  if (typeof tripId !== 'string' || tripId.trim() === '') {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'tripId must be a non-empty string'
+    );
+  }
+  
+  functions.logger.info('Processing trip cancellation', {
+    userId,
+    tripId,
+  });
+  
+  try {
+    const tripRef = db.collection(COLLECTION_NAMES.TRIPS).doc(tripId);
+    const tripDoc = await tripRef.get();
+    
+    if (!tripDoc.exists) {
+      throw new functions.https.HttpsError(
+        'not-found',
+        'Trip not found'
+      );
+    }
+    
+    const tripData = tripDoc.data();
+    
+    // Verify ownership
+    if (tripData?.userId !== userId) {
+      throw new functions.https.HttpsError(
+        'permission-denied',
+        'You can only cancel your own trips'
+      );
+    }
+    
+    // Only allow cancellation of trips in 'processing' status
+    if (tripData?.status !== 'processing') {
+      throw new functions.https.HttpsError(
+        'failed-precondition',
+        `Cannot cancel trip with status '${tripData?.status}'. Only trips with status 'processing' can be cancelled.`
+      );
+    }
+    
+    // Update trip status to failed
+    await tripRef.update({
+      status: 'failed',
+      processedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    
+    functions.logger.info('Trip cancelled successfully', {
+      userId,
+      tripId,
+    });
+    
+    return {
+      success: true,
+      tripId,
+      message: 'Trip cancelled successfully',
+    };
+    
+  } catch (error) {
+    functions.logger.error('Trip cancellation failed', { userId, tripId, error });
+    
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+    
+    throw new functions.https.HttpsError(
+      'internal',
+      'Failed to cancel trip'
+    );
+  }
+});
+
+// ============================================================================
+// POOL CONTRIBUTION (Callable by authenticated users)
+// ============================================================================
+
+/**
+ * Add contribution to pool (called after payment is processed)
+ * 
+ * This is a callable function because:
+ * - communityPool and poolShares collections require admin SDK to write
+ * - Client-side security rules prevent direct writes to these collections
+ * - This ensures atomic, transactional updates across multiple collections
+ */
+export const addPoolContribution = functions.https.onCall(async (data, context) => {
+  // Verify authentication
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+      'unauthenticated',
+      'Must be authenticated to contribute to pool'
+    );
+  }
+  
+  const userId = context.auth.uid;
+  const amountCents = data?.amountCents;
+  
+  // Validate input
+  if (typeof amountCents !== 'number' || amountCents <= 0 || !Number.isInteger(amountCents)) {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      'amountCents must be a positive integer'
+    );
+  }
+  
+  // Maximum single contribution limit (e.g., $10,000)
+  const MAX_CONTRIBUTION_CENTS = 1000000;
+  if (amountCents > MAX_CONTRIBUTION_CENTS) {
+    throw new functions.https.HttpsError(
+      'invalid-argument',
+      `Contribution cannot exceed ${MAX_CONTRIBUTION_CENTS / 100} dollars`
+    );
+  }
+  
+  const period = getCurrentPoolPeriod();
+  
+  functions.logger.info('Processing pool contribution', {
+    userId,
+    amountCents,
+    period,
+  });
+  
+  try {
+    const result = await db.runTransaction(async (transaction) => {
+      const poolRef = db.collection(COLLECTION_NAMES.COMMUNITY_POOL).doc('current');
+      const poolShareRef = db.collection(COLLECTION_NAMES.POOL_SHARES).doc(getShareId(userId, period));
+      const userRef = db.collection(COLLECTION_NAMES.USERS).doc(userId);
+      
+      // Read current state
+      const [poolDoc, poolShareDoc, userDoc] = await Promise.all([
+        transaction.get(poolRef),
+        transaction.get(poolShareRef),
+        transaction.get(userRef),
+      ]);
+      
+      if (!poolDoc.exists) {
+        throw new functions.https.HttpsError(
+          'failed-precondition',
+          'Community pool not initialized'
+        );
+      }
+      
+      if (!userDoc.exists) {
+        throw new functions.https.HttpsError(
+          'not-found',
+          'User profile not found'
+        );
+      }
+      
+      const pool = poolDoc.data() as CommunityPoolDocument;
+      const poolShare = poolShareDoc.exists ? poolShareDoc.data() as PoolShareDocument : null;
+      
+      // Calculate new values
+      const newTotalPool = pool.totalPoolCents + amountCents;
+      const now = admin.firestore.Timestamp.now();
+      
+      let newContributionCents: number;
+      let newSharePercentage: number;
+      
+      // Update pool totals
+      transaction.update(poolRef, {
+        totalPoolCents: newTotalPool,
+        totalContributionsCents: admin.firestore.FieldValue.increment(amountCents),
+        lastCalculatedAt: now,
+        version: admin.firestore.FieldValue.increment(1),
+      });
+      
+      // Update or create pool share
+      if (poolShare) {
+        newContributionCents = poolShare.contributionCents + amountCents;
+        newSharePercentage = (newContributionCents / newTotalPool) * 100;
+        
+        transaction.update(poolShareRef, {
+          contributionCents: newContributionCents,
+          contributionCount: admin.firestore.FieldValue.increment(1),
+          sharePercentage: Math.round(newSharePercentage * 10000) / 10000,
+          updatedAt: now,
+        });
+      } else {
+        // Create new pool share
+        const shareId = getShareId(userId, period);
+        newContributionCents = amountCents;
+        newSharePercentage = (amountCents / newTotalPool) * 100;
+        
+        const newShareData: PoolShareDocument = {
+          shareId,
+          poolPeriod: period,
+          userId,
+          contributionCents: amountCents,
+          contributionCount: 1,
+          sharePercentage: Math.round(newSharePercentage * 10000) / 10000,
+          weightedScore: 0,
+          baseRefundCents: 0,
+          projectedRefundCents: 0,
+          status: 'active',
+          eligibleForRefund: true,
+          tripsIncluded: 0,
+          milesIncluded: 0,
+          averageScore: 100,
+          createdAt: now,
+          updatedAt: now,
+          finalizedAt: null,
+        };
+        
+        transaction.set(poolShareRef, newShareData);
+        
+        // Update pool participant count
+        transaction.update(poolRef, {
+          activeParticipants: admin.firestore.FieldValue.increment(1),
+          totalParticipantsEver: admin.firestore.FieldValue.increment(1),
+        });
+      }
+      
+      // Update user's denormalized pool share
+      transaction.update(userRef, {
+        'poolShare.contributionCents': newContributionCents,
+        'poolShare.sharePercentage': Math.round(newSharePercentage * 100) / 100,
+        'poolShare.lastUpdatedAt': now,
+        updatedAt: now,
+        updatedBy: 'cloud-function',
+      });
+      
+      return {
+        newContributionCents,
+        sharePercentage: Math.round(newSharePercentage * 100) / 100,
+      };
+    });
+    
+    functions.logger.info('Pool contribution successful', {
+      userId,
+      amountCents,
+      newContributionCents: result.newContributionCents,
+      sharePercentage: result.sharePercentage,
+    });
+    
+    return {
+      success: true,
+      newContributionCents: result.newContributionCents,
+      sharePercentage: result.sharePercentage,
+    };
+    
+  } catch (error) {
+    functions.logger.error('Pool contribution failed', { userId, amountCents, error });
+    
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+    
+    throw new functions.https.HttpsError(
+      'internal',
+      'Failed to process pool contribution'
+    );
+  }
+});

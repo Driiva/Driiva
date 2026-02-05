@@ -182,6 +182,19 @@ service cloud.firestore {
     }
     
     // =========================================================================
+    // TRIP SEGMENTS COLLECTION (Stop-Go-Classifier Results)
+    // =========================================================================
+    
+    match /tripSegments/{tripId} {
+      // Users can read their own trip segments
+      allow read: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
+      
+      // Only Cloud Functions (admin SDK) can write
+      allow write: if false;
+    }
+    
+    // =========================================================================
     // CATCH-ALL: DENY EVERYTHING ELSE
     // =========================================================================
     

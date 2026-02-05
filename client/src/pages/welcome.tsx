@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
 import { BarChart3, Wallet, Trophy } from "lucide-react";
 import driivaLogo from '@/assets/driiva-logo-CLEAR-FINAL.png';
+import carouselDotIcon from '@/assets/carousel-dot-icon.png';
 
 const features = [
   { icon: BarChart3, title: "Track Your Driving", description: "Real-time feedback on every trip" },
@@ -61,30 +62,35 @@ export default function Welcome() {
 
   return (
     <div className="relative min-h-screen overflow-hidden">
-      <div className="hero-orb hero-orb-1" />
-      <div className="hero-orb hero-orb-2" />
-      <div className="hero-orb hero-orb-3" />
+      <div className="hero-orb-container">
+        <div className="hero-orb hero-orb-1" />
+        <div className="hero-orb hero-orb-2" />
+        <div className="hero-orb hero-orb-3" />
+      </div>
       
       <div className="relative z-10 max-w-md mx-auto px-4 pt-16 min-h-screen flex flex-col text-white">
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-          className="flex flex-col items-center"
+          className="flex flex-col items-center w-full"
         >
-          <div className="w-80 h-32 mx-auto overflow-hidden flex items-center justify-center">
+          <div className="w-full max-w-[400px] h-44 overflow-hidden flex items-center justify-center self-center shrink-0">
             <img 
               src={driivaLogo} 
               alt="Driiva" 
-              className="w-full h-full object-contain scale-110"
-              style={{ imageRendering: '-webkit-optimize-contrast' }}
+              className="max-w-full max-h-full w-auto h-auto object-contain object-center scale-[1.4] origin-center border-0 border-none overflow-visible"
+              style={{ imageRendering: '-webkit-optimize-contrast', borderImage: 'none' }}
             />
           </div>
-          <div className="text-center mt-2">
-            <p className="text-[var(--neutral-300)] text-2xl font-medium mb-1">
-              AI-<span className="text-neutral-400 drop-shadow-[0_0_8px_rgba(203,213,225,0.6)]">Powered</span>. Community-Driven.
+          <div 
+            className="flex flex-col items-center justify-center mt-0 text-center box-content tracking-normal leading-5 w-full"
+            style={{ verticalAlign: 'middle' }}
+          >
+            <p className="text-[var(--neutral-300)] text-xl font-medium mb-1">
+              AI-<span className="text-neutral-400 drop-shadow-[0_0_4px_rgba(203,213,225,0.4)]">powered</span>. Community-Driven.
             </p>
-            <p className="text-white/80 text-xl font-bold">Your driving, <em>rewarded.</em></p>
+            <p className="text-white/80 text-lg font-semibold leading-5">Your driving, <em>rewarded.</em></p>
           </div>
         </motion.div>
 
@@ -119,23 +125,27 @@ export default function Welcome() {
             </AnimatePresence>
           </div>
 
-          <div className="flex items-center justify-center gap-2 mt-8">
+          <div className="flex items-center justify-center gap-2 mt-4">
             <button
               onClick={handlePrev}
-              className="text-white/50 hover:text-white text-xl transition-colors"
+              className="text-white/50 hover:text-white text-lg transition-colors"
               aria-label="Previous slide"
             >
               &lt;
             </button>
             
-            <div className="relative">
-              <div className="w-3 h-3 rounded-full bg-cyan-400"></div>
-              <div className="absolute inset-0 w-3 h-3 rounded-full bg-cyan-400 animate-ping opacity-30"></div>
+            <div className="relative w-7 h-7 flex items-center justify-center shrink-0">
+              <img
+                src={carouselDotIcon}
+                alt=""
+                className="w-full h-full object-contain select-none mix-blend-screen"
+                style={{ border: 'none' }}
+              />
             </div>
             
             <button
               onClick={handleNext}
-              className="text-white/50 hover:text-white text-xl transition-colors"
+              className="text-white/50 hover:text-white text-lg transition-colors"
               aria-label="Next slide"
             >
               &gt;
@@ -147,7 +157,7 @@ export default function Welcome() {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.35, duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-          className="flex flex-col items-center gap-4 pb-20 mt-12"
+          className="flex flex-col items-center gap-3 pb-20 mt-6"
         >
           <button
             onClick={() => setLocation('/signup')}
@@ -176,7 +186,7 @@ export default function Welcome() {
       </div>
 
       {/* Fixed Footer Navigation */}
-      <footer className="fixed bottom-0 left-0 right-0 z-50 pb-safe">
+      <footer className="fixed bottom-0 left-0 right-0 z-50 pb-safe border-0 border-none shadow-none outline-none bg-transparent">
         <div className="flex items-center justify-center gap-6 py-3">
           <button 
             onClick={() => setLocation('/policy')} 

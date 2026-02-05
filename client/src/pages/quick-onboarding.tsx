@@ -1,251 +1,511 @@
-import { useState } from 'react';
+/**
+ * QUICK ONBOARDING PAGE
+ * =====================
+ * A 3-step onboarding flow that must be completed before accessing the dashboard.
+ * 
+ * Steps:
+ *   1. Welcome - Explain what Driiva does
+ *   2. Location - Request GPS permission and test a single read
+ *   3. Confirm - User acknowledges "drive to earn rewards" concept
+ * 
+ * On completion, sets `onboardingCompleted: true` in Firestore.
+ */
+
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'wouter';
-import { MapPin, Smartphone, Car, ChevronRight, Check, X } from 'lucide-react';
-import { auth, db } from '../lib/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { 
+  MapPin, 
+  Car, 
+  ChevronRight, 
+  Check, 
+  Loader2, 
+  Shield,
+  Wallet,
+  Users,
+  Navigation,
+  AlertCircle
+} from 'lucide-react';
+import { auth, db, isFirebaseConfigured } from '../lib/firebase';
+import { doc, updateDoc, setDoc, getDoc } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
+import driivaLogo from '@/assets/driiva-logo-CLEAR-FINAL.png';
 
 const TOTAL_STEPS = 3;
+
+interface GpsTestResult {
+  success: boolean;
+  latitude?: number;
+  longitude?: number;
+  accuracy?: number;
+  error?: string;
+}
 
 export default function QuickOnboarding() {
   const [, setLocation] = useLocation();
   const [currentStep, setCurrentStep] = useState(1);
-  const [gpsGranted, setGpsGranted] = useState(false);
-  const [gpsError, setGpsError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [authChecking, setAuthChecking] = useState(true);
+  const [confirmed, setConfirmed] = useState(false);
+  
+  // GPS state
+  const [gpsStatus, setGpsStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
+  const [gpsResult, setGpsResult] = useState<GpsTestResult | null>(null);
 
-  const requestGpsPermission = async () => {
-    setGpsError(null);
-    try {
-      const result = await navigator.permissions.query({ name: 'geolocation' });
-      if (result.state === 'granted') {
-        setGpsGranted(true);
+  // Check auth status on mount
+  useEffect(() => {
+    // Check demo mode
+    const isDemoMode = localStorage.getItem('driiva-demo-mode') === 'true';
+    if (isDemoMode) {
+      // Demo users skip onboarding
+      setLocation('/dashboard');
+      return;
+    }
+
+    if (!isFirebaseConfigured) {
+      setAuthChecking(false);
+      return;
+    }
+
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        // Not logged in, redirect to signin
+        setLocation('/signin');
         return;
       }
-      
-      navigator.geolocation.getCurrentPosition(
-        () => setGpsGranted(true),
-        (error) => {
-          if (error.code === error.PERMISSION_DENIED) {
-            setGpsError('GPS permission denied. You can enable it later in settings.');
-          } else {
-            setGpsError('Could not get location. Please try again.');
+
+      // Check if user already completed onboarding
+      try {
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
+        const userData = userDoc.data();
+
+        // Check both field names for compatibility
+        if (userData?.onboardingCompleted === true || userData?.onboardingComplete === true) {
+          // Already completed, go to dashboard
+          setLocation('/dashboard');
+          return;
+        }
+      } catch (error) {
+        console.error('[QuickOnboarding] Error checking onboarding status:', error);
+      }
+
+      setAuthChecking(false);
+    });
+
+    return () => unsubscribe();
+  }, [setLocation]);
+
+  /**
+   * Test GPS by requesting a single position read
+   */
+  const testGpsPermission = async () => {
+    setGpsStatus('testing');
+    setGpsResult(null);
+
+    try {
+      // First check if geolocation is available
+      if (!navigator.geolocation) {
+        setGpsStatus('error');
+        setGpsResult({ success: false, error: 'GPS not available on this device' });
+        return;
+      }
+
+      // Request a single position
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          resolve,
+          reject,
+          {
+            enableHighAccuracy: true,
+            timeout: 15000,
+            maximumAge: 0,
           }
-        },
-        { enableHighAccuracy: true, timeout: 10000 }
-      );
-    } catch {
-      setGpsError('GPS not available on this device.');
+        );
+      });
+
+      setGpsStatus('success');
+      setGpsResult({
+        success: true,
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        accuracy: Math.round(position.coords.accuracy),
+      });
+    } catch (error: any) {
+      setGpsStatus('error');
+      
+      let errorMessage = 'Could not get your location';
+      if (error.code === 1) {
+        errorMessage = 'Location permission denied. Please enable it in your browser settings.';
+      } else if (error.code === 2) {
+        errorMessage = 'Location unavailable. Please check your device settings.';
+      } else if (error.code === 3) {
+        errorMessage = 'Location request timed out. Please try again.';
+      }
+      
+      setGpsResult({ success: false, error: errorMessage });
     }
   };
 
+  /**
+   * Complete onboarding and navigate to dashboard
+   */
   const handleComplete = async () => {
+    if (!confirmed) return;
+    
     setIsLoading(true);
+
     try {
       const user = auth.currentUser;
-      if (user) {
+      if (user && isFirebaseConfigured) {
         const userDocRef = doc(db, 'users', user.uid);
-        await updateDoc(userDocRef, { 
-          onboardingComplete: true,
-          updatedAt: new Date().toISOString(),
-        });
+        
+        // Check if document exists
+        const userDoc = await getDoc(userDocRef);
+        
+        if (userDoc.exists()) {
+          // Update existing document
+          await updateDoc(userDocRef, {
+            onboardingCompleted: true,
+            onboardingComplete: true, // Keep both for compatibility
+            gpsPermissionGranted: gpsStatus === 'success',
+            updatedAt: new Date().toISOString(),
+          });
+        } else {
+          // Create document if it doesn't exist
+          await setDoc(userDocRef, {
+            uid: user.uid,
+            email: user.email,
+            fullName: user.displayName || '',
+            onboardingCompleted: true,
+            onboardingComplete: true,
+            gpsPermissionGranted: gpsStatus === 'success',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          });
+        }
       }
     } catch (err) {
-      console.error('Failed to update onboarding status:', err);
+      console.error('[QuickOnboarding] Failed to update onboarding status:', err);
+      // Continue anyway - we don't want to block the user
     }
+
     setIsLoading(false);
     setLocation('/dashboard');
   };
 
-  const handleSkip = async () => {
-    try {
-      const user = auth.currentUser;
-      if (user) {
-        const userDocRef = doc(db, 'users', user.uid);
-        await updateDoc(userDocRef, { 
-          onboardingComplete: true,
-          updatedAt: new Date().toISOString(),
-        });
-      }
-    } catch (err) {
-      console.error('Failed to update onboarding status:', err);
+  /**
+   * Handle navigation between steps
+   */
+  const nextStep = () => {
+    if (currentStep < TOTAL_STEPS) {
+      setCurrentStep(currentStep + 1);
     }
-    setLocation('/dashboard');
   };
 
+  const prevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  // Show loading while checking auth
+  if (authChecking) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 flex flex-col relative">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 flex flex-col relative overflow-hidden">
+      {/* Background orbs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 -left-20 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl" />
+      </div>
+
       <div className="relative z-10 flex-1 flex flex-col p-6 max-w-lg mx-auto w-full">
+        {/* Progress indicator */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-2">
             {Array.from({ length: TOTAL_STEPS }, (_, i) => (
               <div
                 key={i}
-                className={`w-10 h-1.5 rounded-full transition-colors ${
-                  i + 1 <= currentStep ? 'bg-emerald-500' : 'bg-white/20'
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  i + 1 <= currentStep 
+                    ? 'bg-emerald-500 w-10' 
+                    : 'bg-white/20 w-6'
                 }`}
               />
             ))}
           </div>
-          <button
-            onClick={handleSkip}
-            className="text-white/50 hover:text-white text-sm transition-colors"
-          >
-            Skip for now
-          </button>
+          <span className="text-sm text-white/50">Step {currentStep} of {TOTAL_STEPS}</span>
         </div>
 
+        {/* Step content */}
         <div className="flex-1 flex flex-col justify-center">
           <AnimatePresence mode="wait">
+            {/* STEP 1: Welcome / Explain Driiva */}
             {currentStep === 1 && (
               <motion.div
                 key="step1"
-                initial={{ opacity: 0, x: 20 }}
+                initial={{ opacity: 0, x: 30 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
+                exit={{ opacity: 0, x: -30 }}
+                transition={{ duration: 0.3 }}
                 className="text-center"
               >
-                <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                  <MapPin className="w-10 h-10 text-emerald-400" />
+                {/* Logo */}
+                <div className="w-48 h-20 mx-auto mb-6 overflow-hidden">
+                  <img 
+                    src={driivaLogo} 
+                    alt="Driiva" 
+                    className="w-full h-full object-contain"
+                  />
                 </div>
-                <h1 className="text-2xl font-bold text-white mb-3">Enable GPS Tracking</h1>
+
+                <h1 className="text-3xl font-bold text-white mb-3">Welcome to Driiva</h1>
                 <p className="text-white/60 mb-8 max-w-sm mx-auto">
-                  Allow Driiva to track your driving to calculate your safety score and earn refunds.
+                  The insurance app that rewards safe driving. Here's how it works:
                 </p>
 
-                {gpsGranted ? (
-                  <div className="flex items-center justify-center gap-2 text-emerald-400 mb-6">
-                    <Check className="w-5 h-5" />
-                    <span>GPS enabled successfully!</span>
+                {/* Feature cards */}
+                <div className="space-y-3 mb-8">
+                  <div className="flex items-center gap-4 bg-white/5 backdrop-blur-sm border border-white/10 p-4 rounded-xl text-left">
+                    <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                      <Shield className="w-6 h-6 text-emerald-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-white font-medium">AI-Powered Safety</h3>
+                      <p className="text-white/50 text-sm">Track trips and get a real-time safety score</p>
+                    </div>
                   </div>
-                ) : gpsError ? (
-                  <div className="mb-6">
-                    <p className="text-amber-400 text-sm mb-4">{gpsError}</p>
-                    <button
-                      onClick={requestGpsPermission}
-                      className="text-emerald-400 underline text-sm"
-                    >
-                      Try again
-                    </button>
+
+                  <div className="flex items-center gap-4 bg-white/5 backdrop-blur-sm border border-white/10 p-4 rounded-xl text-left">
+                    <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                      <Wallet className="w-6 h-6 text-blue-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-white font-medium">Earn Refunds</h3>
+                      <p className="text-white/50 text-sm">Safe drivers get up to 15% back at renewal</p>
+                    </div>
                   </div>
-                ) : (
-                  <button
-                    onClick={requestGpsPermission}
-                    className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-4 rounded-xl transition-colors mb-4"
-                  >
-                    Enable GPS Access
-                  </button>
-                )}
+
+                  <div className="flex items-center gap-4 bg-white/5 backdrop-blur-sm border border-white/10 p-4 rounded-xl text-left">
+                    <div className="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center flex-shrink-0">
+                      <Users className="w-6 h-6 text-purple-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-white font-medium">Community Pool</h3>
+                      <p className="text-white/50 text-sm">Join thousands of drivers sharing rewards</p>
+                    </div>
+                  </div>
+                </div>
 
                 <button
-                  onClick={() => setCurrentStep(2)}
-                  className={`w-full font-semibold py-4 rounded-xl transition-colors flex items-center justify-center gap-2 ${
-                    gpsGranted
-                      ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
-                      : 'bg-white/10 hover:bg-white/15 text-white/80'
-                  }`}
+                  onClick={nextStep}
+                  className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-4 rounded-xl transition-colors flex items-center justify-center gap-2"
                 >
-                  {gpsGranted ? 'Continue' : 'Continue without GPS'}
+                  Continue
                   <ChevronRight className="w-5 h-5" />
                 </button>
               </motion.div>
             )}
 
+            {/* STEP 2: GPS Permission Test */}
             {currentStep === 2 && (
               <motion.div
                 key="step2"
-                initial={{ opacity: 0, x: 20 }}
+                initial={{ opacity: 0, x: 30 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
+                exit={{ opacity: 0, x: -30 }}
+                transition={{ duration: 0.3 }}
                 className="text-center"
               >
-                <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-blue-500/20 flex items-center justify-center">
-                  <Smartphone className="w-10 h-10 text-blue-400" />
+                <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-emerald-500/20 to-blue-500/20 flex items-center justify-center">
+                  <MapPin className="w-12 h-12 text-emerald-400" />
                 </div>
-                <h1 className="text-2xl font-bold text-white mb-3">Install Driiva App</h1>
+
+                <h1 className="text-2xl font-bold text-white mb-3">Enable Location Access</h1>
                 <p className="text-white/60 mb-8 max-w-sm mx-auto">
-                  For the best experience, add Driiva to your home screen for automatic trip tracking.
+                  Driiva uses GPS to track your trips and calculate your safety score. 
+                  Your location data is encrypted and never sold.
                 </p>
 
-                <div className="space-y-3 mb-8">
+                {/* GPS Test Result */}
+                {gpsStatus === 'idle' && (
                   <button
-                    onClick={() => {
-                      alert('Add to Home Screen instructions: Tap the share button and select "Add to Home Screen"');
-                    }}
-                    className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-4 rounded-xl transition-colors"
+                    onClick={testGpsPermission}
+                    className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-4 rounded-xl transition-colors flex items-center justify-center gap-2 mb-4"
                   >
-                    Add to Home Screen
+                    <Navigation className="w-5 h-5" />
+                    Test Location Access
+                  </button>
+                )}
+
+                {gpsStatus === 'testing' && (
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-6 mb-4">
+                    <Loader2 className="w-8 h-8 text-emerald-400 animate-spin mx-auto mb-3" />
+                    <p className="text-white/60">Testing GPS access...</p>
+                  </div>
+                )}
+
+                {gpsStatus === 'success' && gpsResult && (
+                  <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-6 mb-4">
+                    <div className="flex items-center justify-center gap-2 text-emerald-400 mb-3">
+                      <Check className="w-6 h-6" />
+                      <span className="font-medium">GPS Working!</span>
+                    </div>
+                    <p className="text-white/50 text-sm">
+                      Location detected with {gpsResult.accuracy}m accuracy
+                    </p>
+                  </div>
+                )}
+
+                {gpsStatus === 'error' && gpsResult && (
+                  <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-6 mb-4">
+                    <div className="flex items-center justify-center gap-2 text-amber-400 mb-3">
+                      <AlertCircle className="w-6 h-6" />
+                      <span className="font-medium">GPS Issue</span>
+                    </div>
+                    <p className="text-white/60 text-sm mb-4">{gpsResult.error}</p>
+                    <button
+                      onClick={testGpsPermission}
+                      className="text-emerald-400 hover:text-emerald-300 text-sm font-medium"
+                    >
+                      Try Again
+                    </button>
+                  </div>
+                )}
+
+                <p className="text-white/40 text-xs mb-6">
+                  You can continue without GPS, but trip tracking will be limited.
+                </p>
+
+                {/* Navigation buttons */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={prevStep}
+                    className="flex-1 bg-white/10 hover:bg-white/15 text-white font-semibold py-4 rounded-xl transition-colors"
+                  >
+                    Back
                   </button>
                   <button
-                    onClick={() => setCurrentStep(3)}
-                    className="w-full bg-white/10 hover:bg-white/15 text-white font-semibold py-4 rounded-xl transition-colors"
+                    onClick={nextStep}
+                    className={`flex-1 font-semibold py-4 rounded-xl transition-colors flex items-center justify-center gap-2 ${
+                      gpsStatus === 'success'
+                        ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
+                        : 'bg-white/10 hover:bg-white/15 text-white/80'
+                    }`}
                   >
-                    Continue in Browser
+                    Continue
+                    <ChevronRight className="w-5 h-5" />
                   </button>
                 </div>
               </motion.div>
             )}
 
+            {/* STEP 3: Confirm Understanding */}
             {currentStep === 3 && (
               <motion.div
                 key="step3"
-                initial={{ opacity: 0, x: 20 }}
+                initial={{ opacity: 0, x: 30 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
+                exit={{ opacity: 0, x: -30 }}
+                transition={{ duration: 0.3 }}
                 className="text-center"
               >
-                <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-purple-500/20 flex items-center justify-center">
-                  <Car className="w-10 h-10 text-purple-400" />
+                <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+                  <Car className="w-12 h-12 text-purple-400" />
                 </div>
-                <h1 className="text-2xl font-bold text-white mb-3">How Driiva Works</h1>
+
+                <h1 className="text-2xl font-bold text-white mb-3">Drive to Earn Rewards</h1>
                 <p className="text-white/60 mb-6 max-w-sm mx-auto">
-                  Track your trips to earn refunds. Safe driving rewards you!
+                  Every trip you take builds your safety score. The safer you drive, the more you earn.
                 </p>
 
-                <div className="space-y-4 mb-8 text-left max-w-sm mx-auto">
-                  <div className="flex items-start gap-3 bg-white/5 p-4 rounded-xl">
-                    <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
-                      <span className="text-emerald-400 font-bold text-sm">1</span>
-                    </div>
-                    <div>
-                      <h3 className="text-white font-medium">Drive Safely</h3>
-                      <p className="text-white/50 text-sm">Your trips are automatically tracked and scored</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3 bg-white/5 p-4 rounded-xl">
-                    <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0">
-                      <span className="text-blue-400 font-bold text-sm">2</span>
-                    </div>
-                    <div>
-                      <h3 className="text-white font-medium">Build Your Score</h3>
-                      <p className="text-white/50 text-sm">Good braking, acceleration, and speed improve your score</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-3 bg-white/5 p-4 rounded-xl">
-                    <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
-                      <span className="text-purple-400 font-bold text-sm">3</span>
-                    </div>
-                    <div>
-                      <h3 className="text-white font-medium">Earn Refunds</h3>
-                      <p className="text-white/50 text-sm">Up to 15% back at renewal from the community pool</p>
-                    </div>
-                  </div>
+                {/* How it works summary */}
+                <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-5 mb-6 text-left">
+                  <h3 className="text-white font-medium mb-4">Here's what happens:</h3>
+                  <ul className="space-y-3">
+                    <li className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-emerald-400 text-xs font-bold">1</span>
+                      </div>
+                      <p className="text-white/70 text-sm">
+                        <strong className="text-white">Start a trip</strong> – We track speed, braking, and acceleration
+                      </p>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-blue-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-blue-400 text-xs font-bold">2</span>
+                      </div>
+                      <p className="text-white/70 text-sm">
+                        <strong className="text-white">Get scored</strong> – Each trip adds to your overall safety score
+                      </p>
+                    </li>
+                    <li className="flex items-start gap-3">
+                      <div className="w-6 h-6 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-purple-400 text-xs font-bold">3</span>
+                      </div>
+                      <p className="text-white/70 text-sm">
+                        <strong className="text-white">Earn refunds</strong> – Higher scores mean bigger refunds at renewal
+                      </p>
+                    </li>
+                  </ul>
                 </div>
 
-                <button
-                  onClick={handleComplete}
-                  disabled={isLoading}
-                  className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-4 rounded-xl transition-colors flex items-center justify-center gap-2"
-                >
-                  {isLoading ? (
-                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      Start Driving
-                      <ChevronRight className="w-5 h-5" />
-                    </>
-                  )}
-                </button>
+                {/* Confirmation checkbox */}
+                <label className="flex items-start gap-3 cursor-pointer mb-6 text-left bg-white/5 border border-white/10 rounded-xl p-4">
+                  <div className="relative mt-0.5">
+                    <input
+                      type="checkbox"
+                      checked={confirmed}
+                      onChange={(e) => setConfirmed(e.target.checked)}
+                      className="sr-only"
+                    />
+                    <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
+                      confirmed
+                        ? 'bg-emerald-500 border-emerald-500'
+                        : 'border-white/30 bg-transparent hover:border-white/50'
+                    }`}>
+                      {confirmed && <Check className="w-4 h-4 text-white" />}
+                    </div>
+                  </div>
+                  <span className="text-white/80 text-sm">
+                    I understand that Driiva tracks my driving to calculate my safety score, and that safe driving earns me refunds from the community pool.
+                  </span>
+                </label>
+
+                {/* Navigation buttons */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={prevStep}
+                    className="flex-1 bg-white/10 hover:bg-white/15 text-white font-semibold py-4 rounded-xl transition-colors"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={handleComplete}
+                    disabled={!confirmed || isLoading}
+                    className={`flex-1 font-semibold py-4 rounded-xl transition-colors flex items-center justify-center gap-2 ${
+                      confirmed && !isLoading
+                        ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
+                        : 'bg-white/10 text-white/40 cursor-not-allowed'
+                    }`}
+                  >
+                    {isLoading ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <>
+                        Let's Go!
+                        <ChevronRight className="w-5 h-5" />
+                      </>
+                    )}
+                  </button>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>

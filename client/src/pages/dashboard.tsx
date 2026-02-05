@@ -1,32 +1,38 @@
+/**
+ * DASHBOARD PAGE
+ * ==============
+ * Main dashboard with real-time Firestore data.
+ * 
+ * Features:
+ *   - Real-time driving score and stats
+ *   - Recent trips list
+ *   - Community pool status
+ *   - Policy information
+ *   - Demo mode support for testing
+ */
+
 import { useEffect, useState, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'wouter';
-import { Car, FileText, AlertCircle, TrendingUp, ChevronRight, Bell, ChevronDown, MapPin, Users, Trophy, Target } from 'lucide-react';
+import { 
+  Car, FileText, AlertCircle, TrendingUp, ChevronRight, 
+  Bell, ChevronDown, MapPin, Users, Trophy, Target, 
+  Play, Navigation, RefreshCw 
+} from 'lucide-react';
 import { PageWrapper } from '../components/PageWrapper';
 import { BottomNav } from '../components/BottomNav';
 import { useAuth } from "@/contexts/AuthContext";
-import { auth, db, isFirebaseConfigured } from "@/lib/firebase";
+import { auth, isFirebaseConfigured } from "@/lib/firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
 import MapLoader from '../components/MapLoader';
+import { useDashboardData, DashboardData } from '@/hooks/useDashboardData';
+import { useCommunityData } from '@/hooks/useCommunityData';
 
 const LeafletMap = lazy(() => import('../components/LeafletMap'));
 
-interface Profile {
-  id: string;
-  full_name: string | null;
-  avatar_url: string | null;
-  onboarding_complete: boolean;
-}
-
-interface Trip {
-  id: number;
-  from: string;
-  to: string;
-  score: number;
-  distance: number;
-  date: string;
-}
+// ============================================================================
+// TYPES
+// ============================================================================
 
 interface DemoUser {
   id: string;
@@ -42,36 +48,144 @@ interface DemoUser {
   drivingScore?: number;
   totalMiles?: number;
   projectedRefund?: number;
-  trips?: Trip[];
+  trips?: Array<{
+    id: number;
+    from: string;
+    to: string;
+    score: number;
+    distance: number;
+    date: string;
+  }>;
   poolTotal?: number;
   poolShare?: number;
   safetyFactor?: number;
 }
 
+// ============================================================================
+// SKELETON COMPONENTS
+// ============================================================================
+
+function ScoreCardSkeleton() {
+  return (
+    <div className="dashboard-glass-card mb-4 animate-pulse">
+      <div className="flex items-center justify-between mb-4">
+        <div className="h-6 w-32 bg-white/10 rounded" />
+        <div className="h-5 w-5 bg-white/10 rounded" />
+      </div>
+      <div className="flex items-end gap-2 mb-4">
+        <div className="h-12 w-20 bg-white/10 rounded" />
+        <div className="h-6 w-12 bg-white/10 rounded mb-1" />
+      </div>
+      <div className="h-4 w-full bg-white/10 rounded mb-4" />
+      <div className="h-2 w-full bg-white/10 rounded-full" />
+    </div>
+  );
+}
+
+function TripsSkeleton() {
+  return (
+    <div className="dashboard-glass-card mb-4 animate-pulse">
+      <div className="flex items-center justify-between mb-4">
+        <div className="h-6 w-24 bg-white/10 rounded" />
+        <div className="h-5 w-5 bg-white/10 rounded" />
+      </div>
+      <div className="space-y-3">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="bg-white/5 rounded-xl p-3">
+            <div className="flex items-center justify-between mb-2">
+              <div className="h-4 w-32 bg-white/10 rounded" />
+              <div className="h-4 w-8 bg-white/10 rounded" />
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="h-3 w-16 bg-white/10 rounded" />
+              <div className="h-3 w-20 bg-white/10 rounded" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PoolSkeleton() {
+  return (
+    <div className="dashboard-glass-card mb-4 animate-pulse">
+      <div className="flex items-center justify-between mb-4">
+        <div className="h-6 w-36 bg-white/10 rounded" />
+        <div className="h-5 w-5 bg-white/10 rounded" />
+      </div>
+      <div className="space-y-3">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="flex items-center justify-between">
+            <div className="h-4 w-24 bg-white/10 rounded" />
+            <div className="h-4 w-16 bg-white/10 rounded" />
+          </div>
+        ))}
+        <div className="h-2 w-full bg-white/10 rounded-full mt-2" />
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+}
+
+function getScoreMessage(score: number): string {
+  if (score >= 80) return "Great driving! Keep it up to maximise your refund.";
+  if (score >= 70) return "Good progress! A few more safe trips will boost your score.";
+  return "Keep practising safe driving to unlock rewards.";
+}
+
+function calculateSurplus(score: number, premium: number): number {
+  if (score < 70) return 0;
+  const scoreRange = Math.max(0, score - 70);
+  const baseRefund = 5;
+  const additionalRefund = (scoreRange / 30) * 10;
+  const totalPercentage = Math.min(baseRefund + additionalRefund, 15);
+  return Math.round((totalPercentage / 100) * premium);
+}
+
+// ============================================================================
+// COMPONENT
+// ============================================================================
+
 export default function Dashboard() {
   const [, setLocation] = useLocation();
   const { user, logout } = useAuth();
-  const [profile, setProfile] = useState<Profile | null>(null);
+  
+  // Auth state
   const [authChecked, setAuthChecked] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [firebaseUserId, setFirebaseUserId] = useState<string | null>(null);
+  
+  // Demo mode
   const [demoUser, setDemoUser] = useState<DemoUser | null>(null);
   const [isDemoMode, setIsDemoMode] = useState(false);
+  
+  // UI state
   const [showDropdown, setShowDropdown] = useState(false);
-  const policyNumber = "DRV-2025-000001";
 
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "Good morning";
-    if (hour < 17) return "Good afternoon";
-    return "Good evening";
-  };
+  // Real-time Firestore data
+  const { data: dashboardData, loading: dataLoading, error: dataError, refresh } = useDashboardData(
+    isDemoMode ? null : firebaseUserId
+  );
 
-  const handleLogout = () => {
-    setShowDropdown(false);
-    logout();
-    setLocation("/");
-  };
+  // Community pool and leaderboard data
+  const {
+    pool: communityPool,
+    poolLoading,
+    userShare,
+    leaderboard,
+  } = useCommunityData(isDemoMode ? null : firebaseUserId);
 
+  // Check for demo mode on mount
   useEffect(() => {
     const demoModeActive = localStorage.getItem('driiva-demo-mode') === 'true';
     if (demoModeActive) {
@@ -83,7 +197,6 @@ export default function Dashboard() {
           setDemoUser(parsedUser);
           setIsDemoMode(true);
           setAuthChecked(true);
-          setLoading(false);
         } catch (e) {
           console.error('Failed to parse demo user data:', e);
         }
@@ -91,6 +204,7 @@ export default function Dashboard() {
     }
   }, []);
 
+  // Firebase auth listener
   useEffect(() => {
     if (isDemoMode) return;
 
@@ -99,7 +213,6 @@ export default function Dashboard() {
         if (!firebaseUser) {
           if (user) {
             setAuthChecked(true);
-            setLoading(false);
             return;
           }
           console.log('[Dashboard] No session, redirecting to signin');
@@ -107,80 +220,116 @@ export default function Dashboard() {
           return;
         }
 
-        const userDocRef = doc(db, 'users', firebaseUser.uid);
-        const userDoc = await getDoc(userDocRef);
-        const userData = userDoc.data();
-
-        if (userData) {
-          setProfile({
-            id: firebaseUser.uid,
-            full_name: userData.fullName || null,
-            avatar_url: userData.avatarUrl || null,
-            onboarding_complete: userData.onboardingComplete === true,
-          });
-          
-          if (!userData.onboardingComplete) {
-            console.log('[Dashboard] Onboarding not complete, redirecting to quick-onboarding');
-            setLocation('/quick-onboarding');
-            return;
-          }
-        } else {
-          console.log('[Dashboard] No profile found, redirecting to quick-onboarding');
-          setLocation('/quick-onboarding');
-          return;
-        }
+        setFirebaseUserId(firebaseUser.uid);
+        setAuthChecked(true);
       } catch (error) {
-        console.error('[Dashboard] Auth/profile fetch error:', error);
+        console.error('[Dashboard] Auth error:', error);
         if (user) {
           setAuthChecked(true);
-          setLoading(false);
           return;
         }
         setLocation('/signin');
-      } finally {
-        setAuthChecked(true);
-        setLoading(false);
       }
     });
 
     return () => unsubscribe();
   }, [setLocation, user, isDemoMode]);
 
+  // Handle logout
+  const handleLogout = () => {
+    setShowDropdown(false);
+    logout();
+    setLocation("/");
+  };
+
+  // Derive display values
   const displayName = isDemoMode 
     ? (demoUser?.first_name && demoUser?.last_name 
         ? `${demoUser.first_name} ${demoUser.last_name}` 
         : demoUser?.name || 'Driver')
-    : (profile?.full_name || user?.name || 'Driver');
+    : (dashboardData?.displayName || user?.name || 'Driver');
 
-  const drivingScore = isDemoMode ? (demoUser?.drivingScore || demoUser?.overall_score || 82) : 0;
-  const premiumAmount = isDemoMode ? (demoUser?.premiumAmount || demoUser?.premium_amount || 1500) : 1500;
-  const totalMiles = isDemoMode ? (demoUser?.totalMiles || 0) : 0;
-  const trips = isDemoMode ? (demoUser?.trips || []) : [];
-  const poolTotal = isDemoMode ? (demoUser?.poolTotal || 105000) : 105000;
-  const poolShare = isDemoMode ? (demoUser?.poolShare || 0) : 0;
-  const safetyFactor = isDemoMode ? (demoUser?.safetyFactor || 0.85) : 0.85;
-  const isNewUser = !isDemoMode && drivingScore === 0;
+  // Use demo data or real Firestore data
+  const drivingScore = isDemoMode 
+    ? (demoUser?.drivingScore || demoUser?.overall_score || 82) 
+    : (dashboardData?.drivingScore || 100);
   
-  const calculateSurplus = (score: number, premium: number): number => {
-    if (score < 70) return 0;
-    const scoreRange = Math.max(0, score - 70);
-    const baseRefund = 5;
-    const additionalRefund = (scoreRange / 30) * 10;
-    const totalPercentage = Math.min(baseRefund + additionalRefund, 15);
-    return Math.round((totalPercentage / 100) * premium);
-  };
+  const premiumAmount = isDemoMode 
+    ? (demoUser?.premiumAmount || demoUser?.premium_amount || 1500) 
+    : (dashboardData?.premiumAmount || 0);
+  
+  const totalMiles = isDemoMode 
+    ? (demoUser?.totalMiles || 0) 
+    : (dashboardData?.totalMiles || 0);
+  
+  const trips = isDemoMode 
+    ? (demoUser?.trips || []) 
+    : (dashboardData?.trips || []);
+  
+  // Pool data from useCommunityData (or fallback to useDashboardData)
+  const poolTotal = isDemoMode 
+    ? (demoUser?.poolTotal || 105000) 
+    : (communityPool?.totalPoolPounds || dashboardData?.poolTotal || 0);
+  
+  const poolShare = isDemoMode 
+    ? (demoUser?.poolShare || 0) 
+    : (userShare?.projectedRefundPounds || dashboardData?.poolShare || 0);
+  
+  const safetyFactor = isDemoMode 
+    ? (demoUser?.safetyFactor || 0.85) 
+    : (communityPool?.safetyFactor || dashboardData?.safetyFactor || 1.0);
+  
+  const activeParticipants = isDemoMode 
+    ? 1247 
+    : (communityPool?.activeParticipants || dashboardData?.activeParticipants || 0);
+  
+  const poolDaysRemaining = communityPool?.daysRemaining || 0;
+  
+  const userSharePercentage = isDemoMode 
+    ? 2.5 
+    : (userShare?.sharePercentage || 0);
+  
+  const userRank = isDemoMode 
+    ? 14 
+    : (leaderboard?.userRank || null);
 
-  // Use demo projectedRefund if available, otherwise calculate
+  const policyNumber = dashboardData?.policyNumber || "DRV-2025-000001";
+  const isNewUser = !isDemoMode && dashboardData?.totalTrips === 0;
+
+  // Calculate surplus projection
   const surplusProjection = isDemoMode && demoUser?.projectedRefund 
     ? demoUser.projectedRefund 
-    : calculateSurplus(drivingScore, premiumAmount);
+    : (dashboardData?.projectedRefund || calculateSurplus(drivingScore, premiumAmount));
 
-  if (loading || !authChecked) {
+  // Loading state
+  const isLoading = !authChecked || (!isDemoMode && dataLoading && !dashboardData);
+
+  if (isLoading) {
     return (
       <PageWrapper>
-        <div className="flex items-center justify-center min-h-[80vh]">
-          <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+        <div className="pb-24 text-white">
+          {/* Header skeleton */}
+          <div className="flex items-start justify-between mb-6 animate-pulse">
+            <div className="flex items-start gap-3">
+              <div className="w-12 h-12 rounded-xl bg-white/10" />
+              <div>
+                <div className="h-6 w-20 bg-white/10 rounded mb-2" />
+                <div className="h-4 w-32 bg-white/10 rounded" />
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-white/10" />
+              <div className="w-10 h-10 rounded-full bg-white/10" />
+            </div>
+          </div>
+          
+          <div className="h-8 w-32 bg-white/10 rounded mb-4 animate-pulse" />
+          
+          <ScoreCardSkeleton />
+          <TripsSkeleton />
+          <PoolSkeleton />
         </div>
+        <BottomNav />
       </PageWrapper>
     );
   }
@@ -211,8 +360,17 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Right side - Bell and avatar with dropdown */}
-          <div className="flex items-center gap-3 relative">
+          {/* Right side - Bell, refresh, and avatar with dropdown */}
+          <div className="flex items-center gap-2 relative">
+            {!isDemoMode && (
+              <button 
+                onClick={refresh}
+                className="p-2 rounded-full hover:bg-white/5 transition-colors"
+                title="Refresh data"
+              >
+                <RefreshCw className={`w-4 h-4 text-white/60 ${dataLoading ? 'animate-spin' : ''}`} />
+              </button>
+            )}
             <button className="p-2 rounded-full hover:bg-white/5 transition-colors">
               <Bell className="w-5 h-5 text-white/60" />
             </button>
@@ -266,6 +424,19 @@ export default function Dashboard() {
 
         <h2 className="text-2xl font-bold text-white mb-4">Dashboard</h2>
 
+        {/* Error banner */}
+        {dataError && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-4 p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm flex items-center gap-2"
+          >
+            <AlertCircle className="w-4 h-4" />
+            <span>Failed to load some data. Pull to refresh.</span>
+          </motion.div>
+        )}
+
+        {/* Driving Score Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -281,20 +452,45 @@ export default function Dashboard() {
             <span className="text-xl text-white/60 mb-1">/100</span>
           </div>
           <p className="text-sm text-white/60 mt-2">
-            {drivingScore >= 80 
-              ? "Great driving! Keep it up to maximise your refund."
-              : drivingScore >= 70 
-                ? "Good progress! A few more safe trips will boost your score."
-                : "Keep practising safe driving to unlock rewards."}
+            {getScoreMessage(drivingScore)}
           </p>
           <div className="mt-4 h-2 bg-white/10 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-500"
-              style={{ width: `${drivingScore}%` }}
+            <motion.div 
+              initial={{ width: 0 }}
+              animate={{ width: `${drivingScore}%` }}
+              transition={{ duration: 1, ease: "easeOut" }}
+              className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full"
             />
           </div>
+          
+          {/* Score breakdown (only show if we have real data) */}
+          {!isDemoMode && dashboardData?.scoreBreakdown && (
+            <div className="mt-4 pt-4 border-t border-white/10 grid grid-cols-5 gap-2 text-center">
+              <div>
+                <div className="text-xs text-white/40">Speed</div>
+                <div className="text-sm font-semibold text-white">{dashboardData.scoreBreakdown.speed}</div>
+              </div>
+              <div>
+                <div className="text-xs text-white/40">Braking</div>
+                <div className="text-sm font-semibold text-white">{dashboardData.scoreBreakdown.braking}</div>
+              </div>
+              <div>
+                <div className="text-xs text-white/40">Accel</div>
+                <div className="text-sm font-semibold text-white">{dashboardData.scoreBreakdown.acceleration}</div>
+              </div>
+              <div>
+                <div className="text-xs text-white/40">Corners</div>
+                <div className="text-sm font-semibold text-white">{dashboardData.scoreBreakdown.cornering}</div>
+              </div>
+              <div>
+                <div className="text-xs text-white/40">Phone</div>
+                <div className="text-sm font-semibold text-white">{dashboardData.scoreBreakdown.phoneUsage}</div>
+              </div>
+            </div>
+          )}
         </motion.div>
 
+        {/* GPS Map Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -316,6 +512,7 @@ export default function Dashboard() {
           </p>
         </motion.div>
 
+        {/* Your Trips Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -358,8 +555,19 @@ export default function Dashboard() {
               <p className="text-white/40 text-xs mt-1">Your journey data will appear here</p>
             </div>
           )}
+          
+          {/* Start Trip Button */}
+          <button
+            onClick={() => setLocation('/trip-recording')}
+            className="w-full mt-4 py-3 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 text-emerald-300 font-medium hover:from-emerald-500/30 hover:to-teal-500/30 transition-all flex items-center justify-center gap-2"
+          >
+            <Play className="w-4 h-4" />
+            Start New Trip
+            <Navigation className="w-4 h-4" />
+          </button>
         </motion.div>
 
+        {/* Community Pool Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -367,31 +575,81 @@ export default function Dashboard() {
           className="dashboard-glass-card mb-4"
         >
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-white">Community Pool</h2>
+            <div>
+              <h2 className="text-lg font-semibold text-white">Community Pool</h2>
+              {poolDaysRemaining > 0 && !isDemoMode && (
+                <p className="text-xs text-white/40">{poolDaysRemaining} days left in period</p>
+              )}
+            </div>
             <Users className="w-5 h-5 text-purple-400" />
           </div>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-white/60 text-sm">Total Pool</span>
-              <span className="text-white font-semibold">£{poolTotal.toLocaleString()}</span>
+          {poolLoading && !isDemoMode ? (
+            <div className="space-y-3 animate-pulse">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="flex items-center justify-between">
+                  <div className="h-4 w-24 bg-white/10 rounded" />
+                  <div className="h-4 w-16 bg-white/10 rounded" />
+                </div>
+              ))}
+              <div className="h-2 w-full bg-white/10 rounded-full mt-2" />
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-white/60 text-sm">Your Share</span>
-              <span className="text-emerald-400 font-bold">£{poolShare.toFixed(2)}</span>
+          ) : (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-white/60 text-sm">Total Pool</span>
+                <span className="text-white font-semibold">£{poolTotal.toLocaleString()}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-white/60 text-sm">Your Projected Refund</span>
+                <span className="text-emerald-400 font-bold">£{poolShare.toFixed(2)}</span>
+              </div>
+              {userSharePercentage > 0 && (
+                <div className="flex items-center justify-between">
+                  <span className="text-white/60 text-sm">Your Share</span>
+                  <span className="text-white font-semibold">{userSharePercentage.toFixed(2)}%</span>
+                </div>
+              )}
+              <div className="flex items-center justify-between">
+                <span className="text-white/60 text-sm">Safety Factor</span>
+                <span className="text-white font-semibold">{Math.round(safetyFactor * 100)}%</span>
+              </div>
+              {activeParticipants > 0 && (
+                <div className="flex items-center justify-between">
+                  <span className="text-white/60 text-sm">Participants</span>
+                  <span className="text-white font-semibold">{activeParticipants.toLocaleString()}</span>
+                </div>
+              )}
+              
+              {/* Safety Factor Progress Bar */}
+              <div className="pt-2">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs text-white/40">Safety Factor</span>
+                  <span className="text-xs text-white/60">{Math.round(safetyFactor * 100)}%</span>
+                </div>
+                <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${safetyFactor * 100}%` }}
+                    transition={{ duration: 1, ease: "easeOut", delay: 0.3 }}
+                    className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"
+                  />
+                </div>
+              </div>
+              
+              {/* Leaderboard Link */}
+              <button
+                onClick={() => setLocation('/leaderboard')}
+                className="w-full mt-2 py-3 rounded-xl bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 text-purple-300 font-medium hover:from-purple-500/30 hover:to-pink-500/30 transition-all flex items-center justify-center gap-2"
+              >
+                <Trophy className="w-4 h-4" />
+                {userRank ? `View Leaderboard • You're #${userRank}` : 'View Leaderboard'}
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-white/60 text-sm">Safety Factor</span>
-              <span className="text-white font-semibold">{Math.round(safetyFactor * 100)}%</span>
-            </div>
-            <div className="h-2 bg-white/10 rounded-full overflow-hidden mt-2">
-              <div 
-                className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"
-                style={{ width: `${safetyFactor * 100}%` }}
-              />
-            </div>
-          </div>
+          )}
         </motion.div>
 
+        {/* Refund Goals Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -412,9 +670,11 @@ export default function Dashboard() {
               <span>Max £{Math.round(premiumAmount * 0.15)}</span>
             </div>
             <div className="h-3 bg-white/10 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 rounded-full transition-all duration-500"
-                style={{ width: `${Math.min((surplusProjection / (premiumAmount * 0.15)) * 100, 100)}%` }}
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: `${Math.min((surplusProjection / Math.max(premiumAmount * 0.15, 1)) * 100, 100)}%` }}
+                transition={{ duration: 1, ease: "easeOut", delay: 0.4 }}
+                className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 rounded-full"
               />
             </div>
             {isNewUser && (
@@ -425,6 +685,7 @@ export default function Dashboard() {
           </div>
         </motion.div>
 
+        {/* Achievements Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -435,7 +696,7 @@ export default function Dashboard() {
             <h2 className="text-lg font-semibold text-white">Achievements</h2>
             <Trophy className="w-5 h-5 text-amber-400" />
           </div>
-          {isDemoMode ? (
+          {(isDemoMode || (dashboardData?.totalTrips || 0) > 0) ? (
             <>
               <div className="flex gap-3 overflow-x-auto pb-2 mb-4">
                 <div className="flex-shrink-0 w-16 h-16 rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/20 border border-amber-500/30 flex items-center justify-center">
@@ -475,6 +736,7 @@ export default function Dashboard() {
           )}
         </motion.div>
 
+        {/* Bottom Action Buttons */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

@@ -24,12 +24,10 @@ import {
   limit,
   startAfter,
   writeBatch,
-  runTransaction,
   serverTimestamp,
   Timestamp,
   DocumentReference,
   QueryConstraint,
-  increment,
   arrayUnion,
   arrayRemove,
 } from 'firebase/firestore';
@@ -48,7 +46,6 @@ import {
   LeaderboardDocument,
   RecentTripSummary,
   DrivingProfileData,
-  ScoreBreakdown,
   TripQueryOptions,
   LeaderboardQueryOptions,
   DEFAULT_DRIVING_PROFILE,
@@ -291,20 +288,42 @@ export async function getUserTrips(options: TripQueryOptions): Promise<TripDocum
 
 /**
  * Update trip status
+ * 
+ * NOTE: This function calls a Cloud Function because Firestore security rules
+ * prevent client-side updates to trip documents (`allow update: if false`).
+ * Trip updates are handled exclusively by Cloud Functions using the admin SDK.
+ * 
+ * For trip cancellation during recording, use the tripService.cancelTrip() function.
  */
 export async function updateTripStatus(
   tripId: string,
   status: TripStatus,
-  additionalData?: Partial<TripDocument>
+  _additionalData?: Partial<TripDocument>
 ): Promise<void> {
   assertFirestore();
   
-  const tripRef = doc(db!, COLLECTION_NAMES.TRIPS, tripId);
-  await updateDoc(tripRef, {
-    status,
-    ...additionalData,
-    processedAt: status === 'completed' ? serverTimestamp() : null,
-  });
+  // Security rules prevent direct client updates to trips
+  // Only Cloud Functions can update trip status
+  if (status === 'failed') {
+    // For cancellation, we can use a Cloud Function
+    const { getFunctions, httpsCallable } = await import('firebase/functions');
+    const functions = getFunctions();
+    
+    const cancelTripFn = httpsCallable<{ tripId: string }, { success: boolean }>(
+      functions,
+      'cancelTrip'
+    );
+    
+    await cancelTripFn({ tripId });
+    return;
+  }
+  
+  // For other status updates, throw an error - these should go through Cloud Functions
+  throw new Error(
+    `Cannot update trip status to '${status}' from client. ` +
+    `Trip updates must be performed by Cloud Functions. ` +
+    `The trip will be automatically processed after creation.`
+  );
 }
 
 // ============================================================================
@@ -733,265 +752,61 @@ function getWeekNumber(date: Date): number {
 
 /**
  * Complete a trip and update all related documents atomically
- * This is the main transaction that runs after a trip ends
+ * 
+ * NOTE: This operation is handled entirely by Cloud Functions (onTripStatusChange trigger).
+ * The client cannot perform this operation because Firestore security rules forbid:
+ *   - Client updates to trips (`allow update: if false`)
+ *   - Client writes to poolShares (`allow write: if false`)
+ *   - Client writes to communityPool (`allow write: if false`)
+ * 
+ * Trip completion flow:
+ *   1. Client creates trip with status 'recording'
+ *   2. Client updates status to 'processing' when trip ends (via tripService.endTrip)
+ *   3. Cloud Function (onTripStatusChange) detects the change and:
+ *      - Computes metrics from GPS points
+ *      - Updates trip with scores and metrics
+ *      - Sets final status ('completed' or 'processing' if flagged)
+ *      - Updates user profile and pool share transactionally
+ * 
+ * @deprecated This function cannot work with current security rules.
+ * Trip completion is handled automatically by Cloud Functions.
  */
 export async function completeTripTransaction(
-  tripId: string,
-  tripData: TripDocument
+  _tripId: string,
+  _tripData: TripDocument
 ): Promise<void> {
-  assertFirestore();
-  
-  const period = getCurrentPoolPeriod();
-  
-  await runTransaction(db!, async (transaction) => {
-    // References
-    const tripRef = doc(db!, COLLECTION_NAMES.TRIPS, tripId);
-    const userRef = doc(db!, COLLECTION_NAMES.USERS, tripData.userId);
-    const poolShareRef = doc(db!, COLLECTION_NAMES.POOL_SHARES, getShareId(tripData.userId, period));
-    const poolRef = doc(db!, COLLECTION_NAMES.COMMUNITY_POOL, POOL_DOC_ID);
-    
-    // Read current state
-    const [userDoc, poolShareDoc, poolDoc] = await Promise.all([
-      transaction.get(userRef),
-      transaction.get(poolShareRef),
-      transaction.get(poolRef),
-    ]);
-    
-    if (!userDoc.exists()) {
-      throw new Error(`User ${tripData.userId} not found`);
-    }
-    
-    const user = userDoc.data() as UserDocument;
-    const poolShare = poolShareDoc.exists() ? poolShareDoc.data() as PoolShareDocument : null;
-    const pool = poolDoc.exists() ? poolDoc.data() as CommunityPoolDocument : null;
-    
-    // Calculate new profile values
-    const distanceMiles = tripData.distanceMeters / 1609.34;
-    const durationMinutes = tripData.durationSeconds / 60;
-    
-    const newTotalTrips = user.drivingProfile.totalTrips + 1;
-    const newTotalMiles = user.drivingProfile.totalMiles + distanceMiles;
-    const newTotalMinutes = user.drivingProfile.totalDrivingMinutes + durationMinutes;
-    
-    // Recalculate weighted average score
-    const oldWeight = user.drivingProfile.totalTrips;
-    const newScore = oldWeight === 0 
-      ? tripData.score 
-      : (user.drivingProfile.currentScore * oldWeight + tripData.score) / newTotalTrips;
-    
-    // Update score breakdown (weighted average)
-    const newScoreBreakdown: ScoreBreakdown = {
-      speedScore: weightedAverage(user.drivingProfile.scoreBreakdown.speedScore, tripData.scoreBreakdown.speedScore, oldWeight),
-      brakingScore: weightedAverage(user.drivingProfile.scoreBreakdown.brakingScore, tripData.scoreBreakdown.brakingScore, oldWeight),
-      accelerationScore: weightedAverage(user.drivingProfile.scoreBreakdown.accelerationScore, tripData.scoreBreakdown.accelerationScore, oldWeight),
-      corneringScore: weightedAverage(user.drivingProfile.scoreBreakdown.corneringScore, tripData.scoreBreakdown.corneringScore, oldWeight),
-      phoneUsageScore: weightedAverage(user.drivingProfile.scoreBreakdown.phoneUsageScore, tripData.scoreBreakdown.phoneUsageScore, oldWeight),
-    };
-    
-    // Determine risk tier
-    const riskTier = newScore >= 80 ? 'low' : newScore >= 60 ? 'medium' : 'high';
-    
-    // Update recent trips (FIFO, max 3)
-    const tripSummary: RecentTripSummary = {
-      tripId,
-      startedAt: tripData.startedAt,
-      endedAt: tripData.endedAt,
-      distanceMiles,
-      durationMinutes,
-      score: tripData.score,
-      routeSummary: buildRouteSummary(tripData.startLocation, tripData.endLocation),
-    };
-    
-    const newRecentTrips = [tripSummary, ...user.recentTrips].slice(0, 3);
-    
-    // Write: Update trip status
-    transaction.update(tripRef, {
-      status: 'completed',
-      processedAt: serverTimestamp(),
-    });
-    
-    // Write: Update user profile
-    transaction.update(userRef, {
-      'drivingProfile.currentScore': Math.round(newScore * 100) / 100,
-      'drivingProfile.scoreBreakdown': newScoreBreakdown,
-      'drivingProfile.totalTrips': newTotalTrips,
-      'drivingProfile.totalMiles': Math.round(newTotalMiles * 100) / 100,
-      'drivingProfile.totalDrivingMinutes': Math.round(newTotalMinutes),
-      'drivingProfile.lastTripAt': tripData.endedAt,
-      'drivingProfile.riskTier': riskTier,
-      recentTrips: newRecentTrips,
-      updatedAt: serverTimestamp(),
-      updatedBy: tripData.userId,
-    });
-    
-    // Write: Update pool share (if exists)
-    if (poolShare) {
-      const newShareTrips = poolShare.tripsIncluded + 1;
-      const newShareMiles = poolShare.milesIncluded + distanceMiles;
-      const newShareAvgScore = (poolShare.averageScore * poolShare.tripsIncluded + tripData.score) / newShareTrips;
-      
-      transaction.update(poolShareRef, {
-        tripsIncluded: newShareTrips,
-        milesIncluded: Math.round(newShareMiles * 100) / 100,
-        averageScore: Math.round(newShareAvgScore * 100) / 100,
-        weightedScore: Math.round(newShareAvgScore * poolShare.contributionCents / 100),
-        updatedAt: serverTimestamp(),
-      });
-    }
-    
-    // Write: Update pool stats (if exists)
-    if (pool) {
-      const newAvgScore = (pool.averagePoolScore * pool.activeParticipants + tripData.score) / (pool.activeParticipants || 1);
-      
-      transaction.update(poolRef, {
-        averagePoolScore: Math.round(newAvgScore * 100) / 100,
-        lastCalculatedAt: serverTimestamp(),
-        version: increment(1),
-      });
-    }
-  });
+  throw new Error(
+    'completeTripTransaction cannot be called from the client. ' +
+    'Trip completion is handled automatically by Cloud Functions when the trip ' +
+    'status changes to "processing". Security rules prevent client-side updates to ' +
+    'trips, poolShares, and communityPool collections.'
+  );
 }
 
 /**
  * Add contribution to pool (payment processed)
+ * 
+ * NOTE: This function calls a Cloud Function because Firestore security rules
+ * prevent client-side writes to communityPool and poolShares collections.
+ * These collections are managed exclusively by Cloud Functions (admin SDK).
  */
 export async function addPoolContribution(
   userId: string,
   amountCents: number
-): Promise<void> {
+): Promise<{ success: boolean; newContributionCents: number; sharePercentage: number }> {
   assertFirestore();
   
-  const period = getCurrentPoolPeriod();
+  // Import Firebase Functions dynamically to avoid circular dependencies
+  const { getFunctions, httpsCallable } = await import('firebase/functions');
+  const functions = getFunctions();
   
-  await runTransaction(db!, async (transaction) => {
-    const poolRef = doc(db!, COLLECTION_NAMES.COMMUNITY_POOL, POOL_DOC_ID);
-    const poolShareRef = doc(db!, COLLECTION_NAMES.POOL_SHARES, getShareId(userId, period));
-    const userRef = doc(db!, COLLECTION_NAMES.USERS, userId);
-    
-    const [poolDoc, poolShareDoc] = await Promise.all([
-      transaction.get(poolRef),
-      transaction.get(poolShareRef),
-    ]);
-    
-    if (!poolDoc.exists()) {
-      throw new Error('Community pool not initialized');
-    }
-    
-    const pool = poolDoc.data() as CommunityPoolDocument;
-    const poolShare = poolShareDoc.exists() ? poolShareDoc.data() as PoolShareDocument : null;
-    
-    // Update pool totals
-    const newTotalPool = pool.totalPoolCents + amountCents;
-    
-    transaction.update(poolRef, {
-      totalPoolCents: newTotalPool,
-      totalContributionsCents: increment(amountCents),
-      lastCalculatedAt: serverTimestamp(),
-      version: increment(1),
-    });
-    
-    // Update or create pool share
-    if (poolShare) {
-      const newContribution = poolShare.contributionCents + amountCents;
-      const newSharePercentage = (newContribution / newTotalPool) * 100;
-      
-      transaction.update(poolShareRef, {
-        contributionCents: newContribution,
-        contributionCount: increment(1),
-        sharePercentage: Math.round(newSharePercentage * 10000) / 10000,
-        updatedAt: serverTimestamp(),
-      });
-      
-      // Update user's denormalized pool share
-      transaction.update(userRef, {
-        'poolShare.contributionCents': newContribution,
-        'poolShare.sharePercentage': Math.round(newSharePercentage * 100) / 100,
-        'poolShare.lastUpdatedAt': serverTimestamp(),
-      });
-    } else {
-      // Create new pool share
-      const shareId = getShareId(userId, period);
-      const newSharePercentage = (amountCents / newTotalPool) * 100;
-      const now = Timestamp.now();
-      
-      transaction.set(poolShareRef, {
-        shareId,
-        poolPeriod: period,
-        userId,
-        contributionCents: amountCents,
-        contributionCount: 1,
-        sharePercentage: Math.round(newSharePercentage * 10000) / 10000,
-        weightedScore: 0,
-        baseRefundCents: 0,
-        projectedRefundCents: 0,
-        status: 'active',
-        eligibleForRefund: true,
-        tripsIncluded: 0,
-        milesIncluded: 0,
-        averageScore: 100,
-        createdAt: now,
-        updatedAt: now,
-        finalizedAt: null,
-      });
-      
-      // Update pool participant count
-      transaction.update(poolRef, {
-        activeParticipants: increment(1),
-        totalParticipantsEver: increment(1),
-      });
-      
-      // Update user's denormalized pool share
-      transaction.update(userRef, {
-        'poolShare.contributionCents': amountCents,
-        'poolShare.sharePercentage': Math.round(newSharePercentage * 100) / 100,
-        'poolShare.lastUpdatedAt': serverTimestamp(),
-      });
-    }
-  });
-}
-
-// ============================================================================
-// HELPER FUNCTIONS
-// ============================================================================
-
-/**
- * Calculate weighted average for score components
- */
-function weightedAverage(oldValue: number, newValue: number, oldWeight: number): number {
-  if (oldWeight === 0) return newValue;
-  const result = (oldValue * oldWeight + newValue) / (oldWeight + 1);
-  return Math.round(result * 100) / 100;
-}
-
-/**
- * Build route summary string
- */
-function buildRouteSummary(
-  start: { placeType: string | null; address: string | null },
-  end: { placeType: string | null; address: string | null }
-): string {
-  const startLabel = start.placeType 
-    ? start.placeType.charAt(0).toUpperCase() + start.placeType.slice(1)
-    : truncateAddress(start.address);
+  const addContribution = httpsCallable<
+    { amountCents: number },
+    { success: boolean; newContributionCents: number; sharePercentage: number }
+  >(functions, 'addPoolContribution');
   
-  const endLabel = end.placeType
-    ? end.placeType.charAt(0).toUpperCase() + end.placeType.slice(1)
-    : truncateAddress(end.address);
-  
-  return `${startLabel} → ${endLabel}`;
-}
-
-/**
- * Truncate address for display
- */
-function truncateAddress(address: string | null): string {
-  if (!address) return 'Unknown';
-  
-  // Extract first part (street name or city)
-  const parts = address.split(',');
-  const firstPart = parts[0].trim();
-  
-  return firstPart.length > 20 ? firstPart.substring(0, 17) + '...' : firstPart;
+  const result = await addContribution({ amountCents });
+  return result.data;
 }
 
 // ============================================================================

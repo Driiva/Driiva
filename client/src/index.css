@@ -44,7 +44,7 @@ button, a, input, select, textarea, [role="button"] {
   position: fixed;
   inset: 0;
   z-index: -1;
-  background-size: cover;
+  background-size: 125% 125%;
   background-position: center;
   background-attachment: fixed;
   background-repeat: no-repeat;
@@ -487,6 +487,9 @@ body, h1, h2, h3, h4, h5, h6, p, span, div, button, input, select, textarea, a {
     #1e3a8a 75%, 
     var(--neutral-900) 100%
   );
+  /* Zoomed out + max resolution: gradient drawn large, then centered */
+  background-size: 160% 160%;
+  background-position: center center;
   z-index: -2;
   transition: transform 0.3s var(--ease-smooth);
   animation: gradient-shift 20s ease infinite;
@@ -638,6 +641,8 @@ body, h1, h2, h3, h4, h5, h6, p, span, div, button, input, select, textarea, a {
       #1e3a8a 65%, 
       var(--neutral-900) 100%
     );
+    background-size: 160% 160%;
+    background-position: center center;
   }
 }
 
@@ -967,12 +972,12 @@ select:focus {
 
 .hero-cta-primary {
   width: 100%;
-  max-width: 240px;
-  height: 48px;
+  max-width: 200px;
+  height: 42px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   color: white;
   border-radius: 1rem;
@@ -1008,12 +1013,12 @@ select:focus {
 
 .hero-cta-tertiary {
   width: 100%;
-  max-width: 240px;
-  height: 46px;
+  max-width: 200px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.9);
   border-radius: 1rem;
@@ -1326,13 +1331,21 @@ body:has(.welcome-page-container) .animated-bg-container {
    HERO ORB ANIMATIONS - Welcome Page
    ============================================ */
 
+.hero-orb-container {
+  position: absolute;
+  inset: -6%;
+  z-index: 1;
+  transform: scale(0.94);
+  transform-origin: center center;
+  pointer-events: none;
+}
+
 .hero-orb {
   position: absolute;
   border-radius: 50%;
   filter: blur(100px);
   opacity: 0.35;
   pointer-events: none;
-  z-index: 1;
   will-change: transform;
 }
 
@@ -1342,7 +1355,7 @@ body:has(.welcome-page-container) .animated-bg-container {
   background: radial-gradient(circle, rgba(255, 120, 50, 0.6) 0%, rgba(200, 80, 40, 0.3) 50%, transparent 70%);
   top: 8%;
   left: -5%;
-  animation: heroOrbFloat1 22s ease-in-out infinite;
+  animation: heroOrbWave1 24s ease-in-out infinite;
 }
 
 .hero-orb-2 {
@@ -1351,7 +1364,7 @@ body:has(.welcome-page-container) .animated-bg-container {
   background: radial-gradient(circle, rgba(139, 92, 246, 0.5) 0%, rgba(88, 28, 135, 0.3) 50%, transparent 70%);
   top: 45%;
   right: -10%;
-  animation: heroOrbFloat2 26s ease-in-out infinite;
+  animation: heroOrbWave2 28s ease-in-out infinite;
 }
 
 .hero-orb-3 {
@@ -1360,46 +1373,29 @@ body:has(.welcome-page-container) .animated-bg-container {
   background: radial-gradient(circle, rgba(220, 90, 70, 0.45) 0%, rgba(139, 92, 246, 0.25) 50%, transparent 70%);
   bottom: 15%;
   left: 10%;
-  animation: heroOrbFloat3 20s ease-in-out infinite;
+  animation: heroOrbWave3 22s ease-in-out infinite;
 }
 
-@keyframes heroOrbFloat1 {
-  0%, 100% { 
-    transform: translate(0, 0) scale(1);
-  }
-  33% { 
-    transform: translate(25px, 30px) scale(1.08);
-  }
-  66% { 
-    transform: translate(-15px, -20px) scale(0.95);
-  }
+/* Wavy flow: horizontal drift + vertical undulation (sine-like) */
+@keyframes heroOrbWave1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  20% { transform: translate(18px, -12px) scale(1.02); }
+  40% { transform: translate(-10px, 20px) scale(0.98); }
+  60% { transform: translate(14px, 8px) scale(1.03); }
+  80% { transform: translate(-16px, -18px) scale(0.99); }
 }
 
-@keyframes heroOrbFloat2 {
-  0%, 100% { 
-    transform: translate(0, 0) scale(1);
-  }
-  25% { 
-    transform: translate(-30px, 40px) scale(1.1);
-  }
-  50% { 
-    transform: translate(20px, -30px) scale(0.92);
-  }
-  75% { 
-    transform: translate(-10px, 20px) scale(1.05);
-  }
+@keyframes heroOrbWave2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(-20px, 16px) scale(1.02); }
+  50% { transform: translate(12px, -22px) scale(0.98); }
+  75% { transform: translate(-14px, -8px) scale(1.01); }
 }
 
-@keyframes heroOrbFloat3 {
-  0%, 100% { 
-    transform: translate(0, 0) scale(1);
-  }
-  40% { 
-    transform: translate(35px, -25px) scale(1.12);
-  }
-  70% { 
-    transform: translate(-20px, 15px) scale(0.9);
-  }
+@keyframes heroOrbWave3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(22px, 14px) scale(1.02); }
+  66% { transform: translate(-18px, -12px) scale(0.98); }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -96,33 +96,37 @@ export default function Signup() {
         displayName: formData.fullName,
       });
 
+      // Create user document with onboarding NOT completed
+      // User will be redirected to quick-onboarding flow
       await setDoc(doc(db, 'users', user.uid), {
         uid: user.uid,
         email: formData.email,
         fullName: formData.fullName,
-        onboardingComplete: true, // Mark as complete so they go directly to dashboard
+        onboardingCompleted: false, // New users must complete onboarding
+        onboardingComplete: false,  // Keep both fields for compatibility
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
 
       console.log('[Signup] Success, user created:', user.uid);
 
+      // Set user in context with onboarding NOT complete
       setUser({
         id: user.uid,
         email: user.email || formData.email,
         name: formData.fullName,
-        onboardingComplete: true,
+        onboardingComplete: false,
       });
 
       toast({
         title: "Account created!",
-        description: "Welcome to Driiva!",
+        description: "Let's get you set up.",
       });
 
-      // Navigate to dashboard after successful signup
+      // Navigate to quick onboarding after successful signup
       setTimeout(() => {
-        setLocation("/dashboard");
-      }, 1000);
+        setLocation("/quick-onboarding");
+      }, 500);
 
     } catch (err: any) {
       console.error("Signup error:", err);

@@ -9,6 +9,8 @@ import * as admin from 'firebase-admin';
 import {
   COLLECTION_NAMES,
   TripDocument,
+  TripPointsDocument,
+  TripPoint,
   UserDocument,
   PoolShareDocument,
   RecentTripSummary,
@@ -23,9 +25,25 @@ import {
   calculateRiskTier,
   getCurrentPoolPeriod,
   getShareId,
+  computeTripMetrics,
 } from '../utils/helpers';
+import { classifyCompletedTrip } from '../http/classifier';
 
 const db = admin.firestore();
+
+/**
+ * Async wrapper for trip classification
+ * 
+ * Calls the Stop-Go-Classifier Python function without blocking trip processing.
+ * Classification is an enhancement, not critical to trip completion.
+ */
+function classifyCompletedTripAsync(tripId: string, trip: TripDocument): void {
+  // Fire and forget - don't await
+  classifyCompletedTrip(tripId, trip)
+    .catch(error => {
+      functions.logger.warn(`Non-blocking classification error for trip ${tripId}:`, error);
+    });
+}
 
 /**
  * Triggered when a new trip is created
@@ -93,7 +111,9 @@ export const onTripCreate = functions.firestore
 
 /**
  * Triggered when trip status changes
- * Handles manual review completion
+ * Handles:
+ * 1. Trip finalization (recording → processing): Compute metrics from GPS points
+ * 2. Manual review completion (processing → completed): Update driver profile
  */
 export const onTripStatusChange = functions.firestore
   .document(`${COLLECTION_NAMES.TRIPS}/{tripId}`)
@@ -102,17 +122,188 @@ export const onTripStatusChange = functions.firestore
     const before = change.before.data() as TripDocument;
     const after = change.after.data() as TripDocument;
     
-    // Only process status transitions to 'completed'
-    if (before.status === after.status || after.status !== 'completed') {
+    // Skip if status hasn't changed
+    if (before.status === after.status) {
       return;
     }
     
-    // If transitioning from 'processing' to 'completed' (manual review)
-    if (before.status === 'processing') {
+    functions.logger.info(`Trip ${tripId} status change: ${before.status} → ${after.status}`);
+    
+    // -------------------------------------------------------------------------
+    // CASE 1: Trip ended (recording → processing)
+    // Finalize trip by computing metrics from GPS points
+    // -------------------------------------------------------------------------
+    if (before.status === 'recording' && after.status === 'processing') {
+      functions.logger.info(`Trip ${tripId} ended, computing metrics from GPS points`);
+      await finalizeTripFromPoints(tripId, after);
+      return;
+    }
+    
+    // -------------------------------------------------------------------------
+    // CASE 2: Manual review completion (processing → completed)
+    // Update driver profile and pool share
+    // -------------------------------------------------------------------------
+    if (before.status === 'processing' && after.status === 'completed') {
       functions.logger.info(`Trip ${tripId} manually approved, updating profile`);
+      
+      // Set processedAt timestamp if not already set
+      if (!after.processedAt) {
+        const tripRef = admin.firestore().collection(COLLECTION_NAMES.TRIPS).doc(tripId);
+        await tripRef.update({
+          processedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        functions.logger.info(`Set processedAt timestamp for trip ${tripId}`);
+      }
+      
       await updateDriverProfileAndPoolShare(after, tripId);
+      
+      // Trigger intelligent trip segmentation (async, non-blocking)
+      classifyCompletedTripAsync(tripId, after);
     }
   });
+
+/**
+ * Finalize trip by reading GPS points and computing metrics
+ * 
+ * Steps:
+ * 1. Read all points from tripPoints/{tripId}
+ * 2. Compute duration, distance (Haversine), average speed
+ * 3. Compute driving score from events
+ * 4. Update trip document with computed metrics
+ * 5. Detect anomalies and set final status
+ * 6. Update driver stats transactionally
+ */
+async function finalizeTripFromPoints(
+  tripId: string,
+  tripData: TripDocument
+): Promise<void> {
+  try {
+    // 1. Read all GPS points
+    const points = await readTripPoints(tripId);
+    
+    if (points.length < 2) {
+      functions.logger.warn(`Trip ${tripId} has insufficient points (${points.length}), marking as failed`);
+      await db.collection(COLLECTION_NAMES.TRIPS).doc(tripId).update({
+        status: 'failed',
+        processedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      return;
+    }
+    
+    functions.logger.info(`Processing ${points.length} GPS points for trip ${tripId}`);
+    
+    // 2. Compute metrics from points
+    const startTimestampMs = tripData.startedAt.toMillis();
+    const metrics = computeTripMetrics(points, startTimestampMs);
+    
+    functions.logger.info(`Computed metrics for trip ${tripId}:`, {
+      distanceMeters: metrics.distanceMeters,
+      durationSeconds: metrics.durationSeconds,
+      avgSpeedMph: Math.round(metrics.avgSpeedMps * 2.237 * 100) / 100,
+      score: metrics.score,
+    });
+    
+    // 3. Detect anomalies
+    const anomalies = detectAnomalies({
+      distanceMeters: metrics.distanceMeters,
+      durationSeconds: metrics.durationSeconds,
+      startLocation: tripData.startLocation,
+      endLocation: tripData.endLocation,
+    });
+    
+    // 4. Calculate context
+    const tripContext = {
+      weatherCondition: null,
+      isNightDriving: isNightTime(tripData.startedAt) || isNightTime(tripData.endedAt),
+      isRushHour: isRushHour(tripData.startedAt),
+    };
+    
+    // 5. Determine final status
+    const finalStatus = anomalies.flaggedForReview ? 'processing' : 'completed';
+    
+    // 6. Update trip document with computed metrics
+    const tripRef = db.collection(COLLECTION_NAMES.TRIPS).doc(tripId);
+    await tripRef.update({
+      // Computed metrics
+      distanceMeters: metrics.distanceMeters,
+      durationSeconds: metrics.durationSeconds,
+      score: metrics.score,
+      scoreBreakdown: metrics.scoreBreakdown,
+      events: metrics.events,
+      
+      // Enrichment
+      anomalies,
+      context: tripContext,
+      
+      // Status
+      status: finalStatus,
+      processedAt: finalStatus === 'completed' ? admin.firestore.FieldValue.serverTimestamp() : null,
+    });
+    
+    functions.logger.info(`Trip ${tripId} finalized with status: ${finalStatus}`, {
+      flaggedForReview: anomalies.flaggedForReview,
+    });
+    
+    // 7. If completed (no anomalies), update driver profile
+    if (finalStatus === 'completed') {
+      // Re-fetch the updated trip data
+      const updatedTrip = (await tripRef.get()).data() as TripDocument;
+      await updateDriverProfileAndPoolShare(updatedTrip, tripId);
+      
+      // 8. Trigger intelligent trip segmentation (async, non-blocking)
+      // This calls the Python Stop-Go-Classifier to detect stops and trip segments
+      classifyCompletedTripAsync(tripId, updatedTrip);
+    }
+    
+  } catch (error) {
+    functions.logger.error(`Error finalizing trip ${tripId}:`, error);
+    
+    // Mark trip as failed
+    await db.collection(COLLECTION_NAMES.TRIPS).doc(tripId).update({
+      status: 'failed',
+      processedAt: admin.firestore.FieldValue.serverTimestamp(),
+    });
+    
+    throw error;
+  }
+}
+
+/**
+ * Read all GPS points for a trip
+ * Handles both single-document and batched storage
+ */
+async function readTripPoints(tripId: string): Promise<TripPoint[]> {
+  const pointsRef = db.collection(COLLECTION_NAMES.TRIP_POINTS).doc(tripId);
+  const snapshot = await pointsRef.get();
+  
+  if (!snapshot.exists) {
+    functions.logger.warn(`No trip points document found for trip ${tripId}`);
+    return [];
+  }
+  
+  const data = snapshot.data() as TripPointsDocument;
+  
+  // If points are in the main document
+  if (data.points && data.points.length > 0) {
+    return data.points;
+  }
+  
+  // Otherwise, fetch from batches subcollection
+  const batchesSnapshot = await pointsRef
+    .collection('batches')
+    .orderBy('batchIndex')
+    .get();
+  
+  const allPoints: TripPoint[] = [];
+  batchesSnapshot.docs.forEach(doc => {
+    const batch = doc.data();
+    if (batch.points && Array.isArray(batch.points)) {
+      allPoints.push(...batch.points);
+    }
+  });
+  
+  return allPoints;
+}
 
 /**
  * Update driver profile and pool share after trip completion
