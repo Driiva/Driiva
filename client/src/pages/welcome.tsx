@@ -81,7 +81,9 @@ export default function Welcome() {
             />
           </div>
           <div className="text-center mt-2">
-            <p className="text-cyan-400 text-2xl font-medium mb-1">AI-powered, community-driven.</p>
+            <p className="text-[var(--neutral-300)] text-2xl font-medium mb-1">
+              AI-<span className="text-neutral-400 drop-shadow-[0_0_8px_rgba(203,213,225,0.6)]">Powered</span>. Community-Driven.
+            </p>
             <p className="text-white/80 text-xl">Your driving, rewarded.</p>
           </div>
         </motion.div>
