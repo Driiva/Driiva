@@ -37,41 +37,136 @@ Visual preferences:
 ### Data Flow
 Mobile sensors collect encrypted trip data, which is processed client-side for safety metrics and then synchronized with the backend. The server aggregates this data for community analysis and determines refund amounts, with real-time UI updates via TanStack Query.
 
-### Navigation Flow
-- **Homepage (/)**: Welcome page with three CTAs:
-  - "Get Started" → /signup → /quick-onboarding → /dashboard
-  - "Test Driiva" → /dashboard (demo mode with full mock data: score 82, trips, pool)
-  - "I Already Have an Account" → /signin → /dashboard
-- **Quick Onboarding (/quick-onboarding)**: 3-step flow with GPS permission, app install prompt, and tutorial. Skip sets onboarding_complete=true.
-- **Unified Dashboard (/dashboard)**: Adapts based on user type:
-  - Demo mode: Full mock data (score 82, trip cards, community pool £105k, achievements)
-  - New user: Empty state with prompts to start driving
-  - Returning user: Real Firestore data with trips, pool share, and achievements
-- **Demo Accounts**: driiva1/driiva1 (score 82), alex/alex123 (score 92), sarah/sarah123 (score 78), james/james123 (score 88), test/test123 (score 72)
+### Navigation Flow (3-Button Entry)
+The landing page (/) has THREE clearly separated entry points:
+
+1. **"Get Started"** → `/signup` → Firebase account creation → `/home` (driver dashboard)
+   - Creates a real Firebase Auth account
+   - Stores user profile in Firestore
+   - Navigates to authenticated dashboard on success
+
+2. **"Test Driiva" / "Try Demo"** → `/demo` → `/dashboard` (demo mode)
+   - NEVER calls Firebase Auth
+   - Uses localStorage for demo state only
+   - Full mock data: score 82, trips, community pool £105k
+   - Completely isolated from real accounts
+
+3. **"I Already Have an Account"** → `/signin` → Firebase sign-in → `/home` (driver dashboard)
+   - Uses Firebase `signInWithEmailAndPassword`
+   - NO demo accounts - real credentials only
+   - Navigates to same dashboard as signup on success
+
+### Route Summary
+| Route | Type | Description |
+|-------|------|-------------|
+| `/` | Public | Landing page with 3 entry buttons |
+| `/signup` | Public | Firebase account creation |
+| `/signin` | Public | Firebase email/password login |
+| `/demo` | Public | Demo mode entry (sets localStorage, goes to /dashboard) |
+| `/home` | Protected | Driver dashboard (real users) |
+| `/dashboard` | Protected | Dashboard (supports both real and demo users) |
+
+### Auth State
+- **Real users**: Firebase Auth state + Firestore profile
+- **Demo users**: `localStorage.getItem('driiva-demo-mode') === 'true'`
+- **Logout**: Clears both Firebase session AND demo localStorage flags
 
 ## Firebase Configuration
 
-### Required Environment Variables (Replit Secrets)
-The following secrets must be set in Replit Secrets (lock icon in sidebar):
+### Required Environment Variables
+Set these in Replit Secrets OR in a `.env.local` file for local development:
 
-| Secret Name | Description | Example Value |
-|-------------|-------------|---------------|
+| Variable | Description | Example |
+|----------|-------------|---------|
 | `VITE_FIREBASE_API_KEY` | Firebase Web API Key | `AIzaSyC...` |
 | `VITE_FIREBASE_PROJECT_ID` | Firebase Project ID | `driiva` |
 | `VITE_FIREBASE_APP_ID` | Firebase App ID | `1:123456789:web:abc123` |
 
+### Local Development Setup
+```bash
+# 1. Clone and install
+git clone <repo-url>
+cd driiva/client
+npm install
+
+# 2. Create environment file
+cat > .env.local << 'EOF'
+VITE_FIREBASE_API_KEY=your-api-key-here
+VITE_FIREBASE_PROJECT_ID=driiva
+VITE_FIREBASE_APP_ID=your-app-id-here
+EOF
+
+# 3. Start dev server
+npm run dev
+```
+
 ### Firebase Health Checklist
-1. ✓ All three VITE_FIREBASE_* secrets are set in Replit Secrets
-2. ✓ Console shows: `✓ Firebase initialized with projectId=driiva`
-3. ✓ No "auth/configuration-not-found" or "api-key-not-valid" errors
-4. ✓ User can sign up with email/password
-5. ✓ User can sign in with existing account
-6. ✓ Demo accounts (driiva1/driiva1, etc.) work without Firebase
+- [ ] All three VITE_FIREBASE_* variables are set
+- [ ] Console shows: `✓ Firebase initialized with projectId=driiva`
+- [ ] No "auth/configuration-not-found" errors
+- [ ] No "api-key-not-valid" errors
+- [ ] Signup creates account and navigates to dashboard
+- [ ] Signin works with existing credentials
+- [ ] Demo mode works WITHOUT Firebase (via /demo route)
 
 ### Firebase Config Location
 - **Single source of truth**: `client/src/lib/firebase.ts`
-- Hard-coded authDomain: `driiva.firebaseapp.com`
-- All auth components import from this single file
+- **authDomain**: Hardcoded to `driiva.firebaseapp.com` (do not change)
+- **All imports**: Must come from this single file
+
+## Manual Smoke Test Checklist
+
+Run through this checklist after any changes to auth/routing:
+
+### 1. Landing Page Tests (/)
+- [ ] Page loads with three visible buttons
+- [ ] "Get Started" button is visible
+- [ ] "Test Driiva" button is visible  
+- [ ] "I Already Have an Account" button is visible
+
+### 2. Signup Flow ("Get Started")
+- [ ] Clicking "Get Started" navigates to `/signup`
+- [ ] Signup page shows form with: Full Name, Email, Password, Confirm Password
+- [ ] Submitting valid data creates Firebase account
+- [ ] After successful signup, navigates to `/home` (driver dashboard)
+- [ ] User is shown in dashboard with correct name
+- [ ] NO demo mode indicators shown (user is real)
+
+### 3. Demo Flow ("Test Driiva")
+- [ ] Clicking "Test Driiva" navigates to `/demo`
+- [ ] Demo page shows feature cards and "Enter Demo Mode" button
+- [ ] Clicking "Enter Demo Mode" sets demo localStorage flags
+- [ ] After entering demo, navigates to `/dashboard`
+- [ ] Dashboard shows "Demo Mode" indicator
+- [ ] Dashboard shows mock data (score 82, trips, pool £105k)
+- [ ] Console has NO Firebase auth errors (demo never calls Firebase)
+
+### 4. Login Flow ("I Already Have an Account")
+- [ ] Clicking "I Already Have an Account" navigates to `/signin`
+- [ ] Sign-in page shows Email and Password fields only
+- [ ] NO demo account hints or prefilled credentials
+- [ ] Invalid credentials show error message
+- [ ] Valid Firebase credentials work
+- [ ] After successful login, navigates to `/home`
+- [ ] User dashboard shows real data, NOT demo data
+
+### 5. Cross-Flow Isolation
+- [ ] Create new account via signup → logout → signin works with same credentials
+- [ ] Enter demo mode → logout → signin does NOT auto-login to demo
+- [ ] Demo mode localStorage is cleared on logout
+- [ ] Real Firebase user never sees demo mode badge unless they go to /demo
+
+### 6. Protected Routes
+- [ ] Visiting `/home` when not logged in redirects to `/signin`
+- [ ] Visiting `/dashboard` when not logged in redirects to `/signin`
+- [ ] Visiting `/signin` when logged in redirects to `/home`
+- [ ] Visiting `/signup` when logged in redirects to `/home`
+
+### 7. Logout
+- [ ] Logout button visible in dashboard dropdown
+- [ ] Clicking logout clears Firebase session
+- [ ] Clicking logout clears demo localStorage
+- [ ] After logout, user lands on `/` or `/signin`
 
 ## External Dependencies
 

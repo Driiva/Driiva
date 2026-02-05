@@ -70,7 +70,7 @@ interface PublicOnlyRouteProps {
 
 export const PublicOnlyRoute: React.FC<PublicOnlyRouteProps> = ({ 
   children, 
-  redirectTo = '/dashboard' 
+  redirectTo = '/home' 
 }) => {
   const [, setLocation] = useLocation();
   const { user } = useAuth();

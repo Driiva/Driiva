@@ -1,9 +1,53 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
-import { ArrowLeft, Car, TrendingUp, Users, Trophy } from "lucide-react";
+import { ArrowLeft, Car, TrendingUp, Users, Trophy, Play, Loader2 } from "lucide-react";
+
+/**
+ * DEMO PAGE
+ * ---------
+ * This page activates demo mode and navigates to the dashboard.
+ * It does NOT call Firebase Auth at all - completely isolated demo experience.
+ */
+
+// Demo user data - completely separate from real Firebase users
+const DEMO_USER_DATA = {
+  id: 'demo-user-1',
+  email: 'demo@driiva.co.uk',
+  name: 'Demo Driver',
+  drivingScore: 82,
+  premiumAmount: 1500,
+  totalMiles: 1247,
+  projectedRefund: 62.50,
+  trips: [
+    { id: 1, from: 'Home', to: 'Office', score: 92, distance: 12.4, date: '2026-02-04' },
+    { id: 2, from: 'Office', to: 'Grocery', score: 88, distance: 3.2, date: '2026-02-03' }
+  ],
+  poolTotal: 105000,
+  poolShare: 62.50,
+  safetyFactor: 0.85,
+};
 
 export default function Demo() {
   const [, setLocation] = useLocation();
+  const [isEntering, setIsEntering] = useState(false);
+
+  /**
+   * Enter demo mode - NO Firebase calls here!
+   * Sets localStorage flags and navigates to dashboard.
+   */
+  const enterDemoMode = () => {
+    setIsEntering(true);
+    
+    // Set demo mode flags in localStorage
+    localStorage.setItem('driiva-demo-mode', 'true');
+    localStorage.setItem('driiva-demo-user', JSON.stringify(DEMO_USER_DATA));
+    
+    // Small delay for UX feedback then navigate to dashboard
+    setTimeout(() => {
+      setLocation('/dashboard');
+    }, 500);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 text-white">
@@ -17,10 +61,11 @@ export default function Demo() {
           <button
             onClick={() => setLocation('/')}
             className="p-2 rounded-full hover:bg-white/10 transition-colors"
+            aria-label="Back to home"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-xl font-bold">Driiva Demo</h1>
+          <h1 className="text-xl font-bold">Try Driiva Demo</h1>
         </motion.div>
 
         {/* Demo Content */}
@@ -30,6 +75,13 @@ export default function Demo() {
           transition={{ delay: 0.2 }}
           className="space-y-6"
         >
+          {/* Demo Notice */}
+          <div className="bg-emerald-500/20 border border-emerald-500/30 rounded-xl p-4">
+            <p className="text-emerald-300 text-sm text-center">
+              Demo mode uses sample data - no account required
+            </p>
+          </div>
+
           <div className="text-center mb-8">
             <h2 className="text-2xl font-bold mb-2">Experience Smart Driving</h2>
             <p className="text-gray-300">See how Driiva tracks and rewards your driving</p>
@@ -114,10 +166,27 @@ export default function Demo() {
             className="space-y-3 pt-6"
           >
             <button
+              onClick={enterDemoMode}
+              disabled={isEntering}
+              className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 text-white py-4 rounded-xl font-semibold hover:from-cyan-600 hover:to-blue-700 transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+            >
+              {isEntering ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Entering Demo...
+                </>
+              ) : (
+                <>
+                  <Play className="w-5 h-5" />
+                  Enter Demo Mode
+                </>
+              )}
+            </button>
+            <button
               onClick={() => setLocation('/signup')}
               className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 rounded-xl font-semibold hover:from-green-600 hover:to-emerald-700 transition-all"
             >
-              Get Started Now
+              Create Real Account
             </button>
             <button
               onClick={() => setLocation('/')}

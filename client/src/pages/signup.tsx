@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
-import { AlertCircle, Loader2, Info, Eye, EyeOff, ArrowLeft, User, Mail, Lock } from "lucide-react";
+import { AlertCircle, Loader2, Eye, EyeOff, ArrowLeft, User, Mail, Lock } from "lucide-react";
 import { timing, easing, microInteractions } from "@/lib/animations";
 import { auth, db, isFirebaseConfigured } from "../lib/firebase";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
@@ -12,6 +12,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useParallax } from "@/hooks/useParallax";
 import { useToast } from "@/hooks/use-toast";
 import signinLogo from "@assets/ii_clear_1769111905071.png";
+
+/**
+ * SIGNUP PAGE
+ * -----------
+ * This page handles REAL Firebase account creation only.
+ * NO demo mode - demo is accessed via /demo route.
+ * On success, navigates to /home (driver dashboard).
+ */
 
 export default function Signup() {
   const [, setLocation] = useLocation();
@@ -25,7 +33,6 @@ export default function Signup() {
   });
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [showDemoHint, setShowDemoHint] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { ref: cardRef, style: cardParallaxStyle } = useParallax({ speed: 0.3 });
@@ -70,10 +77,10 @@ export default function Signup() {
     setIsLoading(true);
 
     try {
+      // Check if Firebase is configured
       if (!isFirebaseConfigured) {
-        console.log('[Signup] Firebase not configured, showing demo mode hint');
-        setError("Account creation is currently unavailable. Please use the demo account to explore the app.");
-        setShowDemoHint(true);
+        console.log('[Signup] Firebase not configured');
+        setError("Account creation is currently unavailable. Please try the demo mode to explore the app.");
         return;
       }
 
@@ -93,7 +100,7 @@ export default function Signup() {
         uid: user.uid,
         email: formData.email,
         fullName: formData.fullName,
-        onboardingComplete: false,
+        onboardingComplete: true, // Mark as complete so they go directly to dashboard
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
@@ -104,16 +111,18 @@ export default function Signup() {
         id: user.uid,
         email: user.email || formData.email,
         name: formData.fullName,
+        onboardingComplete: true,
       });
 
       toast({
         title: "Account created!",
-        description: "Welcome to Driiva! Let's get you set up.",
+        description: "Welcome to Driiva!",
       });
 
+      // Navigate to home (driver dashboard) - same destination as signin
       setTimeout(() => {
-        setLocation("/quick-onboarding");
-      }, 1500);
+        setLocation("/home");
+      }, 1000);
 
     } catch (err: any) {
       console.error("Signup error:", err);
@@ -125,31 +134,13 @@ export default function Signup() {
       } else if (err.code === 'auth/invalid-email') {
         setError("Invalid email address format.");
       } else if (err.code === 'auth/network-request-failed') {
-        setError("Network error. Please check your connection or try the demo account.");
-        setShowDemoHint(true);
+        setError("Network error. Please check your connection and try again.");
       } else {
         setError(err.message || "Something went wrong. Please try again.");
-        setShowDemoHint(true);
       }
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleDemoLogin = () => {
-    localStorage.setItem('driiva-demo-mode', 'true');
-    localStorage.setItem('driiva-demo-user', JSON.stringify({
-      id: "demo-user-8",
-      email: "test@driiva.com",
-      name: "Test Driver",
-      drivingScore: 82,
-    }));
-    setUser({
-      id: "demo-user-8",
-      email: "test@driiva.com",
-      name: "Test Driver",
-    });
-    setLocation("/dashboard");
   };
 
   const handleBack = () => {
@@ -187,43 +178,7 @@ export default function Signup() {
             className="bg-red-500/20 border border-red-500/30 rounded-xl p-4 mb-6 flex items-start gap-3"
           >
             <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-red-300 text-sm">{error}</p>
-              {(error.includes("Network") || error.includes("timeout")) && (
-                <button
-                  onClick={() => {
-                    setError(null);
-                    setShowDemoHint(true);
-                  }}
-                  className="text-red-400 text-sm underline mt-1"
-                >
-                  Try demo mode instead
-                </button>
-              )}
-            </div>
-          </motion.div>
-        )}
-
-        {showDemoHint && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-blue-500/20 border border-blue-500/30 rounded-xl p-4 mb-6 flex items-start gap-3"
-          >
-            <Info className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-blue-300 text-sm font-medium">Try Demo Mode</p>
-              <p className="text-blue-200/80 text-sm mt-1">
-                Explore Driiva with our demo account to see all features.
-              </p>
-              <button
-                onClick={handleDemoLogin}
-                className="mt-2 px-4 py-2 bg-blue-500/30 hover:bg-blue-500/40 
-                         rounded-lg text-blue-200 text-sm transition-colors"
-              >
-                Enter Demo Mode
-              </button>
-            </div>
+            <p className="text-red-300 text-sm">{error}</p>
           </motion.div>
         )}
 
@@ -322,7 +277,7 @@ export default function Signup() {
           </motion.button>
         </form>
 
-        <div className="mt-8 text-center">
+        <div className="mt-8 text-center space-y-2">
           <p className="text-white/50 text-sm">
             Already have an account?{" "}
             <button
@@ -330,6 +285,15 @@ export default function Signup() {
               className="text-orange-400 hover:text-orange-300 font-medium"
             >
               Sign in
+            </button>
+          </p>
+          <p className="text-white/50 text-sm">
+            Just exploring?{" "}
+            <button
+              onClick={() => setLocation("/demo")}
+              className="text-emerald-400 hover:text-emerald-300 font-medium"
+            >
+              Try demo mode
             </button>
           </p>
         </div>

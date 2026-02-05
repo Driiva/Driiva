@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, LogIn, User, Lock, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, LogIn, Mail, Lock, ArrowLeft, AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -12,27 +12,18 @@ import { auth, db, isFirebaseConfigured } from "@/lib/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 
-const DEMO_ACCOUNTS: Record<string, { id: string; email: string; name: string; password: string; drivingScore: number; }> = {
-  'driiva1': { id: 'demo-user-1', email: 'demo@driiva.co.uk', name: 'Demo Driver', password: 'driiva1', drivingScore: 82 },
-  'alex': { id: 'demo-user-2', email: 'alex@driiva.co.uk', name: 'Alex Thompson', password: 'alex123', drivingScore: 92 },
-  'sarah': { id: 'demo-user-3', email: 'sarah@driiva.co.uk', name: 'Sarah Williams', password: 'sarah123', drivingScore: 78 },
-  'james': { id: 'demo-user-4', email: 'james@driiva.co.uk', name: 'James Miller', password: 'james123', drivingScore: 88 },
-  'test': { id: 'demo-user-5', email: 'test@driiva.co.uk', name: 'Test User', password: 'test123', drivingScore: 72 },
-};
-
-function getDemoAccount(username: string, password: string) {
-  const account = DEMO_ACCOUNTS[username.toLowerCase()];
-  if (account && account.password === password) {
-    return account;
-  }
-  return null;
-}
+/**
+ * SIGN-IN PAGE
+ * ------------
+ * This page handles REAL Firebase authentication only.
+ * NO demo accounts - demo mode is accessed via /demo route.
+ */
 
 export default function SignIn() {
-  const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'demo-only'>('checking');
+  const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'unavailable'>('checking');
   const [, setLocation] = useLocation();
-  const [username, setUsername] = useState("driiva1");
-  const [password, setPassword] = useState("driiva1");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
@@ -42,71 +33,49 @@ export default function SignIn() {
 
   useEffect(() => {
     if (!isFirebaseConfigured) {
-      setConnectionStatus('demo-only');
+      setConnectionStatus('unavailable');
     } else {
       setConnectionStatus('connected');
     }
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    console.log('[SignIn] handleSubmit called', { username, password: '***' });
+    console.log('[SignIn] handleSubmit called');
     e.preventDefault();
     e.stopPropagation();
     
     setLoginError(null);
     
-    if (!username.trim() || !password.trim()) {
+    if (!email.trim() || !password.trim()) {
       console.log('[SignIn] Missing credentials');
-      setLoginError('Please enter both email/username and password');
+      setLoginError('Please enter both email and password');
       toast({
         title: "Missing credentials",
-        description: "Please enter both email/username and password",
+        description: "Please enter both email and password",
         variant: "destructive",
       });
       return;
     }
 
-    console.log('[SignIn] Starting authentication...');
+    // Check if Firebase is configured
+    if (!isFirebaseConfigured) {
+      console.log('[SignIn] Firebase not configured');
+      setLoginError('Sign-in is currently unavailable. Please try the demo mode to explore the app.');
+      toast({
+        title: "Service unavailable",
+        description: "Sign-in is currently unavailable. Try demo mode instead.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    console.log('[SignIn] Starting Firebase authentication...');
     setIsLoading(true);
     setLoginError(null);
     
     try {
-      const demoAccount = getDemoAccount(username, password);
-      if (demoAccount) {
-        console.log('[SignIn] Using demo account:', demoAccount.name);
-        
-        localStorage.setItem('driiva-demo-mode', 'true');
-        localStorage.setItem('driiva-demo-user', JSON.stringify(demoAccount));
-        
-        setUser({
-          id: demoAccount.id,
-          email: demoAccount.email,
-          name: demoAccount.name,
-          onboardingComplete: true,
-        });
-
-        toast({
-          title: "Welcome back!",
-          description: `Signed in as ${demoAccount.name}`,
-        });
-
-        setLocation("/dashboard");
-        return;
-      }
-
-      if (!isFirebaseConfigured) {
-        console.log('[SignIn] Firebase not configured, showing error');
-        setLoginError('Invalid credentials. Try one of the demo accounts below.');
-        toast({
-          title: "Sign in failed",
-          description: "Invalid credentials. Try one of the demo accounts listed below.",
-          variant: "destructive",
-        });
-        return;
-      }
-
       console.log('[SignIn] Calling Firebase signInWithEmailAndPassword');
-      const userCredential = await signInWithEmailAndPassword(auth, username, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
       console.log('[SignIn] Authentication successful, user:', user.uid);
@@ -125,7 +94,7 @@ export default function SignIn() {
           console.log('[SignIn] Profile not found, creating...');
           await setDoc(userDocRef, {
             uid: user.uid,
-            email: user.email || username,
+            email: user.email || email,
             fullName: user.displayName || user.email?.split('@')[0] || 'User',
             onboardingComplete: false,
             createdAt: new Date().toISOString(),
@@ -138,7 +107,7 @@ export default function SignIn() {
 
       setUser({
         id: user.uid,
-        email: user.email || username,
+        email: user.email || email,
         name: user.displayName || user.email?.split('@')[0] || 'User',
       });
 
@@ -147,9 +116,10 @@ export default function SignIn() {
         description: "Successfully signed in",
       });
 
+      // Navigate to home (driver dashboard) - same destination as signup
       if (onboardingComplete) {
-        console.log('[SignIn] Redirecting to dashboard (onboarding complete)');
-        setLocation("/dashboard");
+        console.log('[SignIn] Redirecting to /home (onboarding complete)');
+        setLocation("/home");
       } else {
         console.log('[SignIn] Redirecting to quick-onboarding');
         setLocation("/quick-onboarding");
@@ -162,11 +132,11 @@ export default function SignIn() {
       if (error.code === 'auth/invalid-email') {
         errorMessage = "Invalid email address format";
       } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-        errorMessage = "Invalid email or password";
+        errorMessage = "Invalid email or password. Check your credentials or create a new account.";
       } else if (error.code === 'auth/too-many-requests') {
         errorMessage = "Too many failed attempts. Please try again later.";
       } else if (error.code === 'auth/network-request-failed') {
-        errorMessage = "Network error - try one of the demo accounts below";
+        errorMessage = "Network error. Please check your connection and try again.";
       }
 
       setLoginError(errorMessage);
@@ -237,9 +207,9 @@ export default function SignIn() {
                   Sign in to your telematics insurance account
                 </p>
                 
-                {connectionStatus === 'demo-only' && (
-                  <div className="mt-3 px-3 py-1 rounded-full text-xs bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                    Demo Mode Only
+                {connectionStatus === 'unavailable' && (
+                  <div className="mt-3 px-3 py-1 rounded-full text-xs bg-red-500/20 text-red-300 border border-red-500/30">
+                    Service Unavailable
                   </div>
                 )}
                 {connectionStatus === 'connected' && (
@@ -258,21 +228,21 @@ export default function SignIn() {
               >
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-white/80">
-                    Email or Username
+                    Email
                   </label>
                   <div className="relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/50" />
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/50" />
                     <Input
-                      type="text"
-                      value={username}
+                      type="email"
+                      value={email}
                       onChange={(e) => {
-                        setUsername(e.target.value);
+                        setEmail(e.target.value);
                         setLoginError(null);
                       }}
                       className="signin-input pl-10"
-                      placeholder="Email or Username"
+                      placeholder="Enter your email"
                       required
-                      autoComplete="username"
+                      autoComplete="email"
                     />
                   </div>
                 </div>
@@ -293,6 +263,7 @@ export default function SignIn() {
                       className="signin-input pl-10 pr-10"
                       placeholder="Enter your password"
                       required
+                      autoComplete="current-password"
                     />
                     <button
                       type="button"
@@ -308,39 +279,20 @@ export default function SignIn() {
                   <motion.div
                     initial={{ opacity: 0, y: -5 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="flex items-center gap-2 px-3 py-2.5 rounded-xl"
+                    className="flex items-start gap-2 px-3 py-2.5 rounded-xl"
                     style={{
                       background: 'rgba(220, 38, 38, 0.15)',
                       border: '1px solid rgba(220, 38, 38, 0.3)',
                     }}
                   >
-                    <span className="text-red-400 text-sm flex-shrink-0">⚠</span>
+                    <AlertCircle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
                     <span className="text-red-300 text-sm">{loginError}</span>
                   </motion.div>
                 )}
 
-                <div 
-                  className="px-3 py-2.5 rounded-xl"
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.04)',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                  }}
-                >
-                  <p className="text-xs text-white/60 mb-1.5 text-center">
-                    Beta Demo Accounts:
-                  </p>
-                  <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-xs text-white/50">
-                    <div>driiva1 / driiva1</div>
-                    <div>alex / alex123</div>
-                    <div>sarah / sarah123</div>
-                    <div>james / james123</div>
-                    <div className="col-span-2 text-center">test / test123</div>
-                  </div>
-                </div>
-
                 <button
                   type="submit"
-                  disabled={isLoading}
+                  disabled={isLoading || connectionStatus === 'unavailable'}
                   className="hero-cta-primary hero-cta-blue w-full"
                   style={{ maxWidth: '100%' }}
                   aria-label="Sign in to account"
@@ -361,6 +313,30 @@ export default function SignIn() {
                     </div>
                   )}
                 </button>
+
+                {/* Links */}
+                <div className="text-center space-y-2 pt-2">
+                  <p className="text-white/50 text-sm">
+                    Don't have an account?{" "}
+                    <button
+                      type="button"
+                      onClick={() => setLocation("/signup")}
+                      className="text-cyan-400 hover:text-cyan-300 font-medium"
+                    >
+                      Sign up
+                    </button>
+                  </p>
+                  <p className="text-white/50 text-sm">
+                    Just exploring?{" "}
+                    <button
+                      type="button"
+                      onClick={() => setLocation("/demo")}
+                      className="text-emerald-400 hover:text-emerald-300 font-medium"
+                    >
+                      Try demo mode
+                    </button>
+                  </p>
+                </div>
               </motion.form>
             </CardContent>
           </Card>
