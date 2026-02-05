@@ -533,11 +533,6 @@ body, h1, h2, h3, h4, h5, h6, p, span, div, button, input, select, textarea, a {
   50% { box-shadow: 0 0 20px rgba(139, 92, 246, 0.5); }
 }
 
-@keyframes float-subtle {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
-}
-
 .animate-fade-in {
   animation: fade-in var(--duration-base) var(--ease-smooth) forwards;
 }
@@ -927,17 +922,16 @@ select:focus {
 
 .welcome-card-new {
   width: 100%;
+  max-width: 28rem;
   height: 110px;
   position: relative;
   overflow: hidden;
-  border-radius: 20px;
-  background: rgba(20, 20, 30, 0.65);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  border-radius: 1.5rem;
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 
-    0 4px 24px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
 }
 
 .welcome-card-content {
@@ -973,7 +967,7 @@ select:focus {
 
 .hero-cta-primary {
   width: 100%;
-  max-width: 280px;
+  max-width: 240px;
   height: 48px;
   display: flex;
   align-items: center;
@@ -981,8 +975,9 @@ select:focus {
   font-size: 16px;
   font-weight: 600;
   color: white;
-  border-radius: 14px;
+  border-radius: 1rem;
   border: none;
+  outline: none;
   cursor: pointer;
   transition: transform 0.15s ease, background 0.2s ease;
   position: relative;
@@ -1013,24 +1008,25 @@ select:focus {
 
 .hero-cta-tertiary {
   width: 100%;
-  max-width: 280px;
+  max-width: 240px;
   height: 46px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 15px;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.7);
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: transparent;
+  color: rgba(255, 255, 255, 0.9);
+  border-radius: 1rem;
+  border: none;
+  outline: none;
+  background: rgba(127, 29, 29, 0.3);
   cursor: pointer;
-  transition: transform 0.15s ease, color 0.2s ease, border-color 0.2s ease;
+  transition: transform 0.15s ease, color 0.2s ease, background 0.2s ease;
 }
 
 .hero-cta-tertiary:hover {
-  color: rgba(255, 255, 255, 0.9);
-  border-color: rgba(255, 255, 255, 0.35);
+  color: white;
+  background: rgba(127, 29, 29, 0.5);
 }
 
 .hero-cta-tertiary:active {

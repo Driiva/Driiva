@@ -65,34 +65,39 @@ export default function Welcome() {
       <div className="hero-orb hero-orb-2" />
       <div className="hero-orb hero-orb-3" />
       
-      <div className="relative z-10 max-w-md mx-auto px-4 py-6 min-h-screen flex flex-col text-white">
+      <div className="relative z-10 max-w-md mx-auto px-4 pt-16 min-h-screen flex flex-col text-white">
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
           className="flex flex-col items-center"
         >
-          <img 
-            src={driivaLogo} 
-            alt="Driiva" 
-            className="w-64 h-auto mx-auto mb-2" 
-          />
-          <p className="text-cyan-400 text-sm">AI-powered, community-driven.</p>
-          <p className="text-white/80 text-sm mt-1">Your driving, rewarded.</p>
+          <div className="w-80 h-32 mx-auto overflow-hidden flex items-center justify-center">
+            <img 
+              src={driivaLogo} 
+              alt="Driiva" 
+              className="w-full h-full object-contain scale-110"
+              style={{ imageRendering: '-webkit-optimize-contrast' }}
+            />
+          </div>
+          <div className="text-center mt-2">
+            <p className="text-cyan-400 text-2xl font-medium mb-1">AI-powered, community-driven.</p>
+            <p className="text-white/80 text-xl">Your driving, rewarded.</p>
+          </div>
         </motion.div>
 
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-          className="flex-1 flex flex-col items-center justify-center"
+          className="flex flex-col items-center mt-12"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
           role="region"
           aria-label="Feature carousel"
         >
           <div 
-            className="welcome-card-new backdrop-blur-md bg-white/20 border border-white/10 rounded-3xl animate-[float-subtle_6s_ease-in-out_infinite]" 
+            className="welcome-card-new max-w-md backdrop-blur-sm bg-black/20 border border-white/10 rounded-3xl" 
             style={{ boxShadow: '0 0 60px rgba(139, 92, 246, 0.15), 0 0 120px rgba(236, 72, 153, 0.08)' }}
             aria-live="polite"
           >
@@ -112,20 +117,23 @@ export default function Welcome() {
             </AnimatePresence>
           </div>
 
-          <div className="flex items-center justify-center gap-4 mt-5">
+          <div className="flex items-center justify-center gap-2 mt-8">
             <button
               onClick={handlePrev}
-              className="text-white/60 hover:text-white text-2xl transition-colors"
+              className="text-white/50 hover:text-white text-xl transition-colors"
               aria-label="Previous slide"
             >
               &lt;
             </button>
             
-            <div className="w-2 h-2 rounded-full bg-cyan-400"></div>
+            <div className="relative">
+              <div className="w-3 h-3 rounded-full bg-cyan-400"></div>
+              <div className="absolute inset-0 w-3 h-3 rounded-full bg-cyan-400 animate-ping opacity-30"></div>
+            </div>
             
             <button
               onClick={handleNext}
-              className="text-white/60 hover:text-white text-2xl transition-colors"
+              className="text-white/50 hover:text-white text-xl transition-colors"
               aria-label="Next slide"
             >
               &gt;
@@ -137,8 +145,7 @@ export default function Welcome() {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.35, duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-          className="flex flex-col items-center gap-3 pb-20"
-          style={{ marginTop: 18 }}
+          className="flex flex-col items-center gap-4 pb-20 mt-12"
         >
           <button
             onClick={() => setLocation('/signup')}
