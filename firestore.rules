@@ -1,203 +1,187 @@
 rules_version = '2';
 
 /**
- * FIRESTORE SECURITY RULES
- * ========================
- * Security rules for Driiva telematics app.
- * 
+ * =============================================================================
+ * DRIIVA FIRESTORE SECURITY RULES (Production)
+ * =============================================================================
+ *
+ * Context:
+ *   - Firebase Auth: users sign up with email/password (auth.uid = user id).
+ *   - Collections: users, trips, driver_stats, policies, communityPool,
+ *     poolShares, leaderboard, tripPoints, tripSegments.
+ *
  * Principles:
- *   - Users can only read/write their own data
- *   - Trips are write-once (immutable after creation)
- *   - Pool data is read-only for users (written by Cloud Functions)
- *   - Leaderboards are public read, admin write
+ *   1. Users can only read/write their own data (users, trips, policies).
+ *   2. Aggregated/computed data (driver_stats, communityPool, leaderboard,
+ *      poolShares, tripSegments) are read-only for clients; only Cloud
+ *      Functions (Firebase Admin SDK) can write them.
+ *   3. Community pool and leaderboard are readable by everyone (including
+ *      unauthenticated for public docs if desired).
+ *   4. Cloud Functions use the Admin SDK and bypass these rules for writes.
  */
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+
     // =========================================================================
     // HELPER FUNCTIONS
     // =========================================================================
-    
-    // Check if user is authenticated
+
+    /** True if the request has a signed-in user. */
     function isAuthenticated() {
       return request.auth != null;
     }
-    
-    // Check if user owns this document
+
+    /** True if the authenticated user owns the resource (document id or field). */
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
-    
-    // Check if user is admin (custom claim)
-    function isAdmin() {
-      return isAuthenticated() && request.auth.token.admin == true;
-    }
-    
-    // Validate timestamp is server timestamp
-    function isServerTimestamp(field) {
-      return request.resource.data[field] == request.time;
-    }
-    
-    // Check if field is unchanged
+
+    /** True if the given field is not being changed (for immutable fields). */
     function unchanged(field) {
-      return !(field in request.resource.data) || 
+      return !(field in request.resource.data) ||
              request.resource.data[field] == resource.data[field];
     }
-    
+
     // =========================================================================
     // USERS COLLECTION
     // =========================================================================
-    
+    // Each user has one document: users/{userId} where userId == auth.uid.
+    // Authenticated users can read and write their own user document only.
+
     match /users/{userId} {
-      // Users can read their own profile
       allow read: if isOwner(userId);
-      
-      // Users can create their own profile (after auth)
+
       allow create: if isOwner(userId)
         && request.resource.data.uid == userId
         && request.resource.data.email == request.auth.token.email;
-      
-      // Users can update their own profile (with restrictions)
+
       allow update: if isOwner(userId)
-        // Cannot change immutable fields
         && unchanged('uid')
         && unchanged('createdAt')
         && unchanged('createdBy')
-        // Cannot directly modify these (Cloud Functions only)
         && unchanged('drivingProfile')
         && unchanged('poolShare')
         && unchanged('recentTrips');
-      
-      // Users cannot delete their profile
+
       allow delete: if false;
     }
-    
+
     // =========================================================================
     // TRIPS COLLECTION
     // =========================================================================
-    
+    // Users can only read/write trips where userId matches auth.uid.
+    // Client creates with status 'recording', then updates to 'processing' or
+    // 'failed'; Cloud Functions set final score and 'completed'.
+
     match /trips/{tripId} {
-      // Users can read their own trips
-      allow read: if isAuthenticated() 
-        && resource.data.userId == request.auth.uid;
-      
-      // Users can create trips for themselves
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+
       allow create: if isAuthenticated()
         && request.resource.data.userId == request.auth.uid
         && request.resource.data.createdBy == request.auth.uid
-        && request.resource.data.status == 'processing';
-      
-      // Trips are immutable after creation (Cloud Functions can update)
-      allow update: if false;
-      
-      // Users cannot delete trips
+        && (request.resource.data.status == 'recording' || request.resource.data.status == 'processing');
+
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+
       allow delete: if false;
     }
-    
+
     // =========================================================================
     // TRIP POINTS COLLECTION
     // =========================================================================
-    
+    // Raw GPS/sensor points for a trip. Users can read/write only their own
+    // (userId on parent or document must match auth.uid).
+
     match /tripPoints/{tripId} {
-      // Users can read their own trip points
-      allow read: if isAuthenticated()
-        && resource.data.userId == request.auth.uid;
-      
-      // Users can create trip points for their trips
-      allow create: if isAuthenticated()
-        && request.resource.data.userId == request.auth.uid;
-      
-      // Trip points are immutable
-      allow update: if false;
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+
       allow delete: if false;
-      
-      // Batched trip points subcollection
+
       match /batches/{batchId} {
         allow read: if isAuthenticated()
           && get(/databases/$(database)/documents/tripPoints/$(tripId)).data.userId == request.auth.uid;
-        
         allow create: if isAuthenticated()
           && get(/databases/$(database)/documents/tripPoints/$(tripId)).data.userId == request.auth.uid;
-        
         allow update, delete: if false;
       }
     }
-    
+
+    // =========================================================================
+    // DRIVER_STATS COLLECTION
+    // =========================================================================
+    // Aggregated driving stats per user. Users can only read their own doc.
+    // All writes must come from Cloud Functions (Admin SDK); client writes
+    // are rejected.
+
+    match /driver_stats/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if false;
+    }
+
     // =========================================================================
     // POLICIES COLLECTION
     // =========================================================================
-    
+    // Users can read only their own policies (userId matches auth.uid).
+    // Creation/updates are done by backend or Cloud Functions only.
+
     match /policies/{policyId} {
-      // Users can read their own policies
-      allow read: if isAuthenticated()
-        && resource.data.userId == request.auth.uid;
-      
-      // Only admins can create/update policies
-      allow create: if isAdmin();
-      allow update: if isAdmin();
-      
-      // Policies cannot be deleted (must be cancelled)
-      allow delete: if false;
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create, update, delete: if false;
     }
-    
+
     // =========================================================================
     // COMMUNITY POOL COLLECTION
     // =========================================================================
-    
+    // Read-only for all users (and optionally public for meta/current).
+    // All writes come from Cloud Functions (e.g. scheduled aggregation).
+
     match /communityPool/{poolId} {
-      // All authenticated users can read pool state
-      allow read: if isAuthenticated();
-      
-      // Only Cloud Functions (admin SDK) can write
+      allow read: if true;
       allow write: if false;
     }
-    
+
     // =========================================================================
     // POOL SHARES COLLECTION
     // =========================================================================
-    
+    // Per-driver pool share snapshots. Users can read their own; listing for
+    // leaderboard is allowed. Writes only from Cloud Functions.
+
     match /poolShares/{shareId} {
-      // Users can read their own pool shares
-      allow read: if isAuthenticated()
-        && resource.data.userId == request.auth.uid;
-      
-      // Users can list pool shares for leaderboard (limited fields)
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
       allow list: if isAuthenticated();
-      
-      // Only Cloud Functions can write pool shares
       allow write: if false;
     }
-    
+
     // =========================================================================
     // LEADERBOARD COLLECTION
     // =========================================================================
-    
+    // Precomputed rankings. Read-only for everyone (public data).
+    // Writes only from Cloud Functions (scheduled job).
+
     match /leaderboard/{leaderboardId} {
-      // All authenticated users can read leaderboards
-      allow read: if isAuthenticated();
-      
-      // Only Cloud Functions (admin SDK) can write
+      allow read: if true;
       allow write: if false;
     }
-    
+
     // =========================================================================
-    // TRIP SEGMENTS COLLECTION (Stop-Go-Classifier Results)
+    // TRIP SEGMENTS COLLECTION (Stop-Go / classifier results)
     // =========================================================================
-    
+    // Users can read their own segments. Writes only from Cloud Functions.
+
     match /tripSegments/{tripId} {
-      // Users can read their own trip segments
-      allow read: if isAuthenticated()
-        && resource.data.userId == request.auth.uid;
-      
-      // Only Cloud Functions (admin SDK) can write
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
       allow write: if false;
     }
-    
+
     // =========================================================================
-    // CATCH-ALL: DENY EVERYTHING ELSE
+    // CATCH-ALL: DENY
     // =========================================================================
-    
+
     match /{document=**} {
       allow read, write: if false;
     }

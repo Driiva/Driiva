@@ -26,6 +26,8 @@ import Settings from './pages/settings';
 import Achievements from './pages/achievements';
 
 import { AuthProvider } from './contexts/AuthContext';
+import { OnlineStatusProvider, useOnlineStatusContext } from './contexts/OnlineStatusContext';
+import OfflineBanner from './components/OfflineBanner';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,13 +44,26 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <Router>
         <AuthProvider>
-          <div className="App">
-            <div 
-              className="driiva-gradient-bg" 
-              style={{ backgroundImage: `url(${heroBackground})` }}
-            />
-            <ScrollGradient />
-            <Switch>
+          <OnlineStatusProvider>
+            <AppContent />
+          </OnlineStatusProvider>
+        </AuthProvider>
+      </Router>
+    </QueryClientProvider>
+  );
+}
+
+function AppContent() {
+  const { isOnline } = useOnlineStatusContext();
+  return (
+    <div className={`App ${!isOnline ? 'pt-[52px]' : ''}`}>
+      <OfflineBanner />
+      <div 
+        className="driiva-gradient-bg" 
+        style={{ backgroundImage: `url(${heroBackground})` }}
+      />
+      <ScrollGradient />
+      <Switch>
               {/* Public routes */}
               <Route path="/" component={Welcome} />
               <Route path="/welcome" component={Welcome} />
@@ -115,9 +130,6 @@ export default function App() {
               
               <Route>{() => <Redirect to="/" />}</Route>
             </Switch>
-          </div>
-        </AuthProvider>
-      </Router>
-    </QueryClientProvider>
+    </div>
   );
 }

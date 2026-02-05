@@ -58,3 +58,6 @@ export { addPoolContribution, cancelTrip } from './http/admin';
 
 // Trip classification (Stop-Go-Classifier integration)
 export { classifyTrip, batchClassifyTrips } from './http/classifier';
+
+// GDPR: data export and account deletion
+export { exportUserData, deleteUserAccount } from './http/gdpr';

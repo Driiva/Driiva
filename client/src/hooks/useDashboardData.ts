@@ -12,7 +12,7 @@
  * Returns a unified data object optimized for the dashboard UI.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useContext } from 'react';
 import {
   doc,
   collection,
@@ -25,6 +25,7 @@ import {
   Unsubscribe,
 } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from '@/lib/firebase';
+import { OnlineStatusContext } from '@/contexts/OnlineStatusContext';
 import {
   COLLECTION_NAMES,
   UserDocument,
@@ -229,6 +230,9 @@ function calculateProjectedRefund(score: number, premiumCents: number): number {
 // ============================================================================
 
 export function useDashboardData(userId: string | null): UseDashboardDataResult {
+  const onlineStatus = useContext(OnlineStatusContext);
+  const reportFirestoreError = onlineStatus?.reportFirestoreError ?? (() => {});
+
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -272,6 +276,7 @@ export function useDashboardData(userId: string | null): UseDashboardDataResult 
           },
           (err) => {
             console.error('[useDashboardData] User subscription error:', err);
+            reportFirestoreError();
             setError(err);
           }
         )
@@ -295,7 +300,7 @@ export function useDashboardData(userId: string | null): UseDashboardDataResult 
           },
           (err) => {
             console.error('[useDashboardData] Trips subscription error:', err);
-            // Non-critical, continue with empty trips
+            reportFirestoreError();
           }
         )
       );
@@ -320,7 +325,7 @@ export function useDashboardData(userId: string | null): UseDashboardDataResult 
           },
           (err) => {
             console.error('[useDashboardData] Policy subscription error:', err);
-            // Non-critical
+            reportFirestoreError();
           }
         )
       );
@@ -339,7 +344,7 @@ export function useDashboardData(userId: string | null): UseDashboardDataResult 
           },
           (err) => {
             console.error('[useDashboardData] Pool subscription error:', err);
-            // Non-critical
+            reportFirestoreError();
           }
         )
       );

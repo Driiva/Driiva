@@ -1,47 +1,262 @@
+/**
+ * PRIVACY POLICY
+ * ==============
+ * UK GDPR–compliant privacy policy for Driiva telematics insurance.
+ * Last updated: February 2026
+ */
+
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
 import { Shield, ArrowLeft } from "lucide-react";
+
+const Section = ({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) => (
+  <section className="mb-6">
+    <h2 className="text-lg font-semibold text-white mb-2">{title}</h2>
+    <div className="text-white/80 text-sm leading-relaxed space-y-2">
+      {children}
+    </div>
+  </section>
+);
+
+const SubSection = ({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) => (
+  <div className="mb-4">
+    <h3 className="text-base font-medium text-white/95 mb-1">{title}</h3>
+    <div className="text-white/80 text-sm leading-relaxed space-y-1 pl-0">
+      {children}
+    </div>
+  </div>
+);
+
+const P = ({ children }: { children: React.ReactNode }) => (
+  <p className="text-white/80 text-sm leading-relaxed">{children}</p>
+);
+
+const List = ({ items }: { items: string[] }) => (
+  <ul className="list-disc list-inside text-white/80 text-sm space-y-1 mb-2">
+    {items.map((item, i) => (
+      <li key={i}>{item}</li>
+    ))}
+  </ul>
+);
 
 export default function Privacy() {
   const [, setLocation] = useLocation();
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-8 text-white">
+    <div className="min-h-screen flex flex-col items-center px-4 py-8 pb-16 text-white">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="max-w-md w-full text-center"
+        className="max-w-2xl w-full"
       >
-        {/* Logo */}
-        <div className="w-16 h-16 mx-auto mb-6 rounded-xl bg-gradient-to-br from-purple-500/30 to-purple-700/30 border border-white/10 flex items-center justify-center">
-          <Shield className="w-8 h-8 text-purple-400" />
+        <div className="flex items-center justify-between mb-6">
+          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-600/20 border border-white/10 flex items-center justify-center">
+            <Shield className="w-6 h-6 text-amber-400" />
+          </div>
+          <button
+            onClick={() => setLocation("/")}
+            className="flex items-center gap-2 text-teal-400 hover:text-teal-300 transition-colors text-sm"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </button>
         </div>
 
-        <h1 className="text-3xl font-bold mb-4">Privacy Policy</h1>
-        
-        <div className="backdrop-blur-xl bg-[#1a1a2e]/80 border border-white/10 rounded-2xl p-6 text-left mb-6">
-          <p className="text-white/70 text-sm leading-relaxed mb-4">
-            At Driiva, we take your privacy seriously. This policy explains how we collect, use, and protect your data.
-          </p>
-          <p className="text-white/70 text-sm leading-relaxed mb-4">
-            <strong className="text-white">Data Collection:</strong> We collect driving behavior data including speed, acceleration, braking patterns, and trip information to calculate your driving score.
-          </p>
-          <p className="text-white/70 text-sm leading-relaxed mb-4">
-            <strong className="text-white">Data Usage:</strong> Your data is used to determine your eligibility for surplus refunds and to improve our community pool calculations.
-          </p>
-          <p className="text-white/70 text-sm leading-relaxed">
-            <strong className="text-white">Data Protection:</strong> All data is encrypted and stored securely. We never sell your personal information to third parties.
-          </p>
-        </div>
+        <h1 className="text-2xl font-bold mb-2">Privacy Policy</h1>
+        <p className="text-white/60 text-xs mb-6">
+          Effective: February 2026 · Driiva Ltd (UK)
+        </p>
 
-        <button
-          onClick={() => setLocation('/')}
-          className="flex items-center justify-center gap-2 mx-auto text-teal-400 hover:text-teal-300 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Home
-        </button>
+        <div className="backdrop-blur-xl bg-[#1a1a2e]/80 border border-white/10 rounded-2xl p-6 text-left">
+          <p className="text-white/90 text-sm leading-relaxed mb-6">
+            <strong>Your Data, Your Rules: The Driiva Privacy Promise.</strong>{" "}
+            At Driiva, we believe your data is as precious as your no-claims
+            bonus. We are committed to keeping it safe, secure, and transparent.
+            This policy explains what we collect, why, how we protect it, and
+            your rights under UK GDPR.
+          </p>
+
+          <Section title="1. Who we are">
+            <P>
+              Driiva (“we”, “us”, “our”) is the data controller for the
+              personal data we collect through the Driiva app and related
+              services. We are a UK-based telematics insurance platform that
+              rewards safe driving with potential refunds from a community pool.
+            </P>
+          </Section>
+
+          <Section title="2. What data we collect">
+            <SubSection title="2.1 Driving and telematics data">
+              <List
+                items={[
+                  "GPS location data during trips (to calculate distance, routes, and context).",
+                  "Driving behaviour: speed, braking, acceleration, cornering, and phone usage indicators.",
+                  "Trip metadata: start/end times, duration, and derived driving scores.",
+                ]}
+              />
+              <P>
+                This data is used to calculate your driving score and
+                eligibility for community refunds, and for insurance pricing
+                and risk assessment.
+              </P>
+            </SubSection>
+            <SubSection title="2.2 Personal and account data">
+              <List
+                items={[
+                  "Contact details: name, email address, and phone number.",
+                  "Account and authentication data (e.g. login credentials).",
+                  "Payment details (processed by our payment providers; we do not store full card numbers).",
+                ]}
+              />
+            </SubSection>
+            <SubSection title="2.3 Other data">
+              <P>
+                We may collect device type, app version, and usage information
+                to operate and improve the service. We do not sell your personal
+                data to third parties.
+              </P>
+            </SubSection>
+          </Section>
+
+          <Section title="3. How we use your data">
+            <P>We use your data to:</P>
+            <List
+              items={[
+                "Reward safe driving with potential refunds (from the community pool).",
+                "Calculate your driving score and explain how it affects your premium and refunds.",
+                "Price and administer your insurance and handle claims.",
+                "Screen drivers at onboarding (unsafe habits may result in higher premiums or declined coverage).",
+                "Comply with legal and regulatory obligations (e.g. FCA, ICO).",
+              ]}
+            />
+          </Section>
+
+          <Section title="4. Lawful basis for processing (UK GDPR)">
+            <SubSection title="4.1 Contract">
+              <P>
+                Processing necessary to perform our contract with you: providing
+                the app, calculating scores, administering the community pool and
+                refunds, and managing your policy and claims.
+              </P>
+            </SubSection>
+            <SubSection title="4.2 Legitimate interests">
+              <P>
+                We process telematics and driving data for our legitimate
+                interests in pricing risk, preventing fraud, improving our
+                scoring models, and ensuring fair and safe use of the community
+                pool, where this is not overridden by your rights.
+              </P>
+            </SubSection>
+            <SubSection title="4.3 Legal obligation">
+              <P>
+                Where required by law (e.g. regulatory reporting, responding
+                to lawful requests).
+              </P>
+            </SubSection>
+          </Section>
+
+          <Section title="5. Third parties and international transfers">
+            <P>We use the following categories of processors:</P>
+            <SubSection title="5.1 Firebase (Google Cloud)">
+              <P>
+                We use Google Firebase (and Google Cloud) for authentication,
+                database (Firestore), and cloud functions. Data may be
+                processed in the USA. We rely on UK adequacy decisions or
+                appropriate safeguards (e.g. Standard Contractual Clauses) where
+                required for transfers outside the UK.
+              </P>
+            </SubSection>
+            <SubSection title="5.2 Root Insurance Platform">
+              <P>
+                Where applicable, we integrate with or use the Root Insurance
+                platform for insurance operations. Data shared with Root is
+                subject to their privacy policy and our agreements with them.
+              </P>
+            </SubSection>
+            <SubSection title="5.3 Others">
+              <P>
+                We may use payment providers, cloud hosting, and support tools.
+                All processors are bound by contract to use data only for the
+                purposes we specify and to protect it appropriately.
+              </P>
+            </SubSection>
+          </Section>
+
+          <Section title="6. How we protect your data">
+            <List
+              items={[
+                "Your data is encrypted in transit and at rest.",
+                "Access is restricted to authorised personnel and systems (no unauthorised “joyriders”).",
+                "We follow industry standards and our Compliance Policy Framework, including regular risk assessments and training.",
+              ]}
+            />
+            <P>
+              In the event of a data breach that risks your rights, we will
+              notify the ICO within 72 hours where required and inform you in
+              plain language without undue delay.
+            </P>
+          </Section>
+
+          <Section title="7. Data retention">
+            <List
+              items={[
+                "Trip and driving data: retained for the duration of your policy and for 7 years after the end of the policy or as required by law (e.g. claims, regulatory).",
+                "Customer and claims data: 7 years post–policy end or as required by law.",
+                "Account data: until you delete your account or request erasure, subject to legal retention (e.g. 7 years where applicable).",
+                "Marketing and consent-based data: until you withdraw consent or opt out.",
+              ]}
+            />
+          </Section>
+
+          <Section title="8. Your rights (UK GDPR)">
+            <P>You have the right to:</P>
+            <List
+              items={[
+                "Access: request a copy of your personal data (no red tape, no hassle).",
+                "Rectification: have inaccurate data corrected.",
+                "Erasure: request deletion (“Delete Account” in the app – and we will remove it subject to legal retention).",
+                "Export: receive your data in a portable format (data portability).",
+                "Restrict processing or object to certain processing where the law allows.",
+                "Withdraw consent where processing is based on consent (e.g. marketing: unsubscribe at any time).",
+                "Lodge a complaint with the ICO (ico.org.uk).",
+              ]}
+            />
+            <P>
+              To exercise these rights, contact us at hello@driiva.com. We will
+              respond within one month.
+            </P>
+          </Section>
+
+          <Section title="9. Questions and contact">
+            <P>
+              For privacy questions or to exercise your rights, email us at{" "}
+              <a
+                href="mailto:hello@driiva.com"
+                className="text-teal-400 hover:underline"
+              >
+                hello@driiva.com
+              </a>
+              .
+            </P>
+            <P>
+              We are not just an insurance company – we aim to be your co-pilot.
+              Co-pilots do not spill your secrets.
+            </P>
+          </Section>
+        </div>
       </motion.div>
     </div>
   );

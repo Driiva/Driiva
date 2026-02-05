@@ -1,0 +1,228 @@
+/**
+ * GDPR DATA EXPORT & ACCOUNT DELETION
+ * ===================================
+ * UK GDPR: right to data portability (export) and right to erasure (delete).
+ * - exportUserData: returns all user data as JSON (for download).
+ * - deleteUserAccount: deletes all user data and Firebase Auth account.
+ */
+
+import * as functions from 'firebase-functions';
+import * as admin from 'firebase-admin';
+import { COLLECTION_NAMES } from '../types';
+import { requireAuth, requireSelf } from './auth';
+import type { CallableContext } from './auth';
+
+const db = admin.firestore();
+const auth = admin.auth();
+
+const BATCH_SIZE = 500;
+
+/** Convert Firestore Timestamp to ISO string for JSON export */
+function serializeForExport(obj: unknown): unknown {
+  if (obj === null || obj === undefined) return obj;
+  if (typeof obj !== 'object') return obj;
+  if (obj instanceof Date) return obj.toISOString();
+  const ts = obj as { toDate?: () => Date };
+  if (typeof ts.toDate === 'function') {
+    return ts.toDate().toISOString();
+  }
+  if (Array.isArray(obj)) return obj.map(serializeForExport);
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    out[k] = serializeForExport(v);
+  }
+  return out;
+}
+
+/**
+ * Export all user data for GDPR data portability.
+ * Authenticated user must request their own userId.
+ */
+export const exportUserData = functions.https.onCall(async (data: { userId?: string }, context: CallableContext) => {
+  requireAuth(context);
+  const requestedUserId = data?.userId as string | undefined;
+  requireSelf(context, requestedUserId);
+  const userId = requestedUserId!;
+
+  // TODO: Rate limiting – e.g. max 1 export per user per 24 hours
+
+  functions.logger.info('Exporting user data', { userId });
+
+  const userRef = db.collection(COLLECTION_NAMES.USERS).doc(userId);
+  const userSnap = await userRef.get();
+  const userData = userSnap.exists ? serializeForExport({ id: userSnap.id, ...userSnap.data() }) : null;
+
+  const tripsSnap = await db
+    .collection(COLLECTION_NAMES.TRIPS)
+    .where('userId', '==', userId)
+    .get();
+
+  const trips = tripsSnap.docs.map((d: admin.firestore.QueryDocumentSnapshot) => serializeForExport({ id: d.id, ...d.data() }));
+
+  const tripIds = tripsSnap.docs.map((d) => d.id);
+
+  const tripPointsList: Record<string, unknown>[] = [];
+  for (const tripId of tripIds) {
+    const pointsRef = db.collection(COLLECTION_NAMES.TRIP_POINTS).doc(tripId);
+    const pointsSnap = await pointsRef.get();
+    if (pointsSnap.exists) {
+      const data = pointsSnap.data()!;
+      const batchesSnap = await pointsRef.collection('batches').orderBy('batchIndex').get();
+      let points: unknown[] = [];
+      if (data.points && Array.isArray(data.points)) {
+        points = data.points;
+      } else if (!batchesSnap.empty) {
+        for (const b of batchesSnap.docs) {
+          const batchPoints = (b.data() as { points?: unknown[] }).points;
+          if (batchPoints) points = points.concat(batchPoints);
+        }
+      }
+      tripPointsList.push(
+        serializeForExport({
+          tripId,
+          userId: data.userId,
+          points,
+          samplingRateHz: data.samplingRateHz,
+          totalPoints: data.totalPoints ?? points.length,
+          createdAt: data.createdAt,
+        }) as Record<string, unknown>
+      );
+    }
+  }
+
+  const segmentsSnap = await db
+    .collection(COLLECTION_NAMES.TRIP_SEGMENTS)
+    .where('userId', '==', userId)
+    .get();
+  const tripSegments = segmentsSnap.docs.map((d: admin.firestore.QueryDocumentSnapshot) => serializeForExport({ id: d.id, ...d.data() }));
+
+  const policiesSnap = await db
+    .collection(COLLECTION_NAMES.POLICIES)
+    .where('userId', '==', userId)
+    .get();
+  const policies = policiesSnap.docs.map((d: admin.firestore.QueryDocumentSnapshot) => serializeForExport({ id: d.id, ...d.data() }));
+
+  const poolSharesSnap = await db
+    .collection(COLLECTION_NAMES.POOL_SHARES)
+    .where('userId', '==', userId)
+    .get();
+  const poolShares = poolSharesSnap.docs.map((d: admin.firestore.QueryDocumentSnapshot) => serializeForExport({ id: d.id, ...d.data() }));
+
+  let driverStats: unknown = null;
+  const driverStatsRef = db.collection('driver_stats').doc(userId);
+  const driverStatsSnap = await driverStatsRef.get();
+  if (driverStatsSnap.exists) {
+    driverStats = serializeForExport({ id: driverStatsSnap.id, ...driverStatsSnap.data() });
+  }
+
+  const exportPayload = {
+    exportedAt: new Date().toISOString(),
+    userId,
+    user: userData,
+    trips,
+    tripPoints: tripPointsList,
+    tripSegments,
+    policies,
+    poolShares,
+    driver_stats: driverStats,
+  };
+
+  return exportPayload;
+});
+
+/**
+ * Delete user account and all associated data (GDPR right to erasure).
+ * Uses batched deletes for atomicity where possible; then deletes Firebase Auth user.
+ */
+export const deleteUserAccount = functions.https.onCall(async (data: { userId?: string }, context: CallableContext) => {
+  requireAuth(context);
+  const requestedUserId = data?.userId as string | undefined;
+  requireSelf(context, requestedUserId);
+  const userId = requestedUserId!;
+
+  // TODO: Rate limiting – consider requiring re-auth or delay before delete
+
+  functions.logger.info('Deleting user account', { userId });
+
+  const tripSnap = await db
+    .collection(COLLECTION_NAMES.TRIPS)
+    .where('userId', '==', userId)
+    .get();
+  const tripIds = tripSnap.docs.map((d) => d.id);
+
+  type WriteBatch = ReturnType<typeof db.batch>;
+  const batches: WriteBatch[] = [];
+  let currentBatch = db.batch();
+  let opCount = 0;
+
+  function flushBatch(): void {
+    if (opCount > 0) {
+      batches.push(currentBatch);
+      currentBatch = db.batch();
+      opCount = 0;
+    }
+  }
+
+  function addDelete(ref: admin.firestore.DocumentReference): void {
+    currentBatch.delete(ref);
+    opCount++;
+    if (opCount >= BATCH_SIZE) flushBatch();
+  }
+
+  for (const d of tripSnap.docs) {
+    addDelete(d.ref);
+  }
+
+  for (const tripId of tripIds) {
+    const pointsRef = db.collection(COLLECTION_NAMES.TRIP_POINTS).doc(tripId);
+    const batchesRef = pointsRef.collection('batches');
+    const batchDocs = await batchesRef.get();
+    for (const d of batchDocs.docs) addDelete(d.ref);
+    addDelete(pointsRef);
+  }
+
+  const segmentsSnap = await db
+    .collection(COLLECTION_NAMES.TRIP_SEGMENTS)
+    .where('userId', '==', userId)
+    .get();
+  for (const d of segmentsSnap.docs) addDelete(d.ref);
+
+  const policiesSnap = await db
+    .collection(COLLECTION_NAMES.POLICIES)
+    .where('userId', '==', userId)
+    .get();
+  for (const d of policiesSnap.docs) addDelete(d.ref);
+
+  const poolSharesSnap = await db
+    .collection(COLLECTION_NAMES.POOL_SHARES)
+    .where('userId', '==', userId)
+    .get();
+  for (const d of poolSharesSnap.docs) addDelete(d.ref);
+
+  const driverStatsRef = db.collection('driver_stats').doc(userId);
+  const driverStatsSnap = await driverStatsRef.get();
+  if (driverStatsSnap.exists) addDelete(driverStatsRef);
+
+  const userRef = db.collection(COLLECTION_NAMES.USERS).doc(userId);
+  addDelete(userRef);
+
+  flushBatch();
+
+  for (const batch of batches) {
+    await batch.commit();
+  }
+
+  try {
+    await auth.deleteUser(userId);
+  } catch (err) {
+    functions.logger.error('Failed to delete Firebase Auth user', { userId, err });
+    throw new functions.https.HttpsError(
+      'internal',
+      'Firestore data was deleted but we could not delete your auth account. Please contact support.'
+    );
+  }
+
+  functions.logger.info('User account deleted', { userId });
+
+  return { success: true, message: 'Account and all associated data have been permanently deleted.' };
+});

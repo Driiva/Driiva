@@ -2,7 +2,10 @@
  * TRIP CLASSIFIER HTTP FUNCTIONS
  * ==============================
  * HTTP callable functions to invoke the Python Stop-Go-Classifier.
- * 
+ *
+ * Auth: requireAuth (401 if missing/expired token); ownership enforced
+ * so users can only classify their own trips (403 otherwise).
+ *
  * The Python classifier is deployed as a separate Cloud Function (2nd gen).
  * This TypeScript function calls it after trip finalization to detect
  * stops and trip segments.
@@ -11,6 +14,7 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import fetch from 'node-fetch';
+import { requireAuth, requireAdmin } from './auth';
 import {
   COLLECTION_NAMES,
   TripDocument,
@@ -248,28 +252,28 @@ async function readTripPoints(tripId: string): Promise<TripPoint[]> {
 
 /**
  * Classify a completed trip
- * 
+ *
  * Callable from client or other Cloud Functions to trigger classification
- * for a specific trip.
- * 
- * @param tripId - The trip ID to classify
+ * for a specific trip. User can only classify their own trips (trip.userId
+ * must equal auth.uid).
+ *
+ * @param data.tripId - The trip ID to classify
  * @returns Classification results
  */
 export const classifyTrip = functions.https.onCall(async (data, context) => {
-  // Verify authentication
-  if (!context.auth) {
-    throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
-  }
+  const userId = requireAuth(context);
 
-  const tripId = data.tripId as string;
-  if (!tripId) {
+  // TODO: Rate limiting – e.g. max N classifyTrip calls per user per minute
+  // Example: Firestore/Redis counter keyed by userId, reject if over threshold
+
+  const tripId = data?.tripId as string;
+  if (typeof tripId !== 'string' || tripId.trim() === '') {
     throw new functions.https.HttpsError('invalid-argument', 'tripId is required');
   }
 
-  functions.logger.info(`Classifying trip ${tripId} requested by user ${context.auth.uid}`);
+  functions.logger.info(`Classifying trip ${tripId} requested by user ${userId}`);
 
   try {
-    // Get trip document
     const tripRef = db.collection(COLLECTION_NAMES.TRIPS).doc(tripId);
     const tripDoc = await tripRef.get();
 
@@ -279,9 +283,12 @@ export const classifyTrip = functions.https.onCall(async (data, context) => {
 
     const trip = tripDoc.data() as TripDocument;
 
-    // Verify ownership
-    if (trip.userId !== context.auth.uid) {
-      throw new functions.https.HttpsError('permission-denied', 'Not authorized to classify this trip');
+    // Authorization: user can only classify their own trips (403 if not owner)
+    if (trip.userId !== userId) {
+      throw new functions.https.HttpsError(
+        'permission-denied',
+        'You can only classify your own trips'
+      );
     }
 
     // Only classify completed trips
@@ -322,6 +329,7 @@ export const classifyTrip = functions.https.onCall(async (data, context) => {
     if (error instanceof functions.https.HttpsError) {
       throw error;
     }
+    // Expired token: requireAuth() already throws unauthenticated with sign-in-again message
     throw new functions.https.HttpsError(
       'internal',
       error instanceof Error ? error.message : 'Classification failed'
@@ -331,14 +339,15 @@ export const classifyTrip = functions.https.onCall(async (data, context) => {
 
 /**
  * Batch classify multiple trips
- * 
- * Admin function to re-classify historical trips.
+ *
+ * Admin-only. Reject unauthenticated with 401, non-admin with 403.
  */
 export const batchClassifyTrips = functions.https.onCall(async (data, context) => {
-  // Verify admin
-  if (!context.auth?.token.admin) {
-    throw new functions.https.HttpsError('permission-denied', 'Admin access required');
-  }
+  requireAuth(context);
+  requireAdmin(context);
+
+  // TODO: Rate limiting – e.g. max 1 batch job per admin per 5 minutes
+  // Example: check last batchClassifyTrips timestamp in Firestore/Redis for context.auth.uid
 
   const { tripIds, userId, limit = 10 } = data;
 

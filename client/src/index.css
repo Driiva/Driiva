@@ -44,7 +44,7 @@ button, a, input, select, textarea, [role="button"] {
   position: fixed;
   inset: 0;
   z-index: -1;
-  background-size: 125% 125%;
+  background-size: 105% 105%;
   background-position: center;
   background-attachment: fixed;
   background-repeat: no-repeat;
@@ -487,8 +487,8 @@ body, h1, h2, h3, h4, h5, h6, p, span, div, button, input, select, textarea, a {
     #1e3a8a 75%, 
     var(--neutral-900) 100%
   );
-  /* Zoomed out + max resolution: gradient drawn large, then centered */
-  background-size: 160% 160%;
+  /* Zoomed out: gradient at 105% for smooth, high-fidelity look */
+  background-size: 105% 105%;
   background-position: center center;
   z-index: -2;
   transition: transform 0.3s var(--ease-smooth);
@@ -641,7 +641,7 @@ body, h1, h2, h3, h4, h5, h6, p, span, div, button, input, select, textarea, a {
       #1e3a8a 65%, 
       var(--neutral-900) 100%
     );
-    background-size: 160% 160%;
+    background-size: 105% 105%;
     background-position: center center;
   }
 }

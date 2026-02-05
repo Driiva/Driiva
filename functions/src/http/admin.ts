@@ -3,6 +3,9 @@
  * ================================
  * HTTP callable functions for admin operations and
  * client operations that require admin SDK (writes to protected collections).
+ *
+ * All callables use shared auth: requireAuth (401 if missing/expired token),
+ * requireSelf or requireAdmin for authorization (403 if not allowed).
  */
 
 import * as functions from 'firebase-functions';
@@ -13,6 +16,7 @@ import {
   PoolShareDocument,
 } from '../types';
 import { getCurrentPoolPeriod, getShareId } from '../utils/helpers';
+import { requireAuth, requireAdmin } from './auth';
 
 const db = admin.firestore();
 
@@ -21,21 +25,11 @@ const db = admin.firestore();
  * Call this once to set up the pool document
  */
 export const initializePool = functions.https.onCall(async (data, context) => {
-  // Verify admin authentication
-  if (!context.auth) {
-    throw new functions.https.HttpsError(
-      'unauthenticated',
-      'Must be authenticated to initialize pool'
-    );
-  }
-  
-  // In production, check for admin claim
-  // if (!context.auth.token.admin) {
-  //   throw new functions.https.HttpsError(
-  //     'permission-denied',
-  //     'Must be an admin to initialize pool'
-  //   );
-  // }
+  requireAuth(context);
+  requireAdmin(context);
+
+  // TODO: Rate limiting – e.g. allow at most 1 initializePool per project per hour
+  // Example: check Firestore or Redis for last call timestamp by context.auth.uid
   
   const poolRef = db.collection(COLLECTION_NAMES.COMMUNITY_POOL).doc('current');
   const existingPool = await poolRef.get();
@@ -126,15 +120,11 @@ function getPoolPeriodDates(periodType: 'monthly' | 'quarterly'): {
  * - Only the admin SDK can update trip status
  */
 export const cancelTrip = functions.https.onCall(async (data, context) => {
-  // Verify authentication
-  if (!context.auth) {
-    throw new functions.https.HttpsError(
-      'unauthenticated',
-      'Must be authenticated to cancel a trip'
-    );
-  }
-  
-  const userId = context.auth.uid;
+  const userId = requireAuth(context);
+
+  // TODO: Rate limiting – e.g. max N cancelTrip calls per user per minute
+  // Example: increment counter in Firestore/Redis keyed by userId, reject if over threshold
+
   const tripId = data?.tripId;
   
   // Validate input
@@ -198,11 +188,11 @@ export const cancelTrip = functions.https.onCall(async (data, context) => {
     
   } catch (error) {
     functions.logger.error('Trip cancellation failed', { userId, tripId, error });
-    
+
     if (error instanceof functions.https.HttpsError) {
       throw error;
     }
-    
+    // Expired token: requireAuth() already throws unauthenticated with sign-in-again message
     throw new functions.https.HttpsError(
       'internal',
       'Failed to cancel trip'
@@ -221,17 +211,15 @@ export const cancelTrip = functions.https.onCall(async (data, context) => {
  * - communityPool and poolShares collections require admin SDK to write
  * - Client-side security rules prevent direct writes to these collections
  * - This ensures atomic, transactional updates across multiple collections
+ *
+ * Authorization: userId is always context.auth.uid (no client-supplied userId).
  */
 export const addPoolContribution = functions.https.onCall(async (data, context) => {
-  // Verify authentication
-  if (!context.auth) {
-    throw new functions.https.HttpsError(
-      'unauthenticated',
-      'Must be authenticated to contribute to pool'
-    );
-  }
-  
-  const userId = context.auth.uid;
+  const userId = requireAuth(context);
+
+  // TODO: Rate limiting – e.g. max N contributions per user per day, or per amount
+  // Example: check Firestore/Redis for count in current period for userId
+
   const amountCents = data?.amountCents;
   
   // Validate input
@@ -380,11 +368,10 @@ export const addPoolContribution = functions.https.onCall(async (data, context) 
     
   } catch (error) {
     functions.logger.error('Pool contribution failed', { userId, amountCents, error });
-    
+
     if (error instanceof functions.https.HttpsError) {
       throw error;
     }
-    
     throw new functions.https.HttpsError(
       'internal',
       'Failed to process pool contribution'

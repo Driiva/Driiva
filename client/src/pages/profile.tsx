@@ -4,6 +4,7 @@ import { useLocation } from "wouter";
 import { PageWrapper } from '../components/PageWrapper';
 import { BottomNav } from '../components/BottomNav';
 import PolicyDownload from "@/components/PolicyDownload";
+import ExportDataButton from "@/components/ExportDataButton";
 import DeleteAccount from "@/components/DeleteAccount";
 import { ChevronDown, Bell } from "lucide-react";
 import { timing, easing } from "@/lib/animations";
@@ -121,7 +122,7 @@ function CoverageTypeSection({ currentScore }: { currentScore: number }) {
 
 export default function Profile() {
   const [, setLocation] = useLocation();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
   const [locationTracking, setLocationTracking] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(true);
@@ -348,8 +349,9 @@ export default function Profile() {
           
           <div className="space-y-3">
             <PolicyDownload userId={userData.id} userData={userData} />
+            <ExportDataButton userId={user?.id ?? ''} />
             <div className="border-t border-white/5 pt-3">
-              <DeleteAccount userId={userData.id} />
+              <DeleteAccount userId={user?.id ?? ''} />
             </div>
           </div>
         </div>

@@ -29,7 +29,14 @@ import {
   TripEvents,
 } from '@/lib/tripService';
 import { isFirebaseConfigured } from '@/lib/firebase';
+import { useOnlineStatusContext } from '@/contexts/OnlineStatusContext';
 import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { 
   Play, 
   Square, 
@@ -91,6 +98,7 @@ export default function TripRecording() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { isOnline } = useOnlineStatusContext();
 
   // State
   const [recordingState, setRecordingState] = useState<RecordingState>('idle');
@@ -443,7 +451,10 @@ export default function TripRecording() {
   };
 
   // Check if can start
-  const canStart = recordingState === 'idle' && !tracker.isPermissionDenied;
+  const canStart =
+    recordingState === 'idle' &&
+    !tracker.isPermissionDenied &&
+    isOnline;
   const isRecording = recordingState === 'recording' || recordingState === 'paused';
 
   return (
@@ -620,14 +631,29 @@ export default function TripRecording() {
         {/* Control Buttons */}
         <div className="space-y-4">
           {recordingState === 'idle' && (
-            <Button
-              onClick={handleStartTrip}
-              className="w-full h-14 bg-gradient-to-r from-[#8B4513] to-[#B87333] hover:from-[#A0522D] hover:to-[#CD853F] text-white font-semibold rounded-2xl"
-              disabled={!canStart}
-            >
-              <Play className="w-5 h-5 mr-2" />
-              Start Trip
-            </Button>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="block w-full">
+                    <Button
+                      onClick={handleStartTrip}
+                      className="w-full h-14 bg-gradient-to-r from-[#8B4513] to-[#B87333] hover:from-[#A0522D] hover:to-[#CD853F] text-white font-semibold rounded-2xl disabled:opacity-60"
+                      disabled={!canStart}
+                    >
+                      <Play className="w-5 h-5 mr-2" />
+                      Start Trip
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  {!isOnline
+                    ? 'Start trip requires an internet connection. Trip data will sync when you\'re back online.'
+                    : !tracker.isPermissionDenied
+                      ? 'Start recording a new trip'
+                      : 'Allow location access to start a trip'}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
 
           {recordingState === 'starting' && (

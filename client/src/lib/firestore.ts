@@ -809,6 +809,45 @@ export async function addPoolContribution(
   return result.data;
 }
 
+/** Payload returned by exportUserData callable (GDPR data portability) */
+export interface ExportUserDataPayload {
+  exportedAt: string;
+  userId: string;
+  user: Record<string, unknown> | null;
+  trips: Record<string, unknown>[];
+  tripPoints: Record<string, unknown>[];
+  tripSegments: Record<string, unknown>[];
+  policies: Record<string, unknown>[];
+  poolShares: Record<string, unknown>[];
+  driver_stats: Record<string, unknown> | null;
+}
+
+/**
+ * Export all user data as JSON (GDPR right to data portability).
+ * Calls Cloud Function exportUserData; caller must pass authenticated user's uid.
+ */
+export async function exportUserData(userId: string): Promise<ExportUserDataPayload> {
+  assertFirestore();
+  const { getFunctions, httpsCallable } = await import('firebase/functions');
+  const functions = getFunctions();
+  const fn = httpsCallable<{ userId: string }, ExportUserDataPayload>(functions, 'exportUserData');
+  const result = await fn({ userId });
+  return result.data;
+}
+
+/**
+ * Permanently delete user account and all associated data (GDPR right to erasure).
+ * Calls Cloud Function deleteUserAccount; then caller should sign out and redirect.
+ */
+export async function deleteUserAccount(userId: string): Promise<{ success: boolean; message: string }> {
+  assertFirestore();
+  const { getFunctions, httpsCallable } = await import('firebase/functions');
+  const functions = getFunctions();
+  const fn = httpsCallable<{ userId: string }, { success: boolean; message: string }>(functions, 'deleteUserAccount');
+  const result = await fn({ userId });
+  return result.data;
+}
+
 // ============================================================================
 // EXPORTS
 // ============================================================================

@@ -11,7 +11,7 @@
  * Encapsulates all Firestore subscription logic so components stay dumb.
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useContext } from 'react';
 import {
   doc,
   collection,
@@ -25,6 +25,7 @@ import {
   Unsubscribe,
 } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from '@/lib/firebase';
+import { OnlineStatusContext } from '@/contexts/OnlineStatusContext';
 import {
   COLLECTION_NAMES,
   CommunityPoolDocument,
@@ -278,6 +279,9 @@ const DEFAULT_LEADERBOARD: LeaderboardData = {
 // ============================================================================
 
 export function useCommunityData(userId: string | null): UseCommunityDataResult {
+  const onlineStatus = useContext(OnlineStatusContext);
+  const reportFirestoreError = onlineStatus?.reportFirestoreError ?? (() => {});
+
   // Pool state
   const [pool, setPool] = useState<CommunityPoolData | null>(null);
   const [poolLoading, setPoolLoading] = useState(true);
@@ -345,6 +349,7 @@ export function useCommunityData(userId: string | null): UseCommunityDataResult 
       },
       (err) => {
         console.error('[useCommunityData] Pool subscription error:', err);
+        reportFirestoreError();
         setPoolError(err);
         setPoolLoading(false);
       }
@@ -398,6 +403,7 @@ export function useCommunityData(userId: string | null): UseCommunityDataResult 
       },
       (err) => {
         console.error('[useCommunityData] User share subscription error:', err);
+        reportFirestoreError();
         setUserShareError(err);
         setUserShareLoading(false);
       }
@@ -471,6 +477,7 @@ export function useCommunityData(userId: string | null): UseCommunityDataResult 
       },
       (err) => {
         console.error('[useCommunityData] Leaderboard subscription error:', err);
+        reportFirestoreError();
         setLeaderboardError(err);
         setLeaderboardLoading(false);
       }

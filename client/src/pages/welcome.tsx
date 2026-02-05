@@ -75,7 +75,7 @@ export default function Welcome() {
           transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
           className="flex flex-col items-center w-full"
         >
-          <div className="w-full max-w-[400px] h-44 overflow-hidden flex items-center justify-center self-center shrink-0">
+          <div className="w-full max-w-[400px] h-24 overflow-hidden flex items-center justify-center self-center shrink-0">
             <img 
               src={driivaLogo} 
               alt="Driiva" 
@@ -84,11 +84,11 @@ export default function Welcome() {
             />
           </div>
           <div 
-            className="flex flex-col items-center justify-center mt-0 text-center box-content tracking-normal leading-5 w-full"
+            className="flex flex-col items-center justify-center -mt-1 text-center box-content tracking-normal leading-5 w-full"
             style={{ verticalAlign: 'middle' }}
           >
-            <p className="text-[var(--neutral-300)] text-xl font-medium mb-1">
-              AI-<span className="text-neutral-400 drop-shadow-[0_0_4px_rgba(203,213,225,0.4)]">powered</span>. Community-Driven.
+            <p className="text-[var(--neutral-300)] text-sm font-bold mb-1">
+              AI-<span className="text-neutral-400 drop-shadow-[0_0_4px_rgba(203,213,225,0.4)]">powered</span>. Community-driven.
             </p>
             <p className="text-white/80 text-lg font-semibold leading-5">Your driving, <em>rewarded.</em></p>
           </div>

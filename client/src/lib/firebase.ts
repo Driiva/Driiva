@@ -17,7 +17,7 @@
 
 import { initializeApp, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
-import { getFirestore, Firestore } from 'firebase/firestore';
+import { getFirestore, Firestore, enableIndexedDbPersistence } from 'firebase/firestore';
 
 // Runtime env validation - required vars with their env key names
 const requiredEnvVars = {
@@ -78,6 +78,16 @@ if (isFirebaseConfigured) {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     db = getFirestore(app);
+    // Offline persistence: queue writes when offline and sync when back online
+    enableIndexedDbPersistence(db).catch((err) => {
+      if (err.code === 'failed-precondition') {
+        console.warn('Firestore persistence: multiple tabs open, using cache in this tab only.');
+      } else if (err.code === 'unimplemented') {
+        console.warn('Firestore persistence not supported in this browser.');
+      } else {
+        console.warn('Firestore persistence error:', err);
+      }
+    });
     console.log(`✓ Firebase initialized with projectId=${requiredEnvVars.projectId}`);
   } catch (error) {
     console.error('❌ Firebase initialization failed:', error);
