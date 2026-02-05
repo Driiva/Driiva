@@ -1,0 +1,102 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "trips",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "startedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "trips",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "startedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "trips",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "anomalies.flaggedForReview", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "policies",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "effectiveDate", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "policies",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "expirationDate", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "poolShares",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "poolPeriod", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "poolShares",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "poolPeriod", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "poolShares",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "poolPeriod", "order": "ASCENDING" },
+        { "fieldPath": "weightedScore", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "drivingProfile.totalTrips", "order": "DESCENDING" },
+        { "fieldPath": "drivingProfile.currentScore", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "drivingProfile.riskTier", "order": "ASCENDING" },
+        { "fieldPath": "drivingProfile.currentScore", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": [
+    {
+      "collectionGroup": "trips",
+      "fieldPath": "userId",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" }
+      ]
+    },
+    {
+      "collectionGroup": "poolShares",
+      "fieldPath": "userId",
+      "indexes": [
+        { "order": "ASCENDING", "queryScope": "COLLECTION" }
+      ]
+    }
+  ]
+}

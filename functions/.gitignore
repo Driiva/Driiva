@@ -1,0 +1,23 @@
+# Compiled JavaScript
+lib/
+
+# Node modules
+node_modules/
+
+# Local env files
+*.local
+.env
+.env.*
+
+# Debug logs
+firebase-debug.log
+firebase-debug.*.log
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db

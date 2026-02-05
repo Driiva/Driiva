@@ -1,0 +1,232 @@
+/**
+ * HELPER UTILITIES
+ * ================
+ * Shared helper functions for Cloud Functions.
+ */
+
+import * as admin from 'firebase-admin';
+import { TripLocation } from '../types';
+
+/**
+ * Get current pool period string (e.g., "2026-02")
+ */
+export function getCurrentPoolPeriod(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+/**
+ * Get previous pool period string
+ */
+export function getPreviousPoolPeriod(): string {
+  const now = new Date();
+  const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  return `${prevMonth.getFullYear()}-${String(prevMonth.getMonth() + 1).padStart(2, '0')}`;
+}
+
+/**
+ * Get share ID for a user and period
+ */
+export function getShareId(userId: string, period: string): string {
+  return `${period}_${userId}`;
+}
+
+/**
+ * Get ISO week number
+ */
+export function getWeekNumber(date: Date): number {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+}
+
+/**
+ * Get period string for leaderboard type
+ */
+export function getCurrentPeriodForType(periodType: string): string {
+  const now = new Date();
+  
+  switch (periodType) {
+    case 'weekly':
+      const weekNum = getWeekNumber(now);
+      return `${now.getFullYear()}-W${String(weekNum).padStart(2, '0')}`;
+    case 'monthly':
+      return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    case 'all_time':
+      return 'all_time';
+    default:
+      return getCurrentPoolPeriod();
+  }
+}
+
+/**
+ * Calculate weighted average
+ */
+export function weightedAverage(oldValue: number, newValue: number, oldWeight: number): number {
+  if (oldWeight === 0) return newValue;
+  const result = (oldValue * oldWeight + newValue) / (oldWeight + 1);
+  return Math.round(result * 100) / 100;
+}
+
+/**
+ * Build route summary string
+ */
+export function buildRouteSummary(
+  start: TripLocation,
+  end: TripLocation
+): string {
+  const startLabel = start.placeType 
+    ? start.placeType.charAt(0).toUpperCase() + start.placeType.slice(1)
+    : truncateAddress(start.address);
+  
+  const endLabel = end.placeType
+    ? end.placeType.charAt(0).toUpperCase() + end.placeType.slice(1)
+    : truncateAddress(end.address);
+  
+  return `${startLabel} → ${endLabel}`;
+}
+
+/**
+ * Truncate address for display
+ */
+export function truncateAddress(address: string | null): string {
+  if (!address) return 'Unknown';
+  
+  const parts = address.split(',');
+  const firstPart = parts[0].trim();
+  
+  return firstPart.length > 20 ? firstPart.substring(0, 17) + '...' : firstPart;
+}
+
+/**
+ * Calculate distance between two coordinates using Haversine formula
+ */
+export function calculateDistance(
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
+): number {
+  const R = 6371e3; // Earth's radius in meters
+  const φ1 = lat1 * Math.PI / 180;
+  const φ2 = lat2 * Math.PI / 180;
+  const Δφ = (lat2 - lat1) * Math.PI / 180;
+  const Δλ = (lng2 - lng1) * Math.PI / 180;
+
+  const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+            Math.cos(φ1) * Math.cos(φ2) *
+            Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c; // Distance in meters
+}
+
+/**
+ * Check if timestamp is during night hours (10 PM - 6 AM)
+ */
+export function isNightTime(timestamp: admin.firestore.Timestamp): boolean {
+  const date = timestamp.toDate();
+  const hour = date.getHours();
+  return hour >= 22 || hour < 6;
+}
+
+/**
+ * Check if timestamp is during rush hour (7-9 AM or 4-7 PM on weekdays)
+ */
+export function isRushHour(timestamp: admin.firestore.Timestamp): boolean {
+  const date = timestamp.toDate();
+  const day = date.getDay();
+  const hour = date.getHours();
+  
+  // Weekdays only
+  if (day === 0 || day === 6) return false;
+  
+  // Morning rush: 7-9 AM
+  if (hour >= 7 && hour < 9) return true;
+  
+  // Evening rush: 4-7 PM
+  if (hour >= 16 && hour < 19) return true;
+  
+  return false;
+}
+
+/**
+ * Detect anomalies in trip data
+ */
+export function detectAnomalies(trip: {
+  distanceMeters: number;
+  durationSeconds: number;
+  startLocation: TripLocation;
+  endLocation: TripLocation;
+}): {
+  hasGpsJumps: boolean;
+  hasImpossibleSpeed: boolean;
+  isDuplicate: boolean;
+  flaggedForReview: boolean;
+} {
+  const anomalies = {
+    hasGpsJumps: false,
+    hasImpossibleSpeed: false,
+    isDuplicate: false,
+    flaggedForReview: false,
+  };
+  
+  // Check for impossible speed (> 200 mph average)
+  if (trip.durationSeconds > 0) {
+    const avgSpeedMph = (trip.distanceMeters / 1609.34) / (trip.durationSeconds / 3600);
+    if (avgSpeedMph > 200) {
+      anomalies.hasImpossibleSpeed = true;
+      anomalies.flaggedForReview = true;
+    }
+  }
+  
+  // Check for GPS jumps (straight-line distance much less than route distance)
+  const straightLineDistance = calculateDistance(
+    trip.startLocation.lat,
+    trip.startLocation.lng,
+    trip.endLocation.lat,
+    trip.endLocation.lng
+  );
+  
+  // If route is more than 5x the straight-line distance, might have GPS issues
+  if (trip.distanceMeters > straightLineDistance * 5 && straightLineDistance > 100) {
+    anomalies.hasGpsJumps = true;
+    // Only flag for review if the discrepancy is extreme
+    if (trip.distanceMeters > straightLineDistance * 10) {
+      anomalies.flaggedForReview = true;
+    }
+  }
+  
+  return anomalies;
+}
+
+/**
+ * Calculate risk tier based on score
+ */
+export function calculateRiskTier(score: number): 'low' | 'medium' | 'high' {
+  if (score >= 80) return 'low';
+  if (score >= 60) return 'medium';
+  return 'high';
+}
+
+/**
+ * Calculate projected refund based on score and contribution
+ */
+export function calculateProjectedRefund(
+  score: number,
+  contributionCents: number,
+  safetyFactor: number,
+  refundRate: number
+): number {
+  // Base refund rate varies by score (5-15%)
+  const scoreMultiplier = Math.min(1, Math.max(0, (score - 50) / 50)); // 0 at 50, 1 at 100
+  const adjustedRefundRate = 0.05 + (refundRate - 0.05) * scoreMultiplier;
+  
+  // Apply safety factor
+  const baseRefund = contributionCents * adjustedRefundRate;
+  const adjustedRefund = baseRefund * safetyFactor;
+  
+  return Math.round(adjustedRefund);
+}
