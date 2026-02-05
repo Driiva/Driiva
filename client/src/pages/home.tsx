@@ -27,6 +27,14 @@ export default function Home() {
   // Demo data
   const drivingScore = 82;
   const policyNumber = "DRV-2025-000001";
+  const premiumAmount = 1840;
+  
+  // Calculate refund progress based on driving score
+  // Formula: combines personal score (70%) with pool safety factor (30%)
+  const poolSafetyFactor = 0.85;
+  const refundProgress = Math.min(100, Math.round(
+    (drivingScore * 0.7) + (poolSafetyFactor * 100 * 0.3)
+  ));
 
   // Only 2 trips as specified
   const trips = [
@@ -286,8 +294,15 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="bg-purple-500/20 border border-purple-500/20 rounded-lg px-3 py-2">
-            <p className="text-sm text-teal-400">📈 Pool performing +5% above target</p>
+          <div className="flex justify-center">
+            <div className="w-32 h-32 rounded-full bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer" />
+              <div className="text-center z-10">
+                <p className="text-xs text-emerald-400 font-medium mb-1">Pool Status</p>
+                <p className="text-sm font-bold text-white">+5%</p>
+                <p className="text-xs text-emerald-400">above target</p>
+              </div>
+            </div>
           </div>
         </motion.div>
 
@@ -304,11 +319,11 @@ export default function Home() {
               <h2 className="text-lg font-semibold text-white">Achievements & Goals</h2>
             </div>
             <button 
-              onClick={() => setLocation('/dashboard')}
-              className="flex items-center gap-1.5 bg-orange-500 hover:bg-orange-600 px-3 py-2 rounded-lg transition-colors"
+              onClick={() => setLocation('/achievements')}
+              className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-500/20 to-amber-600/20 border border-amber-500/30 hover:from-amber-500/30 hover:to-amber-600/30 flex items-center justify-center transition-all"
+              aria-label="View Achievements"
             >
-              <Gift className="w-4 h-4 text-white" />
-              <span className="text-white text-sm font-medium">View Achievements</span>
+              <Trophy className="w-5 h-5 text-amber-400" />
             </button>
           </div>
         </motion.div>
@@ -325,12 +340,16 @@ export default function Home() {
               <Target className="w-5 h-5 text-blue-400" />
               <h2 className="text-lg font-semibold text-white">Refund Goals</h2>
             </div>
-            <span className="text-sm text-gray-400">Current: 72/100</span>
+            <span className="text-sm text-gray-400">Current: {refundProgress}/100</span>
           </div>
           
           <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full" style={{ width: '72%' }} />
+            <div className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-500" style={{ width: `${refundProgress}%` }} />
           </div>
+          
+          <p className="text-xs text-white/50 mt-2">
+            Based on driving score ({drivingScore}) and pool performance ({Math.round(poolSafetyFactor * 100)}%)
+          </p>
         </motion.div>
 
       </div>

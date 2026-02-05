@@ -942,7 +942,7 @@ select:focus {
 
 .hero-cta-primary {
   width: 100%;
-  max-width: 320px;
+  max-width: 280px;
   height: 48px;
   display: flex;
   align-items: center;
@@ -982,7 +982,7 @@ select:focus {
 
 .hero-cta-tertiary {
   width: 100%;
-  max-width: 320px;
+  max-width: 280px;
   height: 46px;
   display: flex;
   align-items: center;
