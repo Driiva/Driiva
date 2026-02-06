@@ -109,6 +109,7 @@ export default function SignIn() {
         id: user.uid,
         email: user.email || email,
         name: user.displayName || user.email?.split('@')[0] || 'User',
+        onboardingComplete,
       });
 
       toast({
@@ -116,9 +117,10 @@ export default function SignIn() {
         description: "Successfully signed in",
       });
 
-      // Navigate to dashboard after successful signin
-      console.log('[SignIn] Redirecting to /dashboard');
-      setLocation("/dashboard");
+      // Navigate based on onboarding status
+      const destination = onboardingComplete ? "/dashboard" : "/quick-onboarding";
+      console.log('[SignIn] Redirecting to', destination);
+      setLocation(destination);
 
     } catch (error: any) {
       console.error('[SignIn] Authentication failed:', error);

@@ -21,6 +21,8 @@
  *   - cancelTrip: Cancel an in-progress trip
  *   - classifyTrip: Classify trip stops/segments (Stop-Go-Classifier)
  *   - batchClassifyTrips: Admin batch classification
+ *   - analyzeTripAI: On-demand AI trip analysis (Claude Sonnet 4)
+ *   - getAIInsights: Retrieve AI insights for a trip
  */
 
 import * as admin from 'firebase-admin';
@@ -38,6 +40,7 @@ export const db = admin.firestore();
 export { onTripCreate, onTripStatusChange } from './triggers/trips';
 export { onPolicyWrite } from './triggers/policies';
 export { onPoolShareWrite } from './triggers/pool';
+export { onUserCreate } from './triggers/users';
 
 // ============================================================================
 // SCHEDULED FUNCTIONS
@@ -61,3 +64,6 @@ export { classifyTrip, batchClassifyTrips } from './http/classifier';
 
 // GDPR: data export and account deletion
 export { exportUserData, deleteUserAccount } from './http/gdpr';
+
+// AI Trip Analysis (Claude Sonnet 4 integration)
+export { analyzeTripAI, getAIInsights } from './http/aiAnalysis';

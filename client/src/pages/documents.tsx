@@ -1,6 +1,6 @@
 
 import DashboardHeader from "@/components/DashboardHeader";
-import BottomNavigation from "@/components/BottomNavigation";
+import { BottomNav as BottomNavigation } from "@/components/BottomNav";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileText, Download, Eye, Calendar } from "lucide-react";
 

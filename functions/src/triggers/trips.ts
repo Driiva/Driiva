@@ -15,6 +15,7 @@ import {
   PoolShareDocument,
   RecentTripSummary,
   ScoreBreakdown,
+  DrivingProfileData,
 } from '../types';
 import {
   detectAnomalies,
@@ -28,6 +29,7 @@ import {
   computeTripMetrics,
 } from '../utils/helpers';
 import { classifyCompletedTrip } from '../http/classifier';
+import { analyzeTrip } from '../ai/tripAnalysis';
 
 const db = admin.firestore();
 
@@ -42,6 +44,30 @@ function classifyCompletedTripAsync(tripId: string, trip: TripDocument): void {
   classifyCompletedTrip(tripId, trip)
     .catch(error => {
       functions.logger.warn(`Non-blocking classification error for trip ${tripId}:`, error);
+    });
+}
+
+/**
+ * Async wrapper for AI trip analysis
+ * 
+ * Calls Claude Sonnet 4 to generate advanced driving insights.
+ * Non-blocking: the driver sees the algorithmic score immediately,
+ * and AI insights are layered on asynchronously (typically < 5 s).
+ */
+function analyzeCompletedTripAsync(
+  tripId: string,
+  trip: TripDocument,
+  points: TripPoint[],
+  profile: DrivingProfileData,
+): void {
+  analyzeTrip(tripId, trip, points, profile)
+    .then(result => {
+      if (result) {
+        functions.logger.info(`[AI] Trip ${tripId} analysis completed`);
+      }
+    })
+    .catch(error => {
+      functions.logger.warn(`Non-blocking AI analysis error for trip ${tripId}:`, error);
     });
 }
 
@@ -159,6 +185,21 @@ export const onTripStatusChange = functions.firestore
       
       // Trigger intelligent trip segmentation (async, non-blocking)
       classifyCompletedTripAsync(tripId, after);
+      
+      // Trigger AI analysis (async, non-blocking)
+      try {
+        const userDoc = await db.collection(COLLECTION_NAMES.USERS).doc(after.userId).get();
+        if (userDoc.exists) {
+          const userData = userDoc.data() as UserDocument;
+          // Read GPS points for AI analysis
+          const pointsRef = db.collection(COLLECTION_NAMES.TRIP_POINTS).doc(tripId);
+          const pointsSnap = await pointsRef.get();
+          const pointsData = pointsSnap.exists ? (pointsSnap.data()?.points || []) as TripPoint[] : [];
+          analyzeCompletedTripAsync(tripId, after, pointsData, userData.drivingProfile);
+        }
+      } catch (aiSetupErr) {
+        functions.logger.warn(`[AI] Failed to setup AI analysis for trip ${tripId}:`, aiSetupErr);
+      }
     }
   });
 
@@ -253,6 +294,18 @@ async function finalizeTripFromPoints(
       // 8. Trigger intelligent trip segmentation (async, non-blocking)
       // This calls the Python Stop-Go-Classifier to detect stops and trip segments
       classifyCompletedTripAsync(tripId, updatedTrip);
+      
+      // 9. Trigger AI analysis with Claude (async, non-blocking)
+      // Fetches the user's latest profile for historical comparison
+      try {
+        const userDoc = await db.collection(COLLECTION_NAMES.USERS).doc(updatedTrip.userId).get();
+        if (userDoc.exists) {
+          const userData = userDoc.data() as UserDocument;
+          analyzeCompletedTripAsync(tripId, updatedTrip, points, userData.drivingProfile);
+        }
+      } catch (aiSetupErr) {
+        functions.logger.warn(`[AI] Failed to fetch user profile for AI analysis of trip ${tripId}:`, aiSetupErr);
+      }
     }
     
   } catch (error) {

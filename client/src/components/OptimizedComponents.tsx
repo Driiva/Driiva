@@ -5,7 +5,7 @@ import MetricsGrid from '@/components/MetricsGrid';
 import CommunityPool from '@/components/CommunityPool';
 import RefundSimulator from '@/components/RefundSimulator';
 import Gamification from '@/components/Gamification';
-import BottomNavigation from '@/components/BottomNavigation';
+import { BottomNav as BottomNavigation } from '@/components/BottomNav';
 import PolicyStatusWidget from '@/components/PolicyStatusWidget';
 
 // Memoized components for performance optimization

@@ -133,10 +133,8 @@ export default function Signup() {
         description: "Let's get you set up.",
       });
 
-      // Navigate to quick onboarding after successful signup
-      setTimeout(() => {
-        setLocation("/quick-onboarding");
-      }, 500);
+      // Navigate to quick onboarding immediately after successful signup
+      setLocation("/quick-onboarding");
 
     } catch (err: any) {
       console.error("Signup error:", err);

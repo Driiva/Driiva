@@ -173,18 +173,27 @@ export default function Home() {
             <div className="flex items-center gap-2">
               <CreditCard className="w-4 h-4 text-gray-400" />
               <span className="text-gray-400 text-sm">
-                {showMonthly ? 'Monthly' : 'Annual'} Premium: {' '}
+                My Premium: {' '}
                 <span className="text-white font-semibold">
                   £{showMonthly ? Math.round(premiumAmount / 12).toLocaleString() : premiumAmount.toLocaleString()}
                 </span>
                 {showMonthly && <span className="text-gray-500 text-xs">/mo</span>}
               </span>
+              {/* Small toggle switch for Monthly/Annual */}
               <button
                 onClick={() => setShowMonthly(!showMonthly)}
-                className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-medium border border-white/15 text-white/50 hover:text-white/80 hover:border-white/30 transition-colors"
+                className="ml-1 relative inline-flex h-5 w-10 items-center rounded-full transition-colors duration-200 focus:outline-none"
+                style={{ background: showMonthly ? 'rgba(59, 130, 246, 0.4)' : 'rgba(255, 255, 255, 0.15)' }}
+                role="switch"
+                aria-checked={showMonthly}
+                aria-label="Toggle monthly or annual premium view"
               >
-                {showMonthly ? 'Annual' : 'Monthly'}
+                <span
+                  className="inline-block h-3.5 w-3.5 rounded-full bg-white shadow-sm transition-transform duration-200"
+                  style={{ transform: showMonthly ? 'translateX(20px)' : 'translateX(3px)' }}
+                />
               </button>
+              <span className="text-[10px] text-white/40 font-medium">{showMonthly ? 'Monthly' : 'Annual'}</span>
             </div>
             <button className="text-blue-400 hover:text-blue-300 text-sm transition-colors">
               View Details
