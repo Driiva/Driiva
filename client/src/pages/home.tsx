@@ -18,6 +18,7 @@ import {
 import { PageWrapper } from '../components/PageWrapper';
 import { BottomNav } from '../components/BottomNav';
 import { useAuth } from '../contexts/AuthContext';
+import driivaLogo from '@/assets/driiva-logo-CLEAR-FINAL.png';
 
 export default function Home() {
   const [, setLocation] = useLocation();
@@ -28,6 +29,7 @@ export default function Home() {
   const drivingScore = 82;
   const policyNumber = "DRV-2025-000001";
   const premiumAmount = 1840;
+  const [showMonthly, setShowMonthly] = useState(false);
   
   // Calculate refund progress based on driving score
   // Formula: combines personal score (70%) with pool safety factor (30%)
@@ -71,8 +73,12 @@ export default function Home() {
         >
           {/* Left - Logo and greeting */}
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-purple-500/40 to-purple-700/40 border border-white/10 flex items-center justify-center">
-              <span className="text-white font-bold text-lg">Driiva</span>
+            <div className="w-11 h-11 rounded-xl overflow-hidden flex items-center justify-center shrink-0">
+              <img 
+                src={driivaLogo} 
+                alt="Driiva" 
+                className="w-full h-full object-cover"
+              />
             </div>
             <div>
               <p className="text-sm text-gray-400">{getGreeting()},</p>
@@ -149,7 +155,7 @@ export default function Home() {
             <span className="bg-emerald-500/20 text-emerald-400 px-2.5 py-1 rounded-full text-xs font-medium">Active</span>
           </div>
           
-          <p className="text-white font-bold text-lg mb-1">Comprehensive Telematics</p>
+          <p className="text-white font-bold text-lg mb-1">Comp | Driiva Plus+</p>
           <p className="text-gray-400 text-sm mb-4">Policy No: {policyNumber}</p>
           
           <div className="flex items-center gap-6 mb-4 text-sm">
@@ -166,7 +172,19 @@ export default function Home() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <CreditCard className="w-4 h-4 text-gray-400" />
-              <span className="text-gray-400 text-sm">Annual Premium: <span className="text-white font-semibold">£1,840</span></span>
+              <span className="text-gray-400 text-sm">
+                {showMonthly ? 'Monthly' : 'Annual'} Premium: {' '}
+                <span className="text-white font-semibold">
+                  £{showMonthly ? Math.round(premiumAmount / 12).toLocaleString() : premiumAmount.toLocaleString()}
+                </span>
+                {showMonthly && <span className="text-gray-500 text-xs">/mo</span>}
+              </span>
+              <button
+                onClick={() => setShowMonthly(!showMonthly)}
+                className="ml-1 px-2 py-0.5 rounded-full text-[10px] font-medium border border-white/15 text-white/50 hover:text-white/80 hover:border-white/30 transition-colors"
+              >
+                {showMonthly ? 'Annual' : 'Monthly'}
+              </button>
             </div>
             <button className="text-blue-400 hover:text-blue-300 text-sm transition-colors">
               View Details
@@ -295,7 +313,7 @@ export default function Home() {
           </div>
 
           <div className="flex justify-center">
-            <div className="w-32 h-32 rounded-full bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center relative overflow-hidden">
+            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer" />
               <div className="text-center z-10">
                 <p className="text-xs text-emerald-400 font-medium mb-1">Pool Status</p>

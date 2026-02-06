@@ -1,47 +1,51 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useLocation } from 'wouter';
-import { ArrowLeft, Bell, Shield, HelpCircle, LogOut, ChevronRight, Moon, Globe } from 'lucide-react';
+import { ArrowLeft, Bell, Shield, HelpCircle, ChevronRight, Moon, Globe } from 'lucide-react';
 import { PageWrapper } from '../components/PageWrapper';
-import { BottomNav } from '../components/BottomNav';
-import { useAuth } from '@/contexts/AuthContext';
 
 export default function Settings() {
   const [, setLocation] = useLocation();
-  const { logout } = useAuth();
+  const [notifications, setNotifications] = useState(() => {
+    return localStorage.getItem('driiva-notifications') !== 'false';
+  });
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem('driiva-dark-mode') === 'true';
+  });
 
-  const handleLogout = () => {
-    logout();
-    setLocation('/');
-  };
+  useEffect(() => {
+    localStorage.setItem('driiva-notifications', String(notifications));
+  }, [notifications]);
 
-  const settingsGroups = [
-    {
-      title: 'Preferences',
-      items: [
-        { icon: Bell, label: 'Notifications', action: () => {} },
-        { icon: Moon, label: 'Dark Mode', action: () => {}, toggle: true },
-        { icon: Globe, label: 'Language', value: 'English', action: () => {} },
-      ]
-    },
-    {
-      title: 'Account',
-      items: [
-        { icon: Shield, label: 'Privacy & Security', action: () => {} },
-        { icon: HelpCircle, label: 'Help & Support', action: () => setLocation('/support') },
-      ]
+  useEffect(() => {
+    localStorage.setItem('driiva-dark-mode', String(darkMode));
+    if (darkMode) {
+      document.documentElement.style.filter = 'brightness(0.88) contrast(1.05)';
+    } else {
+      document.documentElement.style.filter = '';
     }
-  ];
+    return () => {
+      // Don't remove on unmount — persist across pages
+    };
+  }, [darkMode]);
+
+  // Apply dark mode on mount if previously enabled
+  useEffect(() => {
+    if (localStorage.getItem('driiva-dark-mode') === 'true') {
+      document.documentElement.style.filter = 'brightness(0.88) contrast(1.05)';
+    }
+  }, []);
 
   return (
     <PageWrapper>
-      <div className="pb-24 text-white">
+      <div className="pb-12 text-white">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="flex items-center gap-3 mb-6"
         >
           <button
-            onClick={() => setLocation('/dashboard')}
+            onClick={() => window.history.back()}
             className="p-2 rounded-full hover:bg-white/10 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -50,60 +54,107 @@ export default function Settings() {
         </motion.div>
 
         <div className="space-y-6">
-          {settingsGroups.map((group, groupIndex) => (
-            <motion.div
-              key={group.title}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: groupIndex * 0.1 }}
-            >
-              <h2 className="text-sm font-medium text-white/60 mb-3 px-1">{group.title}</h2>
-              <div className="dashboard-glass-card divide-y divide-white/10">
-                {group.items.map((item, itemIndex) => (
-                  <button
-                    key={item.label}
-                    onClick={item.action}
-                    className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors first:rounded-t-xl last:rounded-b-xl"
-                  >
-                    <div className="flex items-center gap-3">
-                      <item.icon className="w-5 h-5 text-white/60" />
-                      <span className="text-white">{item.label}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {item.value && (
-                        <span className="text-white/40 text-sm">{item.value}</span>
-                      )}
-                      {item.toggle ? (
-                        <div className="w-10 h-6 bg-white/20 rounded-full relative">
-                          <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full" />
-                        </div>
-                      ) : (
-                        <ChevronRight className="w-4 h-4 text-white/40" />
-                      )}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </motion.div>
-          ))}
-
+          {/* Preferences */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
+            transition={{ delay: 0 }}
           >
-            <button
-              onClick={handleLogout}
-              className="w-full dashboard-glass-card flex items-center justify-center gap-2 p-4 text-red-400 hover:bg-red-500/10 transition-colors"
-            >
-              <LogOut className="w-5 h-5" />
-              <span className="font-medium">Logout</span>
-            </button>
+            <h2 className="text-sm font-medium text-white/60 mb-3 px-1">Preferences</h2>
+            <div className="dashboard-glass-card divide-y divide-white/10">
+              {/* Notifications */}
+              <button
+                onClick={() => setNotifications(!notifications)}
+                className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors rounded-t-xl"
+              >
+                <div className="flex items-center gap-3">
+                  <Bell className="w-5 h-5 text-white/60" />
+                  <span className="text-white">Notifications</span>
+                </div>
+                <div
+                  className={`w-10 h-6 rounded-full relative transition-colors ${
+                    notifications ? 'bg-emerald-500' : 'bg-white/20'
+                  }`}
+                >
+                  <div
+                    className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                      notifications ? 'translate-x-5' : 'translate-x-1'
+                    }`}
+                  />
+                </div>
+              </button>
+
+              {/* Dark Mode */}
+              <button
+                onClick={() => setDarkMode(!darkMode)}
+                className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <Moon className="w-5 h-5 text-white/60" />
+                  <span className="text-white">Dark Mode</span>
+                </div>
+                <div
+                  className={`w-10 h-6 rounded-full relative transition-colors ${
+                    darkMode ? 'bg-emerald-500' : 'bg-white/20'
+                  }`}
+                >
+                  <div
+                    className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                      darkMode ? 'translate-x-5' : 'translate-x-1'
+                    }`}
+                  />
+                </div>
+              </button>
+
+              {/* Language */}
+              <button
+                onClick={() => {}}
+                className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors rounded-b-xl"
+              >
+                <div className="flex items-center gap-3">
+                  <Globe className="w-5 h-5 text-white/60" />
+                  <span className="text-white">Language</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-white/40 text-sm">English</span>
+                  <ChevronRight className="w-4 h-4 text-white/40" />
+                </div>
+              </button>
+            </div>
+          </motion.div>
+
+          {/* Account */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <h2 className="text-sm font-medium text-white/60 mb-3 px-1">Account</h2>
+            <div className="dashboard-glass-card divide-y divide-white/10">
+              <button
+                onClick={() => setLocation('/privacy')}
+                className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors rounded-t-xl"
+              >
+                <div className="flex items-center gap-3">
+                  <Shield className="w-5 h-5 text-white/60" />
+                  <span className="text-white">Privacy & Security</span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-white/40" />
+              </button>
+              <button
+                onClick={() => setLocation('/support')}
+                className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors rounded-b-xl"
+              >
+                <div className="flex items-center gap-3">
+                  <HelpCircle className="w-5 h-5 text-white/60" />
+                  <span className="text-white">Help & Support</span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-white/40" />
+              </button>
+            </div>
           </motion.div>
         </div>
       </div>
-
-      <BottomNav />
     </PageWrapper>
   );
 }

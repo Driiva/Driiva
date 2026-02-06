@@ -1,8 +1,7 @@
 import { PageWrapper } from '../components/PageWrapper';
-import { BottomNav } from '../components/BottomNav';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MessageCircle, Phone, Mail, HelpCircle } from "lucide-react";
+import { ArrowLeft, MessageCircle, Phone, Mail, HelpCircle } from "lucide-react";
 
 export default function Support() {
   const supportOptions = [
@@ -46,8 +45,14 @@ export default function Support() {
 
   return (
     <PageWrapper>
-      <div className="pb-24 text-white">
-        <div className="flex items-center justify-between mb-6">
+      <div className="pb-12 text-white">
+        <div className="flex items-center gap-3 mb-6">
+          <button
+            onClick={() => window.history.back()}
+            className="p-2 rounded-full hover:bg-white/10 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
           <h1 className="text-2xl font-bold">Support</h1>
         </div>
 
@@ -103,7 +108,6 @@ export default function Support() {
         </div>
       </div>
 
-      <BottomNav />
     </PageWrapper>
   );
 }

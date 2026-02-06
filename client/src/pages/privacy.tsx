@@ -67,7 +67,7 @@ export default function Privacy() {
             <Shield className="w-6 h-6 text-amber-400" />
           </div>
           <button
-            onClick={() => setLocation("/")}
+            onClick={() => window.history.back()}
             className="flex items-center gap-2 text-teal-400 hover:text-teal-300 transition-colors text-sm"
           >
             <ArrowLeft className="w-4 h-4" />
