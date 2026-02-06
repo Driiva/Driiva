@@ -26,7 +26,7 @@
  */
 
 import { initializeApp, FirebaseApp } from 'firebase/app';
-import { getAuth, Auth } from 'firebase/auth';
+import { getAuth, Auth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore, Firestore, enableIndexedDbPersistence } from 'firebase/firestore';
 
 // ---------------------------------------------------------------------------
@@ -160,5 +160,8 @@ if (isFirebaseConfigured) {
 // 6. Exports
 // ---------------------------------------------------------------------------
 
-export { auth, db };
+// Google Auth provider — pre-configured, ready for signInWithPopup
+const googleProvider = isFirebaseConfigured ? new GoogleAuthProvider() : null;
+
+export { auth, db, googleProvider };
 export default app;
