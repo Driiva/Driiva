@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
 import { BarChart3, Wallet, Trophy } from "lucide-react";
 import driivaLogo from '@/assets/driiva-logo-CLEAR-FINAL.png';
-import carouselDotIcon from '@/assets/carousel-dot-icon.png';
 
 const features = [
   { icon: BarChart3, title: "Track Your Driving", description: "Real-time feedback on every trip" },
@@ -87,10 +86,10 @@ export default function Welcome() {
             className="flex flex-col items-center justify-center -mt-1 text-center box-content tracking-normal leading-5 w-full"
             style={{ verticalAlign: 'middle' }}
           >
-            <p className="text-[var(--neutral-300)] text-sm font-bold mb-1">
-              AI-<span className="text-neutral-400 drop-shadow-[0_0_4px_rgba(203,213,225,0.4)]">powered</span>. Community-driven.
+            <p className="text-white text-base font-semibold mb-1" style={{ fontFamily: 'Inter, sans-serif' }}>
+              AI-<span className="text-white/60">powered</span>. Community-driven.
             </p>
-            <p className="text-white/80 text-lg font-semibold leading-5">Your driving, <em>rewarded.</em></p>
+            <p className="text-white text-sm font-medium leading-5" style={{ fontFamily: 'Inter, sans-serif' }}>Your driving, <em>rewarded.</em></p>
           </div>
         </motion.div>
 
@@ -125,30 +124,36 @@ export default function Welcome() {
             </AnimatePresence>
           </div>
 
-          <div className="flex items-center justify-center gap-2 mt-4">
+          <div className="flex items-center justify-center gap-1 mt-4">
             <button
               onClick={handlePrev}
-              className="text-white/50 hover:text-white text-lg transition-colors"
+              className="text-white/30 hover:text-white/60 transition-colors"
               aria-label="Previous slide"
             >
-              &lt;
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
             </button>
             
-            <div className="relative w-7 h-7 flex items-center justify-center shrink-0">
-              <img
-                src={carouselDotIcon}
-                alt=""
-                className="w-full h-full object-contain select-none mix-blend-screen"
-                style={{ border: 'none' }}
-              />
+            <div className="relative w-4 h-4 flex items-center justify-center shrink-0">
+              <svg
+                viewBox="0 0 100 120"
+                fill="white"
+                className="w-full h-full select-none"
+                aria-hidden="true"
+              >
+                <polygon points="25,120 45,0 70,0 58,52 68,52 80,0 100,0 75,120 55,120 65,62 55,62 45,120" />
+              </svg>
             </div>
             
             <button
               onClick={handleNext}
-              className="text-white/50 hover:text-white text-lg transition-colors"
+              className="text-white/30 hover:text-white/60 transition-colors"
               aria-label="Next slide"
             >
-              &gt;
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+                <path d="M9 18l6-6-6-6" />
+              </svg>
             </button>
           </div>
         </motion.div>
@@ -187,9 +192,9 @@ export default function Welcome() {
 
       {/* Fixed Footer Navigation */}
       <footer className="fixed bottom-0 left-0 right-0 z-50 pb-safe border-0 border-none shadow-none outline-none bg-transparent">
-        <div className="flex items-center justify-center gap-6 py-3">
+        <div className="relative flex items-center justify-center gap-6 py-3 px-4">
           <button 
-            onClick={() => setLocation('/policy')} 
+            onClick={() => setLocation('/privacy')} 
             className="text-white/60 hover:text-white text-sm transition"
           >
             Policy
@@ -208,6 +213,12 @@ export default function Welcome() {
           >
             Settings
           </button>
+          <span 
+            className="absolute right-4 text-white/40 text-xs italic"
+            style={{ fontFamily: 'Inter, sans-serif' }}
+          >
+            driiva © 2026
+          </span>
         </div>
       </footer>
     </div>

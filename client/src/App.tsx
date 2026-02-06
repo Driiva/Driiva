@@ -107,23 +107,17 @@ function AppContent() {
               <Route path="/profile">
                 <ProtectedRoute><Profile /></ProtectedRoute>
               </Route>
-              <Route path="/support">
-                <ProtectedRoute><Support /></ProtectedRoute>
-              </Route>
+              <Route path="/support" component={Support} />
               <Route path="/trip-recording">
                 <ProtectedRoute><TripRecording /></ProtectedRoute>
               </Route>
               <Route path="/leaderboard">
                 <ProtectedRoute><LeaderboardPage /></ProtectedRoute>
               </Route>
-              <Route path="/policy">
-                <ProtectedRoute><PolicyPage /></ProtectedRoute>
-              </Route>
+              <Route path="/policy" component={PolicyPage} />
               <Route path="/demo" component={Demo} />
               <Route path="/quick-onboarding" component={QuickOnboarding} />
-              <Route path="/settings">
-                <ProtectedRoute><Settings /></ProtectedRoute>
-              </Route>
+              <Route path="/settings" component={Settings} />
               <Route path="/achievements">
                 <ProtectedRoute><Achievements /></ProtectedRoute>
               </Route>
