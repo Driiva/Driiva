@@ -84,6 +84,11 @@ export default function Signup() {
         return;
       }
 
+      if (!auth) {
+        setError("Firebase Auth is not initialized. Check your environment configuration.");
+        return;
+      }
+
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         formData.email,
@@ -98,6 +103,11 @@ export default function Signup() {
 
       // Create user document with onboarding NOT completed
       // User will be redirected to quick-onboarding flow
+      if (!db) {
+        console.error('[Signup] Firestore not initialized');
+        setError("Database is not available. Please try again later.");
+        return;
+      }
       await setDoc(doc(db, 'users', user.uid), {
         uid: user.uid,
         email: formData.email,
@@ -131,7 +141,15 @@ export default function Signup() {
     } catch (err: any) {
       console.error("Signup error:", err);
 
-      if (err.code === 'auth/email-already-in-use') {
+      if (err.code === 'auth/api-key-not-valid.-please-pass-a-valid-api-key' ||
+          err.code === 'auth/api-key-not-valid-please-pass-a-valid-api-key' ||
+          err.message?.includes('api-key-not-valid')) {
+        console.error('[Signup] API key rejected by Firebase. Check .env VITE_FIREBASE_API_KEY and Google Cloud API key restrictions.');
+        setError(
+          "Service configuration error. The Firebase API key is invalid or restricted. " +
+          "Please contact the developer or check the API key in Google Cloud Console."
+        );
+      } else if (err.code === 'auth/email-already-in-use') {
         setError("This email is already registered. Please sign in instead.");
       } else if (err.code === 'auth/weak-password') {
         setError("Password is too weak. Use at least 8 characters with a mix of letters and numbers.");

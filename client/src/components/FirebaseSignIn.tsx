@@ -7,7 +7,7 @@ import {
   GoogleAuthProvider,
   signOut
 } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { auth, isFirebaseConfigured } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -34,6 +34,9 @@ export default function FirebaseSignIn({ onAuthSuccess }: FirebaseSignInProps) {
     setIsLoading(true);
 
     try {
+      if (!auth) {
+        throw new Error('Firebase Auth is not initialized. Check environment configuration.');
+      }
       const userCredential = isSignUp 
         ? await createUserWithEmailAndPassword(auth, email, password)
         : await signInWithEmailAndPassword(auth, email, password);
@@ -71,6 +74,9 @@ export default function FirebaseSignIn({ onAuthSuccess }: FirebaseSignInProps) {
     const provider = new GoogleAuthProvider();
 
     try {
+      if (!auth) {
+        throw new Error('Firebase Auth is not initialized. Check environment configuration.');
+      }
       const result = await signInWithPopup(auth, provider);
       const token = await result.user.getIdToken();
       

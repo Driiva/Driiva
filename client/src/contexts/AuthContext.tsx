@@ -62,9 +62,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     initAuth();
 
+    // Guard: only subscribe to auth state if Firebase Auth is initialized
+    if (!auth) {
+      console.warn('[AuthContext] Firebase Auth not initialized — skipping onAuthStateChanged listener');
+      setLoading(false);
+      return () => {}; // no-op cleanup
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
         try {
+          if (!db) {
+            throw new Error('Firestore not initialized');
+          }
           const userDocRef = doc(db, 'users', firebaseUser.uid);
           const userDoc = await getDoc(userDocRef);
           const userData = userDoc.data();
@@ -97,6 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
+    if (!auth) throw new Error('Firebase Auth is not initialized. Check environment configuration.');
     await signInWithEmailAndPassword(auth, email, password);
   };
 
@@ -104,19 +115,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem('driiva-demo-mode');
     localStorage.removeItem('driiva-demo-user');
     localStorage.removeItem('driiva-auth-token');
-    
-    await signOut(auth);
+
+    if (auth) {
+      await signOut(auth);
+    }
     setUser(null);
   };
 
   const checkOnboardingStatus = async (): Promise<boolean> => {
-    if (!user) return false;
-    
+    if (!user || !db) return false;
+
     try {
       const userDocRef = doc(db, 'users', user.id);
       const userDoc = await getDoc(userDocRef);
       const userData = userDoc.data();
-      
+
       return userData?.onboardingComplete === true;
     } catch {
       return false;

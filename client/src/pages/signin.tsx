@@ -124,7 +124,12 @@ export default function SignIn() {
       console.error('[SignIn] Authentication failed:', error);
       let errorMessage = "Invalid email or password";
 
-      if (error.code === 'auth/invalid-email') {
+      if (error.code === 'auth/api-key-not-valid.-please-pass-a-valid-api-key' ||
+          error.code === 'auth/api-key-not-valid-please-pass-a-valid-api-key' ||
+          error.message?.includes('api-key-not-valid')) {
+        console.error('[SignIn] API key rejected by Firebase. Check .env VITE_FIREBASE_API_KEY and Google Cloud API key restrictions.');
+        errorMessage = "Service configuration error. The Firebase API key is invalid or restricted. Please contact support.";
+      } else if (error.code === 'auth/invalid-email') {
         errorMessage = "Invalid email address format";
       } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         errorMessage = "Invalid email or password. Check your credentials or create a new account.";

@@ -24,6 +24,9 @@ export default defineConfig({
     },
   },
   root: path.resolve(import.meta.dirname, "client"),
+  // envDir must point to the repo root where .env lives.
+  // Without this, Vite defaults envDir to root ("client/") and misses the .env file.
+  envDir: path.resolve(import.meta.dirname),
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
