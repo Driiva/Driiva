@@ -849,6 +849,106 @@ export async function deleteUserAccount(userId: string): Promise<{ success: bool
 }
 
 // ============================================================================
+// AI TRIP ANALYSIS
+// ============================================================================
+
+/** Response from the analyzeTripAI Cloud Function */
+export interface AnalyzeTripAIResponse {
+  success: boolean;
+  insightId?: string;
+  cached?: boolean;
+  message?: string;
+  error?: string;
+}
+
+/** Specific incident flagged by AI */
+export interface TripAIIncident {
+  timestamp: string;
+  type: string;
+  severity: 'low' | 'medium' | 'high';
+  description: string;
+}
+
+/** Driving pattern detected by AI */
+export interface TripAIPattern {
+  category: string;
+  title: string;
+  description: string;
+  severity: 'low' | 'medium' | 'high';
+  scoreImpact: number;
+}
+
+/** AI insight document returned from getAIInsights Cloud Function */
+export interface TripAIInsight {
+  tripId: string;
+  userId: string;
+  overallScore: number;
+  riskLevel: 'low' | 'medium' | 'high';
+  summary: string;
+  strengths: string[];
+  improvements: string[];
+  specificIncidents: TripAIIncident[];
+  patterns: TripAIPattern[];
+  safetyTips: string[];
+  comparisonToAverage: string;
+  scoreAdjustment: {
+    originalScore: number;
+    adjustedScore: number;
+    delta: number;
+    reasoning: string;
+    confidence: number;
+  };
+  contextFactors: {
+    timeOfDay: string;
+    dayOfWeek: string;
+    isNightDriving: boolean;
+    isRushHour: boolean;
+    estimatedRoadType: string;
+    weatherConsideration: string | null;
+  };
+  historicalComparison: {
+    vsAverageScore: number;
+    trendDirection: 'improving' | 'stable' | 'declining';
+    consistencyNote: string;
+  };
+  model: string;
+  promptTokens: number;
+  completionTokens: number;
+  latencyMs: number;
+  analyzedAt: string | null;
+  createdAt: string | null;
+}
+
+/**
+ * Request on-demand AI analysis for a completed trip.
+ * Calls the analyzeTripAI Cloud Function.
+ */
+export async function requestTripAIAnalysis(tripId: string): Promise<AnalyzeTripAIResponse> {
+  assertFirestore();
+  const { getFunctions, httpsCallable } = await import('firebase/functions');
+  const functions = getFunctions();
+  const fn = httpsCallable<{ tripId: string }, AnalyzeTripAIResponse>(functions, 'analyzeTripAI');
+  const result = await fn({ tripId });
+  return result.data;
+}
+
+/**
+ * Fetch AI insights for a trip.
+ * Calls the getAIInsights Cloud Function.
+ */
+export async function fetchTripAIInsights(tripId: string): Promise<TripAIInsight | null> {
+  assertFirestore();
+  const { getFunctions, httpsCallable } = await import('firebase/functions');
+  const functions = getFunctions();
+  const fn = httpsCallable<{ tripId: string }, { success: boolean; insights: TripAIInsight | null }>(
+    functions,
+    'getAIInsights'
+  );
+  const result = await fn({ tripId });
+  return result.data.insights;
+}
+
+// ============================================================================
 // EXPORTS
 // ============================================================================
 

@@ -27,8 +27,8 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { auth, db, isFirebaseConfigured } from '../lib/firebase';
-import { doc, updateDoc, setDoc, getDoc } from 'firebase/firestore';
-import { onAuthStateChanged } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import { useAuth } from '../contexts/AuthContext';
 import driivaLogo from '@/assets/driiva-logo-CLEAR-FINAL.png';
 
 const TOTAL_STEPS = 3;
@@ -43,58 +43,41 @@ interface GpsTestResult {
 
 export default function QuickOnboarding() {
   const [, setLocation] = useLocation();
+  const { user, loading: authLoading } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  const [authChecking, setAuthChecking] = useState(true);
   const [confirmed, setConfirmed] = useState(false);
   
   // GPS state
   const [gpsStatus, setGpsStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [gpsResult, setGpsResult] = useState<GpsTestResult | null>(null);
 
-  // Check auth status on mount
+  // Use AuthContext instead of a separate onAuthStateChanged listener.
+  // AuthContext already tracks the user and their onboarding status,
+  // so we avoid a redundant Firebase + Firestore round-trip.
   useEffect(() => {
+    if (authLoading) return; // Wait for AuthContext to resolve
+
     // Check demo mode
     const isDemoMode = localStorage.getItem('driiva-demo-mode') === 'true';
     if (isDemoMode) {
-      // Demo users skip onboarding
       setLocation('/dashboard');
       return;
     }
 
-    if (!isFirebaseConfigured) {
-      setAuthChecking(false);
+    if (!user) {
+      // Not logged in, redirect to signin
+      setLocation('/signin');
       return;
     }
 
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        // Not logged in, redirect to signin
-        setLocation('/signin');
-        return;
-      }
-
-      // Check if user already completed onboarding
-      try {
-        const userDocRef = doc(db, 'users', user.uid);
-        const userDoc = await getDoc(userDocRef);
-        const userData = userDoc.data();
-
-        // Check both field names for compatibility
-        if (userData?.onboardingCompleted === true || userData?.onboardingComplete === true) {
-          // Already completed, go to dashboard
-          setLocation('/dashboard');
-          return;
-        }
-      } catch (error) {
-        console.error('[QuickOnboarding] Error checking onboarding status:', error);
-      }
-
-      setAuthChecking(false);
-    });
-
-    return () => unsubscribe();
-  }, [setLocation]);
+    // If user already completed onboarding, skip to dashboard
+    if (user.onboardingComplete) {
+      setLocation('/dashboard');
+      return;
+    }
+    // Otherwise, user needs onboarding — let them through
+  }, [user, authLoading, setLocation]);
 
   /**
    * Test GPS by requesting a single position read
@@ -152,46 +135,39 @@ export default function QuickOnboarding() {
    */
   const handleComplete = async () => {
     if (!confirmed) return;
-    
+
     setIsLoading(true);
 
+    // 1. Update AuthContext FIRST so ProtectedRoute won't bounce back
+    if (user) {
+      setUser({
+        ...user,
+        onboardingComplete: true,
+      });
+    }
+
+    // 2. Navigate immediately — don't block on Firestore write
+    setLocation('/dashboard');
+
+    // 3. Persist to Firestore in background
     try {
-      const user = auth.currentUser;
-      if (user && isFirebaseConfigured) {
-        const userDocRef = doc(db, 'users', user.uid);
-        
-        // Check if document exists
-        const userDoc = await getDoc(userDocRef);
-        
-        if (userDoc.exists()) {
-          // Update existing document
-          await updateDoc(userDocRef, {
-            onboardingCompleted: true,
-            onboardingComplete: true, // Keep both for compatibility
-            gpsPermissionGranted: gpsStatus === 'success',
-            updatedAt: new Date().toISOString(),
-          });
-        } else {
-          // Create document if it doesn't exist
-          await setDoc(userDocRef, {
-            uid: user.uid,
-            email: user.email,
-            fullName: user.displayName || '',
-            onboardingCompleted: true,
-            onboardingComplete: true,
-            gpsPermissionGranted: gpsStatus === 'success',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          });
-        }
+      const firebaseUser = auth?.currentUser;
+      if (firebaseUser && isFirebaseConfigured && db) {
+        const userDocRef = doc(db, 'users', firebaseUser.uid);
+
+        // Use setDoc with merge: true — works whether the doc exists or not,
+        // and avoids the extra getDoc round-trip.
+        await setDoc(userDocRef, {
+          onboardingCompleted: true,
+          onboardingComplete: true, // Keep both for compatibility
+          gpsPermissionGranted: gpsStatus === 'success',
+          updatedAt: new Date().toISOString(),
+        }, { merge: true });
       }
     } catch (err) {
       console.error('[QuickOnboarding] Failed to update onboarding status:', err);
-      // Continue anyway - we don't want to block the user
+      // Non-blocking — user is already on the dashboard
     }
-
-    setIsLoading(false);
-    setLocation('/dashboard');
   };
 
   /**
@@ -209,8 +185,8 @@ export default function QuickOnboarding() {
     }
   };
 
-  // Show loading while checking auth
-  if (authChecking) {
+  // Show loading only while AuthContext is resolving (typically instant after signup)
+  if (authLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900 flex items-center justify-center">
         <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin" />

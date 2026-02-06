@@ -3,10 +3,21 @@
  * ==========================
  * Displays Claude Sonnet 4-powered analysis for a specific trip.
  *
+ * Sections:
+ *   1. Summary + Risk Badge + Overall Score
+ *   2. Strengths (good driving behaviors)
+ *   3. Improvements (areas to work on)
+ *   4. Specific Incidents timeline
+ *   5. Safety Tips
+ *   6. Comparison to personal average
+ *   7. Detailed Patterns (expandable)
+ *   8. Context footer
+ *
  * States:
- *   1. Loading — skeleton pulse
- *   2. No insights yet — CTA to request analysis
- *   3. Insights available — full breakdown
+ *   - Loading — skeleton pulse
+ *   - No insights yet — CTA to request analysis
+ *   - Analysis pending — spinner
+ *   - Insights available — full breakdown
  */
 
 import { motion, AnimatePresence } from 'framer-motion';
@@ -24,12 +35,16 @@ import {
   ChevronDown,
   RefreshCw,
   Zap,
+  CheckCircle2,
+  Target,
+  AlertCircle,
+  Activity,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useTripAIInsights } from '@/hooks/useTripAIInsights';
-import type { TripAIInsight } from '@/lib/firestore';
+import type { TripAIInsight, TripAIIncident, TripAIPattern } from '@/lib/firestore';
 import { useState } from 'react';
 
 interface TripAIInsightsProps {
@@ -54,7 +69,8 @@ export default function TripAIInsights({
     enabled: tripStatus === 'completed',
   });
 
-  const [expanded, setExpanded] = useState(false);
+  const [patternsExpanded, setPatternsExpanded] = useState(false);
+  const [incidentsExpanded, setIncidentsExpanded] = useState(false);
 
   // ── Loading state ──
   if (isLoading) {
@@ -125,6 +141,7 @@ export default function TripAIInsights({
       className={className}
     >
       <Card className="glass-morphism border-0 overflow-hidden">
+        {/* ─── HEADER: Score + Risk Level ─── */}
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
@@ -141,57 +158,148 @@ export default function TripAIInsights({
         </CardHeader>
 
         <CardContent className="space-y-4">
-          {/* Summary */}
+          {/* ─── SCORE + COMPARISON ─── */}
           <div className="glass-card rounded-xl p-4">
-            <p className="text-gray-200 text-sm leading-relaxed">
-              {insights.summary}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-bold text-white">
+                  {insights.overallScore}
+                </span>
+                <span className="text-sm text-gray-400">/100</span>
+                <ScoreDelta delta={insights.scoreAdjustment.delta} />
+              </div>
+              <span className="text-[10px] text-gray-500">
+                {(insights.scoreAdjustment.confidence * 100).toFixed(0)}% confidence
+              </span>
+            </div>
+            <p className="text-sm text-gray-300 leading-relaxed">
+              {insights.comparisonToAverage}
             </p>
           </div>
 
-          {/* Score Adjustment */}
-          <ScoreAdjustmentCard adjustment={insights.scoreAdjustment} />
+          {/* ─── STRENGTHS ─── */}
+          {insights.strengths.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                Strengths
+              </h4>
+              {insights.strengths.map((strength, i) => (
+                <motion.div
+                  key={i}
+                  className="glass-card rounded-lg px-3 py-2.5 flex items-start gap-2.5"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.06 }}
+                >
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0" />
+                  <p className="text-xs text-gray-200 leading-relaxed">{strength}</p>
+                </motion.div>
+              ))}
+            </div>
+          )}
 
-          {/* Patterns (top 2 always shown) */}
-          <div className="space-y-2">
-            <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-              <BarChart3 className="w-3.5 h-3.5" />
-              Driving Patterns
-            </h4>
-            <AnimatePresence initial={false}>
-              {insights.patterns
-                .slice(0, expanded ? undefined : 2)
-                .map((pattern, i) => (
-                  <PatternCard key={i} pattern={pattern} index={i} />
-                ))}
-            </AnimatePresence>
-            {insights.patterns.length > 2 && (
+          {/* ─── IMPROVEMENTS ─── */}
+          {insights.improvements.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Target className="w-3.5 h-3.5 text-amber-400" />
+                Areas to Improve
+              </h4>
+              {insights.improvements.map((improvement, i) => (
+                <motion.div
+                  key={i}
+                  className="glass-card rounded-lg px-3 py-2.5 flex items-start gap-2.5"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.06 }}
+                >
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-1.5 flex-shrink-0" />
+                  <p className="text-xs text-gray-200 leading-relaxed">{improvement}</p>
+                </motion.div>
+              ))}
+            </div>
+          )}
+
+          {/* ─── SPECIFIC INCIDENTS ─── */}
+          {insights.specificIncidents.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5 text-red-400" />
+                Incidents Detected ({insights.specificIncidents.length})
+              </h4>
+              <AnimatePresence initial={false}>
+                {insights.specificIncidents
+                  .slice(0, incidentsExpanded ? undefined : 3)
+                  .map((incident, i) => (
+                    <IncidentCard key={i} incident={incident} index={i} />
+                  ))}
+              </AnimatePresence>
+              {insights.specificIncidents.length > 3 && (
+                <button
+                  onClick={() => setIncidentsExpanded(!incidentsExpanded)}
+                  className="flex items-center gap-1 text-xs text-purple-400 hover:text-purple-300 transition-colors mx-auto"
+                >
+                  {incidentsExpanded ? 'Show less' : `+${insights.specificIncidents.length - 3} more`}
+                  <ChevronDown
+                    className={`w-3.5 h-3.5 transition-transform ${incidentsExpanded ? 'rotate-180' : ''}`}
+                  />
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* ─── SAFETY TIPS ─── */}
+          {insights.safetyTips.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Lightbulb className="w-3.5 h-3.5 text-blue-400" />
+                Safety Tips
+              </h4>
+              {insights.safetyTips.map((tip, i) => (
+                <motion.div
+                  key={i}
+                  className="glass-card rounded-lg p-3 flex items-start gap-2.5"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.08 }}
+                  whileHover={{ x: 3 }}
+                >
+                  <Shield className="w-3.5 h-3.5 text-blue-400 flex-shrink-0 mt-0.5" />
+                  <p className="text-xs text-gray-200 leading-relaxed">{tip}</p>
+                </motion.div>
+              ))}
+            </div>
+          )}
+
+          {/* ─── DETAILED PATTERNS (expandable) ─── */}
+          {insights.patterns.length > 0 && (
+            <div className="space-y-2">
               <button
-                onClick={() => setExpanded(!expanded)}
-                className="flex items-center gap-1 text-xs text-purple-400 hover:text-purple-300 transition-colors mx-auto"
+                onClick={() => setPatternsExpanded(!patternsExpanded)}
+                className="w-full flex items-center justify-between text-xs font-semibold text-gray-400 uppercase tracking-wider"
               >
-                {expanded ? 'Show less' : `+${insights.patterns.length - 2} more`}
+                <span className="flex items-center gap-1.5">
+                  <BarChart3 className="w-3.5 h-3.5" />
+                  Detailed Patterns ({insights.patterns.length})
+                </span>
                 <ChevronDown
-                  className={`w-3.5 h-3.5 transition-transform ${expanded ? 'rotate-180' : ''}`}
+                  className={`w-3.5 h-3.5 transition-transform ${patternsExpanded ? 'rotate-180' : ''}`}
                 />
               </button>
-            )}
-          </div>
+              <AnimatePresence initial={false}>
+                {patternsExpanded &&
+                  insights.patterns.map((pattern, i) => (
+                    <PatternCard key={i} pattern={pattern} index={i} />
+                  ))}
+              </AnimatePresence>
+            </div>
+          )}
 
-          {/* Safety Tips */}
-          <div className="space-y-2">
-            <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-              <Lightbulb className="w-3.5 h-3.5" />
-              Safety Tips
-            </h4>
-            {insights.safetyTips.map((tip, i) => (
-              <SafetyTipCard key={i} tip={tip} index={i} />
-            ))}
-          </div>
-
-          {/* Historical Comparison */}
+          {/* ─── HISTORICAL COMPARISON ─── */}
           <HistoricalComparisonCard comparison={insights.historicalComparison} />
 
-          {/* Context Footer */}
+          {/* ─── CONTEXT FOOTER ─── */}
           <div className="flex items-center justify-between text-[10px] text-gray-500 pt-2 border-t border-white/5">
             <span className="flex items-center gap-1">
               <Clock className="w-3 h-3" />
@@ -216,11 +324,10 @@ export default function TripAIInsights({
 function RiskBadge({ level }: { level: string }) {
   const config: Record<string, { bg: string; text: string; label: string }> = {
     low: { bg: 'bg-emerald-500/15', text: 'text-emerald-400', label: 'Low Risk' },
-    moderate: { bg: 'bg-yellow-500/15', text: 'text-yellow-400', label: 'Moderate' },
-    elevated: { bg: 'bg-orange-500/15', text: 'text-orange-400', label: 'Elevated' },
+    medium: { bg: 'bg-yellow-500/15', text: 'text-yellow-400', label: 'Medium Risk' },
     high: { bg: 'bg-red-500/15', text: 'text-red-400', label: 'High Risk' },
   };
-  const c = config[level] ?? config.moderate;
+  const c = config[level] ?? config.medium;
 
   return (
     <Badge variant="outline" className={`${c.bg} ${c.text} border-current/30 text-[10px] font-medium`}>
@@ -229,56 +336,78 @@ function RiskBadge({ level }: { level: string }) {
   );
 }
 
-function ScoreAdjustmentCard({
-  adjustment,
-}: {
-  adjustment: TripAIInsight['scoreAdjustment'];
-}) {
-  const delta = adjustment.delta;
+function ScoreDelta({ delta }: { delta: number }) {
+  if (delta === 0) return null;
   const isPositive = delta > 0;
-  const isNeutral = delta === 0;
+  return (
+    <span
+      className={`text-sm font-semibold flex items-center gap-0.5 ${
+        isPositive ? 'text-emerald-400' : 'text-red-400'
+      }`}
+    >
+      {isPositive ? (
+        <TrendingUp className="w-3.5 h-3.5" />
+      ) : (
+        <TrendingDown className="w-3.5 h-3.5" />
+      )}
+      {isPositive ? '+' : ''}{delta}
+    </span>
+  );
+}
+
+function IncidentCard({
+  incident,
+  index,
+}: {
+  incident: TripAIIncident;
+  index: number;
+}) {
+  const severityConfig: Record<string, { border: string; icon: JSX.Element }> = {
+    low: {
+      border: 'border-l-emerald-400/50',
+      icon: <Activity className="w-3.5 h-3.5 text-emerald-400" />,
+    },
+    medium: {
+      border: 'border-l-yellow-400/50',
+      icon: <AlertTriangle className="w-3.5 h-3.5 text-yellow-400" />,
+    },
+    high: {
+      border: 'border-l-red-400/50',
+      icon: <AlertTriangle className="w-3.5 h-3.5 text-red-400" />,
+    },
+  };
+  const cfg = severityConfig[incident.severity] ?? severityConfig.medium;
+
+  const typeLabel: Record<string, string> = {
+    harsh_braking: 'Hard Braking',
+    speeding: 'Speeding',
+    rapid_acceleration: 'Rapid Accel',
+    sharp_turn: 'Sharp Turn',
+    phone_usage: 'Phone Use',
+    tailgating: 'Tailgating',
+    erratic_driving: 'Erratic',
+  };
 
   return (
     <motion.div
-      className="glass-card rounded-xl p-4"
-      whileHover={{ scale: 1.01 }}
-      transition={{ type: 'spring', stiffness: 400 }}
+      className={`glass-card rounded-lg p-3 border-l-2 ${cfg.border}`}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ delay: index * 0.05 }}
     >
-      <div className="flex items-center justify-between mb-2">
-        <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-          <Zap className="w-3.5 h-3.5" />
-          AI Score Assessment
-        </h4>
-        <span className="text-[10px] text-gray-500">
-          {(adjustment.confidence * 100).toFixed(0)}% confidence
-        </span>
+      <div className="flex items-start gap-2.5">
+        <div className="mt-0.5">{cfg.icon}</div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-0.5">
+            <span className="text-xs font-medium text-white">
+              {typeLabel[incident.type] || incident.type}
+            </span>
+            <span className="text-[10px] text-gray-500">{incident.timestamp}</span>
+          </div>
+          <p className="text-xs text-gray-400 leading-relaxed">{incident.description}</p>
+        </div>
       </div>
-      <div className="flex items-baseline gap-3">
-        <span className="text-2xl font-bold text-white">
-          {adjustment.adjustedScore}
-        </span>
-        {!isNeutral && (
-          <span
-            className={`text-sm font-semibold flex items-center gap-0.5 ${
-              isPositive ? 'text-emerald-400' : 'text-red-400'
-            }`}
-          >
-            {isPositive ? (
-              <TrendingUp className="w-3.5 h-3.5" />
-            ) : (
-              <TrendingDown className="w-3.5 h-3.5" />
-            )}
-            {isPositive ? '+' : ''}{delta}
-          </span>
-        )}
-        {isNeutral && (
-          <span className="text-sm text-gray-500 flex items-center gap-0.5">
-            <Minus className="w-3.5 h-3.5" />
-            No change
-          </span>
-        )}
-      </div>
-      <p className="text-xs text-gray-400 mt-1">{adjustment.reasoning}</p>
     </motion.div>
   );
 }
@@ -287,16 +416,15 @@ function PatternCard({
   pattern,
   index,
 }: {
-  pattern: TripAIInsight['patterns'][number];
+  pattern: TripAIPattern;
   index: number;
 }) {
   const severityColor: Record<string, string> = {
     low: 'text-emerald-400 bg-emerald-500/10',
-    moderate: 'text-yellow-400 bg-yellow-500/10',
-    elevated: 'text-orange-400 bg-orange-500/10',
+    medium: 'text-yellow-400 bg-yellow-500/10',
     high: 'text-red-400 bg-red-500/10',
   };
-  const color = severityColor[pattern.severity] ?? severityColor.moderate;
+  const color = severityColor[pattern.severity] ?? severityColor.medium;
 
   return (
     <motion.div
@@ -332,33 +460,6 @@ function PatternCard({
           </span>
         )}
       </div>
-    </motion.div>
-  );
-}
-
-function SafetyTipCard({
-  tip,
-  index,
-}: {
-  tip: TripAIInsight['safetyTips'][number];
-  index: number;
-}) {
-  const priorityIcon: Record<string, JSX.Element> = {
-    high: <AlertTriangle className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />,
-    medium: <Shield className="w-3.5 h-3.5 text-yellow-400 flex-shrink-0" />,
-    low: <Lightbulb className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />,
-  };
-
-  return (
-    <motion.div
-      className="glass-card rounded-lg p-3 flex items-start gap-2.5"
-      initial={{ opacity: 0, x: -10 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay: index * 0.08 }}
-      whileHover={{ x: 3 }}
-    >
-      {priorityIcon[tip.priority] ?? priorityIcon.medium}
-      <p className="text-xs text-gray-200 leading-relaxed">{tip.tip}</p>
     </motion.div>
   );
 }

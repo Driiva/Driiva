@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useLocation } from 'wouter';
-import { ArrowLeft, Bell, Shield, HelpCircle, ChevronRight, Moon, Globe } from 'lucide-react';
+import { ArrowLeft, Bell, Shield, HelpCircle, ChevronRight, Moon, Globe, LogOut } from 'lucide-react';
 import { PageWrapper } from '../components/PageWrapper';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Settings() {
   const [, setLocation] = useLocation();
+  const { logout } = useAuth();
   const [notifications, setNotifications] = useState(() => {
     return localStorage.getItem('driiva-notifications') !== 'false';
   });
@@ -143,13 +145,25 @@ export default function Settings() {
               </button>
               <button
                 onClick={() => setLocation('/support')}
-                className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors rounded-b-xl"
+                className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors"
               >
                 <div className="flex items-center gap-3">
                   <HelpCircle className="w-5 h-5 text-white/60" />
                   <span className="text-white">Help & Support</span>
                 </div>
                 <ChevronRight className="w-4 h-4 text-white/40" />
+              </button>
+              <button
+                onClick={async () => {
+                  await logout();
+                  setLocation('/');
+                }}
+                className="w-full flex items-center justify-between p-4 hover:bg-red-500/10 transition-colors rounded-b-xl group"
+              >
+                <div className="flex items-center gap-3">
+                  <LogOut className="w-5 h-5 text-red-400" />
+                  <span className="text-red-400 font-medium">Sign Out</span>
+                </div>
               </button>
             </div>
           </motion.div>

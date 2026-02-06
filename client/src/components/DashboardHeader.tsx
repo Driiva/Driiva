@@ -43,12 +43,10 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
     setLocation(path);
   };
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
     setMenuOpen(false);
-    setTimeout(() => {
-      logout();
-      setLocation("/welcome");
-    }, 100);
+    await logout();
+    setLocation("/");
   };
 
   return (

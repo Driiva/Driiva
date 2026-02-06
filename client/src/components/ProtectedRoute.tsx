@@ -1,8 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useLocation } from 'wouter';
-import { auth, db, isFirebaseConfigured } from '@/lib/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { auth, isFirebaseConfigured } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface ProtectedRouteProps {
@@ -16,119 +14,68 @@ interface ProtectedRouteProps {
  * =========================
  * Guards routes that require authentication.
  * 
+ * PERFORMANCE FIX: Resolves synchronously from AuthContext.user when available.
+ * No Firestore reads here — onboarding status is already on the user object.
+ * Only shows a spinner during the initial AuthProvider bootstrap (loading=true).
+ * 
  * Flow:
- *   1. Check demo mode → allow access if demo
- *   2. Check Firebase auth → redirect to /signin if not authenticated
- *   3. Check onboarding status → redirect to /quick-onboarding if not completed
- *   4. Allow access if all checks pass
+ *   1. If AuthContext is still loading → brief spinner
+ *   2. Demo mode → allow access
+ *   3. AuthContext.user exists → check onboarding, redirect if needed
+ *   4. No user → redirect to /signin
  */
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
   children,
   skipOnboardingCheck = false
 }) => {
   const [, setLocation] = useLocation();
-  const { user } = useAuth();
-  const [isChecking, setIsChecking] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [onboardingCompleted, setOnboardingCompleted] = useState(false);
+  const { user, loading } = useAuth();
+  const hasRedirected = useRef(false);
+
+  // Demo mode — instant pass-through
+  const isDemoMode = typeof window !== 'undefined' && localStorage.getItem('driiva-demo-mode') === 'true';
 
   useEffect(() => {
-    // Check demo mode first
-    const isDemoMode = localStorage.getItem('driiva-demo-mode') === 'true';
-    if (isDemoMode) {
-      setIsAuthenticated(true);
-      setOnboardingCompleted(true); // Demo users skip onboarding
-      setIsChecking(false);
-      return;
-    }
+    // Don't redirect while AuthProvider is still bootstrapping
+    if (loading) return;
+    // Don't redirect more than once per mount
+    if (hasRedirected.current) return;
 
-    // If we have user from context, use that
-    if (user) {
-      setIsAuthenticated(true);
-      const completed = user.onboardingComplete === true;
-      setOnboardingCompleted(completed);
-      
-      // Redirect to onboarding if not completed (unless skipped)
-      if (!completed && !skipOnboardingCheck) {
-        setLocation('/quick-onboarding');
-      }
-      setIsChecking(false);
-      return;
-    }
+    if (isDemoMode) return; // demo users always pass
 
-    // Firebase not configured
-    if (!isFirebaseConfigured) {
-      setIsAuthenticated(false);
-      setIsChecking(false);
+    if (!user) {
+      hasRedirected.current = true;
       setLocation('/signin');
       return;
     }
 
-    // Listen to auth state
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (!firebaseUser) {
-        setIsAuthenticated(false);
-        setIsChecking(false);
-        setLocation('/signin');
-        return;
-      }
+    // Check onboarding (from context, no Firestore read needed)
+    if (!skipOnboardingCheck && user.onboardingComplete !== true) {
+      hasRedirected.current = true;
+      setLocation('/quick-onboarding');
+    }
+  }, [loading, user, isDemoMode, skipOnboardingCheck, setLocation]);
 
-      setIsAuthenticated(true);
-
-      // Skip onboarding check if requested
-      if (skipOnboardingCheck) {
-        setOnboardingCompleted(true);
-        setIsChecking(false);
-        return;
-      }
-
-      // Check onboarding status in Firestore
-      try {
-        const userDocRef = doc(db, 'users', firebaseUser.uid);
-        const userDoc = await getDoc(userDocRef);
-        const userData = userDoc.data();
-
-        // Check both field names for compatibility
-        const completed = userData?.onboardingCompleted === true || 
-                          userData?.onboardingComplete === true;
-        
-        setOnboardingCompleted(completed);
-
-        if (!completed) {
-          setLocation('/quick-onboarding');
-        }
-      } catch (error) {
-        console.error('[ProtectedRoute] Error checking onboarding status:', error);
-        // On error, redirect to onboarding to be safe
-        setOnboardingCompleted(false);
-        setLocation('/quick-onboarding');
-      }
-
-      setIsChecking(false);
-    });
-
-    return () => unsubscribe();
-  }, [user, setLocation, skipOnboardingCheck]);
-
-  // Show loading spinner while checking
-  if (isChecking) {
+  // AuthProvider still bootstrapping — show a BRIEF spinner
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900">
-        <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-10 h-10 border-3 border-white/20 border-t-white rounded-full animate-spin" />
       </div>
     );
   }
 
-  // Not authenticated
-  if (!isAuthenticated) {
+  // Not authenticated (and not demo) — render nothing (redirect in useEffect)
+  if (!isDemoMode && !user) {
     return null;
   }
 
-  // Authenticated but onboarding not completed (and not skipped)
-  if (!onboardingCompleted && !skipOnboardingCheck) {
+  // Onboarding not completed — render nothing (redirect in useEffect)
+  if (!isDemoMode && !skipOnboardingCheck && user && user.onboardingComplete !== true) {
     return null;
   }
 
+  // All checks pass — render children immediately, no delay
   return <>{children}</>;
 };
 
@@ -137,55 +84,46 @@ interface PublicOnlyRouteProps {
   redirectTo?: string;
 }
 
+/**
+ * PUBLIC ONLY ROUTE
+ * =================
+ * Redirects authenticated users away from auth pages (signin, signup).
+ * Demo mode does NOT count — users should be able to create real accounts from demo.
+ *
+ * PERFORMANCE FIX: Synchronous resolution from AuthContext.
+ */
 export const PublicOnlyRoute: React.FC<PublicOnlyRouteProps> = ({ 
   children, 
   redirectTo = '/home' 
 }) => {
   const [, setLocation] = useLocation();
-  const { user } = useAuth();
-  const [isChecking, setIsChecking] = useState(true);
-  const [shouldRedirect, setShouldRedirect] = useState(false);
+  const { user, loading } = useAuth();
 
   useEffect(() => {
-    // NOTE: Demo mode should NOT block access to auth pages (signup/signin)
-    // Users in demo mode should be able to create a real account
-    // Only real Firebase authentication should redirect away from auth pages
+    if (loading) return;
+
+    // Demo mode should NOT block access to auth pages
+    const isDemoMode = localStorage.getItem('driiva-demo-mode') === 'true';
+    if (isDemoMode) return;
 
     if (user) {
-      setShouldRedirect(true);
-      setIsChecking(false);
       setLocation(redirectTo);
-      return;
     }
+  }, [loading, user, setLocation, redirectTo]);
 
-    if (!isFirebaseConfigured) {
-      setShouldRedirect(false);
-      setIsChecking(false);
-      return;
-    }
-
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      if (firebaseUser) {
-        setShouldRedirect(true);
-        setLocation(redirectTo);
-      } else {
-        setShouldRedirect(false);
-      }
-      setIsChecking(false);
-    });
-
-    return () => unsubscribe();
-  }, [user, setLocation, redirectTo]);
-
-  if (isChecking) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin" />
-      </div>
-    );
+  // While auth is loading, show content immediately (no spinner for public pages)
+  if (loading) {
+    return <>{children}</>;
   }
 
-  if (shouldRedirect) {
+  // Demo mode — always show auth pages
+  const isDemoMode = typeof window !== 'undefined' && localStorage.getItem('driiva-demo-mode') === 'true';
+  if (isDemoMode) {
+    return <>{children}</>;
+  }
+
+  // Authenticated real user — render nothing (redirect happens in useEffect)
+  if (user) {
     return null;
   }
 
