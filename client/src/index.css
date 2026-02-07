@@ -44,6 +44,14 @@ button, a, input, select, textarea, [role="button"] {
   position: fixed;
   inset: 0;
   z-index: -1;
+  /* Fallback when no inline background-image (e.g. hero) is set; App overrides with hero-background.png */
+  background: linear-gradient(135deg,
+    var(--neutral-900) 0%,
+    #1e1b4b 25%,
+    #312e81 50%,
+    #1e3a8a 75%,
+    var(--neutral-900) 100%
+  );
   background-size: 105% 105%;
   background-position: center;
   background-attachment: fixed;

@@ -90,6 +90,7 @@ export default function SignIn() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="driiva-gradient-bg" aria-hidden />
       <div className="glass-morphism rounded-3xl p-8 w-full max-w-md relative z-10">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>

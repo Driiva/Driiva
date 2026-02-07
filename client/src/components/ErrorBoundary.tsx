@@ -33,6 +33,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     if (this.state.hasError) {
       return (
         <div className="min-h-screen flex items-center justify-center p-4">
+          <div className="driiva-gradient-bg" aria-hidden />
           <div className="glass-morphism rounded-2xl p-8 max-w-md w-full text-center relative z-10">
             <h2 className="text-2xl font-bold mb-4 text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
               Application Error
