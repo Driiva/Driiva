@@ -137,8 +137,8 @@ export default function Profile() {
 
   const handleLogout = () => {
     setShowDropdown(false);
-    logout();
     setLocation("/");
+    logout();
   };
   
   const userData = {

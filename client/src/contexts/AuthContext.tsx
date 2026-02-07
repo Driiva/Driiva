@@ -112,14 +112,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
+    // Clear user from state FIRST for instant UI feedback
+    setUser(null);
+
+    // Clear all localStorage flags
     localStorage.removeItem('driiva-demo-mode');
     localStorage.removeItem('driiva-demo-user');
     localStorage.removeItem('driiva-auth-token');
 
+    // Firebase signOut in background (non-blocking for UX)
     if (auth) {
-      await signOut(auth);
+      try {
+        await signOut(auth);
+      } catch (err) {
+        console.error('[AuthContext] signOut error:', err);
+      }
     }
-    setUser(null);
   };
 
   const checkOnboardingStatus = async (): Promise<boolean> => {

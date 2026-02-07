@@ -46,8 +46,8 @@ export default function Rewards() {
 
   const handleLogout = () => {
     setShowDropdown(false);
-    logout();
     setLocation("/");
+    logout();
   };
 
   const achievements: Achievement[] = [

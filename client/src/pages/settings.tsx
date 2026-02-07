@@ -154,9 +154,11 @@ export default function Settings() {
                 <ChevronRight className="w-4 h-4 text-white/40" />
               </button>
               <button
-                onClick={async () => {
-                  await logout();
+                onClick={() => {
+                  // Navigate FIRST, then logout — prevents ProtectedRoute
+                  // from intercepting and redirecting to /signin
                   setLocation('/');
+                  logout();
                 }}
                 className="w-full flex items-center justify-between p-4 hover:bg-red-500/10 transition-colors rounded-b-xl group"
               >

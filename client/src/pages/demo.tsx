@@ -71,6 +71,7 @@ export default function Demo() {
   /**
    * Enter demo mode - NO Firebase calls here!
    * Sets localStorage flags and navigates to dashboard.
+   * Uses requestAnimationFrame for minimal delay (just enough for button feedback).
    */
   const enterDemoMode = () => {
     setIsEntering(true);
@@ -79,10 +80,10 @@ export default function Demo() {
     localStorage.setItem('driiva-demo-mode', 'true');
     localStorage.setItem('driiva-demo-user', JSON.stringify(DEMO_USER_DATA));
     
-    // Small delay for UX feedback then navigate to dashboard
-    setTimeout(() => {
+    // Navigate next frame — instant feel while allowing button animation
+    requestAnimationFrame(() => {
       setLocation('/dashboard');
-    }, 500);
+    });
   };
 
   return (

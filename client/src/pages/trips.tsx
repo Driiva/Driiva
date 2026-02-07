@@ -38,8 +38,8 @@ export default function Trips() {
 
   const handleLogout = () => {
     setShowDropdown(false);
-    logout();
     setLocation("/");
+    logout();
   };
 
   const trips: Trip[] = [

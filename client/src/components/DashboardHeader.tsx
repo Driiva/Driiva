@@ -45,8 +45,8 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
 
   const handleSignOut = async () => {
     setMenuOpen(false);
-    await logout();
     setLocation("/");
+    await logout();
   };
 
   return (

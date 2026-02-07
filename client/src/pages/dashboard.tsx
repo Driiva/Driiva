@@ -11,7 +11,7 @@
  *   - Demo mode support for testing
  */
 
-import { useEffect, useState, lazy, Suspense } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'wouter';
 import { 
@@ -22,8 +22,7 @@ import {
 import { PageWrapper } from '../components/PageWrapper';
 import { BottomNav } from '../components/BottomNav';
 import { useAuth } from "@/contexts/AuthContext";
-import { auth, isFirebaseConfigured } from "@/lib/firebase";
-import { onAuthStateChanged } from "firebase/auth";
+// Firebase config not needed here — AuthContext handles all auth state
 import MapLoader from '../components/MapLoader';
 import { useDashboardData, DashboardData } from '@/hooks/useDashboardData';
 import { useCommunityData } from '@/hooks/useCommunityData';
@@ -161,20 +160,27 @@ export default function Dashboard() {
   const [, setLocation] = useLocation();
   const { user, logout } = useAuth();
   
-  // Auth state
-  const [authChecked, setAuthChecked] = useState(false);
-  const [firebaseUserId, setFirebaseUserId] = useState<string | null>(null);
-  
-  // Demo mode
-  const [demoUser, setDemoUser] = useState<DemoUser | null>(null);
-  const [isDemoMode, setIsDemoMode] = useState(false);
-  
+  // Demo mode — read once on mount
+  const [demoUser, setDemoUser] = useState<DemoUser | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const demoModeActive = localStorage.getItem('driiva-demo-mode') === 'true';
+    if (!demoModeActive) return null;
+    try {
+      const raw = localStorage.getItem('driiva-demo-user');
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  });
+  const isDemoMode = demoUser !== null;
+
   // UI state
   const [showDropdown, setShowDropdown] = useState(false);
 
+  // Resolve userId from AuthContext (no redundant onAuthStateChanged)
+  const firebaseUserId = isDemoMode ? null : (user?.id ?? null);
+
   // Real-time Firestore data
   const { data: dashboardData, loading: dataLoading, error: dataError, refresh } = useDashboardData(
-    isDemoMode ? null : firebaseUserId
+    firebaseUserId
   );
 
   // Community pool and leaderboard data
@@ -183,63 +189,13 @@ export default function Dashboard() {
     poolLoading,
     userShare,
     leaderboard,
-  } = useCommunityData(isDemoMode ? null : firebaseUserId);
+  } = useCommunityData(firebaseUserId);
 
-  // Check for demo mode on mount
-  useEffect(() => {
-    const demoModeActive = localStorage.getItem('driiva-demo-mode') === 'true';
-    if (demoModeActive) {
-      const demoUserData = localStorage.getItem('driiva-demo-user');
-      if (demoUserData) {
-        try {
-          const parsedUser = JSON.parse(demoUserData);
-          console.log('📊 Demo mode active, loading mock data:', parsedUser);
-          setDemoUser(parsedUser);
-          setIsDemoMode(true);
-          setAuthChecked(true);
-        } catch (e) {
-          console.error('Failed to parse demo user data:', e);
-        }
-      }
-    }
-  }, []);
-
-  // Firebase auth listener
-  useEffect(() => {
-    if (isDemoMode) return;
-
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      try {
-        if (!firebaseUser) {
-          if (user) {
-            setAuthChecked(true);
-            return;
-          }
-          console.log('[Dashboard] No session, redirecting to signin');
-          setLocation('/signin');
-          return;
-        }
-
-        setFirebaseUserId(firebaseUser.uid);
-        setAuthChecked(true);
-      } catch (error) {
-        console.error('[Dashboard] Auth error:', error);
-        if (user) {
-          setAuthChecked(true);
-          return;
-        }
-        setLocation('/signin');
-      }
-    });
-
-    return () => unsubscribe();
-  }, [setLocation, user, isDemoMode]);
-
-  // Handle logout
+  // Handle logout — navigate FIRST to prevent ProtectedRoute from intercepting
   const handleLogout = () => {
     setShowDropdown(false);
-    logout();
     setLocation("/");
+    logout();
   };
 
   // Derive display values
@@ -301,8 +257,8 @@ export default function Dashboard() {
     ? demoUser.projectedRefund 
     : (dashboardData?.projectedRefund || calculateSurplus(drivingScore, premiumAmount));
 
-  // Loading state
-  const isLoading = !authChecked || (!isDemoMode && dataLoading && !dashboardData);
+  // Loading state — rely on AuthContext loading, not a separate check
+  const isLoading = (!isDemoMode && !user) || (!isDemoMode && dataLoading && !dashboardData);
 
   if (isLoading) {
     return (

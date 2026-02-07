@@ -108,15 +108,62 @@ export default function Signup() {
         setError("Database is not available. Please try again later.");
         return;
       }
+
+      const now = new Date();
+      const nowISO = now.toISOString();
+
       await setDoc(doc(db, 'users', user.uid), {
         uid: user.uid,
         email: formData.email,
         fullName: formData.fullName,
         onboardingCompleted: false, // New users must complete onboarding
         onboardingComplete: false,  // Keep both fields for compatibility
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: nowISO,
+        updatedAt: nowISO,
       });
+
+      // Auto-create default policy with correct start/end dates
+      const policyStart = new Date(now);
+      const policyEnd = new Date(now);
+      policyEnd.setFullYear(policyEnd.getFullYear() + 1);
+
+      const policyNumber = `DRV-${now.getFullYear()}-${user.uid.slice(0, 6).toUpperCase()}`;
+
+      try {
+        await setDoc(doc(db, 'policies', `${user.uid}-policy`), {
+          policyId: `${user.uid}-policy`,
+          userId: user.uid,
+          policyNumber,
+          status: 'active',
+          coverageType: 'comprehensive_plus',
+          coverageDetails: {
+            liabilityLimitCents: 2000000000, // £20M
+            collisionDeductibleCents: 25000,  // £250
+            comprehensiveDeductibleCents: 35000, // £350
+            includesRoadside: true,
+            includesRental: true,
+          },
+          basePremiumCents: 184000, // £1,840 default
+          currentPremiumCents: 184000,
+          discountPercentage: 0,
+          effectiveDate: policyStart.toISOString(),
+          expirationDate: policyEnd.toISOString(),
+          renewalDate: policyEnd.toISOString(),
+          vehicle: {
+            vin: null,
+            make: '',
+            model: '',
+            year: now.getFullYear(),
+          },
+          createdAt: nowISO,
+          updatedAt: nowISO,
+          created_by: 'client-signup',
+        });
+        console.log('[Signup] Policy auto-created for user:', user.uid);
+      } catch (policyErr) {
+        // Non-blocking — user can still proceed without policy
+        console.error('[Signup] Policy auto-create failed:', policyErr);
+      }
 
       console.log('[Signup] Success, user created:', user.uid);
 

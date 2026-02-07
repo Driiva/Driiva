@@ -24,24 +24,22 @@ export const AuthHeader: React.FC<AuthHeaderProps> = ({
   const handleLogout = async () => {
     setIsLoggingOut(true);
     
+    // Navigate FIRST to prevent ProtectedRoute from intercepting
+    setLocation('/');
+    
     try {
       localStorage.removeItem('driiva-demo-mode');
       localStorage.removeItem('driiva-demo-user');
       localStorage.removeItem('driiva-auth-token');
-      
       sessionStorage.clear();
       
-      await signOut(auth);
-      
       setUser(null);
-      
-      setLocation('/');
+      await signOut(auth);
     } catch (error) {
       console.error('[AuthHeader] Logout error:', error);
       localStorage.clear();
       sessionStorage.clear();
       setUser(null);
-      setLocation('/');
     } finally {
       setIsLoggingOut(false);
     }

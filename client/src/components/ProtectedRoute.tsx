@@ -1,6 +1,5 @@
-import { useEffect, useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import { useLocation } from 'wouter';
-import { auth, isFirebaseConfigured } from '@/lib/firebase';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface ProtectedRouteProps {
@@ -14,13 +13,14 @@ interface ProtectedRouteProps {
  * =========================
  * Guards routes that require authentication.
  * 
- * PERFORMANCE FIX: Resolves synchronously from AuthContext.user when available.
- * No Firestore reads here — onboarding status is already on the user object.
- * Only shows a spinner during the initial AuthProvider bootstrap (loading=true).
+ * PERFORMANCE FIX (v2):
+ *   - useLayoutEffect for redirect → fires BEFORE browser paint, zero flicker
+ *   - Resolves synchronously from AuthContext.user (no Firestore reads)
+ *   - Demo mode is a fast localStorage check
  * 
  * Flow:
  *   1. If AuthContext is still loading → brief spinner
- *   2. Demo mode → allow access
+ *   2. Demo mode → allow access instantly
  *   3. AuthContext.user exists → check onboarding, redirect if needed
  *   4. No user → redirect to /signin
  */
@@ -32,16 +32,15 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { user, loading } = useAuth();
   const hasRedirected = useRef(false);
 
-  // Demo mode — instant pass-through
+  // Demo mode — instant pass-through (synchronous check)
   const isDemoMode = typeof window !== 'undefined' && localStorage.getItem('driiva-demo-mode') === 'true';
 
-  useEffect(() => {
-    // Don't redirect while AuthProvider is still bootstrapping
+  // useLayoutEffect fires synchronously after DOM mutation but BEFORE paint.
+  // This eliminates the flash of blank content that useEffect causes.
+  useLayoutEffect(() => {
     if (loading) return;
-    // Don't redirect more than once per mount
     if (hasRedirected.current) return;
-
-    if (isDemoMode) return; // demo users always pass
+    if (isDemoMode) return;
 
     if (!user) {
       hasRedirected.current = true;
@@ -49,7 +48,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       return;
     }
 
-    // Check onboarding (from context, no Firestore read needed)
     if (!skipOnboardingCheck && user.onboardingComplete !== true) {
       hasRedirected.current = true;
       setLocation('/quick-onboarding');
@@ -65,17 +63,16 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  // Not authenticated (and not demo) — render nothing (redirect in useEffect)
-  if (!isDemoMode && !user) {
-    return null;
-  }
+  // Demo mode → render immediately
+  if (isDemoMode) return <>{children}</>;
 
-  // Onboarding not completed — render nothing (redirect in useEffect)
-  if (!isDemoMode && !skipOnboardingCheck && user && user.onboardingComplete !== true) {
-    return null;
-  }
+  // Not authenticated → render nothing (redirect fires in useLayoutEffect)
+  if (!user) return null;
 
-  // All checks pass — render children immediately, no delay
+  // Onboarding not completed → render nothing (redirect fires in useLayoutEffect)
+  if (!skipOnboardingCheck && user.onboardingComplete !== true) return null;
+
+  // All checks pass → render children immediately
   return <>{children}</>;
 };
 
@@ -90,7 +87,7 @@ interface PublicOnlyRouteProps {
  * Redirects authenticated users away from auth pages (signin, signup).
  * Demo mode does NOT count — users should be able to create real accounts from demo.
  *
- * PERFORMANCE FIX: Synchronous resolution from AuthContext.
+ * PERFORMANCE FIX (v2): useLayoutEffect for zero-flicker redirects.
  */
 export const PublicOnlyRoute: React.FC<PublicOnlyRouteProps> = ({ 
   children, 
@@ -99,33 +96,24 @@ export const PublicOnlyRoute: React.FC<PublicOnlyRouteProps> = ({
   const [, setLocation] = useLocation();
   const { user, loading } = useAuth();
 
-  useEffect(() => {
+  const isDemoMode = typeof window !== 'undefined' && localStorage.getItem('driiva-demo-mode') === 'true';
+
+  useLayoutEffect(() => {
     if (loading) return;
-
-    // Demo mode should NOT block access to auth pages
-    const isDemoMode = localStorage.getItem('driiva-demo-mode') === 'true';
     if (isDemoMode) return;
-
     if (user) {
       setLocation(redirectTo);
     }
-  }, [loading, user, setLocation, redirectTo]);
+  }, [loading, user, setLocation, redirectTo, isDemoMode]);
 
   // While auth is loading, show content immediately (no spinner for public pages)
-  if (loading) {
-    return <>{children}</>;
-  }
+  if (loading) return <>{children}</>;
 
-  // Demo mode — always show auth pages
-  const isDemoMode = typeof window !== 'undefined' && localStorage.getItem('driiva-demo-mode') === 'true';
-  if (isDemoMode) {
-    return <>{children}</>;
-  }
+  // Demo mode — always show auth pages (so user can create real account)
+  if (isDemoMode) return <>{children}</>;
 
-  // Authenticated real user — render nothing (redirect happens in useEffect)
-  if (user) {
-    return null;
-  }
+  // Authenticated real user — render nothing (redirect fires in useLayoutEffect)
+  if (user) return null;
 
   return <>{children}</>;
 };
