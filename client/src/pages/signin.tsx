@@ -5,7 +5,7 @@ import { Eye, EyeOff, LogIn, Mail, Lock, ArrowLeft, AlertCircle } from "lucide-r
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import signinLogo from "@assets/ii_clear_1769111905071.png";
+import signinLogo from "@/assets/driiva-logo-CLEAR-FINAL.png";
 import { useParallax } from "@/hooks/useParallax";
 import { useAuth } from "../contexts/AuthContext";
 import { auth, db, isFirebaseConfigured, googleProvider } from "@/lib/firebase";

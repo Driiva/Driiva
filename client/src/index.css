@@ -1172,7 +1172,7 @@ body:has(.welcome-page-container) .animated-bg-container {
   left: 0;
   right: 0;
   bottom: 0;
-  background: 
+  background:
     radial-gradient(ellipse 120% 80% at 15% 20%, #9d1b30 0%, transparent 50%),
     radial-gradient(ellipse 100% 100% at 85% 80%, #6b46c1 0%, transparent 50%),
     radial-gradient(ellipse 80% 60% at 50% 50%, rgba(139, 92, 246, 0.4) 0%, transparent 60%),

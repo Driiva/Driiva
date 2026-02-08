@@ -11,7 +11,6 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { useParallax } from "@/hooks/useParallax";
 import { useToast } from "@/hooks/use-toast";
-import signinLogo from "@assets/ii_clear_1769111905071.png";
 
 /**
  * SIGNUP PAGE
@@ -215,7 +214,7 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col p-6 text-white">
+    <div className="min-h-screen flex flex-col p-6 text-white relative z-10">
       <div className="flex items-center justify-between mb-8">
         <motion.button
           onClick={handleBack}
