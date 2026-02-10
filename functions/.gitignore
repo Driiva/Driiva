@@ -1,13 +1,13 @@
-# Compiled JavaScript
-lib/
+# Compiled JavaScript (top-level lib/ output from tsc)
+/lib/
 
 # Node modules
 node_modules/
 
-# Local env files
+# Local env files (keep .env.example for documentation)
 *.local
 .env
-.env.*
+!.env.example
 
 # Debug logs
 firebase-debug.log

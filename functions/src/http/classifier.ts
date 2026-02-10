@@ -396,10 +396,11 @@ export const batchClassifyTrips = functions.https.onCall(async (data, context) =
 
   return {
     processed: results.length,
-    results: results.map((r, i) => ({
-      tripId: tripsToProcess[i],
-      ...(r.status === 'fulfilled' ? r.value : { status: 'error', error: String(r.reason) }),
-    })),
+    results: results.map((r, i) => (
+      r.status === 'fulfilled'
+        ? r.value
+        : { tripId: tripsToProcess[i], status: 'error' as const, error: String(r.reason) }
+    )),
   };
 });
 

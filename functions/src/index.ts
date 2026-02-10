@@ -67,3 +67,6 @@ export { exportUserData, deleteUserAccount } from './http/gdpr';
 
 // AI Trip Analysis (Claude Sonnet 4 integration)
 export { analyzeTripAI, getAIInsights } from './http/aiAnalysis';
+
+// Insurance (Root Platform integration)
+export { getInsuranceQuote, acceptInsuranceQuote, syncInsurancePolicy } from './http/insurance';

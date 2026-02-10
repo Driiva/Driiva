@@ -15,6 +15,7 @@ import {
   TripAIInsight,
 } from '@/lib/firestore';
 import { isFirebaseConfigured } from '@/lib/firebase';
+import { useFeatureFlags } from './useFeatureFlags';
 
 /** Cache key factory */
 const aiInsightsKey = (tripId: string) => ['ai-insights', tripId] as const;
@@ -57,6 +58,7 @@ export function useTripAIInsights({
   enabled = true,
 }: UseTripAIInsightsOptions): UseTripAIInsightsResult {
   const queryClient = useQueryClient();
+  const { aiInsights: aiEnabled } = useFeatureFlags();
 
   const {
     data: insights = null,
@@ -69,7 +71,7 @@ export function useTripAIInsights({
       if (!tripId) return null;
       return fetchTripAIInsights(tripId);
     },
-    enabled: enabled && !!tripId && isFirebaseConfigured,
+    enabled: enabled && !!tripId && isFirebaseConfigured && aiEnabled,
     staleTime: 5 * 60 * 1000, // 5 minutes — insights don't change often
     gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
     retry: 1,

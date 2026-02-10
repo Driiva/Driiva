@@ -949,6 +949,82 @@ export async function fetchTripAIInsights(tripId: string): Promise<TripAIInsight
 }
 
 // ============================================================================
+// INSURANCE (Root Platform)
+// ============================================================================
+
+/** Response from getInsuranceQuote Cloud Function */
+export interface InsuranceQuoteResponse {
+  quoteId: string;
+  premiumCents: number;
+  billingAmountCents: number;
+  expiresAt: string;
+  coverageType: string;
+  drivingScore: number;
+  discountPercentage: number;
+}
+
+/** Response from acceptInsuranceQuote Cloud Function */
+export interface InsurancePolicyResponse {
+  policyId: string;
+  policyNumber: string;
+  status: string;
+  monthlyPremiumCents: number;
+  startDate: string;
+  endDate: string;
+}
+
+/**
+ * Request an insurance quote from Root Platform via Cloud Function.
+ */
+export async function getInsuranceQuote(
+  coverageType: 'basic' | 'standard' | 'premium' = 'standard'
+): Promise<InsuranceQuoteResponse> {
+  assertFirestore();
+  const { getFunctions, httpsCallable } = await import('firebase/functions');
+  const functions = getFunctions();
+  const fn = httpsCallable<
+    { coverageType: string },
+    InsuranceQuoteResponse
+  >(functions, 'getInsuranceQuote');
+  const result = await fn({ coverageType });
+  return result.data;
+}
+
+/**
+ * Accept a quote and bind a policy via Root Platform.
+ */
+export async function acceptInsuranceQuote(
+  quoteId: string
+): Promise<InsurancePolicyResponse> {
+  assertFirestore();
+  const { getFunctions, httpsCallable } = await import('firebase/functions');
+  const functions = getFunctions();
+  const fn = httpsCallable<
+    { quoteId: string },
+    InsurancePolicyResponse
+  >(functions, 'acceptInsuranceQuote');
+  const result = await fn({ quoteId });
+  return result.data;
+}
+
+/**
+ * Sync a policy's status with Root Platform.
+ */
+export async function syncInsurancePolicy(
+  policyId: string
+): Promise<InsurancePolicyResponse> {
+  assertFirestore();
+  const { getFunctions, httpsCallable } = await import('firebase/functions');
+  const functions = getFunctions();
+  const fn = httpsCallable<
+    { policyId: string },
+    InsurancePolicyResponse
+  >(functions, 'syncInsurancePolicy');
+  const result = await fn({ policyId });
+  return result.data;
+}
+
+// ============================================================================
 // EXPORTS
 // ============================================================================
 

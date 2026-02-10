@@ -48,11 +48,24 @@ function classifyCompletedTripAsync(tripId: string, trip: TripDocument): void {
 }
 
 /**
+ * Check whether AI insights feature flag is enabled.
+ *
+ * Set via environment variable FEATURE_AI_INSIGHTS (default: "true").
+ * Disable by setting it to "false" in Cloud Functions config / .env.
+ */
+function isAIInsightsEnabled(): boolean {
+  const flag = process.env.FEATURE_AI_INSIGHTS ?? 'true';
+  return flag.toLowerCase() === 'true';
+}
+
+/**
  * Async wrapper for AI trip analysis
  * 
  * Calls Claude Sonnet 4 to generate advanced driving insights.
  * Non-blocking: the driver sees the algorithmic score immediately,
  * and AI insights are layered on asynchronously (typically < 5 s).
+ *
+ * Gated by the FEATURE_AI_INSIGHTS environment variable.
  */
 function analyzeCompletedTripAsync(
   tripId: string,
@@ -60,6 +73,11 @@ function analyzeCompletedTripAsync(
   points: TripPoint[],
   profile: DrivingProfileData,
 ): void {
+  if (!isAIInsightsEnabled()) {
+    functions.logger.info(`[AI] Feature flag disabled, skipping analysis for trip ${tripId}`);
+    return;
+  }
+
   analyzeTrip(tripId, trip, points, profile)
     .then(result => {
       if (result) {

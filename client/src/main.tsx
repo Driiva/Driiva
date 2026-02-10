@@ -2,58 +2,35 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import './index.css';
+import { initSentry, captureError, SentryErrorBoundary } from './lib/sentry';
 
-// Fixed: Enhanced Error Boundary with better error handling
-class ErrorBoundary extends React.Component<
-  { children: React.ReactNode },
-  { hasError: boolean; error?: Error }
-> {
-  constructor(props: { children: React.ReactNode }) {
-    super(props);
-    this.state = { hasError: false };
-  }
+// Initialize Sentry BEFORE rendering (captures early errors)
+initSentry();
 
-  static getDerivedStateFromError(error: Error) {
-    console.error('Error Boundary caught error:', error);
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('App Error Details:', {
-      error: error.message,
-      stack: error.stack,
-      componentStack: errorInfo.componentStack
-    });
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 flex items-center justify-center">
-          <div className="glass-morphism p-8 rounded-2xl max-w-md mx-4 text-center">
-            <h1 className="text-2xl font-bold text-white mb-4">Something went wrong</h1>
-            <p className="text-gray-300 mb-6">
-              {this.state.error?.message || 'An unexpected error occurred'}
-            </p>
-            <button
-              onClick={() => {
-                this.setState({ hasError: false, error: undefined });
-                window.location.reload();
-              }}
-              className="px-6 py-3 bg-[#06B6D4] hover:bg-[#0891B2] text-white rounded-lg font-medium transition-colors"
-            >
-              Reload App
-            </button>
-          </div>
-        </div>
-      );
-    }
-
-    return this.props.children;
-  }
+// Fallback error boundary UI
+function ErrorFallback({ error, resetError }: { error: Error; resetError: () => void }) {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 flex items-center justify-center">
+      <div className="glass-morphism p-8 rounded-2xl max-w-md mx-4 text-center">
+        <h1 className="text-2xl font-bold text-white mb-4">Something went wrong</h1>
+        <p className="text-gray-300 mb-6">
+          {error?.message || 'An unexpected error occurred'}
+        </p>
+        <button
+          onClick={() => {
+            resetError();
+            window.location.reload();
+          }}
+          className="px-6 py-3 bg-[#06B6D4] hover:bg-[#0891B2] text-white rounded-lg font-medium transition-colors"
+        >
+          Reload App
+        </button>
+      </div>
+    </div>
+  );
 }
 
-// Fixed: Initialize app with proper error handling
+// Initialize app with proper error handling
 const container = document.getElementById('root');
 if (!container) {
   throw new Error('Root element not found');
@@ -63,8 +40,15 @@ const root = createRoot(container);
 
 root.render(
   <React.StrictMode>
-    <ErrorBoundary>
+    <SentryErrorBoundary
+      fallback={({ error, resetError }) => (
+        <ErrorFallback error={error} resetError={resetError} />
+      )}
+      onError={(error, componentStack) => {
+        captureError(error, { componentStack });
+      }}
+    >
       <App />
-    </ErrorBoundary>
+    </SentryErrorBoundary>
   </React.StrictMode>
 );

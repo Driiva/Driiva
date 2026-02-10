@@ -68,7 +68,7 @@ export const onPolicyWrite = functions.firestore
         functions.logger.info(`Synced active policy to user ${policy.userId}`);
       } 
       // If policy was active and is now inactive, clear from user
-      else if (beforeData?.status === 'active' && policy.status !== 'active') {
+      else if (beforeData?.status === 'active') {
         // Check if user's activePolicy is this one
         const userData = userDoc.data();
         if (userData?.activePolicy?.policyId === policyId) {

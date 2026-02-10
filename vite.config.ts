@@ -23,6 +23,9 @@ export default defineConfig({
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
     },
   },
+  define: {
+    __APP_VERSION__: JSON.stringify(process.env.npm_package_version || '1.0.0'),
+  },
   root: path.resolve(import.meta.dirname, "client"),
   // envDir must point to the repo root where .env lives.
   // Without this, Vite defaults envDir to root ("client/") and misses the .env file.
