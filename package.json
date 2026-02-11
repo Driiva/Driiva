@@ -13,7 +13,10 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:auth": "node test-auth.js",
-    "create:user": "node create-user.js"
+    "create:user": "node create-user.js",
+    "create-firebase-test-users": "tsx scripts/create-firebase-test-users.ts",
+    "verify:db": "tsx scripts/verify-db.ts",
+    "db:schema": "tsx scripts/run-schema.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
@@ -72,6 +75,7 @@
     "express-rate-limit": "^8.0.1",
     "express-session": "^1.18.1",
     "firebase": "^12.8.0",
+    "firebase-admin": "^12.0.0",
     "framer-motion": "^11.18.2",
     "input-otp": "^1.4.2",
     "leaflet": "^1.9.4",
