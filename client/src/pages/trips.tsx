@@ -1,14 +1,84 @@
+/**
+ * TRIPS PAGE
+ * ==========
+ * Shows user's trip history with proper loading, empty, error, and data states.
+ * 
+ * Features:
+ *   - Real-time Firestore data for authenticated users
+ *   - Demo mode support with mock trip data
+ *   - Graceful empty state for new users
+ *   - Consistent glassmorphic card design (dashboard-glass-card)
+ */
+
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useLocation } from "wouter";
 import { PageWrapper } from '../components/PageWrapper';
 import { BottomNav } from '../components/BottomNav';
-import { GlassCard } from "@/components/GlassCard";
-import { Map, Bell, ChevronDown, Loader2 } from "lucide-react";
-import { container, item, timing, microInteractions } from "@/lib/animations";
+import { Map, Car, AlertCircle, Loader2, Play, Navigation, RefreshCw } from "lucide-react";
 import { useAuth } from '../contexts/AuthContext';
 import { getUserTrips } from '@/lib/firestore';
 import type { TripDocument } from '../../../shared/firestore-types';
+
+// ============================================================================
+// DEMO DATA
+// ============================================================================
+
+interface DemoTrip {
+  tripId: string;
+  from: string;
+  to: string;
+  score: number;
+  distance: number;
+  date: string;
+  durationMinutes: number;
+  hardBrakingCount: number;
+  hardAccelerationCount: number;
+  speedingSeconds: number;
+}
+
+const DEMO_TRIPS: DemoTrip[] = [
+  {
+    tripId: 'demo-trip-1',
+    from: 'Home',
+    to: 'Office',
+    score: 92,
+    distance: 12.3,
+    date: 'Mon, 10 Feb',
+    durationMinutes: 25,
+    hardBrakingCount: 1,
+    hardAccelerationCount: 0,
+    speedingSeconds: 0,
+  },
+  {
+    tripId: 'demo-trip-2',
+    from: 'Office',
+    to: 'Grocery Store',
+    score: 88,
+    distance: 5.7,
+    date: 'Mon, 10 Feb',
+    durationMinutes: 14,
+    hardBrakingCount: 2,
+    hardAccelerationCount: 1,
+    speedingSeconds: 5,
+  },
+  {
+    tripId: 'demo-trip-3',
+    from: 'Grocery Store',
+    to: 'Home',
+    score: 95,
+    distance: 6.1,
+    date: 'Sun, 9 Feb',
+    durationMinutes: 16,
+    hardBrakingCount: 0,
+    hardAccelerationCount: 0,
+    speedingSeconds: 0,
+  },
+];
+
+// ============================================================================
+// HELPERS
+// ============================================================================
 
 /** Format a TripLocation label for display */
 function locationLabel(loc: TripDocument['startLocation']): string {
@@ -22,30 +92,34 @@ function locationLabel(loc: TripDocument['startLocation']): string {
   return 'Unknown';
 }
 
+function getScoreColor(score: number): string {
+  if (score >= 90) return 'text-emerald-400';
+  if (score >= 80) return 'text-blue-400';
+  return 'text-amber-400';
+}
+
+// ============================================================================
+// COMPONENT
+// ============================================================================
+
 export default function Trips() {
   const [, setLocation] = useLocation();
-  const { user, logout } = useAuth();
-  const [showDropdown, setShowDropdown] = useState(false);
+  const { user } = useAuth();
   const [trips, setTrips] = useState<TripDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const policyNumber = "DRV-2025-000001";
 
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return "Good morning";
-    if (hour < 17) return "Good afternoon";
-    return "Good evening";
-  };
+  // Demo mode detection
+  const isDemoMode = typeof window !== 'undefined' && localStorage.getItem('driiva-demo-mode') === 'true';
 
-  const handleLogout = () => {
-    setShowDropdown(false);
-    setLocation("/");
-    logout();
-  };
-
-  // Fetch trips from Firestore
+  // Fetch trips from Firestore (or load demo data)
   useEffect(() => {
+    if (isDemoMode) {
+      // Demo mode — skip Firestore, no loading spinner
+      setLoading(false);
+      return;
+    }
+
     if (!user?.id) {
       setLoading(false);
       return;
@@ -60,7 +134,7 @@ export default function Trips() {
         const result = await getUserTrips({
           userId: user!.id,
           status: 'completed',
-          limit: 20,
+          limit: 50,
         });
         if (!cancelled) {
           setTrips(result);
@@ -79,7 +153,24 @@ export default function Trips() {
 
     fetchTrips();
     return () => { cancelled = true; };
-  }, [user?.id]);
+  }, [user?.id, isDemoMode]);
+
+  const handleRetry = () => {
+    setError(null);
+    setLoading(true);
+    // Re-trigger useEffect by updating a dependency
+    window.location.reload();
+  };
+
+  // Determine what to render
+  const hasRealTrips = !isDemoMode && trips.length > 0;
+  const hasDemoTrips = isDemoMode && DEMO_TRIPS.length > 0;
+  const isEmpty = !loading && !error && !hasRealTrips && !hasDemoTrips;
+
+  const totalTrips = isDemoMode ? DEMO_TRIPS.length : trips.length;
+  const totalMiles = isDemoMode 
+    ? DEMO_TRIPS.reduce((sum, t) => sum + t.distance, 0).toFixed(1)
+    : trips.reduce((sum, t) => sum + (t.distanceMeters / 1609.34), 0).toFixed(1);
 
   return (
     <PageWrapper>
@@ -91,121 +182,153 @@ export default function Trips() {
           transition={{ duration: 0.5 }}
           className="flex items-start justify-between mb-6"
         >
-          {/* Left side - Logo and greeting */}
           <div className="flex items-start gap-3">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/30 to-purple-700/30 border border-white/10 flex items-center justify-center overflow-hidden">
               <img src="/logo.png" alt="Driiva" className="w-full h-full object-cover" />
             </div>
             <div style={{ marginTop: '2px' }}>
               <h1 className="text-xl font-bold text-white">Driiva</h1>
-              <p className="text-sm text-white/50">{getGreeting()}, {user?.name || 'Driver'}</p>
-            </div>
-          </div>
-
-          {/* Right side - Bell and avatar with dropdown */}
-          <div className="flex items-center gap-3 relative">
-            <button className="p-2 rounded-full hover:bg-white/5 transition-colors">
-              <Bell className="w-5 h-5 text-white/60" />
-            </button>
-            
-            <button 
-              onClick={() => setShowDropdown(!showDropdown)}
-              className="flex items-center gap-1"
-            >
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center">
-                <span className="text-white font-bold text-lg italic">d</span>
-              </div>
-              <ChevronDown className={`w-4 h-4 text-white/50 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
-            </button>
-
-            {/* Dropdown Menu */}
-            <AnimatePresence>
-              {showDropdown && (
-                <>
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    onClick={() => setShowDropdown(false)}
-                    className="fixed inset-0 z-40"
-                  />
-                  <motion.div
-                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute top-12 right-0 w-56 z-50 backdrop-blur-2xl bg-[#1a1a2e]/95 border border-white/10 rounded-xl shadow-2xl overflow-hidden"
-                  >
-                    <div className="p-4">
-                      <p className="text-xs text-white/50 mb-1">Policy No:</p>
-                      <p className="text-sm font-medium text-white">{policyNumber}</p>
-                    </div>
-                    <div className="border-t border-white/10">
-                      <button
-                        onClick={handleLogout}
-                        className="w-full px-4 py-3 text-left text-sm text-red-400 hover:bg-white/5 transition-colors"
-                      >
-                        Logout
-                      </button>
-                    </div>
-                  </motion.div>
-                </>
+              <p className="text-sm text-white/50">Your trip history</p>
+              {isDemoMode && (
+                <span className="inline-block mt-1 px-2 py-0.5 text-xs bg-emerald-500/20 text-emerald-400 rounded-full border border-emerald-500/30">
+                  Demo Mode
+                </span>
               )}
-            </AnimatePresence>
+            </div>
           </div>
         </motion.div>
 
         <h2 className="text-2xl font-bold text-white mb-2">Recent Trips</h2>
         
-        <motion.div 
-          className="mb-6"
-          variants={item}
-          initial="hidden"
-          animate="show"
-        >
-          <p className="text-sm text-white/50">
-            {loading ? 'Loading...' : `${trips.length} trip${trips.length !== 1 ? 's' : ''}`}
-          </p>
-        </motion.div>
+        {!loading && (
+          <motion.div 
+            className="mb-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <p className="text-sm text-white/50">
+              {totalTrips} trip{totalTrips !== 1 ? 's' : ''}{Number(totalMiles) > 0 ? ` • ${totalMiles} mi total` : ''}
+            </p>
+          </motion.div>
+        )}
 
         {/* Loading state */}
         {loading && (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-8 h-8 text-white/40 animate-spin" />
+          <div className="dashboard-glass-card flex flex-col items-center justify-center py-16">
+            <Loader2 className="w-8 h-8 text-white/40 animate-spin mb-4" />
+            <p className="text-white/50 text-sm">Loading your trips...</p>
           </div>
         )}
 
         {/* Error state */}
         {error && !loading && (
-          <GlassCard className="p-6 text-center">
-            <p className="text-red-300 text-sm mb-3">{error}</p>
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="dashboard-glass-card p-6 text-center"
+          >
+            <AlertCircle className="w-10 h-10 text-red-400/60 mx-auto mb-3" />
+            <p className="text-red-300 text-sm mb-4">{error}</p>
             <button
-              onClick={() => window.location.reload()}
-              className="text-sm text-cyan-400 hover:text-cyan-300"
+              onClick={handleRetry}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 border border-white/20 text-white/70 text-sm hover:bg-white/15 transition-all"
             >
+              <RefreshCw className="w-4 h-4" />
               Retry
             </button>
-          </GlassCard>
+          </motion.div>
         )}
 
-        {/* Empty state */}
-        {!loading && !error && trips.length === 0 && (
-          <GlassCard className="p-8 text-center">
-            <Map className="w-10 h-10 text-white/20 mx-auto mb-3" />
-            <h3 className="text-white/70 font-medium mb-1">No trips yet</h3>
-            <p className="text-white/40 text-sm">
-              Start recording a trip to see your driving history here.
+        {/* Empty state — new user with no trips */}
+        {isEmpty && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="dashboard-glass-card p-8 text-center"
+          >
+            <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-4">
+              <Car className="w-8 h-8 text-white/40" />
+            </div>
+            <h3 className="text-white/80 font-semibold text-lg mb-2">No trips yet</h3>
+            <p className="text-white/40 text-sm mb-6">
+              Start your first trip to see your driving history and scores here.
             </p>
-          </GlassCard>
+            <button
+              onClick={() => setLocation('/trip-recording')}
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 text-emerald-300 font-medium hover:from-emerald-500/30 hover:to-teal-500/30 transition-all"
+            >
+              <Play className="w-4 h-4" />
+              Start Your First Trip
+              <Navigation className="w-4 h-4" />
+            </button>
+          </motion.div>
         )}
 
-        {/* Trips list */}
-        {!loading && !error && trips.length > 0 && (
+        {/* Demo trips list */}
+        {isDemoMode && !loading && !error && (
           <motion.div 
             className="space-y-3"
-            variants={container}
-            initial="hidden"
-            animate="show"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.1 }}
+          >
+            {DEMO_TRIPS.map((trip, index) => (
+              <motion.div
+                key={trip.tripId}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.05 * index, duration: 0.4 }}
+                className="dashboard-glass-card p-5"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+                      <Map className="w-5 h-5 text-white/70" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-white text-sm">
+                        {trip.from} → {trip.to}
+                      </h3>
+                      <p className="text-xs text-white/50 mt-0.5">
+                        {trip.date} • {trip.durationMinutes} min
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className={`text-lg font-semibold ${getScoreColor(trip.score)}`}>
+                      {trip.score}
+                    </div>
+                    <div className="text-xs text-white/50">{trip.distance} mi</div>
+                  </div>
+                </div>
+                
+                <div className="mt-4 pt-3 border-t border-white/5 grid grid-cols-3 gap-3">
+                  <div className="text-center">
+                    <div className="text-xs text-white/40 mb-1">Braking</div>
+                    <div className="text-sm font-medium text-white/80">{trip.hardBrakingCount}</div>
+                  </div>
+                  <div className="text-center border-x border-white/5">
+                    <div className="text-xs text-white/40 mb-1">Acceleration</div>
+                    <div className="text-sm font-medium text-white/80">{trip.hardAccelerationCount}</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-xs text-white/40 mb-1">Speed</div>
+                    <div className="text-sm font-medium text-white/80">{trip.speedingSeconds}s</div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+
+        {/* Real Firestore trips list */}
+        {hasRealTrips && !loading && !error && (
+          <motion.div 
+            className="space-y-3"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.1 }}
           >
             {trips.map((trip, index) => {
               const distanceMiles = (trip.distanceMeters / 1609.34).toFixed(1);
@@ -217,65 +340,73 @@ export default function Trips() {
               return (
                 <motion.div
                   key={trip.tripId}
-                  variants={item}
-                  whileHover={microInteractions.hoverShift}
-                  whileTap={microInteractions.tap}
-                  transition={{ duration: timing.interaction }}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.05 * index, duration: 0.4 }}
+                  className="dashboard-glass-card p-5"
                 >
-                  <GlassCard className="p-5">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center space-x-3">
-                        <motion.div 
-                          className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center"
-                          whileHover={{ rotate: 5, scale: 1.05 }}
-                          transition={{ duration: timing.interaction }}
-                        >
-                          <Map className="w-5 h-5 text-white/70" />
-                        </motion.div>
-                        <div>
-                          <h3 className="font-semibold text-white text-sm">
-                            {startLabel} → {endLabel}
-                          </h3>
-                          <p className="text-xs text-white/50 mt-0.5">
-                            {tripDate.toLocaleDateString('en-GB', { 
-                              weekday: 'short', 
-                              day: 'numeric', 
-                              month: 'short' 
-                            })} • {durationMinutes} min
-                          </p>
-                        </div>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center">
+                        <Map className="w-5 h-5 text-white/70" />
                       </div>
-                      <div className="text-right">
-                        <motion.div 
-                          className={`text-lg font-semibold ${trip.score >= 90 ? 'text-emerald-400' : 'text-white'}`}
-                          initial={{ scale: 0.8, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          transition={{ delay: timing.interaction + index * 0.08, duration: timing.cardEntrance }}
-                        >
-                          {trip.score}
-                        </motion.div>
-                        <div className="text-xs text-white/50">{distanceMiles} mi</div>
+                      <div>
+                        <h3 className="font-semibold text-white text-sm">
+                          {startLabel} → {endLabel}
+                        </h3>
+                        <p className="text-xs text-white/50 mt-0.5">
+                          {tripDate.toLocaleDateString('en-GB', { 
+                            weekday: 'short', 
+                            day: 'numeric', 
+                            month: 'short' 
+                          })} • {durationMinutes} min
+                        </p>
                       </div>
                     </div>
-                    
-                    <div className="mt-4 pt-3 border-t border-white/5 grid grid-cols-3 gap-3">
-                      <div className="text-center">
-                        <div className="text-xs text-white/40 mb-1">Braking</div>
-                        <div className="text-sm font-medium text-white/80">{trip.events.hardBrakingCount}</div>
+                    <div className="text-right">
+                      <div className={`text-lg font-semibold ${getScoreColor(trip.score)}`}>
+                        {trip.score}
                       </div>
-                      <div className="text-center border-x border-white/5">
-                        <div className="text-xs text-white/40 mb-1">Acceleration</div>
-                        <div className="text-sm font-medium text-white/80">{trip.events.hardAccelerationCount}</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-xs text-white/40 mb-1">Speed</div>
-                        <div className="text-sm font-medium text-white/80">{trip.events.speedingSeconds}s</div>
-                      </div>
+                      <div className="text-xs text-white/50">{distanceMiles} mi</div>
                     </div>
-                  </GlassCard>
+                  </div>
+                  
+                  <div className="mt-4 pt-3 border-t border-white/5 grid grid-cols-3 gap-3">
+                    <div className="text-center">
+                      <div className="text-xs text-white/40 mb-1">Braking</div>
+                      <div className="text-sm font-medium text-white/80">{trip.events.hardBrakingCount}</div>
+                    </div>
+                    <div className="text-center border-x border-white/5">
+                      <div className="text-xs text-white/40 mb-1">Acceleration</div>
+                      <div className="text-sm font-medium text-white/80">{trip.events.hardAccelerationCount}</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xs text-white/40 mb-1">Speed</div>
+                      <div className="text-sm font-medium text-white/80">{trip.events.speedingSeconds}s</div>
+                    </div>
+                  </div>
                 </motion.div>
               );
             })}
+          </motion.div>
+        )}
+
+        {/* Start Trip Button — always visible when not loading/error */}
+        {!loading && !error && !isEmpty && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+            className="mt-6"
+          >
+            <button
+              onClick={() => setLocation('/trip-recording')}
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 text-emerald-300 font-medium hover:from-emerald-500/30 hover:to-teal-500/30 transition-all flex items-center justify-center gap-2"
+            >
+              <Play className="w-4 h-4" />
+              Start New Trip
+              <Navigation className="w-4 h-4" />
+            </button>
           </motion.div>
         )}
       </div>

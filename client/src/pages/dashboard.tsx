@@ -11,7 +11,7 @@
  *   - Demo mode support for testing
  */
 
-import { useState, lazy, Suspense } from 'react';
+import { useState, lazy, Suspense, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'wouter';
 import { 
@@ -26,6 +26,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import MapLoader from '../components/MapLoader';
 import { useDashboardData, DashboardData } from '@/hooks/useDashboardData';
 import { useCommunityData } from '@/hooks/useCommunityData';
+import { useBetaEstimate } from '@/hooks/useBetaEstimate';
+import { BetaEstimateCard } from '@/components/BetaEstimateCard';
 
 const LeafletMap = lazy(() => import('../components/LeafletMap'));
 
@@ -159,6 +161,10 @@ function calculateSurplus(score: number, premium: number): number {
 export default function Dashboard() {
   const [, setLocation] = useLocation();
   const { user, logout } = useAuth();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
   
   // Demo mode — read once on mount
   const [demoUser, setDemoUser] = useState<DemoUser | null>(() => {
@@ -190,6 +196,9 @@ export default function Dashboard() {
     userShare,
     leaderboard,
   } = useCommunityData(firebaseUserId);
+
+  // Beta estimate (premium + refund)
+  const { estimate: betaEstimate, loading: betaEstimateLoading, error: betaEstimateError, refresh: refreshBetaEstimate } = useBetaEstimate(firebaseUserId);
 
   // Handle logout — navigate FIRST to prevent ProtectedRoute from intercepting
   const handleLogout = () => {
@@ -445,6 +454,22 @@ export default function Dashboard() {
             </div>
           )}
         </motion.div>
+
+        {/* Beta Estimate Card (non-binding premium + refund) */}
+        {!isDemoMode && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.12, duration: 0.5 }}
+          >
+            <BetaEstimateCard
+              estimate={betaEstimate}
+              loading={betaEstimateLoading}
+              error={betaEstimateError}
+              onRefresh={refreshBetaEstimate}
+            />
+          </motion.div>
+        )}
 
         {/* GPS Map Card */}
         <motion.div

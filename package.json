@@ -16,7 +16,9 @@
     "create:user": "node create-user.js",
     "create-firebase-test-users": "tsx scripts/create-firebase-test-users.ts",
     "verify:db": "tsx scripts/verify-db.ts",
-    "db:schema": "tsx scripts/run-schema.ts"
+    "db:schema": "tsx scripts/run-schema.ts",
+    "load-test": "tsx scripts/load-test.ts",
+    "test:root-api": "tsx scripts/test-root-api.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",

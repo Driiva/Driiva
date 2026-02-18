@@ -61,12 +61,12 @@ export default function Welcome() {
 
   return (
     <div className="relative min-h-screen overflow-hidden">
-      <div className="hero-orb-container">
+      {/* Floating orbs – behind content, on top of gradient background */}
+      <div className="hero-orb-container hero-orb-container-welcome" aria-hidden>
         <div className="hero-orb hero-orb-1" />
         <div className="hero-orb hero-orb-2" />
         <div className="hero-orb hero-orb-3" />
       </div>
-      
       <div className="relative z-10 max-w-md mx-auto px-4 pt-16 min-h-screen flex flex-col text-white">
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -192,29 +192,29 @@ export default function Welcome() {
 
       {/* Fixed Footer Navigation */}
       <footer className="fixed bottom-0 left-0 right-0 z-50 pb-safe border-0 border-none shadow-none outline-none bg-transparent">
-        <div className="relative flex items-center justify-center gap-6 py-3 px-4">
+        <div className="relative flex items-center justify-center gap-2 py-2.5 px-4">
           <button 
             onClick={() => setLocation('/privacy')} 
-            className="text-white/60 hover:text-white text-sm transition"
+            className="text-white/60 hover:text-white text-xs transition"
           >
             Policy
           </button>
           <span className="text-white/20">|</span>
           <button 
             onClick={() => setLocation('/support')} 
-            className="text-white/60 hover:text-white text-sm transition"
+            className="text-white/60 hover:text-white text-xs transition"
           >
             FAQs
           </button>
           <span className="text-white/20">|</span>
           <button 
-            onClick={() => setLocation('/settings')} 
-            className="text-white/60 hover:text-white text-sm transition"
+            onClick={() => setLocation('/terms')} 
+            className="text-white/60 hover:text-white text-xs transition"
           >
-            Settings
+            Terms
           </button>
           <span 
-            className="absolute right-4 text-white/40 text-xs italic"
+            className="absolute right-3 bottom-1 text-white/35 text-[10px] italic"
             style={{ fontFamily: 'Inter, sans-serif' }}
           >
             driiva © 2026

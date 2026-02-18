@@ -2,9 +2,9 @@ import { useLocation, Link } from 'wouter';
 import { Home, Map, TrendingUp, User } from 'lucide-react';
 
 const navItems = [
-  { icon: Home, label: 'Home', path: '/home' },
+  { icon: Home, label: 'Home', path: '/dashboard' },
   { icon: Map, label: 'Trips', path: '/trips' },
-  { icon: TrendingUp, label: 'Dashboard', path: '/dashboard' },
+  { icon: TrendingUp, label: 'Rewards', path: '/rewards' },
   { icon: User, label: 'Profile', path: '/profile' },
 ] as const;
 

@@ -1,3 +1,16 @@
+/**
+ * API route registration. All /api/* routes are protected except:
+ *
+ * PUBLIC (no auth): POST /api/auth/login, POST /api/auth/register, POST /api/auth/firebase,
+ *   WebAuthn endpoints, GET /api/community-pool, GET /api/leaderboard, GET /api/achievements (list).
+ *
+ * PROTECTED (requireAuth): /api/profile/me, /api/auth/check, POST /api/trips, POST /api/incidents,
+ *   POST /api/simulate-refund, POST /api/ask. Routes with :userId also use requireResourceOwner
+ *   so User A cannot access User B's data (dashboard, trips, scores, insights, achievements, GDPR).
+ *
+ * ADMIN (requireAuth + requireAdmin): PUT /api/community-pool. Rate limited via poolModificationLimiter.
+ * GDPR delete is rate limited via gdprDeleteLimiter.
+ */
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
@@ -10,8 +23,78 @@ import { z } from "zod";
 import { authService } from "./auth";
 import { webauthnService } from "./webauthn";
 import { authLimiter, tripDataLimiter } from "./middleware/security";
+import { gdprDeleteLimiter, poolModificationLimiter } from "./middleware/rateLimiter";
+import {
+  verifyFirebaseAuth,
+  requireAuth,
+  requireResourceOwner,
+  requireAdmin,
+  type AuthRequest,
+} from "./middleware/auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Verify Firebase JWT on all requests; sets req.auth { uid, email, userId } from token only (never from headers)
+  app.use(verifyFirebaseAuth);
+
+  // -------------------------------------------------------------------------
+  // PUBLIC ROUTES (no auth) — login, register, webauthn, read-only leaderboard/achievements/community-pool
+  // -------------------------------------------------------------------------
+
+  // -------------------------------------------------------------------------
+  // Profile API (protected: Firebase token required; identity from token only)
+  // -------------------------------------------------------------------------
+  app.get("/api/profile/me", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const uid = req.auth!.uid;
+      const email = req.auth!.email ?? "";
+      let profile = await storage.getUserByFirebaseUid(uid);
+      if (!profile && email) {
+        profile = await storage.getOrCreateUserByFirebase(uid, email, undefined);
+      }
+      if (!profile) {
+        return res.status(404).json({ message: "Profile not found. Sign up first." });
+      }
+      const { password: _, ...safe } = profile;
+      res.json({
+        id: String(profile.id),
+        firebaseUid: profile.firebaseUid,
+        email: profile.email,
+        name: profile.displayName ?? profile.firstName ?? profile.email?.split("@")[0] ?? "User",
+        onboardingComplete: profile.onboardingComplete === true,
+      });
+    } catch (error: unknown) {
+      console.error("GET /api/profile/me error:", error);
+      res.status(500).json({ message: "Error fetching profile" });
+    }
+  });
+
+  app.patch("/api/profile/me", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const uid = req.auth!.uid;
+      const user = await storage.getUserByFirebaseUid(uid);
+      if (!user) {
+        return res.status(404).json({ message: "Profile not found. Complete signup first." });
+      }
+      const { onboardingComplete } = req.body as { onboardingComplete?: boolean };
+      if (typeof onboardingComplete !== "boolean") {
+        return res.status(400).json({ message: "onboardingComplete must be a boolean" });
+      }
+      const updated = await storage.updateUser(user.id, { onboardingComplete });
+      if (!updated) {
+        return res.status(500).json({ message: "Update failed" });
+      }
+      res.json({
+        id: String(updated.id),
+        email: updated.email,
+        name: updated.displayName ?? updated.email?.split("@")[0] ?? "User",
+        onboardingComplete: updated.onboardingComplete === true,
+      });
+    } catch (error: unknown) {
+      console.error("PATCH /api/profile/me error:", error);
+      res.status(500).json({ message: "Error updating profile" });
+    }
+  });
+
   // Auth endpoints with rate limiting
   app.post("/api/auth/login", authLimiter, async (req, res) => {
     try {
@@ -36,20 +119,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/auth/check", async (req, res) => {
-    // For now, we'll use a simple check - in production, use sessions/JWT
-    const userId = req.headers['x-user-id'];
-    if (!userId) {
-      return res.status(401).json({ authenticated: false });
+  // Auth check: requires valid Firebase JWT; returns authenticated + user from verified token (never trusts x-user-id)
+  app.get("/api/auth/check", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const uid = req.auth!.uid;
+      const user = await storage.getUserByFirebaseUid(uid);
+      if (!user) {
+        return res.status(200).json({ authenticated: true, user: null, firebaseUid: uid });
+      }
+      const { password: _, ...userWithoutPassword } = user;
+      res.json({ authenticated: true, user: userWithoutPassword });
+    } catch (e) {
+      console.error("GET /api/auth/check error:", e);
+      res.status(500).json({ authenticated: false });
     }
-    
-    const user = await storage.getUser(parseInt(userId as string));
-    if (!user) {
-      return res.status(401).json({ authenticated: false });
-    }
-    
-    const { password: _, ...userWithoutPassword } = user;
-    res.json({ authenticated: true, user: userWithoutPassword });
   });
 
 
@@ -139,11 +222,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/auth/webauthn/credentials/:username", async (req, res) => {
+  // List WebAuthn credentials (protected: only own user's credentials)
+  app.get("/api/auth/webauthn/credentials/:username", requireAuth, async (req: AuthRequest, res) => {
     try {
-      const { username } = req.params;
-      
-      const credentials = await webauthnService.getUserCredentials(username);
+      const user = await storage.getUser(req.auth!.userId);
+      if (!user || user.username !== req.params.username) {
+        return res.status(403).json({ message: "Forbidden", code: "RESOURCE_OWNER_REQUIRED" });
+      }
+      const credentials = await webauthnService.getUserCredentials(req.params.username);
       res.json({
         credentials: credentials.map((cred: any) => ({
           id: cred.credentialId,
@@ -160,10 +246,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
 
-  // Get user dashboard data
-  app.get("/api/dashboard/:userId", async (req, res) => {
+  // Get user dashboard data (protected: token required; user can only access own dashboard)
+  app.get("/api/dashboard/:userId", requireAuth, requireResourceOwner("userId"), async (req: AuthRequest, res) => {
     try {
-      const userId = parseInt(req.params.userId);
+      const userId = req.auth!.userId;
       console.log(`Fetching dashboard data for user ${userId}`);
 
       const user = await storage.getUser(userId);
@@ -212,11 +298,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Submit trip data with rate limiting
-  app.post("/api/trips", tripDataLimiter, async (req, res) => {
+  // Submit trip data (protected: auth required; userId taken from token, not body)
+  app.post("/api/trips", requireAuth, tripDataLimiter, async (req: AuthRequest, res) => {
     try {
-      // Support both TelematicsData and TripJSON formats
-      const tripData = insertTripSchema.parse(req.body);
+      const authenticatedUserId = req.auth!.userId;
+      const body = { ...req.body, userId: authenticatedUserId };
+      const tripData = insertTripSchema.parse(body);
       const telematicsDataOrJSON: TelematicsData | TripJSON = req.body.telematicsData || req.body;
       const userId = tripData.userId;
 
@@ -308,10 +395,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get user trips
-  app.get("/api/trips/:userId", async (req, res) => {
+  // Get user trips (protected: user can only access own trips)
+  app.get("/api/trips/:userId", requireAuth, requireResourceOwner("userId"), async (req: AuthRequest, res) => {
     try {
-      const userId = parseInt(req.params.userId);
+      const userId = req.auth!.userId;
       const limit = parseInt(req.query.limit as string) || 20;
       const offset = parseInt(req.query.offset as string) || 0;
       
@@ -330,10 +417,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get aggregated weekly score
-  app.get("/api/scores/weekly/:userId", async (req, res) => {
+  // Get aggregated weekly score (protected: own data only)
+  app.get("/api/scores/weekly/:userId", requireAuth, requireResourceOwner("userId"), async (req: AuthRequest, res) => {
     try {
-      const userId = parseInt(req.params.userId);
+      const userId = req.auth!.userId;
       const weekStart = req.query.weekStart 
         ? new Date(req.query.weekStart as string)
         : undefined;
@@ -348,10 +435,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get aggregated monthly score
-  app.get("/api/scores/monthly/:userId", async (req, res) => {
+  // Get aggregated monthly score (protected: own data only)
+  app.get("/api/scores/monthly/:userId", requireAuth, requireResourceOwner("userId"), async (req: AuthRequest, res) => {
     try {
-      const userId = parseInt(req.params.userId);
+      const userId = req.auth!.userId;
       const monthStart = req.query.monthStart 
         ? new Date(req.query.monthStart as string)
         : undefined;
@@ -366,10 +453,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get time-series data
-  app.get("/api/scores/timeseries/:userId", async (req, res) => {
+  // Get time-series data (protected: own data only)
+  app.get("/api/scores/timeseries/:userId", requireAuth, requireResourceOwner("userId"), async (req: AuthRequest, res) => {
     try {
-      const userId = parseInt(req.params.userId);
+      const userId = req.auth!.userId;
       const startDate = new Date(req.query.startDate as string || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
       const endDate = new Date(req.query.endDate as string || new Date().toISOString());
       const granularity = (req.query.granularity as 'daily' | 'weekly' | 'monthly') || 'daily';
@@ -381,10 +468,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get score trend
-  app.get("/api/scores/trend/:userId", async (req, res) => {
+  // Get score trend (protected: own data only)
+  app.get("/api/scores/trend/:userId", requireAuth, requireResourceOwner("userId"), async (req: AuthRequest, res) => {
     try {
-      const userId = parseInt(req.params.userId);
+      const userId = req.auth!.userId;
       const period = (req.query.period as 'weekly' | 'monthly') || 'weekly';
       
       const trend = await scoreAggregation.getScoreTrend(userId, period);
@@ -394,14 +481,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Report incident
-  app.post("/api/incidents", async (req, res) => {
+  // Report incident (protected: userId set from token)
+  app.post("/api/incidents", requireAuth, async (req: AuthRequest, res) => {
     try {
       console.log("Received incident data:", req.body);
-
-      // Prepare the data with proper timestamp
       const incidentData = {
         ...req.body,
+        userId: req.auth!.userId,
         reportedAt: new Date(),
         timestamp: req.body.timestamp || new Date().toISOString()
       };
@@ -422,7 +508,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get community pool data
+  // Get community pool (public read-only)
   app.get("/api/community-pool", async (req, res) => {
     try {
       const pool = await storage.getCommunityPool();
@@ -432,8 +518,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Update community pool (admin only)
-  app.put("/api/community-pool", async (req, res) => {
+  // Update community pool (admin only; rate limited)
+  app.put("/api/community-pool", requireAuth, requireAdmin, poolModificationLimiter, async (req, res) => {
     try {
       const poolData = req.body;
       const pool = await storage.updateCommunityPool(poolData);
@@ -465,10 +551,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get user achievements
-  app.get("/api/achievements/:userId", async (req, res) => {
+  // Get user achievements (protected: own data only)
+  app.get("/api/achievements/:userId", requireAuth, requireResourceOwner("userId"), async (req: AuthRequest, res) => {
     try {
-      const userId = parseInt(req.params.userId);
+      const userId = req.auth!.userId;
       const achievements = await storage.getUserAchievements(userId);
       res.json(achievements);
     } catch (error: any) {
@@ -476,8 +562,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Refund simulator
-  app.post("/api/simulate-refund", async (req, res) => {
+  // Refund simulator (protected)
+  app.post("/api/simulate-refund", requireAuth, async (req, res) => {
     try {
       const { personalScore, poolSafetyFactor, premiumAmount } = req.body;
       const refund = telematicsProcessor.calculateRefund(personalScore, poolSafetyFactor, premiumAmount);
@@ -487,10 +573,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // AI insights endpoint
-  app.get("/api/insights/:userId", async (req, res) => {
+  // AI insights (protected: own data only)
+  app.get("/api/insights/:userId", requireAuth, requireResourceOwner("userId"), async (req: AuthRequest, res) => {
     try {
-      const userId = parseInt(req.params.userId);
+      const userId = req.auth!.userId;
       
       // Get user profile and recent trips
       const profile = await storage.getDrivingProfile(userId);
@@ -514,24 +600,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // GDPR: Export user data
-  app.get("/api/gdpr/export/:userId", async (req, res) => {
+  // GDPR: Export user data (protected: own data only)
+  app.get("/api/gdpr/export/:userId", requireAuth, requireResourceOwner("userId"), async (req: AuthRequest, res) => {
     try {
-      const userId = parseInt(req.params.userId);
+      const userId = req.auth!.userId;
       const userData = await storage.exportUserData(userId);
 
-      res.setHeader('Content-Type', 'application/json');
-      res.setHeader('Content-Disposition', `attachment; filename=driiva-data-${userId}.json`);
+      res.setHeader("Content-Type", "application/json");
+      res.setHeader("Content-Disposition", `attachment; filename=driiva-data-${userId}.json`);
       res.json(userData);
     } catch (error: any) {
       res.status(500).json({ message: "Error exporting data: " + error.message });
     }
   });
 
-  // GDPR: Delete user account
-  app.delete("/api/gdpr/delete/:userId", async (req, res) => {
+  // GDPR: Delete user account (protected: own data only; strict rate limit)
+  app.delete("/api/gdpr/delete/:userId", requireAuth, requireResourceOwner("userId"), gdprDeleteLimiter, async (req: AuthRequest, res) => {
     try {
-      const userId = parseInt(req.params.userId);
+      const userId = req.auth!.userId;
       await storage.deleteUserData(userId);
       res.json({ message: "User data deleted successfully" });
     } catch (error: any) {
@@ -539,8 +625,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Perplexity AI endpoint
-  app.post("/api/ask", async (req, res) => {
+  // Perplexity AI endpoint (protected)
+  app.post("/api/ask", requireAuth, async (req, res) => {
     try {
       const { prompt } = req.body;
       

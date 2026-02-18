@@ -14,35 +14,31 @@ export interface AuthService {
 
 export class SimpleAuthService implements AuthService {
 
-  // Secure login with bcrypt password checking
+  // Secure login with bcrypt password checking (legacy username/password only)
   async login(username: string, password: string): Promise<User | null> {
     const [user] = await db.select().from(users).where(eq(users.username, username));
-    
-    if (!user) {
+    if (!user || user.password == null) {
       return null;
     }
-
-    // Check password using bcrypt
     const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return null;
-    }
-
+    if (!isPasswordValid) return null;
     return user;
   }
 
   async createUser(userData: InsertUser): Promise<User> {
-    // Hash password before storing
-    const hashedPassword = await bcrypt.hash(userData.password, SALT_ROUNDS);
-    
+    const pwd = userData.password ?? null;
+    if (pwd == null || pwd === "") {
+      throw new Error("Password required for legacy signup");
+    }
+    const hashedPassword = await bcrypt.hash(pwd, SALT_ROUNDS);
     const [user] = await db
       .insert(users)
       .values({
         ...userData,
-        password: hashedPassword
+        password: hashedPassword,
       })
       .returning();
-    
+    if (!user) throw new Error("Failed to create user");
     return user;
   }
 

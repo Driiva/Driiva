@@ -23,6 +23,9 @@
  *   - batchClassifyTrips: Admin batch classification
  *   - analyzeTripAI: On-demand AI trip analysis (Claude Sonnet 4)
  *   - getAIInsights: Retrieve AI insights for a trip
+ *
+ * HTTP Request (public, no auth):
+ *   - health: GET /health for uptime monitoring (200/503)
  */
 
 import * as admin from 'firebase-admin';
@@ -41,6 +44,8 @@ export { onTripCreate, onTripStatusChange } from './triggers/trips';
 export { onPolicyWrite } from './triggers/policies';
 export { onPoolShareWrite } from './triggers/pool';
 export { onUserCreate } from './triggers/users';
+export { syncUserOnSignup } from './triggers/syncUserOnSignup';
+export { syncTripOnComplete } from './triggers/syncTripOnComplete';
 
 // ============================================================================
 // SCHEDULED FUNCTIONS
@@ -70,3 +75,15 @@ export { analyzeTripAI, getAIInsights } from './http/aiAnalysis';
 
 // Insurance (Root Platform integration)
 export { getInsuranceQuote, acceptInsuranceQuote, syncInsurancePolicy } from './http/insurance';
+
+// Beta estimate (non-binding premium + refund calculator)
+export {
+  calculateBetaEstimateForUser,
+  onUserUpdateRecalcBetaEstimate,
+} from './http/betaEstimate';
+
+// ============================================================================
+// HTTP REQUEST (PUBLIC) — Uptime monitoring
+// ============================================================================
+
+export { health } from './http/health';

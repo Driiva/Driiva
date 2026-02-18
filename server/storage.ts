@@ -2,6 +2,7 @@ import {
   users, 
   drivingProfiles, 
   trips, 
+  tripsSummary,
   communityPool, 
   achievements, 
   userAchievements, 
@@ -9,6 +10,8 @@ import {
   leaderboard,
   type User, 
   type InsertUser,
+  type TripSummary,
+  type InsertTripSummary,
   type DrivingProfile,
   type InsertDrivingProfile,
   type Trip,
@@ -28,9 +31,14 @@ import { eq, desc, asc, and, gte, lte, sql } from "drizzle-orm";
 export interface IStorage {
   // User operations
   getUser(id: number): Promise<User | undefined>;
+  getUserByFirebaseUid(firebaseUid: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  updateUser(id: number, updates: Partial<InsertUser>): Promise<User>;
+  updateUser(id: number, updates: Partial<InsertUser>): Promise<User | undefined>;
+  getOrCreateUserByFirebase(firebaseUid: string, email: string, displayName?: string | null): Promise<User>;
+  // Trip summary (synced from Firestore)
+  createTripSummary(summary: InsertTripSummary): Promise<TripSummary>;
+  getTripSummariesByUserId(userId: number, limit?: number, offset?: number): Promise<TripSummary[]>;
   
   // Driving profile operations
   getDrivingProfile(userId: number): Promise<DrivingProfile | undefined>;
@@ -76,9 +84,44 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
+  async getUserByFirebaseUid(firebaseUid: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.firebaseUid, firebaseUid));
+    return user || undefined;
+  }
+
   async getUserByUsername(username: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.username, username));
     return user || undefined;
+  }
+
+  async getOrCreateUserByFirebase(firebaseUid: string, email: string, displayName?: string | null): Promise<User> {
+    const existing = await this.getUserByFirebaseUid(firebaseUid);
+    if (existing) return existing;
+    const [user] = await db.insert(users).values({
+      firebaseUid,
+      email,
+      displayName: displayName ?? null,
+      onboardingComplete: false,
+      createdBy: "firebase-auth",
+      updatedBy: "firebase-auth",
+    }).returning();
+    if (!user) throw new Error("Failed to create user from Firebase");
+    await this.createDrivingProfile({ userId: user.id });
+    return user;
+  }
+
+  async createTripSummary(summary: InsertTripSummary): Promise<TripSummary> {
+    const [row] = await db.insert(tripsSummary).values(summary).returning();
+    if (!row) throw new Error("Failed to create trip summary");
+    return row;
+  }
+
+  async getTripSummariesByUserId(userId: number, limit: number = 20, offset: number = 0): Promise<TripSummary[]> {
+    return await db.select().from(tripsSummary)
+      .where(eq(tripsSummary.userId, userId))
+      .orderBy(desc(tripsSummary.startedAt))
+      .limit(limit)
+      .offset(offset);
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
@@ -90,7 +133,7 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async updateUser(id: number, updates: Partial<InsertUser>): Promise<User> {
+  async updateUser(id: number, updates: Partial<InsertUser>): Promise<User | undefined> {
     const [user] = await db.update(users).set(updates).where(eq(users.id, id)).returning();
     return user;
   }

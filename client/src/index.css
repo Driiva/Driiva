@@ -44,7 +44,7 @@ button, a, input, select, textarea, [role="button"] {
   position: fixed;
   inset: 0;
   z-index: -1;
-  /* Fallback when no inline background-image (e.g. hero) is set; App overrides with hero-background.png */
+  /* Fallback when no inline background-image */
   background: linear-gradient(135deg,
     var(--neutral-900) 0%,
     #1e1b4b 25%,
@@ -52,18 +52,17 @@ button, a, input, select, textarea, [role="button"] {
     #1e3a8a 75%,
     var(--neutral-900) 100%
   );
-  background-size: 105% 105%;
+  background-size: cover;
   background-position: center;
   background-attachment: fixed;
   background-repeat: no-repeat;
-  transition: transform 0.3s ease-out;
 }
 
 .driiva-gradient-bg::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.08);
   pointer-events: none;
 }
 
@@ -1300,77 +1299,89 @@ body:has(.welcome-page-container) .animated-bg-container {
 
 /* ============================================
    HERO ORB ANIMATIONS - Welcome Page
+   High-fidelity, smooth floating orbs on gradient
    ============================================ */
 
 .hero-orb-container {
   position: absolute;
-  inset: -6%;
+  inset: -8%;
   z-index: 1;
-  transform: scale(0.94);
   transform-origin: center center;
   pointer-events: none;
+  overflow: hidden;
+  /* GPU layer for smooth compositing */
+  contain: layout style paint;
+}
+
+.hero-orb-container-welcome {
+  /* Ensure orbs sit above gradient, below content */
+  z-index: 1;
 }
 
 .hero-orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(100px);
-  opacity: 0.35;
+  filter: blur(90px);
+  opacity: 0.4;
   pointer-events: none;
+  /* GPU acceleration for smooth animation */
   will-change: transform;
+  backface-visibility: hidden;
+  transform: translateZ(0);
 }
 
 .hero-orb-1 {
-  width: 280px;
-  height: 280px;
-  background: radial-gradient(circle, rgba(255, 120, 50, 0.6) 0%, rgba(200, 80, 40, 0.3) 50%, transparent 70%);
-  top: 8%;
-  left: -5%;
-  animation: heroOrbWave1 24s ease-in-out infinite;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 140, 60, 0.65) 0%, rgba(210, 100, 50, 0.35) 45%, transparent 70%);
+  top: 6%;
+  left: -6%;
+  animation: heroOrbWave1 26s cubic-bezier(0.45, 0, 0.55, 1) infinite;
 }
 
 .hero-orb-2 {
-  width: 320px;
-  height: 320px;
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.5) 0%, rgba(88, 28, 135, 0.3) 50%, transparent 70%);
-  top: 45%;
-  right: -10%;
-  animation: heroOrbWave2 28s ease-in-out infinite;
+  width: 340px;
+  height: 340px;
+  background: radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.55) 0%, rgba(88, 28, 135, 0.3) 45%, transparent 70%);
+  top: 42%;
+  right: -12%;
+  animation: heroOrbWave2 30s cubic-bezier(0.45, 0, 0.55, 1) infinite;
 }
 
 .hero-orb-3 {
-  width: 200px;
-  height: 200px;
-  background: radial-gradient(circle, rgba(220, 90, 70, 0.45) 0%, rgba(139, 92, 246, 0.25) 50%, transparent 70%);
-  bottom: 15%;
-  left: 10%;
-  animation: heroOrbWave3 22s ease-in-out infinite;
+  width: 220px;
+  height: 220px;
+  background: radial-gradient(circle at 50% 50%, rgba(220, 90, 70, 0.5) 0%, rgba(139, 92, 246, 0.28) 45%, transparent 70%);
+  bottom: 12%;
+  left: 8%;
+  animation: heroOrbWave3 24s cubic-bezier(0.45, 0, 0.55, 1) infinite;
 }
 
-/* Wavy flow: horizontal drift + vertical undulation (sine-like) */
+/* Smooth wavy flow – translate3d for GPU, cubic-bezier for fluid motion */
 @keyframes heroOrbWave1 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  20% { transform: translate(18px, -12px) scale(1.02); }
-  40% { transform: translate(-10px, 20px) scale(0.98); }
-  60% { transform: translate(14px, 8px) scale(1.03); }
-  80% { transform: translate(-16px, -18px) scale(0.99); }
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  20% { transform: translate3d(20px, -14px, 0) scale(1.02); }
+  40% { transform: translate3d(-12px, 22px, 0) scale(0.98); }
+  60% { transform: translate3d(16px, 10px, 0) scale(1.03); }
+  80% { transform: translate3d(-18px, -20px, 0) scale(0.99); }
 }
 
 @keyframes heroOrbWave2 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  25% { transform: translate(-20px, 16px) scale(1.02); }
-  50% { transform: translate(12px, -22px) scale(0.98); }
-  75% { transform: translate(-14px, -8px) scale(1.01); }
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  25% { transform: translate3d(-24px, 18px, 0) scale(1.02); }
+  50% { transform: translate3d(14px, -24px, 0) scale(0.98); }
+  75% { transform: translate3d(-16px, -10px, 0) scale(1.01); }
 }
 
 @keyframes heroOrbWave3 {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(22px, 14px) scale(1.02); }
-  66% { transform: translate(-18px, -12px) scale(0.98); }
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  33% { transform: translate3d(24px, 16px, 0) scale(1.02); }
+  66% { transform: translate3d(-20px, -14px, 0) scale(0.98); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .hero-orb {
     animation: none !important;
+    will-change: auto;
   }
 }

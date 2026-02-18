@@ -140,6 +140,8 @@ export interface UserDocument {
   displayName: string;
   photoURL: string | null;
   phoneNumber: string | null;
+  age?: number;
+  postcode?: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
   drivingProfile: DrivingProfileData;

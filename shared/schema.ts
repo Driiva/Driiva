@@ -1,23 +1,28 @@
-import { pgTable, text, serial, integer, boolean, timestamp, decimal, json, uuid } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, decimal, json, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
+  firebaseUid: text("firebase_uid").unique(),
+  username: text("username").unique(),
   email: text("email").notNull().unique(),
-  password: text("password").notNull(),
+  password: text("password"),
+  displayName: text("display_name"),
   firstName: text("first_name"),
   lastName: text("last_name"),
   phoneNumber: text("phone_number"),
   dateOfBirth: timestamp("date_of_birth"),
   licenseNumber: text("license_number"),
+  onboardingComplete: boolean("onboarding_complete").notNull().default(false),
   premiumAmount: decimal("premium_amount", { precision: 10, scale: 2 }).default('500.00'),
   stripeCustomerId: text("stripe_customer_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  createdBy: text("created_by"),
+  updatedBy: text("updated_by"),
 });
 
 export const drivingProfiles = pgTable("driving_profiles", {
@@ -64,6 +69,48 @@ export const communityPool = pgTable("community_pool", {
   lastUpdated: timestamp("last_updated").defaultNow(),
 });
 
+/** Trip summaries synced from Firestore on completion; API reads from here. */
+export const tripsSummary = pgTable("trips_summary", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  firestoreTripId: text("firestore_trip_id").notNull().unique(),
+  startedAt: timestamp("started_at").notNull(),
+  endedAt: timestamp("ended_at").notNull(),
+  distanceKm: decimal("distance_km", { precision: 10, scale: 2 }).notNull(),
+  durationSeconds: integer("duration_seconds").notNull(),
+  score: integer("score").notNull(),
+  hardBrakingEvents: integer("hard_braking_events").default(0),
+  harshAcceleration: integer("harsh_acceleration").default(0),
+  speedViolations: integer("speed_violations").default(0),
+  nightDriving: boolean("night_driving").default(false),
+  sharpCorners: integer("sharp_corners").default(0),
+  startAddress: text("start_address"),
+  endAddress: text("end_address"),
+  createdAt: timestamp("created_at").defaultNow(),
+  createdBy: text("created_by"),
+});
+
+/** Policies (structured data for API; optional sync from Firestore). */
+export const policies = pgTable("policies", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  policyNumber: text("policy_number").notNull(),
+  status: text("status").notNull().default("pending"),
+  coverageType: text("coverage_type").notNull().default("standard"),
+  basePremiumCents: integer("base_premium_cents").notNull().default(0),
+  currentPremiumCents: integer("current_premium_cents").notNull().default(0),
+  discountPercentage: integer("discount_percentage").default(0),
+  effectiveDate: timestamp("effective_date").notNull(),
+  expirationDate: timestamp("expiration_date").notNull(),
+  renewalDate: timestamp("renewal_date"),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  billingCycle: text("billing_cycle").default("annual"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  createdBy: text("created_by"),
+  updatedBy: text("updated_by"),
+});
+
 export const achievements = pgTable("achievements", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -100,7 +147,7 @@ export const leaderboard = pgTable("leaderboard", {
   rank: integer("rank").notNull(),
   period: text("period").default('weekly'), // weekly, monthly, all-time
   lastUpdated: timestamp("last_updated").defaultNow(),
-});
+}, (t) => [unique().on(t.userId, t.period)]);
 
 export const webauthnCredentials = pgTable("webauthn_credentials", {
   id: serial("id").primaryKey(),
@@ -122,6 +169,8 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     references: [drivingProfiles.userId],
   }),
   trips: many(trips),
+  tripsSummaries: many(tripsSummary),
+  policies: many(policies),
   achievements: many(userAchievements),
   incidents: many(incidents),
   leaderboardEntry: one(leaderboard, {
@@ -129,6 +178,14 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     references: [leaderboard.userId],
   }),
   webauthnCredentials: many(webauthnCredentials),
+}));
+
+export const tripsSummaryRelations = relations(tripsSummary, ({ one }) => ({
+  user: one(users, { fields: [tripsSummary.userId], references: [users.id] }),
+}));
+
+export const policiesRelations = relations(policies, ({ one }) => ({
+  user: one(users, { fields: [policies.userId], references: [users.id] }),
 }));
 
 export const drivingProfilesRelations = relations(drivingProfiles, ({ one }) => ({
@@ -184,6 +241,17 @@ export const insertUserSchema = createInsertSchema(users).omit({
   updatedAt: true,
 });
 
+export const insertTripsSummarySchema = createInsertSchema(tripsSummary).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertPolicySchema = createInsertSchema(policies).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertDrivingProfileSchema = createInsertSchema(drivingProfiles).omit({
   id: true,
   lastUpdated: true,
@@ -221,6 +289,10 @@ export const insertWebauthnCredentialSchema = createInsertSchema(webauthnCredent
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type TripSummary = typeof tripsSummary.$inferSelect;
+export type InsertTripSummary = z.infer<typeof insertTripsSummarySchema>;
+export type Policy = typeof policies.$inferSelect;
+export type InsertPolicy = z.infer<typeof insertPolicySchema>;
 export type DrivingProfile = typeof drivingProfiles.$inferSelect;
 export type InsertDrivingProfile = z.infer<typeof insertDrivingProfileSchema>;
 export type Trip = typeof trips.$inferSelect;

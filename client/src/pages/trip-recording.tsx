@@ -220,93 +220,106 @@ export default function TripRecording() {
     setRecordingState('starting');
 
     try {
-      // Request permissions first
-      const permissionGranted = await tracker.requestPermission();
-      if (!permissionGranted) {
-        setRecordingState('idle');
-        return;
-      }
+      // Timeout: if setup takes >25s, show error (e.g. location permission blocked)
+      const timeoutMs = 25000;
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Setup timed out. Please allow location access and try again.')), timeoutMs)
+      );
 
-      // Request telematics permissions
-      await telematics.requestPermissions();
-
-      // Get initial position for start location
-      const initialPosition = tracker.currentPosition;
-      if (!initialPosition) {
-        // Wait a moment for first position
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      }
-
-      const startPosition = tracker.currentPosition;
-      const userId = getUserId();
-      const now = Date.now();
-      tripStartTimeRef.current = now;
-
-      // Create trip in Firestore (skip if not configured)
-      let trip: ActiveTrip | null = null;
-      if (isFirebaseConfigured) {
-        try {
-          trip = await startTrip({
-            userId,
-            startLocation: createTripLocation(
-              startPosition?.latitude ?? 0,
-              startPosition?.longitude ?? 0
-            ),
-          });
-          setActiveTrip(trip);
-
-          // Initialize point streamer
-          streamerRef.current = new TripPointStreamer(
-            trip.tripId,
-            userId,
-            now,
-            (error) => {
-              console.error('[TripRecording] Streamer error:', error);
-              toast({
-                title: 'Sync Error',
-                description: 'Failed to save some GPS points. Trip will continue.',
-                variant: 'destructive',
-              });
-            }
-          );
-          streamerRef.current.start();
-        } catch (error) {
-          console.error('[TripRecording] Failed to create trip:', error);
-          toast({
-            title: 'Trip Start Error',
-            description: 'Failed to save trip to cloud. Recording locally.',
-            variant: 'destructive',
-          });
+      const runStart = async () => {
+        // Request permissions first
+        const permissionGranted = await tracker.requestPermission();
+        if (!permissionGranted) {
+          setRecordingState('idle');
+          return;
         }
-      }
 
-      // Start GPS tracking
-      await tracker.start();
+        // Request telematics permissions
+        await telematics.requestPermissions();
 
-      // Start telematics collection
-      await telematics.startCollection();
+        // Get initial position for start location
+        const initialPosition = tracker.currentPosition;
+        if (!initialPosition) {
+          // Wait a moment for first position
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
 
-      // Reset stats
-      setTripStats({
-        distanceMeters: 0,
-        durationMs: 0,
-        pointsCount: 0,
-        avgSpeed: 0,
-      });
-      setTripEvents({
-        hardBrakingCount: 0,
-        hardAccelerationCount: 0,
-        speedingSeconds: 0,
-        sharpTurnCount: 0,
-        phonePickupCount: 0,
-      });
+        const startPosition = tracker.currentPosition;
+        const userId = getUserId();
+        const now = Date.now();
+        tripStartTimeRef.current = now;
 
-      setRecordingState('recording');
+        // Demo mode: skip Firestore (no auth.uid = permission denied). Record locally only.
+        const isDemoMode = typeof window !== 'undefined' && localStorage.getItem('driiva-demo-mode') === 'true';
 
-      toast({
-        title: 'Trip Started',
-        description: 'Recording your drive. Stay safe!',
-      });
+        // Create trip in Firestore (skip if not configured or demo mode)
+        let trip: ActiveTrip | null = null;
+        if (isFirebaseConfigured && !isDemoMode) {
+          try {
+            trip = await startTrip({
+              userId,
+              startLocation: createTripLocation(
+                startPosition?.latitude ?? 0,
+                startPosition?.longitude ?? 0
+              ),
+            });
+            setActiveTrip(trip);
+
+            // Initialize point streamer
+            streamerRef.current = new TripPointStreamer(
+              trip.tripId,
+              userId,
+              now,
+              (error) => {
+                console.error('[TripRecording] Streamer error:', error);
+                toast({
+                  title: 'Sync Error',
+                  description: 'Failed to save some GPS points. Trip will continue.',
+                  variant: 'destructive',
+                });
+              }
+            );
+            streamerRef.current.start();
+          } catch (error) {
+            console.error('[TripRecording] Failed to create trip:', error);
+            toast({
+              title: 'Trip Start Error',
+              description: 'Failed to save trip to cloud. Recording locally.',
+              variant: 'destructive',
+            });
+          }
+        }
+
+        // Start GPS tracking
+        await tracker.start();
+
+        // Start telematics collection
+        await telematics.startCollection();
+
+        // Reset stats
+        setTripStats({
+          distanceMeters: 0,
+          durationMs: 0,
+          pointsCount: 0,
+          avgSpeed: 0,
+        });
+        setTripEvents({
+          hardBrakingCount: 0,
+          hardAccelerationCount: 0,
+          speedingSeconds: 0,
+          sharpTurnCount: 0,
+          phonePickupCount: 0,
+        });
+
+        setRecordingState('recording');
+
+        toast({
+          title: 'Trip Started',
+          description: isDemoMode ? 'Demo mode: recording locally (not saved to cloud).' : 'Recording your drive. Stay safe!',
+        });
+      };
+
+      await Promise.race([runStart(), timeoutPromise]);
     } catch (error) {
       console.error('[TripRecording] Start error:', error);
       setRecordingState('idle');

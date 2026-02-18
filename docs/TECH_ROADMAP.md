@@ -150,7 +150,9 @@ For a product handling personal driving data and insurance premiums, these are t
 
 | Requirement | Status | Priority |
 |------------|--------|----------|
-| Uptime monitoring | Not set up | Need 99.9% SLA for insurance product |
+| Uptime monitoring | UptimeRobot pinging /health | 99.9% SLA target |
+
+**Uptime monitoring:** The `health` Cloud Function exposes a public GET endpoint for external pingers. URL after deploy: `https://<region>-<project-id>.cloudfunctions.net/health`. Configure UptimeRobot (or similar) to hit this URL every 5 minutes; 200 = healthy, 503 = unhealthy (e.g. Firestore unreachable).
 | Error alerting | Not set up | Need PagerDuty or similar for on-call |
 | Database backups | Automatic (Firebase) | Firestore handles backups |
 | Disaster recovery plan | Not documented | Need documented DR procedures |

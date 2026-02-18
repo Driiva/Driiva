@@ -30,6 +30,7 @@ import {
   QueryConstraint,
   arrayUnion,
   arrayRemove,
+  onSnapshot,
 } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from './firebase';
 import {
@@ -53,6 +54,7 @@ import {
   DEFAULT_USER_SETTINGS,
   TripStatus,
   PoolShareSummary,
+  BetaEstimateDocument,
 } from '../../../shared/firestore-types';
 
 // ============================================================================
@@ -195,6 +197,78 @@ export async function getUserDashboard(userId: string): Promise<{
     poolShare: user.poolShare,
     recentTrips: user.recentTrips,
   };
+}
+
+// ============================================================================
+// BETA PRICING (users/{userId}/betaPricing/currentEstimate)
+// ============================================================================
+
+const BETA_PRICING_SUBCOLLECTION = 'betaPricing';
+const BETA_ESTIMATE_DOC_ID = 'currentEstimate';
+
+/**
+ * Reference to the user's current beta estimate document.
+ */
+export function getBetaEstimateRef(userId: string): DocumentReference<BetaEstimateDocument> {
+  assertFirestore();
+  return doc(
+    db!,
+    COLLECTION_NAMES.USERS,
+    userId,
+    BETA_PRICING_SUBCOLLECTION,
+    BETA_ESTIMATE_DOC_ID
+  ) as DocumentReference<BetaEstimateDocument>;
+}
+
+/**
+ * Subscribe to the user's beta estimate document (real-time).
+ */
+export function subscribeBetaEstimate(
+  userId: string,
+  onData: (data: BetaEstimateDocument | null) => void,
+  onError: (err: Error) => void
+): () => void {
+  assertFirestore();
+  const ref = getBetaEstimateRef(userId);
+  return onSnapshot(
+    ref,
+    (snap) => {
+      onData(snap.exists() ? (snap.data() as BetaEstimateDocument) : null);
+    },
+    (err) => onError(err as Error)
+  );
+}
+
+/** Result of calculateBetaEstimateForUser callable */
+export interface CalculateBetaEstimateResult {
+  success: boolean;
+  message?: string;
+  estimate?: {
+    estimatedPremium: number;
+    minPremium: number;
+    maxPremium: number;
+    refundRate: number;
+    estimatedRefund: number;
+    estimatedNetCost: number;
+  };
+}
+
+/**
+ * Request backend to compute and persist beta estimate for the current user.
+ * Call when the estimate doc is missing or user wants to refresh.
+ */
+export async function calculateBetaEstimateForUser(
+  userId: string
+): Promise<CalculateBetaEstimateResult> {
+  assertFirestore();
+  const { getFunctions, httpsCallable } = await import('firebase/functions');
+  const functions = getFunctions();
+  const fn = httpsCallable<{ userId?: string }, CalculateBetaEstimateResult>(
+    functions,
+    'calculateBetaEstimateForUser'
+  );
+  const result = await fn({ userId });
+  return result.data;
 }
 
 // ============================================================================

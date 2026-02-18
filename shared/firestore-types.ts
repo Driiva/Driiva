@@ -116,6 +116,26 @@ export interface UserSettings {
 }
 
 /**
+ * Beta pricing estimate document (single source of truth).
+ * Path: users/{userId}/betaPricing/currentEstimate
+ */
+export interface BetaEstimateDocument {
+  estimatedPremium: number;
+  minPremium: number;
+  maxPremium: number;
+  refundRate: number;
+  estimatedRefund: number;
+  estimatedNetCost: number;
+  personalScore: number;
+  age: number;
+  postcode: string;
+  communityPoolSafety: number;
+  version: 'beta-v1';
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+
+/**
  * Main user document - optimized for dashboard reads
  * Collection: users/{userId}
  * Document ID: Firebase Auth UID
@@ -127,6 +147,10 @@ export interface UserDocument {
   displayName: string;
   photoURL: string | null;
   phoneNumber: string | null;
+  /** Optional: used for beta premium estimate */
+  age?: number;
+  /** Optional: UK postcode e.g. "SW1A 1AA", used for beta premium estimate */
+  postcode?: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
   

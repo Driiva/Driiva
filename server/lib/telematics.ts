@@ -1,3 +1,8 @@
+import {
+  haversineMeters,
+  tripDistanceMeters,
+  tripDurationSeconds,
+} from '../../shared/tripProcessor.js';
 
 export interface TelematicsData {
   gpsPoints: GPSPoint[];
@@ -235,21 +240,13 @@ export class TelematicsProcessor {
   }
 
   /**
-   * Calculate distance in kilometers
+   * Calculate distance in kilometers (uses shared/tripProcessor as source of truth)
    */
   private calculateDistanceKm(gpsPoints: GPSPoint[]): number {
     if (gpsPoints.length < 2) return 0;
-
-    let totalDistance = 0;
-    for (let i = 1; i < gpsPoints.length; i++) {
-      totalDistance += this.haversineDistanceKm(
-        gpsPoints[i - 1].latitude,
-        gpsPoints[i - 1].longitude,
-        gpsPoints[i].latitude,
-        gpsPoints[i].longitude
-      );
-    }
-    return Number(totalDistance.toFixed(2));
+    const points = gpsPoints.map((p) => ({ lat: p.latitude, lng: p.longitude }));
+    const meters = tripDistanceMeters(points);
+    return Number((meters / 1000).toFixed(2));
   }
 
   /**
@@ -259,9 +256,14 @@ export class TelematicsProcessor {
     return this.calculateDistanceKm(gpsPoints);
   }
 
+  /**
+   * Duration in minutes (uses shared/tripProcessor for canonical duration in seconds)
+   */
   private calculateDuration(gpsPoints: GPSPoint[]): number {
     if (gpsPoints.length < 2) return 0;
-    return Math.round((gpsPoints[gpsPoints.length - 1].timestamp - gpsPoints[0].timestamp) / 60000);
+    const points = gpsPoints.map((p) => ({ timestamp: p.timestamp }));
+    const durationSeconds = tripDurationSeconds(points);
+    return Math.round(durationSeconds / 60);
   }
 
   /**
@@ -279,18 +281,19 @@ export class TelematicsProcessor {
       return Number(avgSpeed.toFixed(1));
     }
     
-    // Calculate from GPS points if no speed data
+    // Calculate from GPS points if no speed data (distance/duration from shared tripProcessor)
     if (gpsPoints.length < 2) return 0;
     
     const distanceKm = this.calculateDistanceKm(gpsPoints);
-    const durationHours = (gpsPoints[gpsPoints.length - 1].timestamp - gpsPoints[0].timestamp) / (1000 * 60 * 60);
-    
+    const points = gpsPoints.map((p) => ({ timestamp: p.timestamp }));
+    const durationSeconds = tripDurationSeconds(points);
+    const durationHours = durationSeconds / 3600;
     if (durationHours <= 0) return 0;
     return Number((distanceKm / durationHours).toFixed(1));
   }
 
   /**
-   * Calculate max speed in km/h
+   * Calculate max speed in km/h (segment distances from shared tripProcessor)
    */
   private calculateMaxSpeedKmh(speedData: SpeedReading[], gpsPoints: GPSPoint[]): number {
     if (speedData.length > 0) {
@@ -302,20 +305,17 @@ export class TelematicsProcessor {
       return Number(maxSpeed.toFixed(1));
     }
     
-    // Calculate from GPS points
+    // Calculate from GPS points using shared haversine
     if (gpsPoints.length < 2) return 0;
     
     let maxSpeed = 0;
     for (let i = 1; i < gpsPoints.length; i++) {
-      const distance = this.haversineDistanceKm(
-        gpsPoints[i - 1].latitude,
-        gpsPoints[i - 1].longitude,
-        gpsPoints[i].latitude,
-        gpsPoints[i].longitude
-      );
-      const timeDelta = (gpsPoints[i].timestamp - gpsPoints[i - 1].timestamp) / (1000 * 60 * 60); // hours
-      if (timeDelta > 0) {
-        const speed = distance / timeDelta;
+      const prev = gpsPoints[i - 1];
+      const curr = gpsPoints[i];
+      const distanceKm = haversineMeters(prev.latitude, prev.longitude, curr.latitude, curr.longitude) / 1000;
+      const timeDeltaHours = (curr.timestamp - prev.timestamp) / (1000 * 60 * 60);
+      if (timeDeltaHours > 0) {
+        const speed = distanceKm / timeDeltaHours;
         maxSpeed = Math.max(maxSpeed, speed);
       }
     }
@@ -439,32 +439,7 @@ export class TelematicsProcessor {
   }
 
   /**
-   * Calculate haversine distance in kilometers
-   */
-  private haversineDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
-    const R = 6371; // Earth's radius in kilometers
-    const dLat = this.toRadians(lat2 - lat1);
-    const dLon = this.toRadians(lon2 - lon1);
-    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(this.toRadians(lat1)) * Math.cos(this.toRadians(lat2)) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  }
-
-  /**
-   * Legacy method - kept for backward compatibility (now returns km)
-   */
-  private haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-    return this.haversineDistanceKm(lat1, lon1, lat2, lon2);
-  }
-
-  private toRadians(degrees: number): number {
-    return degrees * (Math.PI / 180);
-  }
-
-  /**
-   * Detect anomalies in trip data
+   * Detect anomalies in trip data (uses shared tripProcessor for distance)
    */
   private detectAnomalies(
     telematicsData: TelematicsData,
@@ -492,14 +467,14 @@ export class TelematicsProcessor {
     for (let i = 1; i < telematicsData.gpsPoints.length; i++) {
       const point1 = telematicsData.gpsPoints[i - 1];
       const point2 = telematicsData.gpsPoints[i];
-      const distance = this.haversineDistanceKm(
+      const distanceKm = haversineMeters(
         point1.latitude, point1.longitude,
         point2.latitude, point2.longitude
-      );
+      ) / 1000;
       const timeDelta = (point2.timestamp - point1.timestamp) / 1000; // seconds
       
       if (timeDelta > 0) {
-        const speedKmh = (distance / timeDelta) * 3.6; // m/s to km/h
+        const speedKmh = (distanceKm / timeDelta) * 3.6; // m/s to km/h
         if (speedKmh > this.MAX_REALISTIC_SPEED_KMH) {
           impossibleSpeeds.push({ speed: speedKmh, timestamp: point2.timestamp });
           anomalies.hasImpossibleSpeed = true;
@@ -516,15 +491,15 @@ export class TelematicsProcessor {
     for (let i = 1; i < telematicsData.gpsPoints.length; i++) {
       const point1 = telematicsData.gpsPoints[i - 1];
       const point2 = telematicsData.gpsPoints[i];
-      const distance = this.haversineDistanceKm(
+      const distanceKm = haversineMeters(
         point1.latitude, point1.longitude,
         point2.latitude, point2.longitude
-      );
+      ) / 1000;
       const timeDelta = point2.timestamp - point1.timestamp;
 
-      if (distance > this.GPS_JUMP_THRESHOLD_KM && timeDelta < this.GPS_JUMP_TIME_THRESHOLD_MS) {
+      if (distanceKm > this.GPS_JUMP_THRESHOLD_KM && timeDelta < this.GPS_JUMP_TIME_THRESHOLD_MS) {
         gpsJumps.push({
-          distance,
+          distance: distanceKm,
           timeDelta,
           from: point1,
           to: point2
@@ -645,15 +620,15 @@ export class TelematicsProcessor {
         continue;
       }
       
-      // Calculate speed from distance and time
-      const distance = this.haversineDistanceKm(
+      // Calculate speed from distance and time (shared tripProcessor)
+      const distanceKm = haversineMeters(
         point1.latitude, point1.longitude,
         point2.latitude, point2.longitude
-      );
+      ) / 1000;
       const timeDelta = (point2.timestamp - point1.timestamp) / 1000; // seconds
       
       if (timeDelta > 0) {
-        const speedKmh = (distance / timeDelta) * 3.6; // m/s to km/h
+        const speedKmh = (distanceKm / timeDelta) * 3.6; // m/s to km/h
         readings.push({
           speed: speedKmh,
           timestamp: point2.timestamp

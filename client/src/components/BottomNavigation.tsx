@@ -17,7 +17,7 @@ export default function BottomNavigation() {
     { 
       path: '/rewards', 
       icon: StatsIcon, 
-      label: 'Dashboard'
+      label: 'Rewards'
     },
     { 
       path: '/profile', 

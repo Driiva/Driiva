@@ -11,5 +11,13 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+// Require Neon PostgreSQL; reject SQLite (file:) to avoid production failures
+const url = process.env.DATABASE_URL;
+if (url.startsWith("file:") || url.includes("dev.db")) {
+  throw new Error(
+    "DATABASE_URL must be a PostgreSQL connection string (e.g. postgresql://user:pass@host/db). SQLite is not supported. Use Neon or another PostgreSQL provider.",
+  );
+}
+
+export const pool = new Pool({ connectionString: url });
 export const db = drizzle({ client: pool, schema });

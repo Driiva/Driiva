@@ -118,7 +118,19 @@ If you’re not using Supabase, you can leave these unset and ignore those scrip
 
 ---
 
-## 6. Quick checklist
+## 6. When to input Neon and Firebase keys
+
+| When | Where to set them | Why |
+|------|-------------------|-----|
+| **Local development (now)** | Root **`.env`** on your machine | App and server read from `.env`; you can test signup, DB, and API locally. |
+| **Beta / staging** | Your host’s **environment** or **secrets** (e.g. Vercel, Railway, Replit, Render) | Same keys (or separate staging Neon/Firebase projects). Never commit `.env` to git. |
+| **Production / go-live** | Host’s **production** env/secrets; optionally separate Neon branch and Firebase project | Use production DB and Firebase project; keep staging and prod separate. |
+
+You don’t wait until beta to add keys — use them in **`.env`** for local testing now. For beta and live, add the same (or production) keys to whatever platform runs your app.
+
+---
+
+## 7. Quick checklist
 
 - [ ] Neon project + DB created; **connection string** copied.
 - [ ] `migrations/schema.sql` run against that DB.

@@ -5,7 +5,7 @@ import { AlertCircle, Loader2, Eye, EyeOff, ArrowLeft, User, Mail, Lock } from "
 import { timing, easing, microInteractions } from "@/lib/animations";
 import { auth, db, isFirebaseConfigured } from "../lib/firebase";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, writeBatch } from "firebase/firestore";
 import { useAuth } from "../contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -62,6 +62,13 @@ export default function Signup() {
       return;
     }
 
+    // Firebase often rejects test domains like @example.com
+    const domain = formData.email.split("@")[1]?.toLowerCase() || "";
+    if (["example.com", "example.org", "test.com"].includes(domain)) {
+      setError("Use a real email address (e.g. Gmail). Test domains like @example.com are not accepted.");
+      return;
+    }
+
     const passwordError = validatePassword(formData.password);
     if (passwordError) {
       setError(passwordError);
@@ -88,83 +95,80 @@ export default function Signup() {
         return;
       }
 
+      if (!db) {
+        setError("Database is not available. Please try again later.");
+        return;
+      }
+
+      const localPart = formData.email.split('@')[0]?.toLowerCase() || '';
+      if (localPart) {
+        const usernameRef = doc(db, 'usernames', localPart);
+        const existing = await getDoc(usernameRef);
+        if (existing.exists()) {
+          const existingEmail = (existing.data()?.email as string) || '';
+          if (existingEmail.toLowerCase() !== formData.email.toLowerCase()) {
+            setError('This username is already taken. Please use a different email or sign in.');
+            setIsLoading(false);
+            return;
+          }
+        }
+      }
+
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         formData.email,
         formData.password
       );
-
       const user = userCredential.user;
-
-      await updateProfile(user, {
-        displayName: formData.fullName,
-      });
-
-      // Create user document with onboarding NOT completed
-      // User will be redirected to quick-onboarding flow
-      if (!db) {
-        console.error('[Signup] Firestore not initialized');
-        setError("Database is not available. Please try again later.");
-        return;
-      }
-
       const now = new Date();
       const nowISO = now.toISOString();
-
-      await setDoc(doc(db, 'users', user.uid), {
-        uid: user.uid,
-        email: formData.email,
-        fullName: formData.fullName,
-        onboardingCompleted: false, // New users must complete onboarding
-        onboardingComplete: false,  // Keep both fields for compatibility
-        createdAt: nowISO,
-        updatedAt: nowISO,
-      });
-
-      // Auto-create default policy with correct start/end dates
       const policyStart = new Date(now);
       const policyEnd = new Date(now);
       policyEnd.setFullYear(policyEnd.getFullYear() + 1);
-
       const policyNumber = `DRV-${now.getFullYear()}-${user.uid.slice(0, 6).toUpperCase()}`;
 
-      try {
-        await setDoc(doc(db, 'policies', `${user.uid}-policy`), {
-          policyId: `${user.uid}-policy`,
-          userId: user.uid,
-          policyNumber,
-          status: 'active',
-          coverageType: 'comprehensive_plus',
-          coverageDetails: {
-            liabilityLimitCents: 2000000000, // £20M
-            collisionDeductibleCents: 25000,  // £250
-            comprehensiveDeductibleCents: 35000, // £350
-            includesRoadside: true,
-            includesRental: true,
-          },
-          basePremiumCents: 184000, // £1,840 default
-          currentPremiumCents: 184000,
-          discountPercentage: 0,
-          effectiveDate: policyStart.toISOString(),
-          expirationDate: policyEnd.toISOString(),
-          renewalDate: policyEnd.toISOString(),
-          vehicle: {
-            vin: null,
-            make: '',
-            model: '',
-            year: now.getFullYear(),
-          },
-          createdAt: nowISO,
-          updatedAt: nowISO,
-          created_by: 'client-signup',
-        });
-        console.log('[Signup] Policy auto-created for user:', user.uid);
-      } catch (policyErr) {
-        // Non-blocking — user can still proceed without policy
-        console.error('[Signup] Policy auto-create failed:', policyErr);
+      const batch = writeBatch(db);
+      batch.set(doc(db, 'users', user.uid), {
+        uid: user.uid,
+        email: formData.email,
+        fullName: formData.fullName,
+        onboardingCompleted: false,
+        onboardingComplete: false,
+        createdAt: nowISO,
+        updatedAt: nowISO,
+      });
+      if (localPart) {
+        batch.set(doc(db, 'usernames', localPart), { email: formData.email, uid: user.uid }, { merge: true });
       }
+      batch.set(doc(db, 'policies', `${user.uid}-policy`), {
+        policyId: `${user.uid}-policy`,
+        userId: user.uid,
+        policyNumber,
+        status: 'active',
+        coverageType: 'comprehensive_plus',
+        coverageDetails: {
+          liabilityLimitCents: 2000000000,
+          collisionDeductibleCents: 25000,
+          comprehensiveDeductibleCents: 35000,
+          includesRoadside: true,
+          includesRental: true,
+        },
+        basePremiumCents: 184000,
+        currentPremiumCents: 184000,
+        discountPercentage: 0,
+        effectiveDate: policyStart.toISOString(),
+        expirationDate: policyEnd.toISOString(),
+        renewalDate: policyEnd.toISOString(),
+        vehicle: { vin: null, make: '', model: '', year: now.getFullYear() },
+        createdAt: nowISO,
+        updatedAt: nowISO,
+        created_by: 'client-signup',
+      });
 
-      console.log('[Signup] Success, user created:', user.uid);
+      await Promise.all([
+        updateProfile(user, { displayName: formData.fullName }),
+        batch.commit(),
+      ]);
 
       // Set user in context with onboarding NOT complete
       setUser({
@@ -201,6 +205,10 @@ export default function Signup() {
         setError("Invalid email address format.");
       } else if (err.code === 'auth/network-request-failed') {
         setError("Network error. Please check your connection and try again.");
+      } else if (err.code === 'auth/operation-not-allowed') {
+        setError("Email/password sign-up is not enabled. Check Firebase Console → Authentication → Sign-in method.");
+      } else if (err.code === 'auth/too-many-requests') {
+        setError("Too many attempts. Please try again later.");
       } else {
         setError(err.message || "Something went wrong. Please try again.");
       }

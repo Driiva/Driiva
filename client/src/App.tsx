@@ -1,10 +1,9 @@
 import { lazy, Suspense } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { Router, Route, Switch, Redirect, useLocation } from 'wouter';
-import ScrollGradient from './components/ScrollGradient';
-import AnimatedBackground from './components/AnimatedBackground';
-import heroBackground from './assets/hero-background.png';
+import { Router, Route, Switch, Redirect } from 'wouter';
+import gradientBackground from './assets/gradient-background.png';
 import { ProtectedRoute, PublicOnlyRoute } from './components/ProtectedRoute';
+import { HomeRedirect } from './components/HomeRedirect';
 
 // ─── Eagerly loaded: critical user journey pages ─────────────────────────
 // These are loaded in the initial bundle so navigation is instant.
@@ -13,7 +12,6 @@ import Signup from './pages/signup';
 import SignIn from './pages/signin';
 import Demo from './pages/demo';
 import QuickOnboarding from './pages/quick-onboarding';
-import Home from './pages/home';
 import Dashboard from './pages/dashboard';
 import Trips from './pages/trips';
 import Profile from './pages/profile';
@@ -70,20 +68,19 @@ export default function App() {
 
 function AppContent() {
   const { isOnline } = useOnlineStatusContext();
-  const [location] = useLocation();
-  
-  // Welcome page has its own hero orbs; show animated orbs on all other pages
-  const isWelcomePage = location === '/' || location === '/welcome';
-  
+
   return (
     <div className={`App ${!isOnline ? 'pt-[52px]' : ''}`}>
       <OfflineBanner />
       <div 
         className="driiva-gradient-bg" 
-        style={{ backgroundImage: `url(${heroBackground})` }}
+        style={{ 
+          backgroundImage: `url(${gradientBackground})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        }}
       />
-      {!isWelcomePage && <AnimatedBackground variant="app" />}
-      <ScrollGradient />
       <Suspense fallback={<PageFallback />}>
       <Switch>
               {/* Public routes */}
@@ -92,19 +89,19 @@ function AppContent() {
               <Route path="/terms" component={Terms} />
               <Route path="/privacy" component={Privacy} />
               
-              {/* Auth routes - redirect to home if already logged in */}
+              {/* Auth routes - redirect to dashboard if already logged in */}
               <Route path="/signin">
-                <PublicOnlyRoute redirectTo="/home">
+                <PublicOnlyRoute redirectTo="/dashboard">
                   <SignIn />
                 </PublicOnlyRoute>
               </Route>
               <Route path="/login">
-                <PublicOnlyRoute redirectTo="/home">
+                <PublicOnlyRoute redirectTo="/dashboard">
                   <SignIn />
                 </PublicOnlyRoute>
               </Route>
               <Route path="/signup">
-                <PublicOnlyRoute redirectTo="/home">
+                <PublicOnlyRoute redirectTo="/dashboard">
                   <Signup />
                 </PublicOnlyRoute>
               </Route>
@@ -113,10 +110,10 @@ function AppContent() {
               <Route path="/permissions" component={Permissions} />
               <Route path="/onboarding" component={Onboarding} />
               
+              {/* Redirect legacy /home: dashboard if auth/demo, else welcome */}
+              <Route path="/home" component={HomeRedirect} />
+              
               {/* Protected routes - require authentication */}
-              <Route path="/home">
-                <ProtectedRoute><Home /></ProtectedRoute>
-              </Route>
               <Route path="/dashboard">
                 <ProtectedRoute><Dashboard /></ProtectedRoute>
               </Route>

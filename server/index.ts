@@ -9,17 +9,27 @@ const app = express();
 // Apply security headers
 app.use(securityHeaders);
 
-// CORS middleware
+// CORS: allow only approved origins (app domain + localhost for dev). No wildcard.
+const CORS_ORIGINS = (process.env.CORS_ORIGINS ?? "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+const CORS_ORIGIN_SET = new Set(CORS_ORIGINS);
+
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  
-  if (req.method === 'OPTIONS') {
-    res.sendStatus(200);
-  } else {
-    next();
+  const origin = req.headers.origin;
+  if (origin && CORS_ORIGIN_SET.has(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
   }
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  res.setHeader("Access-Control-Max-Age", "86400");
+
+  if (req.method === "OPTIONS") {
+    res.sendStatus(204);
+    return;
+  }
+  next();
 });
 
 // Apply rate limiting to API routes

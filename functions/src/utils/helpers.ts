@@ -234,6 +234,8 @@ export function calculateProjectedRefund(
 // ============================================================================
 // TRIP METRICS COMPUTATION
 // ============================================================================
+// Canonical source for distance (m) and duration (s) formulas: shared/tripProcessor.ts.
+// This implementation must match (Haversine R=6371e3, duration = last−first timestamp).
 
 import { TripPoint, ScoreBreakdown, TripEvents, ComputedTripMetrics } from '../types';
 

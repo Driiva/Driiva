@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { auth, db, isFirebaseConfigured } from "../lib/firebase";
+import { auth, isFirebaseConfigured } from "../lib/firebase";
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, User as FirebaseUser } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
 
 interface User {
   id: string;
@@ -72,30 +71,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
         try {
-          if (!db) {
-            throw new Error('Firestore not initialized');
-          }
-          const userDocRef = doc(db, 'users', firebaseUser.uid);
-          const userDoc = await getDoc(userDocRef);
-          const userData = userDoc.data();
-
-          setUser({
-            id: firebaseUser.uid,
-            email: firebaseUser.email!,
-            name: userData?.fullName || firebaseUser.displayName || firebaseUser.email!.split("@")[0],
-            onboardingComplete: userData?.onboardingComplete === true,
+          const token = await firebaseUser.getIdToken();
+          const res = await fetch("/api/profile/me", {
+            headers: { Authorization: `Bearer ${token}` },
+            credentials: "include",
           });
+          if (res.ok) {
+            const profile = await res.json();
+            setUser({
+              id: firebaseUser.uid,
+              email: profile.email ?? firebaseUser.email ?? "",
+              name: profile.name ?? firebaseUser.displayName ?? firebaseUser.email?.split("@")[0] ?? "User",
+              onboardingComplete: profile.onboardingComplete === true,
+            });
+          } else {
+            setUser({
+              id: firebaseUser.uid,
+              email: firebaseUser.email ?? "",
+              name: firebaseUser.displayName ?? firebaseUser.email?.split("@")[0] ?? "User",
+              onboardingComplete: false,
+            });
+          }
         } catch (error) {
-          console.error('[AuthContext] Error fetching user profile:', error);
+          console.error("[AuthContext] Error fetching profile from API:", error);
           setUser({
             id: firebaseUser.uid,
-            email: firebaseUser.email!,
-            name: firebaseUser.displayName || firebaseUser.email!.split("@")[0],
+            email: firebaseUser.email ?? "",
+            name: firebaseUser.displayName ?? firebaseUser.email?.split("@")[0] ?? "User",
             onboardingComplete: false,
           });
         }
       } else {
-        const demoModeActive = localStorage.getItem('driiva-demo-mode') === 'true';
+        const demoModeActive = localStorage.getItem("driiva-demo-mode") === "true";
         if (!demoModeActive) {
           setUser(null);
         }
@@ -131,14 +138,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const checkOnboardingStatus = async (): Promise<boolean> => {
-    if (!user || !db) return false;
-
+    if (!user || !auth?.currentUser) return false;
     try {
-      const userDocRef = doc(db, 'users', user.id);
-      const userDoc = await getDoc(userDocRef);
-      const userData = userDoc.data();
-
-      return userData?.onboardingComplete === true;
+      const token = await auth.currentUser.getIdToken();
+      const res = await fetch("/api/profile/me", {
+        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
+      });
+      if (!res.ok) return false;
+      const profile = await res.json();
+      return profile.onboardingComplete === true;
     } catch {
       return false;
     }

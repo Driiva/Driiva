@@ -7,7 +7,7 @@
 
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
-import { Shield, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 const Section = ({
   title,
@@ -62,10 +62,7 @@ export default function Privacy() {
         transition={{ duration: 0.5 }}
         className="max-w-2xl w-full"
       >
-        <div className="flex items-center justify-between mb-6">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500/20 to-orange-600/20 border border-white/10 flex items-center justify-center">
-            <Shield className="w-6 h-6 text-amber-400" />
-          </div>
+        <div className="flex items-center justify-end mb-6">
           <button
             onClick={() => window.history.back()}
             className="flex items-center gap-2 text-teal-400 hover:text-teal-300 transition-colors text-sm"
@@ -182,8 +179,9 @@ export default function Privacy() {
             <SubSection title="5.2 Root Insurance Platform">
               <P>
                 Where applicable, we integrate with or use the Root Insurance
-                platform for insurance operations. Data shared with Root is
-                subject to their privacy policy and our agreements with them.
+                platform for insurance operations. Root's infrastructure incorporates
+                ISO 27001–compliant data centres. Data shared with Root is subject
+                to their privacy policy and our agreements with them.
               </P>
             </SubSection>
             <SubSection title="5.3 Others">
@@ -235,7 +233,7 @@ export default function Privacy() {
               ]}
             />
             <P>
-              To exercise these rights, contact us at hello@driiva.com. We will
+              To exercise these rights, contact us at info@driiva.co.uk. We will
               respond within one month.
             </P>
           </Section>
@@ -244,17 +242,19 @@ export default function Privacy() {
             <P>
               For privacy questions or to exercise your rights, email us at{" "}
               <a
-                href="mailto:hello@driiva.com"
+                href="mailto:info@driiva.co.uk"
                 className="text-teal-400 hover:underline"
               >
-                hello@driiva.com
+                info@driiva.co.uk
               </a>
               .
             </P>
             <P>
-              We are not just an insurance company – we aim to be your co-pilot.
-              Co-pilots do not spill your secrets.
+              We aren't your normal insurer – we aim to be your co-pilot. And co-pilots don't spill secrets.
             </P>
+            <p className="text-white/70 text-xs leading-relaxed italic">
+              All demo and sample data shown in the app is randomised – no real user data is used in examples or marketing.
+            </p>
           </Section>
         </div>
       </motion.div>

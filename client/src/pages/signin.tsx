@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, LogIn, Mail, Lock, ArrowLeft, AlertCircle } from "lucide-react";
@@ -22,7 +22,8 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 export default function SignIn() {
   const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'unavailable'>('checking');
   const [, setLocation] = useLocation();
-  const [email, setEmail] = useState("");
+  // Single field: user can enter email or username (e.g. driiva1 → driiva1@driiva.co.uk)
+  const [emailOrUsername, setEmailOrUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -30,6 +31,7 @@ export default function SignIn() {
   const { toast } = useToast();
   const { ref: cardRef, style: cardParallaxStyle } = useParallax({ speed: 0.3 });
   const { setUser } = useAuth();
+  const errorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!isFirebaseConfigured) {
@@ -39,6 +41,13 @@ export default function SignIn() {
     }
   }, []);
 
+  // Scroll error into view when it appears
+  useEffect(() => {
+    if (loginError && errorRef.current) {
+      errorRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [loginError]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     console.log('[SignIn] handleSubmit called');
     e.preventDefault();
@@ -46,35 +55,47 @@ export default function SignIn() {
     
     setLoginError(null);
     
-    if (!email.trim() || !password.trim()) {
-      console.log('[SignIn] Missing credentials');
-      setLoginError('Please enter both email and password');
-      toast({
-        title: "Missing credentials",
-        description: "Please enter both email and password",
-        variant: "destructive",
-      });
+    if (!emailOrUsername.trim() || !password.trim()) {
+      setLoginError('Please enter both email or username and password');
+      toast({ title: "Missing credentials", description: "Please enter both email or username and password", variant: "destructive" });
       return;
     }
 
-    // Check if Firebase is configured
-    if (!isFirebaseConfigured) {
-      console.log('[SignIn] Firebase not configured');
-      setLoginError('Sign-in is currently unavailable. Please try the demo mode to explore the app.');
-      toast({
-        title: "Service unavailable",
-        description: "Sign-in is currently unavailable. Try demo mode instead.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    console.log('[SignIn] Starting Firebase authentication...');
+    // Show loading immediately so user sees feedback
     setIsLoading(true);
     setLoginError(null);
-    
+
+    // Resolve to email so johndoe and johndoe@abc.com map to the same user
+    let email: string;
+    const raw = emailOrUsername.trim();
+    if (raw.includes('@')) {
+      email = raw;
+    } else {
+      const usernameKey = raw.toLowerCase();
+      if (db) {
+        try {
+          const usernameSnap = await getDoc(doc(db, 'usernames', usernameKey));
+          if (usernameSnap.exists() && usernameSnap.data()?.email) {
+            email = usernameSnap.data()!.email as string;
+          } else {
+            email = `${raw}@driiva.co.uk`;
+          }
+        } catch {
+          email = `${raw}@driiva.co.uk`;
+        }
+      } else {
+        email = `${raw}@driiva.co.uk`;
+      }
+    }
+
+    if (!isFirebaseConfigured || !auth) {
+      setIsLoading(false);
+      setLoginError('Sign-in is currently unavailable. Please try demo mode.');
+      toast({ title: "Service unavailable", description: "Try demo mode instead.", variant: "destructive" });
+      return;
+    }
+
     try {
-      console.log('[SignIn] Calling Firebase signInWithEmailAndPassword');
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
@@ -122,23 +143,23 @@ export default function SignIn() {
       console.log('[SignIn] Redirecting to', destination);
       setLocation(destination);
 
-    } catch (error: any) {
-      console.error('[SignIn] Authentication failed:', error);
-      let errorMessage = "Invalid email or password";
+    } catch (error: unknown) {
+      const err = error as { code?: string; message?: string };
+      console.error('[SignIn] Authentication failed:', err);
+      let errorMessage = "Invalid email or password. Try demo mode if you don't have an account yet.";
 
-      if (error.code === 'auth/api-key-not-valid.-please-pass-a-valid-api-key' ||
-          error.code === 'auth/api-key-not-valid-please-pass-a-valid-api-key' ||
-          error.message?.includes('api-key-not-valid')) {
-        console.error('[SignIn] API key rejected by Firebase. Check .env VITE_FIREBASE_API_KEY and Google Cloud API key restrictions.');
-        errorMessage = "Service configuration error. The Firebase API key is invalid or restricted. Please contact support.";
-      } else if (error.code === 'auth/invalid-email') {
-        errorMessage = "Invalid email address format";
-      } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-        errorMessage = "Invalid email or password. Check your credentials or create a new account.";
-      } else if (error.code === 'auth/too-many-requests') {
-        errorMessage = "Too many failed attempts. Please try again later.";
-      } else if (error.code === 'auth/network-request-failed') {
-        errorMessage = "Network error. Please check your connection and try again.";
+      if (err.code === 'auth/api-key-not-valid.-please-pass-a-valid-api-key' ||
+          err.code === 'auth/api-key-not-valid-please-pass-a-valid-api-key' ||
+          err.message?.includes('api-key-not-valid')) {
+        errorMessage = "Service configuration error. The Firebase API key is invalid or restricted.";
+      } else if (err.code === 'auth/invalid-email') {
+        errorMessage = "Invalid email address format.";
+      } else if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        errorMessage = "Invalid email or password. Use one of the test accounts or try demo mode.";
+      } else if (err.code === 'auth/too-many-requests') {
+        errorMessage = "Too many attempts. Please try again later.";
+      } else if (err.code === 'auth/network-request-failed') {
+        errorMessage = "Network error. Check your connection and try again.";
       }
 
       setLoginError(errorMessage);
@@ -316,21 +337,21 @@ export default function SignIn() {
               >
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium text-white/80">
-                    Email
+                    Email or username
                   </label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-white/50" />
                     <Input
-                      type="email"
-                      value={email}
+                      type="text"
+                      value={emailOrUsername}
                       onChange={(e) => {
-                        setEmail(e.target.value);
+                        setEmailOrUsername(e.target.value);
                         setLoginError(null);
                       }}
                       className="signin-input pl-10"
-                      placeholder="Enter your email"
+                      placeholder="e.g. you@example.com or driiva1"
                       required
-                      autoComplete="email"
+                      autoComplete="username email"
                     />
                   </div>
                 </div>
@@ -365,6 +386,7 @@ export default function SignIn() {
 
                 {loginError && (
                   <motion.div
+                    ref={errorRef}
                     initial={{ opacity: 0, y: -5 }}
                     animate={{ opacity: 1, y: 0 }}
                     className="flex items-start gap-2 px-3 py-2.5 rounded-xl"

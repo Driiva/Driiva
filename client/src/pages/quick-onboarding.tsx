@@ -131,7 +131,8 @@ export default function QuickOnboarding() {
   };
 
   /**
-   * Complete onboarding and navigate to dashboard
+   * Complete onboarding and navigate to dashboard.
+   * Persists onboarding_complete to PostgreSQL (source of truth) and optionally Firestore.
    */
   const handleComplete = async () => {
     if (!confirmed) return;
@@ -146,27 +147,41 @@ export default function QuickOnboarding() {
       });
     }
 
-    // 2. Navigate immediately — don't block on Firestore write
+    // 2. Navigate immediately — don't block on backend writes
     setLocation('/dashboard');
 
-    // 3. Persist to Firestore in background
+    // 3. Persist to PostgreSQL (single source of truth for onboarding)
+    const firebaseUser = auth?.currentUser;
+    if (firebaseUser) {
+      try {
+        const token = await firebaseUser.getIdToken();
+        await fetch('/api/profile/me', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          credentials: 'include',
+          body: JSON.stringify({ onboardingComplete: true }),
+        });
+      } catch (err) {
+        console.error('[QuickOnboarding] Failed to update onboarding in PostgreSQL:', err);
+      }
+    }
+
+    // 4. Optional: keep Firestore in sync for legacy/telematics
     try {
-      const firebaseUser = auth?.currentUser;
       if (firebaseUser && isFirebaseConfigured && db) {
         const userDocRef = doc(db, 'users', firebaseUser.uid);
-
-        // Use setDoc with merge: true — works whether the doc exists or not,
-        // and avoids the extra getDoc round-trip.
         await setDoc(userDocRef, {
           onboardingCompleted: true,
-          onboardingComplete: true, // Keep both for compatibility
+          onboardingComplete: true,
           gpsPermissionGranted: gpsStatus === 'success',
           updatedAt: new Date().toISOString(),
         }, { merge: true });
       }
     } catch (err) {
-      console.error('[QuickOnboarding] Failed to update onboarding status:', err);
-      // Non-blocking — user is already on the dashboard
+      console.error('[QuickOnboarding] Failed to update Firestore:', err);
     }
   };
 
