@@ -1,3 +1,6 @@
+// UI simulation only — not used for stored scores.
+// Canonical scoring lives in functions/src/utils/helpers.ts.
+// This file powers the RefundSimulator component for display purposes only.
 // Driiva Scoring System - Optimized for Runtime Stability
 
 export interface ScoringMetrics {
@@ -135,14 +138,15 @@ export function calculateRefund(
       refundPercentage = Math.min(15, refundPercentage);
     }
 
-    const refundAmount = (safePremium * refundPercentage) / 100;
+    // refundAmount is in integer cents (e.g. £1.84 = 184)
+    const refundAmount = Math.round((safePremium * refundPercentage) / 100);
 
     return {
       personalScore: safePersonal,
       communityScore,
       totalScore,
       refundPercentage: Math.round(refundPercentage * 100) / 100,
-      refundAmount: Math.round(refundAmount * 100) / 100,
+      refundAmount, // integer cents
       qualifiesForRefund
     };
   } catch (error) {
@@ -185,7 +189,7 @@ export const drivingScorer = {
   calculateTotalScore,
   calculateRefund,
   simulateScoreChange,
-  
+
   // Additional helper for RefundSimulator component
   calculateRefundProjection(
     score: number,

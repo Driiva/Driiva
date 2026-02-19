@@ -6,11 +6,8 @@
  */
 
 import * as functions from 'firebase-functions';
-import * as admin from 'firebase-admin';
 import { COLLECTION_NAMES, TripDocument } from '../types';
 import { getPgUserIdByFirebaseUid, insertTripSummary } from '../lib/neon';
-
-const db = admin.firestore();
 
 export const syncTripOnComplete = functions.firestore
   .document(`${COLLECTION_NAMES.TRIPS}/{tripId}`)

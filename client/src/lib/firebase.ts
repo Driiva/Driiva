@@ -26,8 +26,9 @@
  */
 
 import { initializeApp, FirebaseApp } from 'firebase/app';
-import { getAuth, Auth, GoogleAuthProvider } from 'firebase/auth';
-import { getFirestore, Firestore, enableIndexedDbPersistence } from 'firebase/firestore';
+import { getAuth, Auth, GoogleAuthProvider, connectAuthEmulator } from 'firebase/auth';
+import { getFirestore, Firestore, enableIndexedDbPersistence, connectFirestoreEmulator } from 'firebase/firestore';
+import { getAnalytics, Analytics } from 'firebase/analytics';
 
 // ---------------------------------------------------------------------------
 // 1. Read environment variables
@@ -130,6 +131,7 @@ const firebaseConfig = {
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let db: Firestore | null = null;
+let analytics: Analytics | null = null;
 
 if (isFirebaseConfigured) {
   try {
@@ -137,6 +139,25 @@ if (isFirebaseConfigured) {
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
     db = getFirestore(app);
+
+    // Connect to emulators in development mode
+    /*
+    if (import.meta.env.DEV) {
+      connectAuthEmulator(auth, 'http://localhost:9099');
+      connectFirestoreEmulator(db, 'localhost', 8080);
+      console.log('✓ Connected to Firebase Emulators (Auth: 9099, Firestore: 8080)');
+    }
+    */
+
+    // Analytics: initialize when measurementId is available (throws in some environments)
+    if (envMeasurementId) {
+      try {
+        analytics = getAnalytics(app);
+      } catch (analyticsErr) {
+        // Analytics can fail in environments with ad-blockers or restricted APIs
+        console.warn('Firebase Analytics could not be initialized:', analyticsErr);
+      }
+    }
 
     // Offline persistence: queue writes when offline and sync when back online
     enableIndexedDbPersistence(db).catch((err) => {
@@ -163,5 +184,5 @@ if (isFirebaseConfigured) {
 // Google Auth provider — pre-configured, ready for signInWithPopup
 const googleProvider = isFirebaseConfigured ? new GoogleAuthProvider() : null;
 
-export { auth, db, googleProvider };
+export { auth, db, googleProvider, analytics };
 export default app;

@@ -219,11 +219,10 @@ describe('calculateRefund', () => {
     expect(result.refundAmount).toBe(0);
   });
 
-  it('uses integer-safe amounts (no floating point drift)', () => {
+  it('returns refundAmount as integer cents (no floating point)', () => {
     const result = calculateRefund(85, 9999);
-    // refundAmount should be a clean number (rounded to 2 decimals)
-    const decimalPlaces = (result.refundAmount.toString().split('.')[1] || '').length;
-    expect(decimalPlaces).toBeLessThanOrEqual(2);
+    // refundAmount should be an integer (cents)
+    expect(Number.isInteger(result.refundAmount)).toBe(true);
   });
 
   it('includes correct community and total score in result', () => {
@@ -260,5 +259,29 @@ describe('simulateScoreChange', () => {
   it('clamps target score to 0-100', () => {
     const result = simulateScoreChange(50, 200, 10000);
     expect(result.personalScore).toBeLessThanOrEqual(100);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Deterministic refund test (known inputs for auditing)
+// ---------------------------------------------------------------------------
+
+describe('calculateRefund — deterministic audit test', () => {
+  it('produces known output for score=85, premium=184000 cents, safetyFactor=0.85', () => {
+    // Input: score 85, premium £1840 = 184000 cents, safety factor 0.85
+    // Canonical formula:
+    //   scoreRange = max(0, 85 - 70) = 15
+    //   baseRefund = 5%
+    //   additionalRefund = (15/30) * 10 = 5%
+    //   refundPercentage = 5 + 5 = 10%
+    //   poolAdjustment: safetyFactor 0.85 > 0.8 → 1.0
+    //   refundPercentage after adjustment = 10% * 1.0 = 10%
+    //   refundAmount = (184000 * 10) / 100 = 18400 cents
+    const result = calculateRefund(85, 184000, 0.85);
+
+    expect(result.qualifiesForRefund).toBe(true);
+    expect(result.refundPercentage).toBe(10);
+    expect(result.refundAmount).toBe(18400); // integer cents = £184.00
+    expect(Number.isInteger(result.refundAmount)).toBe(true);
   });
 });

@@ -41,11 +41,11 @@ const root = createRoot(container);
 root.render(
   <React.StrictMode>
     <SentryErrorBoundary
-      fallback={({ error, resetError }) => (
-        <ErrorFallback error={error} resetError={resetError} />
+      fallback={(props) => (
+        <ErrorFallback error={props.error as Error} resetError={props.resetError} />
       )}
       onError={(error, componentStack) => {
-        captureError(error, { componentStack });
+        captureError(error as Error, { componentStack });
       }}
     >
       <App />

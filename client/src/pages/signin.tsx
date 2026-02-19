@@ -52,9 +52,9 @@ export default function SignIn() {
     console.log('[SignIn] handleSubmit called');
     e.preventDefault();
     e.stopPropagation();
-    
+
     setLoginError(null);
-    
+
     if (!emailOrUsername.trim() || !password.trim()) {
       setLoginError('Please enter both email or username and password');
       toast({ title: "Missing credentials", description: "Please enter both email or username and password", variant: "destructive" });
@@ -102,11 +102,12 @@ export default function SignIn() {
       console.log('[SignIn] Authentication successful, user:', user.uid);
 
       let onboardingComplete = false;
-      
+
       try {
+        if (!db) throw new Error('Firestore not initialized');
         const userDocRef = doc(db, 'users', user.uid);
         const userDoc = await getDoc(userDocRef);
-        
+
         if (userDoc.exists()) {
           const userData = userDoc.data();
           onboardingComplete = userData?.onboardingComplete === true;
@@ -131,6 +132,7 @@ export default function SignIn() {
         email: user.email || email,
         name: user.displayName || user.email?.split('@')[0] || 'User',
         onboardingComplete,
+        emailVerified: user.emailVerified,
       });
 
       toast({
@@ -149,8 +151,8 @@ export default function SignIn() {
       let errorMessage = "Invalid email or password. Try demo mode if you don't have an account yet.";
 
       if (err.code === 'auth/api-key-not-valid.-please-pass-a-valid-api-key' ||
-          err.code === 'auth/api-key-not-valid-please-pass-a-valid-api-key' ||
-          err.message?.includes('api-key-not-valid')) {
+        err.code === 'auth/api-key-not-valid-please-pass-a-valid-api-key' ||
+        err.message?.includes('api-key-not-valid')) {
         errorMessage = "Service configuration error. The Firebase API key is invalid or restricted.";
       } else if (err.code === 'auth/invalid-email') {
         errorMessage = "Invalid email address format.";
@@ -221,6 +223,7 @@ export default function SignIn() {
         email: user.email || '',
         name: user.displayName || user.email?.split('@')[0] || 'User',
         onboardingComplete,
+        emailVerified: user.emailVerified, // Google accounts are always pre-verified
       });
 
       toast({
@@ -284,9 +287,9 @@ export default function SignIn() {
           }}
           className="w-full max-w-sm"
         >
-          <Card 
+          <Card
             ref={cardRef}
-            className="w-full parallax-content" 
+            className="w-full parallax-content"
             style={{
               background: 'rgba(20, 20, 30, 0.7)',
               border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -307,15 +310,15 @@ export default function SignIn() {
                 }}
                 className="flex flex-col items-center mb-4"
               >
-                <img 
-                  src={signinLogo} 
-                  alt="Driiva" 
-                  className="h-10 w-auto mb-2" 
+                <img
+                  src={signinLogo}
+                  alt="Driiva"
+                  className="h-10 w-auto mb-2"
                 />
                 <p className="text-center text-white/70 text-sm">
                   Sign in to your telematics insurance account
                 </p>
-                
+
                 {connectionStatus === 'unavailable' && (
                   <div className="mt-3 px-3 py-1 rounded-full text-xs bg-red-500/20 text-red-300 border border-red-500/30">
                     Service Unavailable
@@ -384,6 +387,15 @@ export default function SignIn() {
                   </div>
                 </div>
 
+                <div className="flex justify-end -mt-2">
+                  <button
+                    type="button"
+                    onClick={() => setLocation("/forgot-password")}
+                    className="text-xs text-white/50 hover:text-cyan-400 transition-colors"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
                 {loginError && (
                   <motion.div
                     ref={errorRef}
@@ -453,10 +465,10 @@ export default function SignIn() {
                   aria-label="Continue with Google"
                 >
                   <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
-                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                    <path fill="#FBBC05" d="M10.53 28.59a14.5 14.5 0 0 1 0-9.18l-7.98-6.19a24.01 24.01 0 0 0 0 21.56l7.98-6.19z"/>
-                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+                    <path fill="#FBBC05" d="M10.53 28.59a14.5 14.5 0 0 1 0-9.18l-7.98-6.19a24.01 24.01 0 0 0 0 21.56l7.98-6.19z" />
+                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
                   </svg>
                   <span>Continue with Google</span>
                 </button>

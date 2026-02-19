@@ -28,6 +28,8 @@ const PolicyPage = lazy(() => import('./pages/policy'));
 const Terms = lazy(() => import('./pages/terms'));
 const Privacy = lazy(() => import('./pages/privacy'));
 const Achievements = lazy(() => import('./pages/achievements'));
+const ForgotPassword = lazy(() => import('./pages/forgot-password'));
+const VerifyEmail = lazy(() => import('./pages/verify-email'));
 
 import { AuthProvider } from './contexts/AuthContext';
 import { OnlineStatusProvider, useOnlineStatusContext } from './contexts/OnlineStatusContext';
@@ -72,9 +74,9 @@ function AppContent() {
   return (
     <div className={`App ${!isOnline ? 'pt-[52px]' : ''}`}>
       <OfflineBanner />
-      <div 
-        className="driiva-gradient-bg" 
-        style={{ 
+      <div
+        className="driiva-gradient-bg"
+        style={{
           backgroundImage: `url(${gradientBackground})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
@@ -82,73 +84,83 @@ function AppContent() {
         }}
       />
       <Suspense fallback={<PageFallback />}>
-      <Switch>
-              {/* Public routes */}
-              <Route path="/" component={Welcome} />
-              <Route path="/welcome" component={Welcome} />
-              <Route path="/terms" component={Terms} />
-              <Route path="/privacy" component={Privacy} />
-              
-              {/* Auth routes - redirect to dashboard if already logged in */}
-              <Route path="/signin">
-                <PublicOnlyRoute redirectTo="/dashboard">
-                  <SignIn />
-                </PublicOnlyRoute>
-              </Route>
-              <Route path="/login">
-                <PublicOnlyRoute redirectTo="/dashboard">
-                  <SignIn />
-                </PublicOnlyRoute>
-              </Route>
-              <Route path="/signup">
-                <PublicOnlyRoute redirectTo="/dashboard">
-                  <Signup />
-                </PublicOnlyRoute>
-              </Route>
-              
-              {/* Semi-protected routes (onboarding flow) */}
-              <Route path="/permissions" component={Permissions} />
-              <Route path="/onboarding" component={Onboarding} />
-              
-              {/* Redirect legacy /home: dashboard if auth/demo, else welcome */}
-              <Route path="/home" component={HomeRedirect} />
-              
-              {/* Protected routes - require authentication */}
-              <Route path="/dashboard">
-                <ProtectedRoute><Dashboard /></ProtectedRoute>
-              </Route>
-              <Route path="/trips">
-                <ProtectedRoute><Trips /></ProtectedRoute>
-              </Route>
-              <Route path="/rewards">
-                <ProtectedRoute><Rewards /></ProtectedRoute>
-              </Route>
-              <Route path="/profile">
-                <ProtectedRoute><Profile /></ProtectedRoute>
-              </Route>
-              <Route path="/support" component={Support} />
-              <Route path="/trip-recording">
-                <ProtectedRoute><TripRecording /></ProtectedRoute>
-              </Route>
-              <Route path="/leaderboard">
-                <ProtectedRoute><LeaderboardPage /></ProtectedRoute>
-              </Route>
-              <Route path="/policy">
-                <ProtectedRoute><PolicyPage /></ProtectedRoute>
-              </Route>
-              <Route path="/demo" component={Demo} />
-              <Route path="/quick-onboarding">
-                <ProtectedRoute skipOnboardingCheck><QuickOnboarding /></ProtectedRoute>
-              </Route>
-              <Route path="/settings">
-                <ProtectedRoute><Settings /></ProtectedRoute>
-              </Route>
-              <Route path="/achievements">
-                <ProtectedRoute><Achievements /></ProtectedRoute>
-              </Route>
-              
-              <Route>{() => <Redirect to="/" />}</Route>
-            </Switch>
+        <Switch>
+          {/* Public routes */}
+          <Route path="/" component={Welcome} />
+          <Route path="/welcome" component={Welcome} />
+          <Route path="/terms" component={Terms} />
+          <Route path="/privacy" component={Privacy} />
+
+          {/* Auth routes - redirect to dashboard if already logged in */}
+          <Route path="/signin">
+            <PublicOnlyRoute redirectTo="/dashboard">
+              <SignIn />
+            </PublicOnlyRoute>
+          </Route>
+          <Route path="/login">
+            <PublicOnlyRoute redirectTo="/dashboard">
+              <SignIn />
+            </PublicOnlyRoute>
+          </Route>
+          <Route path="/signup">
+            <PublicOnlyRoute redirectTo="/dashboard">
+              <Signup />
+            </PublicOnlyRoute>
+          </Route>
+          <Route path="/forgot-password">
+            <PublicOnlyRoute redirectTo="/dashboard">
+              <ForgotPassword />
+            </PublicOnlyRoute>
+          </Route>
+
+          {/* Semi-protected routes (onboarding flow) */}
+          <Route path="/permissions" component={Permissions} />
+          <Route path="/onboarding" component={Onboarding} />
+
+          {/* Redirect legacy /home: dashboard if auth/demo, else welcome */}
+          <Route path="/home" component={HomeRedirect} />
+
+          {/* Protected routes - require authentication */}
+          <Route path="/dashboard">
+            <ProtectedRoute><Dashboard /></ProtectedRoute>
+          </Route>
+          <Route path="/trips">
+            <ProtectedRoute><Trips /></ProtectedRoute>
+          </Route>
+          <Route path="/rewards">
+            <ProtectedRoute><Rewards /></ProtectedRoute>
+          </Route>
+          <Route path="/profile">
+            <ProtectedRoute><Profile /></ProtectedRoute>
+          </Route>
+          <Route path="/support" component={Support} />
+          <Route path="/trip-recording">
+            <ProtectedRoute><TripRecording /></ProtectedRoute>
+          </Route>
+          <Route path="/leaderboard">
+            <ProtectedRoute><LeaderboardPage /></ProtectedRoute>
+          </Route>
+          <Route path="/policy">
+            <ProtectedRoute><PolicyPage /></ProtectedRoute>
+          </Route>
+          <Route path="/demo" component={Demo} />
+          <Route path="/quick-onboarding">
+            {/* Skip both checks: new users verify email after onboarding, not before */}
+            <ProtectedRoute skipOnboardingCheck skipEmailVerificationCheck><QuickOnboarding /></ProtectedRoute>
+          </Route>
+          <Route path="/verify-email">
+            {/* Accessible to authenticated but unverified users */}
+            <ProtectedRoute skipOnboardingCheck skipEmailVerificationCheck><VerifyEmail /></ProtectedRoute>
+          </Route>
+          <Route path="/settings">
+            <ProtectedRoute><Settings /></ProtectedRoute>
+          </Route>
+          <Route path="/achievements">
+            <ProtectedRoute><Achievements /></ProtectedRoute>
+          </Route>
+
+          <Route>{() => <Redirect to="/" />}</Route>
+        </Switch>
       </Suspense>
     </div>
   );

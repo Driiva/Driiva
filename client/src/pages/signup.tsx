@@ -4,7 +4,7 @@ import { useLocation } from "wouter";
 import { AlertCircle, Loader2, Eye, EyeOff, ArrowLeft, User, Mail, Lock } from "lucide-react";
 import { timing, easing, microInteractions } from "@/lib/animations";
 import { auth, db, isFirebaseConfigured } from "../lib/firebase";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile, sendEmailVerification } from "firebase/auth";
 import { doc, setDoc, getDoc, writeBatch } from "firebase/firestore";
 import { useAuth } from "../contexts/AuthContext";
 import { Input } from "@/components/ui/input";
@@ -170,12 +170,18 @@ export default function Signup() {
         batch.commit(),
       ]);
 
+      // Send verification email (non-blocking — failure is logged but doesn't break signup)
+      sendEmailVerification(user).catch((err) => {
+        console.warn('[Signup] Failed to send verification email:', err);
+      });
+
       // Set user in context with onboarding NOT complete
       setUser({
         id: user.uid,
         email: user.email || formData.email,
         name: formData.fullName,
         onboardingComplete: false,
+        emailVerified: false, // new email/password accounts start unverified
       });
 
       toast({

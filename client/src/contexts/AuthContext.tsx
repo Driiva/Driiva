@@ -7,6 +7,7 @@ interface User {
   name: string;
   email: string;
   onboardingComplete?: boolean;
+  emailVerified?: boolean;
 }
 
 interface AuthContextType {
@@ -83,6 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               email: profile.email ?? firebaseUser.email ?? "",
               name: profile.name ?? firebaseUser.displayName ?? firebaseUser.email?.split("@")[0] ?? "User",
               onboardingComplete: profile.onboardingComplete === true,
+              emailVerified: firebaseUser.emailVerified,
             });
           } else {
             setUser({
@@ -90,6 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               email: firebaseUser.email ?? "",
               name: firebaseUser.displayName ?? firebaseUser.email?.split("@")[0] ?? "User",
               onboardingComplete: false,
+              emailVerified: firebaseUser.emailVerified,
             });
           }
         } catch (error) {
@@ -99,6 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             email: firebaseUser.email ?? "",
             name: firebaseUser.displayName ?? firebaseUser.email?.split("@")[0] ?? "User",
             onboardingComplete: false,
+            emailVerified: firebaseUser.emailVerified,
           });
         }
       } else {

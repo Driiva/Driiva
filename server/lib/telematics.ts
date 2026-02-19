@@ -94,13 +94,15 @@ export class TelematicsProcessor {
   private readonly DUPLICATE_TRIP_TIME_THRESHOLD_MS = 300000; // 5 minutes
   private readonly DUPLICATE_TRIP_DISTANCE_THRESHOLD_KM = 0.5; // 500m
 
+  // Canonical weights per CLAUDE.md — must match functions/src/utils/helpers.ts
   private readonly SCORING_WEIGHTS = {
+    speed: 0.25,
     hardBraking: 0.25,
     acceleration: 0.20,
-    speed: 0.20,
-    nightDriving: 0.15,
-    cornering: 0.10,
-    consistency: 0.10
+    cornering: 0.20,
+    // TODO: Implement real phone pickup detection (accelerometer pattern recognition)
+    // Currently hardcoded to 100 (no penalty) — weight is 10% per CLAUDE.md scoring spec
+    phoneUsage: 0.10,
   };
 
   /**
@@ -236,7 +238,7 @@ export class TelematicsProcessor {
     // Ensure refund doesn't exceed maximum possible
     const finalRefund = Math.min(adjustedRefund, premiumAmount * maxRefundRate);
 
-    return Number(Math.max(0, finalRefund).toFixed(2));
+    return Math.round(Math.max(0, finalRefund) * 100); // integer cents
   }
 
   /**
@@ -420,20 +422,19 @@ export class TelematicsProcessor {
     sharpCorners: number;
     ecoScore: number;
   }): number {
+    const speedScore = Math.max(0, 100 - (metrics.speedViolations * 2));
     const hardBrakingScore = Math.max(0, 100 - (metrics.hardBrakingEvents * 5));
     const accelerationScore = Math.max(0, 100 - (metrics.harshAccelerationEvents * 3));
-    const speedScore = Math.max(0, 100 - (metrics.speedViolations * 2));
-    const nightScore = metrics.nightDriving ? 85 : 100;
     const corneringScore = Math.max(0, 100 - (metrics.sharpCorners * 2));
-    const consistencyScore = 100; // Would be calculated over multiple trips
+    // Phone usage: placeholder — always 100 until phone detection is implemented
+    const phoneUsageScore = 100;
 
     const weightedScore = 
+      speedScore * this.SCORING_WEIGHTS.speed +
       hardBrakingScore * this.SCORING_WEIGHTS.hardBraking +
       accelerationScore * this.SCORING_WEIGHTS.acceleration +
-      speedScore * this.SCORING_WEIGHTS.speed +
-      nightScore * this.SCORING_WEIGHTS.nightDriving +
       corneringScore * this.SCORING_WEIGHTS.cornering +
-      consistencyScore * this.SCORING_WEIGHTS.consistency;
+      phoneUsageScore * this.SCORING_WEIGHTS.phoneUsage;
 
     return Math.max(0, Math.min(100, Math.round(weightedScore)));
   }

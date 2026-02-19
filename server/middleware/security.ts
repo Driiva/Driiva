@@ -40,6 +40,24 @@ export const securityHeaders = (req: express.Request, res: express.Response, nex
   res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   res.setHeader('Referrer-Policy', 'no-referrer-when-downgrade');
   res.setHeader('Permissions-Policy', 'geolocation=(self), camera=(), microphone=()');
+
+  const isDev = process.env.NODE_ENV !== 'production';
+
+  // Content Security Policy
+  const csp = [
+    "default-src 'self'",
+    `script-src 'self' ${isDev ? "'unsafe-inline' 'unsafe-eval'" : ""} https://*.firebaseapp.com https://*.firebase.com https://*.googletagmanager.com`,
+    `connect-src 'self' ${isDev ? "ws: wss:" : ""} https://*.googleapis.com https://*.firebaseio.com https://api.anthropic.com wss://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com`,
+    "img-src 'self' data: https://*.openstreetmap.org https://*.googletagmanager.com https://*.google-analytics.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' data: https://fonts.gstatic.com",
+    "frame-src https://*.firebaseapp.com",
+    "object-src 'none'",
+    "base-uri 'self'",
+  ];
+
+  res.setHeader('Content-Security-Policy', csp.join('; '));
+
   next();
 };
 
@@ -77,7 +95,7 @@ export const errorHandler = (err: Error, req: express.Request, res: express.Resp
 
   // Don't leak error details in production
   const isDevelopment = process.env.NODE_ENV === 'development';
-  
+
   res.status(500).json({
     error: {
       message: isDevelopment ? err.message : 'Internal server error',

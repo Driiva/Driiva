@@ -37,13 +37,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { 
-  Play, 
-  Square, 
-  Pause, 
-  Navigation, 
-  Clock, 
-  Zap, 
+import {
+  Play,
+  Square,
+  Pause,
+  Navigation,
+  Clock,
+  Zap,
   MapPin,
   AlertCircle,
   Loader2,
@@ -147,6 +147,8 @@ export default function TripRecording() {
         }));
 
         // Detect driving events (simplified - production would be more sophisticated)
+        // TODO: Implement real phone pickup detection (accelerometer pattern recognition)
+        // Currently hardcoded to 0 — phone usage weight is 10% per CLAUDE.md scoring spec
         if (point.speed !== null) {
           const speedMph = point.speed * 2.237;
           if (speedMph > 75) {
@@ -490,15 +492,14 @@ export default function TripRecording() {
           <div className="text-center">
             {/* Status Indicator */}
             <div
-              className={`w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center ${
-                recordingState === 'recording'
+              className={`w-24 h-24 mx-auto mb-4 rounded-full flex items-center justify-center ${recordingState === 'recording'
                   ? 'bg-red-500/20 border-2 border-red-500'
                   : recordingState === 'paused'
-                  ? 'bg-yellow-500/20 border-2 border-yellow-500'
-                  : recordingState === 'starting' || recordingState === 'stopping'
-                  ? 'bg-blue-500/20 border-2 border-blue-500'
-                  : 'bg-gray-500/20 border-2 border-gray-500'
-              }`}
+                    ? 'bg-yellow-500/20 border-2 border-yellow-500'
+                    : recordingState === 'starting' || recordingState === 'stopping'
+                      ? 'bg-blue-500/20 border-2 border-blue-500'
+                      : 'bg-gray-500/20 border-2 border-gray-500'
+                }`}
             >
               {recordingState === 'starting' || recordingState === 'stopping' ? (
                 <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
@@ -568,21 +569,19 @@ export default function TripRecording() {
             <div className="flex items-center justify-between">
               <span className="text-sm">GPS Location</span>
               <div
-                className={`w-3 h-3 rounded-full ${
-                  tracker.currentPosition
+                className={`w-3 h-3 rounded-full ${tracker.currentPosition
                     ? 'bg-green-500'
                     : tracker.isPermissionDenied
-                    ? 'bg-red-500'
-                    : 'bg-yellow-500'
-                }`}
+                      ? 'bg-red-500'
+                      : 'bg-yellow-500'
+                  }`}
               />
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm">Motion Sensors</span>
               <div
-                className={`w-3 h-3 rounded-full ${
-                  telematics.isPermissionGranted ? 'bg-green-500' : 'bg-red-500'
-                }`}
+                className={`w-3 h-3 rounded-full ${telematics.isPermissionGranted ? 'bg-green-500' : 'bg-red-500'
+                  }`}
               />
             </div>
             {activeTrip && (

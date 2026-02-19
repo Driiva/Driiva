@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from 'react';
+import React, { useLayoutEffect, useRef } from 'react';
 import { useLocation } from 'wouter';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -6,27 +6,33 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
   /** If true, skip onboarding check (for onboarding pages themselves) */
   skipOnboardingCheck?: boolean;
+  /** If true, skip email verification check (used for /quick-onboarding so new users can complete setup first) */
+  skipEmailVerificationCheck?: boolean;
 }
 
 /**
  * PROTECTED ROUTE COMPONENT
  * =========================
  * Guards routes that require authentication.
- * 
+ *
  * PERFORMANCE FIX (v2):
  *   - useLayoutEffect for redirect → fires BEFORE browser paint, zero flicker
  *   - Resolves synchronously from AuthContext.user (no Firestore reads)
  *   - Demo mode is a fast localStorage check
- * 
+ *
  * Flow:
  *   1. If AuthContext is still loading → brief spinner
  *   2. Demo mode → allow access instantly
- *   3. AuthContext.user exists → check onboarding, redirect if needed
- *   4. No user → redirect to /signin
+ *   3. No user → redirect to /signin
+ *   4. Onboarding not complete → redirect to /quick-onboarding
+ *   5. Email not verified → redirect to /verify-email
+ *      (skipped for Google accounts since emailVerified=true; skipped for /quick-onboarding)
+ *   6. All checks pass → render children
  */
-export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
+export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
-  skipOnboardingCheck = false
+  skipOnboardingCheck = false,
+  skipEmailVerificationCheck = false,
 }) => {
   const [, setLocation] = useLocation();
   const { user, loading } = useAuth();
@@ -51,8 +57,14 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     if (!skipOnboardingCheck && user.onboardingComplete !== true) {
       hasRedirected.current = true;
       setLocation('/quick-onboarding');
+      return;
     }
-  }, [loading, user, isDemoMode, skipOnboardingCheck, setLocation]);
+
+    if (!skipEmailVerificationCheck && user.emailVerified === false) {
+      hasRedirected.current = true;
+      setLocation('/verify-email');
+    }
+  }, [loading, user, isDemoMode, skipOnboardingCheck, skipEmailVerificationCheck, setLocation]);
 
   // AuthProvider still bootstrapping — show a BRIEF spinner
   if (loading) {
@@ -71,6 +83,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // Onboarding not completed → render nothing (redirect fires in useLayoutEffect)
   if (!skipOnboardingCheck && user.onboardingComplete !== true) return null;
+
+  // Email not verified → render nothing (redirect fires in useLayoutEffect)
+  if (!skipEmailVerificationCheck && user.emailVerified === false) return null;
 
   // All checks pass → render children immediately
   return <>{children}</>;
