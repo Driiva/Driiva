@@ -144,7 +144,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createDrivingProfile(profile: InsertDrivingProfile): Promise<DrivingProfile> {
-    const [newProfile] = await db.insert(drivingProfiles).values(profile).returning();
+    // Use upsert so duplicate calls (e.g. race conditions on user creation)
+    // don't throw a unique constraint error — return the existing row instead.
+    const [newProfile] = await db.insert(drivingProfiles)
+      .values(profile)
+      .onConflictDoUpdate({
+        target: drivingProfiles.userId,
+        set: { lastUpdated: new Date() }, // no-op update; just return existing row
+      })
+      .returning();
     return newProfile;
   }
 
@@ -241,8 +249,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateCommunityPool(updates: Partial<CommunityPool>): Promise<CommunityPool> {
+    // community_pool is a singleton; always target the existing row by id to
+    // avoid updating ALL rows when no WHERE clause is supplied.
+    const existing = await this.getCommunityPool();
+    if (!existing) {
+      throw new Error('Community pool record not found; seed it first');
+    }
     const [pool] = await db.update(communityPool)
       .set({ ...updates, lastUpdated: new Date() })
+      .where(eq(communityPool.id, existing.id))
       .returning();
     return pool;
   }

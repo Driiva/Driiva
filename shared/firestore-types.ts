@@ -26,6 +26,8 @@ export const COLLECTION_NAMES = {
   USERS: 'users',
   TRIPS: 'trips',
   TRIP_POINTS: 'tripPoints',
+  TRIP_SEGMENTS: 'tripSegments',   // Stop-Go-Classifier output
+  DRIVER_STATS: 'driver_stats',    // Aggregated per-user stats (server-written only)
   POLICIES: 'policies',
   COMMUNITY_POOL: 'communityPool',
   POOL_SHARES: 'poolShares',

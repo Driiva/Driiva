@@ -483,13 +483,11 @@ export default function Dashboard() {
             <MapPin className="w-5 h-5 text-emerald-400" />
           </div>
           <Suspense fallback={<MapLoader />}>
-            <LeafletMap 
-              location={{ lat: 51.5074, lng: -0.1278, label: 'London, UK' }}
-              className="border border-white/10"
-            />
+            {/* No location prop — LeafletMap requests device GPS automatically */}
+            <LeafletMap className="border border-white/10" />
           </Suspense>
           <p className="text-white/40 text-xs mt-3 text-center">
-            Live GPS tracking enabled
+            Showing your current location
           </p>
         </motion.div>
 

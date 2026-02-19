@@ -1,4 +1,4 @@
-import { SelectDrivingProfile, SelectTrip } from "@shared/schema";
+import { DrivingProfile, Trip } from "@shared/schema";
 
 export interface AIInsight {
   riskTrend: 'decreasing' | 'stable' | 'increasing';
@@ -27,8 +27,8 @@ export interface AIInsight {
 
 export class AIInsightsEngine {
   generateInsights(
-    profile: SelectDrivingProfile,
-    trips: SelectTrip[],
+    profile: DrivingProfile,
+    trips: Trip[],
     communityAverage: number = 75
   ): AIInsight {
     const currentScore = profile.currentScore || 0;
@@ -104,32 +104,32 @@ export class AIInsightsEngine {
     };
   }
   
-  private generateRecommendations(profile: SelectDrivingProfile, trips: SelectTrip[]): string[] {
+  private generateRecommendations(profile: DrivingProfile, _trips: Trip[]): string[] {
     const recommendations: string[] = [];
-    
+
     // Analyze specific areas for improvement
-    if (profile.hardBrakingEvents > 10) {
+    if ((profile.hardBrakingScore ?? 100) < 70) {
       recommendations.push('Maintain safer following distances to reduce hard braking by 30%');
     }
-    
-    if (profile.nightDrivingHours > 20) {
+
+    if ((profile.nightDrivingScore ?? 100) < 70) {
       recommendations.push('Consider daytime alternatives for 2-3 weekly trips to boost safety score');
     }
-    
-    if (profile.harshAccelerationEvents > 8) {
+
+    if ((profile.accelerationScore ?? 100) < 70) {
       recommendations.push('Gentle acceleration could improve your score by up to 5 points');
     }
-    
+
     // Always provide positive reinforcement
-    if (profile.currentScore >= 85) {
+    if ((profile.currentScore ?? 0) >= 85) {
       recommendations.push('Your consistent safe driving puts you in the top 10% of drivers');
     }
-    
+
     return recommendations.slice(0, 3); // Max 3 recommendations
   }
-  
-  private calculateSustainability(trips: SelectTrip[]): AIInsight['sustainabilityScore'] {
-    const totalMiles = trips.reduce((sum, trip) => sum + trip.distance, 0);
+
+  private calculateSustainability(trips: Trip[]): AIInsight['sustainabilityScore'] {
+    const totalMiles = trips.reduce((sum, trip) => sum + Number(trip.distance), 0);
     const avgScore = trips.reduce((sum, trip) => sum + trip.score, 0) / trips.length;
     
     // Estimate CO2 saved by efficient driving (kg)
@@ -150,7 +150,7 @@ export class AIInsightsEngine {
     };
   }
   
-  private analyzeBehaviorPatterns(trips: SelectTrip[]): AIInsight['behaviorPatterns'] {
+  private analyzeBehaviorPatterns(trips: Trip[]): AIInsight['behaviorPatterns'] {
     // Group trips by day of week
     const dayScores: { [key: string]: number[] } = {};
     const timeScores: { [key: string]: number[] } = {};
@@ -191,8 +191,8 @@ export class AIInsightsEngine {
     
     // Improvement areas based on metrics
     const improvementAreas: string[] = [];
-    const avgHardBraking = trips.reduce((sum, t) => sum + t.hardBrakingEvents, 0) / trips.length;
-    const avgSpeeding = trips.reduce((sum, t) => sum + t.speedViolations, 0) / trips.length;
+    const avgHardBraking = trips.reduce((sum, t) => sum + (t.hardBrakingEvents ?? 0), 0) / trips.length;
+    const avgSpeeding = trips.reduce((sum, t) => sum + (t.speedViolations ?? 0), 0) / trips.length;
     
     if (avgHardBraking > 2) improvementAreas.push('Braking patterns');
     if (avgSpeeding > 1) improvementAreas.push('Speed compliance');

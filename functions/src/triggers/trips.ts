@@ -101,27 +101,37 @@ export const onTripCreate = functions.firestore
     const tripId = context.params.tripId;
     const trip = snap.data() as TripDocument;
     
-    functions.logger.info(`Processing new trip: ${tripId}`, { userId: trip.userId });
-    
+    functions.logger.info(`Processing new trip: ${tripId}`, { userId: trip.userId, status: trip.status });
+
+    // Trips created with status='recording' are in-progress on the client.
+    // The client transitions recording→processing when the trip ends, which
+    // triggers onTripStatusChange to compute metrics from GPS points.
+    // Do NOT change status here — distanceMeters/durationSeconds are 0 at
+    // creation time and anomaly detection on zero values produces false results.
+    if (trip.status === 'recording') {
+      functions.logger.info(`Trip ${tripId} is recording; awaiting client status transition`);
+      return;
+    }
+
     try {
-      // 1. Detect anomalies
+      // 1. Detect anomalies (only valid for trips with pre-computed metrics)
       const anomalies = detectAnomalies({
         distanceMeters: trip.distanceMeters,
         durationSeconds: trip.durationSeconds,
         startLocation: trip.startLocation,
         endLocation: trip.endLocation,
       });
-      
+
       // 2. Calculate context
       const tripContext = {
         weatherCondition: null, // TODO: Integrate weather API
         isNightDriving: isNightTime(trip.startedAt) || isNightTime(trip.endedAt),
         isRushHour: isRushHour(trip.startedAt),
       };
-      
+
       // 3. Determine status
       const newStatus = anomalies.flaggedForReview ? 'processing' : 'completed';
-      
+
       // 4. Update trip document
       await snap.ref.update({
         anomalies,
@@ -129,26 +139,26 @@ export const onTripCreate = functions.firestore
         status: newStatus,
         processedAt: newStatus === 'completed' ? admin.firestore.FieldValue.serverTimestamp() : null,
       });
-      
-      functions.logger.info(`Trip ${tripId} processed`, { 
-        status: newStatus, 
-        flagged: anomalies.flaggedForReview 
+
+      functions.logger.info(`Trip ${tripId} processed`, {
+        status: newStatus,
+        flagged: anomalies.flaggedForReview
       });
-      
+
       // 5. If trip is completed (no anomalies), trigger profile update
       if (newStatus === 'completed') {
         await updateDriverProfileAndPoolShare(trip, tripId);
       }
-      
+
     } catch (error) {
       functions.logger.error(`Error processing trip ${tripId}:`, error);
-      
+
       // Mark trip as failed
       await snap.ref.update({
         status: 'failed',
         processedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
-      
+
       throw error;
     }
   });

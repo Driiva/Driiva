@@ -34,7 +34,10 @@ export async function getPgUserIdByFirebaseUid(firebaseUid: string): Promise<num
 
 export async function insertUserFromFirebase(firebaseUid: string, email: string, displayName: string | null): Promise<number> {
   const p = getPool();
-  const username = email.includes('@') ? email.split('@')[0].toLowerCase() : email.toLowerCase();
+  // Append last 4 chars of Firebase UID to prevent username collisions between
+  // users who share the same email prefix (e.g. user@gmail.com vs user@yahoo.com).
+  const emailPrefix = email.includes('@') ? email.split('@')[0].toLowerCase() : email.toLowerCase();
+  const username = `${emailPrefix}_${firebaseUid.slice(-4)}`;
   const r = await p.query(
     `INSERT INTO users (firebase_uid, email, display_name, username, onboarding_complete, created_by, updated_by)
      VALUES ($1, $2, $3, $4, false, 'firebase-auth', 'firebase-auth')

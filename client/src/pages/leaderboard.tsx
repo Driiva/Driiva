@@ -214,7 +214,7 @@ export default function LeaderboardPage() {
   useEffect(() => {
     if (isDemoMode) return;
     
-    if (!isFirebaseConfigured) return;
+    if (!isFirebaseConfigured || !auth) return;
 
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {

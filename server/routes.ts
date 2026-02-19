@@ -115,7 +115,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(userWithoutPassword);
     } catch (error: any) {
       console.error("Login error:", error);
-      res.status(500).json({ message: "Login failed: " + error.message });
+      // Do not leak internal error details to the client
+      res.status(500).json({ message: "Login failed" });
     }
   });
 
@@ -341,6 +342,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Require a real encryption key — no insecure fallback in production
+      const encryptionKey = process.env.ENCRYPTION_KEY;
+      if (!encryptionKey) {
+        console.error('ENCRYPTION_KEY env var not set; refusing to store telematics data');
+        return res.status(500).json({ message: 'Server configuration error' });
+      }
+
       // Create trip with processed metrics (distance in km)
       const trip = await storage.createTrip({
         ...tripData,
@@ -354,7 +362,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         duration: metrics.duration,
         telematicsData: crypto.encrypt(
           JSON.stringify(telematicsDataOrJSON),
-          process.env.ENCRYPTION_KEY || 'default-key'
+          encryptionKey
         )
       });
 
@@ -406,6 +414,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.query.startDate && req.query.endDate) {
         const startDate = new Date(req.query.startDate as string);
         const endDate = new Date(req.query.endDate as string);
+        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+          return res.status(400).json({ message: 'Invalid startDate or endDate; use ISO 8601 format' });
+        }
+        if (endDate <= startDate) {
+          return res.status(400).json({ message: 'endDate must be after startDate' });
+        }
         const trips = await storage.getTripsByDateRange(userId, startDate, endDate, limit);
         return res.json(trips);
       }

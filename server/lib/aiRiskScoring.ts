@@ -119,7 +119,7 @@ export class AIRiskScoringEngine {
       return result;
     } catch (error) {
       console.error('AI Risk Scoring Engine Error:', error);
-      throw new Error(`AI model calculation failed: ${error.message}`);
+      throw new Error(`AI model calculation failed: ${(error as Error).message}`);
     }
   }
 

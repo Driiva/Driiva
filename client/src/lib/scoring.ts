@@ -3,6 +3,34 @@
 // This file powers the RefundSimulator component for display purposes only.
 // Driiva Scoring System - Optimized for Runtime Stability
 
+export interface RiskFactor {
+  factor: string;
+  impact: number;
+  severity: 'LOW' | 'MEDIUM' | 'HIGH';
+  description: string;
+}
+
+export interface RiskProfile {
+  riskScore: number;
+  riskCategory: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  predictedClaimProbability: number;
+  confidenceScore: number;
+  riskFactors: RiskFactor[];
+  recommendations: string[];
+}
+
+export interface DrivingMetrics {
+  score: number;
+  distance: number;
+  duration: number;
+  hardBrakingEvents: number;
+  harshAccelerationEvents: number;
+  speedViolations: number;
+  nightDriving: boolean;
+  sharpCorners: number;
+  aiRiskProfile?: RiskProfile;
+}
+
 export interface ScoringMetrics {
   hardBrakingScore: number;
   accelerationScore: number;
@@ -203,5 +231,20 @@ export const drivingScorer = {
       console.error('Error calculating refund projection:', error);
       return 0;
     }
+  },
+
+  calculateDrivingMetrics(_data: unknown): DrivingMetrics {
+    // Stub: real metrics are computed server-side via tripProcessor.
+    // Returns a default object; the hook will be populated with real data from the API.
+    return {
+      score: 0,
+      distance: 0,
+      duration: 0,
+      hardBrakingEvents: 0,
+      harshAccelerationEvents: 0,
+      speedViolations: 0,
+      nightDriving: false,
+      sharpCorners: 0,
+    };
   }
 };

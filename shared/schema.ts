@@ -27,7 +27,7 @@ export const users = pgTable("users", {
 
 export const drivingProfiles = pgTable("driving_profiles", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull().unique(),
   currentScore: integer("current_score").default(0),
   hardBrakingScore: integer("hard_braking_score").default(0),
   accelerationScore: integer("acceleration_score").default(0),

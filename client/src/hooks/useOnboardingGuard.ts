@@ -84,7 +84,7 @@ export function useOnboardingGuard(
     }
 
     // If no Firebase, skip check
-    if (!isFirebaseConfigured) {
+    if (!isFirebaseConfigured || !auth) {
       setIsReady(true);
       setLoading(false);
       return;
@@ -105,6 +105,7 @@ export function useOnboardingGuard(
 
       try {
         // Check Firestore for onboarding status
+        if (!db) throw new Error('Firestore not initialized');
         const userDocRef = doc(db, 'users', firebaseUser.uid);
         const userDoc = await getDoc(userDocRef);
         const userData = userDoc.data();

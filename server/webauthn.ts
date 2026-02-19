@@ -59,15 +59,14 @@ export class SimpleWebAuthnService implements WebAuthnService {
     const opts: GenerateRegistrationOptionsOpts = {
       rpName: RP_NAME,
       rpID: RP_ID,
-      userID: user.id.toString(),
+      userID: new TextEncoder().encode(user.id.toString()),
       userName: username,
       userDisplayName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || username,
       timeout: 60000,
       attestationType: 'none',
       excludeCredentials: existingCredentials.map(cred => ({
-        id: new Uint8Array(Buffer.from(cred.credentialId, 'base64url')),
-        type: 'public-key',
-        transports: ['internal'],
+        id: cred.credentialId,
+        transports: ['internal' as const],
       })),
       authenticatorSelection: {
         authenticatorAttachment: 'platform', // Force Face ID/Touch ID only
@@ -159,9 +158,8 @@ export class SimpleWebAuthnService implements WebAuthnService {
     const opts: GenerateAuthenticationOptionsOpts = {
       timeout: 60000,
       allowCredentials: userCredentials.map(cred => ({
-        id: new Uint8Array(Buffer.from(cred.credentialId, 'base64url')),
-        type: 'public-key',
-        transports: ['internal'],
+        id: cred.credentialId,
+        transports: ['internal' as const],
       })),
       userVerification: 'required',
       rpID: RP_ID,
@@ -209,7 +207,7 @@ export class SimpleWebAuthnService implements WebAuthnService {
       expectedRPID: RP_ID,
       expectedCredentialID: Buffer.from(credential.credentialId, 'base64url'),
       credential: {
-        id: Buffer.from(credential.credentialId, 'base64url'),
+        id: credential.credentialId,
         publicKey: Buffer.from(credential.publicKey, 'base64url'),
         counter: credential.counter || 0,
       },

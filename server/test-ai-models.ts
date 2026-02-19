@@ -34,13 +34,24 @@ export function testAIModels() {
 
   const sampleMetrics: DrivingMetrics = {
     hardBrakingEvents: 2,
+    harshBrakingCount: 2,
     harshAccelerationEvents: 1,
     speedViolations: 3,
     nightDriving: false,
     sharpCorners: 1,
     score: 85,
     distance: 5.2,
-    duration: 12
+    distanceKm: 5.2,
+    duration: 12,
+    avgSpeed: 26,
+    maxSpeed: 60,
+    ecoScore: 80,
+    anomalies: {
+      hasImpossibleSpeed: false,
+      hasGPSJumps: false,
+      isDuplicate: false,
+      anomalyScore: 100,
+    },
   };
 
   try {

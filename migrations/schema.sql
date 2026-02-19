@@ -62,6 +62,8 @@ CREATE TABLE IF NOT EXISTS trips_summary (
 CREATE INDEX IF NOT EXISTS trips_summary_user_id_idx ON trips_summary(user_id);
 CREATE INDEX IF NOT EXISTS trips_summary_started_at_idx ON trips_summary(started_at);
 CREATE INDEX IF NOT EXISTS trips_summary_firestore_trip_id_idx ON trips_summary(firestore_trip_id);
+-- Composite index for the most common query: user's trips ordered by date
+CREATE INDEX IF NOT EXISTS trips_summary_user_started_at_idx ON trips_summary(user_id, started_at DESC);
 
 -- -----------------------------------------------------------------------------
 -- POLICIES (structured policy data for API; optional sync from Firestore)

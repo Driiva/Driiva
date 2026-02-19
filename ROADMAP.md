@@ -6,7 +6,7 @@
 
 ## Sprint: "Make It Real" (Week 1–2)
 
-*If you’ve already done keys, Firebase login, deploy, or Root contact, check those off.*
+*If you've already done keys, Firebase login, deploy, or Root contact, check those off.*
 
 - [ ] Create Anthropic account and set API key as Firebase secret
 - [ ] Run `firebase login` and authenticate
@@ -26,6 +26,7 @@
 - [ ] Set up staging Firebase project
 - [x] Add Firebase Analytics initialisation — *done: getAnalytics() in client/src/lib/firebase.ts; guarded by VITE_FIREBASE_MEASUREMENT_ID; try/catch for ad-blocker safety*
 - [x] Implement email verification — *done: sendEmailVerification() in signup.tsx; emailVerified field on User type in AuthContext; ProtectedRoute redirects unverified users to /verify-email; verify-email.tsx page with resend + check flow; /quick-onboarding skips check*
+- [x] Backend & database security audit — *done: 12 issues found and fixed across Firestore rules, PostgreSQL, Cloud Functions, and API routes. See DRIIVA_CHANGELOG.md for full details.*
 
 ## Sprint: "Make It Payable" (Week 5–6)
 
@@ -34,15 +35,35 @@
 - [ ] Wire premium payments to community pool contributions
 - [ ] Test Root Platform quote → accept → policy flow end-to-end
 - [ ] Add premium amount display on policy page
+- [ ] Set `ENCRYPTION_KEY` env var in production (required — server now refuses to store telematics data without it)
 
 ## Sprint: "Make It Polished" (Week 7–8)
 
 - [ ] Add push notifications (trip complete, score update, payment due)
 - [ ] Build service worker for offline/PWA support
+- [x] Fix dashboard map — was hardcoded to London; now requests device GPS on load, handles permission denied and GPS unavailable states gracefully
 - [ ] Wire up profile page to real data
-- [ ] Implement trip route visualisation on map
+- [ ] Implement trip route visualisation on map (show the actual driven path, not just current position)
 - [ ] Phone usage detection for scoring
 - [ ] Build achievements backend
+- [ ] Weather API integration (currently returns null in trip context — affects isRushHour/isNightDriving accuracy)
+
+## Remaining features not yet in any sprint
+
+These are known gaps that don't have tickets yet:
+
+- [ ] **Weather API** — trip context has a `weatherCondition` field that always returns `null`. Need to wire a weather API (e.g. Open-Meteo, free and no key required) to enrich trips with weather conditions at time of drive. Affects future AI analysis accuracy and could be used to weight scoring (e.g. driving well in rain is harder).
+- [ ] **Root Platform credentials** — scaffolded but not wired. Needs sandbox creds from Root to test quote → bind → policy flow. Once wired, the `/api/insurance` endpoints become live.
+- [ ] **Stripe wiring** — dependencies installed, tables exist, webhooks scaffolded. Premium payments and pool contributions not yet connected end-to-end.
+- [ ] **Profile page real data** — profile.tsx is a static/demo page. Needs to read from Firestore user document and allow editing name, phone, vehicle info.
+- [ ] **Trip route visualisation** — map currently shows current location only. Need to draw the driven GPS path as a polyline using the `tripPoints` collection after a trip completes.
+- [ ] **Phone pickup detection** — scoring has a 10% weight for phone usage but it's hardcoded to 100 (no penalty). Needs accelerometer pattern recognition to detect phone pickups while driving.
+- [ ] **Push notifications** — FCM token fields exist on user documents, but no notification triggers are wired. Needs Cloud Functions to send on: trip complete, weekly score summary, refund available.
+- [ ] **Leaderboard rank recalculation** — the PostgreSQL leaderboard table inserts with `rank: 1` and doesn't recalculate ranks. Fine for now since rankings are served from Firestore (pre-computed by scheduled function), but the PG table is stale.
+- [ ] **GDPR data export** — endpoint exists (`GET /api/users/:userId/export`) but the export function needs to be wired to actually query and return all Firestore + PostgreSQL data for the user.
+- [ ] **Achievements backend** — achievement criteria exist in the schema (`achievements` table) but the unlock logic isn't implemented. No Cloud Function checks trip completion against criteria.
+- [ ] **WebAuthn/Passkey login** — `server/webauthn.ts` is scaffolded but not exposed as a real login flow in the frontend.
+- [ ] **Staging environment** — no Firebase staging project exists yet. Recommended before any production payments go live.
 
 ## Completed (reference)
 
@@ -52,6 +73,7 @@
 - [x] Root Platform integration scaffolded
 - [x] CORS fixed (origin allowlist via `CORS_ORIGINS`; no wildcard)
 - [x] CLAUDE.md and ROADMAP.md added; trip-processor source of truth; regression report and investor doc
+- [x] Dashboard map now uses device GPS instead of hardcoded London coordinates
 
 ---
 

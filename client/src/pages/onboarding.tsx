@@ -46,6 +46,7 @@ export default function Onboarding() {
   });
 
   useEffect(() => {
+    if (!auth) { setAuthChecking(false); return; }
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (!user) {
         setLocation("/signin");
@@ -112,13 +113,14 @@ export default function Onboarding() {
     setError(null);
 
     try {
-      const user = auth.currentUser;
-      
+      const user = auth?.currentUser;
+
       if (!user) {
         setLocation("/signin");
         return;
       }
 
+      if (!db) throw new Error('Firestore not initialized');
       const userDocRef = doc(db, 'users', user.uid);
       await updateDoc(userDocRef, {
         fullName: formData.fullName,

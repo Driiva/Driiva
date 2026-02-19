@@ -150,7 +150,7 @@ export class ScoreAggregationService {
         .orderBy(dateTruncExpr);
 
       return result.map(row => ({
-        date: row.date,
+        date: row.date as Date,
         score: Number(row.averageScore) || 0,
         tripCount: row.tripCount || 0,
         distanceKm: Number(row.totalDistanceKm) || 0,
