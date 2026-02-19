@@ -5,6 +5,12 @@
 
 ## Entries
 
+### 2026‑02‑19 – Antigravity – GDPR Compliance, AI Models & Trip Optimization
+- Files: server/routes.ts, server/storage.ts, server/lib/aiInsights.ts, functions/src/triggers/trips.ts, client/src/components/LeafletMap.tsx, client/src/hooks/useOnboardingGuard.ts
+- Change: Implemented GDPR export/delete endpoints; finalized AI risk scoring and insights engine; added trip anomaly detection (impossible speed, duplicates); optimized time-series queries with date range filters; map now uses device GPS; fixed onboarding redirect loop and implemented zero-flicker auth redirects.
+- Reason: GDPR compliance is required for launch; AI insights provide the core product value; anomaly detection ensures data integrity; query optimization improves performance; UX polish for auth and onboarding.
+- Tests: MANUAL_TEST_CHECKLIST 1.1–1.6, 2.1–2.4, 3.1–3.3, 4.1–4.4, 6.1-6.3 passed on Chrome desktop; verified GDPR export/delete functionality via API.
+
 ### 2026‑02‑18 – Antigravity – Auth, Scoring & Password Reset Fixes
 - Files: client/src/hooks/useAuth.ts (deleted), server/lib/telematics.ts, client/src/lib/scoring.ts, client/src/pages/forgot-password.tsx, client/src/pages/signin.tsx, client/src/App.tsx
 - Change: Deleted broken useAuth hook, aligned scoring weights to canonical spec (Speed 25%, Braking 25%, Accel 20%, Cornering 20%, Phone 10%), fixed refund calculations to use integer cents, and implemented the password reset flow.

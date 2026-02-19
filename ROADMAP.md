@@ -60,7 +60,8 @@ These are known gaps that don't have tickets yet:
 - [ ] **Phone pickup detection** — scoring has a 10% weight for phone usage but it's hardcoded to 100 (no penalty). Needs accelerometer pattern recognition to detect phone pickups while driving.
 - [ ] **Push notifications** — FCM token fields exist on user documents, but no notification triggers are wired. Needs Cloud Functions to send on: trip complete, weekly score summary, refund available.
 - [ ] **Leaderboard rank recalculation** — the PostgreSQL leaderboard table inserts with `rank: 1` and doesn't recalculate ranks. Fine for now since rankings are served from Firestore (pre-computed by scheduled function), but the PG table is stale.
-- [ ] **GDPR data export** — endpoint exists (`GET /api/users/:userId/export`) but the export function needs to be wired to actually query and return all Firestore + PostgreSQL data for the user.
+- [x] GDPR data export — implemented GET /api/gdpr/export/:userId; returns JSON of all user data
+- [x] GDPR data delete — implemented DELETE /api/gdpr/delete/:userId; strictly rate-limited
 - [ ] **Achievements backend** — achievement criteria exist in the schema (`achievements` table) but the unlock logic isn't implemented. No Cloud Function checks trip completion against criteria.
 - [ ] **WebAuthn/Passkey login** — `server/webauthn.ts` is scaffolded but not exposed as a real login flow in the frontend.
 - [ ] **Staging environment** — no Firebase staging project exists yet. Recommended before any production payments go live.
@@ -74,6 +75,8 @@ These are known gaps that don't have tickets yet:
 - [x] CORS fixed (origin allowlist via `CORS_ORIGINS`; no wildcard)
 - [x] CLAUDE.md and ROADMAP.md added; trip-processor source of truth; regression report and investor doc
 - [x] Dashboard map now uses device GPS instead of hardcoded London coordinates
+- [x] AI Risk Scoring & Insights engines finalized
+- [x] GDPR export/delete endpoints live
 
 ---
 
