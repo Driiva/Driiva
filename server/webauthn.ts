@@ -205,7 +205,6 @@ export class SimpleWebAuthnService implements WebAuthnService {
       expectedChallenge,
       expectedOrigin: ORIGIN,
       expectedRPID: RP_ID,
-      expectedCredentialID: Buffer.from(credential.credentialId, 'base64url'),
       credential: {
         id: credential.credentialId,
         publicKey: Buffer.from(credential.publicKey, 'base64url'),

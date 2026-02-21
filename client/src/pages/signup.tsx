@@ -122,10 +122,7 @@ export default function Signup() {
       const user = userCredential.user;
       const now = new Date();
       const nowISO = now.toISOString();
-      const policyStart = new Date(now);
-      const policyEnd = new Date(now);
-      policyEnd.setFullYear(policyEnd.getFullYear() + 1);
-      const policyNumber = `DRV-${now.getFullYear()}-${user.uid.slice(0, 6).toUpperCase()}`;
+
 
       const batch = writeBatch(db);
       batch.set(doc(db, 'users', user.uid), {
@@ -140,30 +137,7 @@ export default function Signup() {
       if (localPart) {
         batch.set(doc(db, 'usernames', localPart), { email: formData.email, uid: user.uid }, { merge: true });
       }
-      batch.set(doc(db, 'policies', `${user.uid}-policy`), {
-        policyId: `${user.uid}-policy`,
-        userId: user.uid,
-        policyNumber,
-        status: 'active',
-        coverageType: 'comprehensive_plus',
-        coverageDetails: {
-          liabilityLimitCents: 2000000000,
-          collisionDeductibleCents: 25000,
-          comprehensiveDeductibleCents: 35000,
-          includesRoadside: true,
-          includesRental: true,
-        },
-        basePremiumCents: 184000,
-        currentPremiumCents: 184000,
-        discountPercentage: 0,
-        effectiveDate: policyStart.toISOString(),
-        expirationDate: policyEnd.toISOString(),
-        renewalDate: policyEnd.toISOString(),
-        vehicle: { vin: null, make: '', model: '', year: now.getFullYear() },
-        createdAt: nowISO,
-        updatedAt: nowISO,
-        created_by: 'client-signup',
-      });
+      // Policy is created by the onUserCreate Cloud Function trigger
 
       await Promise.all([
         updateProfile(user, { displayName: formData.fullName }),

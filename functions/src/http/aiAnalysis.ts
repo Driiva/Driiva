@@ -29,7 +29,9 @@ const db = admin.firestore();
  *
  * Auth required. Users can only analyze their own trips.
  */
-export const analyzeTripAI = functions.https.onCall(async (data, context) => {
+export const analyzeTripAI = functions
+  .runWith({ secrets: ['ANTHROPIC_API_KEY'] })
+  .https.onCall(async (data, context) => {
   // Auth check
   if (!context.auth) {
     throw new functions.https.HttpsError(
@@ -147,7 +149,9 @@ export const analyzeTripAI = functions.https.onCall(async (data, context) => {
  *
  * Auth required. Users can only view insights for their own trips.
  */
-export const getAIInsights = functions.https.onCall(async (data, context) => {
+export const getAIInsights = functions
+  .runWith({ secrets: ['ANTHROPIC_API_KEY'] })
+  .https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError(
       'unauthenticated',

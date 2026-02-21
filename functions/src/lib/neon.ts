@@ -4,7 +4,6 @@
  * Or set DATABASE_URL in .env when running locally.
  */
 
-import * as functions from 'firebase-functions';
 import { Pool, neonConfig } from '@neondatabase/serverless';
 import * as ws from 'ws';
 
@@ -13,11 +12,9 @@ neonConfig.webSocketConstructor = ws;
 let pool: Pool | null = null;
 
 function getPool(): Pool {
-  const fromEnv = typeof process.env.DATABASE_URL === 'string' ? process.env.DATABASE_URL : '';
-  const fromConfig = (functions.config().db as { url?: string } | undefined)?.url ?? '';
-  const url = fromEnv || fromConfig;
+  const url = process.env.DATABASE_URL ?? '';
   if (!url || url.startsWith('file:')) {
-    throw new Error('DATABASE_URL must be a PostgreSQL URL. Set via firebase functions:config:set db.url="postgresql://..." or .env');
+    throw new Error('DATABASE_URL must be a PostgreSQL connection string. Set it via Firebase Secrets (functions:secrets:set DATABASE_URL).');
   }
   if (!pool) {
     pool = new Pool({ connectionString: url });

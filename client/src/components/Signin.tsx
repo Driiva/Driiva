@@ -52,7 +52,7 @@ export default function SignIn() {
         password: sanitizedPassword
       });
 
-      login(user);
+      await login(user.email, sanitizedPassword);
       
       toast({
         title: "Welcome back!",

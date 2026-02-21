@@ -9,7 +9,9 @@ import * as functions from 'firebase-functions';
 import { COLLECTION_NAMES, TripDocument } from '../types';
 import { getPgUserIdByFirebaseUid, insertTripSummary } from '../lib/neon';
 
-export const syncTripOnComplete = functions.firestore
+export const syncTripOnComplete = functions
+  .runWith({ secrets: ['DATABASE_URL'] })
+  .firestore
   .document(`${COLLECTION_NAMES.TRIPS}/{tripId}`)
   .onUpdate(async (change, context) => {
     const before = change.before.data() as TripDocument;

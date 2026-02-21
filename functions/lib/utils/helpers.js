@@ -1,0 +1,399 @@
+"use strict";
+/**
+ * HELPER UTILITIES
+ * ================
+ * Shared helper functions for Cloud Functions.
+ */
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.getCurrentPoolPeriod = getCurrentPoolPeriod;
+exports.getPreviousPoolPeriod = getPreviousPoolPeriod;
+exports.getShareId = getShareId;
+exports.getWeekNumber = getWeekNumber;
+exports.getCurrentPeriodForType = getCurrentPeriodForType;
+exports.weightedAverage = weightedAverage;
+exports.buildRouteSummary = buildRouteSummary;
+exports.truncateAddress = truncateAddress;
+exports.calculateDistance = calculateDistance;
+exports.isNightTime = isNightTime;
+exports.isRushHour = isRushHour;
+exports.detectAnomalies = detectAnomalies;
+exports.calculateRiskTier = calculateRiskTier;
+exports.calculateProjectedRefund = calculateProjectedRefund;
+exports.computeTripMetrics = computeTripMetrics;
+/**
+ * Get current pool period string (e.g., "2026-02")
+ */
+function getCurrentPoolPeriod() {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+/**
+ * Get previous pool period string
+ */
+function getPreviousPoolPeriod() {
+    const now = new Date();
+    const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    return `${prevMonth.getFullYear()}-${String(prevMonth.getMonth() + 1).padStart(2, '0')}`;
+}
+/**
+ * Get share ID for a user and period
+ */
+function getShareId(userId, period) {
+    return `${period}_${userId}`;
+}
+/**
+ * Get ISO week number
+ */
+function getWeekNumber(date) {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+}
+/**
+ * Get period string for leaderboard type
+ */
+function getCurrentPeriodForType(periodType) {
+    const now = new Date();
+    switch (periodType) {
+        case 'weekly':
+            const weekNum = getWeekNumber(now);
+            return `${now.getFullYear()}-W${String(weekNum).padStart(2, '0')}`;
+        case 'monthly':
+            return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        case 'all_time':
+            return 'all_time';
+        default:
+            return getCurrentPoolPeriod();
+    }
+}
+/**
+ * Calculate weighted average
+ */
+function weightedAverage(oldValue, newValue, oldWeight) {
+    if (oldWeight === 0)
+        return newValue;
+    const result = (oldValue * oldWeight + newValue) / (oldWeight + 1);
+    return Math.round(result * 100) / 100;
+}
+/**
+ * Build route summary string
+ */
+function buildRouteSummary(start, end) {
+    const startLabel = start.placeType
+        ? start.placeType.charAt(0).toUpperCase() + start.placeType.slice(1)
+        : truncateAddress(start.address);
+    const endLabel = end.placeType
+        ? end.placeType.charAt(0).toUpperCase() + end.placeType.slice(1)
+        : truncateAddress(end.address);
+    return `${startLabel} → ${endLabel}`;
+}
+/**
+ * Truncate address for display
+ */
+function truncateAddress(address) {
+    if (!address)
+        return 'Unknown';
+    const parts = address.split(',');
+    const firstPart = parts[0].trim();
+    return firstPart.length > 20 ? firstPart.substring(0, 17) + '...' : firstPart;
+}
+/**
+ * Calculate distance between two coordinates using Haversine formula
+ */
+function calculateDistance(lat1, lng1, lat2, lng2) {
+    const R = 6371e3; // Earth's radius in meters
+    const φ1 = lat1 * Math.PI / 180;
+    const φ2 = lat2 * Math.PI / 180;
+    const Δφ = (lat2 - lat1) * Math.PI / 180;
+    const Δλ = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+        Math.cos(φ1) * Math.cos(φ2) *
+            Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // Distance in meters
+}
+/**
+ * Check if timestamp is during night hours (10 PM - 6 AM)
+ */
+function isNightTime(timestamp) {
+    const date = timestamp.toDate();
+    const hour = date.getHours();
+    return hour >= 22 || hour < 6;
+}
+/**
+ * Check if timestamp is during rush hour (7-9 AM or 4-7 PM on weekdays)
+ */
+function isRushHour(timestamp) {
+    const date = timestamp.toDate();
+    const day = date.getDay();
+    const hour = date.getHours();
+    // Weekdays only
+    if (day === 0 || day === 6)
+        return false;
+    // Morning rush: 7-9 AM
+    if (hour >= 7 && hour < 9)
+        return true;
+    // Evening rush: 4-7 PM
+    if (hour >= 16 && hour < 19)
+        return true;
+    return false;
+}
+/**
+ * Detect anomalies in trip data
+ */
+function detectAnomalies(trip) {
+    const anomalies = {
+        hasGpsJumps: false,
+        hasImpossibleSpeed: false,
+        isDuplicate: false,
+        flaggedForReview: false,
+    };
+    // Check for impossible speed (> 200 mph average)
+    if (trip.durationSeconds > 0) {
+        const avgSpeedMph = (trip.distanceMeters / 1609.34) / (trip.durationSeconds / 3600);
+        if (avgSpeedMph > 200) {
+            anomalies.hasImpossibleSpeed = true;
+            anomalies.flaggedForReview = true;
+        }
+    }
+    // Check for GPS jumps (straight-line distance much less than route distance)
+    const straightLineDistance = calculateDistance(trip.startLocation.lat, trip.startLocation.lng, trip.endLocation.lat, trip.endLocation.lng);
+    // If route is more than 5x the straight-line distance, might have GPS issues
+    if (trip.distanceMeters > straightLineDistance * 5 && straightLineDistance > 100) {
+        anomalies.hasGpsJumps = true;
+        // Only flag for review if the discrepancy is extreme
+        if (trip.distanceMeters > straightLineDistance * 10) {
+            anomalies.flaggedForReview = true;
+        }
+    }
+    return anomalies;
+}
+/**
+ * Calculate risk tier based on score
+ */
+function calculateRiskTier(score) {
+    if (score >= 80)
+        return 'low';
+    if (score >= 60)
+        return 'medium';
+    return 'high';
+}
+/**
+ * Calculate projected refund based on score and contribution
+ */
+function calculateProjectedRefund(score, contributionCents, safetyFactor, refundRate) {
+    // Base refund rate varies by score (5-15%)
+    const scoreMultiplier = Math.min(1, Math.max(0, (score - 50) / 50)); // 0 at 50, 1 at 100
+    const adjustedRefundRate = 0.05 + (refundRate - 0.05) * scoreMultiplier;
+    // Apply safety factor
+    const baseRefund = contributionCents * adjustedRefundRate;
+    const adjustedRefund = baseRefund * safetyFactor;
+    return Math.round(adjustedRefund);
+}
+/**
+ * Compute trip metrics from raw GPS points
+ * This is the core algorithm that processes GPS data to derive metrics and scores.
+ */
+function computeTripMetrics(points, startTimestampMs) {
+    if (points.length < 2) {
+        return getDefaultMetrics();
+    }
+    // Sort points by timestamp
+    const sortedPoints = [...points].sort((a, b) => a.t - b.t);
+    // 1. Compute distance using Haversine between sequential points
+    let totalDistanceMeters = 0;
+    for (let i = 1; i < sortedPoints.length; i++) {
+        const prev = sortedPoints[i - 1];
+        const curr = sortedPoints[i];
+        totalDistanceMeters += calculateDistance(prev.lat, prev.lng, curr.lat, curr.lng);
+    }
+    // 2. Compute duration from first to last point
+    const firstPoint = sortedPoints[0];
+    const lastPoint = sortedPoints[sortedPoints.length - 1];
+    const durationMs = lastPoint.t - firstPoint.t;
+    const durationSeconds = Math.max(1, Math.round(durationMs / 1000)); // At least 1 second
+    // 3. Compute speed statistics
+    const { avgSpeedMps, maxSpeedMps, speedVariance } = computeSpeedStats(sortedPoints);
+    // 4. Detect driving events
+    const events = detectDrivingEvents(sortedPoints);
+    // 5. Compute driving score
+    const { score, scoreBreakdown } = computeDrivingScore(sortedPoints, events, speedVariance, avgSpeedMps, totalDistanceMeters, durationSeconds);
+    return {
+        distanceMeters: Math.round(totalDistanceMeters),
+        durationSeconds,
+        avgSpeedMps,
+        maxSpeedMps,
+        score,
+        scoreBreakdown,
+        events,
+    };
+}
+/**
+ * Default metrics for trips with insufficient data
+ */
+function getDefaultMetrics() {
+    return {
+        distanceMeters: 0,
+        durationSeconds: 0,
+        avgSpeedMps: 0,
+        maxSpeedMps: 0,
+        score: 70, // Default neutral score
+        scoreBreakdown: {
+            speedScore: 70,
+            brakingScore: 70,
+            accelerationScore: 70,
+            corneringScore: 70,
+            phoneUsageScore: 100,
+        },
+        events: {
+            hardBrakingCount: 0,
+            hardAccelerationCount: 0,
+            speedingSeconds: 0,
+            sharpTurnCount: 0,
+            phonePickupCount: 0,
+        },
+    };
+}
+/**
+ * Compute speed statistics from points
+ */
+function computeSpeedStats(points) {
+    if (points.length === 0) {
+        return { avgSpeedMps: 0, maxSpeedMps: 0, speedVariance: 0 };
+    }
+    // Convert spd from integer (m/s * 100) to m/s
+    const speeds = points
+        .map(p => p.spd / 100) // Convert to actual m/s
+        .filter(s => s >= 0 && s < 100); // Filter unreasonable speeds (< 360 km/h)
+    if (speeds.length === 0) {
+        return { avgSpeedMps: 0, maxSpeedMps: 0, speedVariance: 0 };
+    }
+    const avgSpeedMps = speeds.reduce((sum, s) => sum + s, 0) / speeds.length;
+    const maxSpeedMps = Math.max(...speeds);
+    // Calculate variance
+    const variance = speeds.reduce((sum, s) => sum + Math.pow(s - avgSpeedMps, 2), 0) / speeds.length;
+    const speedVariance = Math.sqrt(variance);
+    return {
+        avgSpeedMps: Math.round(avgSpeedMps * 100) / 100,
+        maxSpeedMps: Math.round(maxSpeedMps * 100) / 100,
+        speedVariance: Math.round(speedVariance * 100) / 100,
+    };
+}
+/**
+ * Detect driving events from GPS points
+ */
+function detectDrivingEvents(points) {
+    const events = {
+        hardBrakingCount: 0,
+        hardAccelerationCount: 0,
+        speedingSeconds: 0,
+        sharpTurnCount: 0,
+        phonePickupCount: 0,
+    };
+    if (points.length < 2) {
+        return events;
+    }
+    // Thresholds
+    const HARD_BRAKING_THRESHOLD = -3.5; // m/s² (deceleration)
+    const HARD_ACCEL_THRESHOLD = 3.0; // m/s² (acceleration)
+    const SHARP_TURN_THRESHOLD = 30; // degrees per second
+    const SPEED_LIMIT_MPS = 31.3; // ~70 mph in m/s
+    for (let i = 1; i < points.length; i++) {
+        const prev = points[i - 1];
+        const curr = points[i];
+        // Time delta in seconds
+        const dt = (curr.t - prev.t) / 1000;
+        if (dt <= 0 || dt > 10)
+            continue; // Skip invalid intervals
+        // Speed values (convert from integer format)
+        const prevSpeed = prev.spd / 100;
+        const currSpeed = curr.spd / 100;
+        // Calculate acceleration (m/s²)
+        const acceleration = (currSpeed - prevSpeed) / dt;
+        // Hard braking detection
+        if (acceleration < HARD_BRAKING_THRESHOLD) {
+            events.hardBrakingCount++;
+        }
+        // Hard acceleration detection
+        if (acceleration > HARD_ACCEL_THRESHOLD) {
+            events.hardAccelerationCount++;
+        }
+        // Speeding detection
+        if (currSpeed > SPEED_LIMIT_MPS) {
+            events.speedingSeconds += Math.round(dt);
+        }
+        // Sharp turn detection (heading change rate)
+        const headingDelta = Math.abs(normalizeHeadingDelta(curr.hdg - prev.hdg));
+        const headingRate = headingDelta / dt;
+        if (headingRate > SHARP_TURN_THRESHOLD && currSpeed > 5) {
+            events.sharpTurnCount++;
+        }
+    }
+    return events;
+}
+/**
+ * Normalize heading delta to -180 to 180 range
+ */
+function normalizeHeadingDelta(delta) {
+    while (delta > 180)
+        delta -= 360;
+    while (delta < -180)
+        delta += 360;
+    return delta;
+}
+/**
+ * Compute driving score from metrics and events
+ *
+ * Score breakdown:
+ * - Speed Score (25%): Based on speed variance and compliance
+ * - Braking Score (25%): Penalizes hard braking events
+ * - Acceleration Score (20%): Penalizes aggressive acceleration
+ * - Cornering Score (20%): Penalizes sharp turns
+ * - Phone Usage Score (10%): Placeholder (no phone detection yet)
+ */
+function computeDrivingScore(points, events, speedVariance, avgSpeedMps, distanceMeters, durationSeconds) {
+    // Normalize metrics per mile for fair comparison
+    const distanceMiles = Math.max(0.1, distanceMeters / 1609.34);
+    // Speed Score (25%)
+    // Lower variance = better score, also penalize excessive speeding
+    const speedingPenalty = Math.min(30, (events.speedingSeconds / durationSeconds) * 100);
+    const variancePenalty = Math.min(20, speedVariance * 2);
+    const speedScore = Math.max(0, Math.min(100, 100 - speedingPenalty - variancePenalty));
+    // Braking Score (25%)
+    // Penalize hard braking events (up to -5 points per event, max -50)
+    const brakingEventsPerMile = events.hardBrakingCount / distanceMiles;
+    const brakingPenalty = Math.min(50, brakingEventsPerMile * 10);
+    const brakingScore = Math.max(0, Math.min(100, 100 - brakingPenalty));
+    // Acceleration Score (20%)
+    // Penalize hard acceleration events
+    const accelEventsPerMile = events.hardAccelerationCount / distanceMiles;
+    const accelPenalty = Math.min(50, accelEventsPerMile * 8);
+    const accelerationScore = Math.max(0, Math.min(100, 100 - accelPenalty));
+    // Cornering Score (20%)
+    // Penalize sharp turns
+    const turnEventsPerMile = events.sharpTurnCount / distanceMiles;
+    const turnPenalty = Math.min(50, turnEventsPerMile * 6);
+    const corneringScore = Math.max(0, Math.min(100, 100 - turnPenalty));
+    // Phone Usage Score (10%)
+    // Placeholder - always 100 until phone detection is implemented
+    const phoneUsageScore = 100;
+    // Calculate weighted composite score
+    const score = Math.round(speedScore * 0.25 +
+        brakingScore * 0.25 +
+        accelerationScore * 0.20 +
+        corneringScore * 0.20 +
+        phoneUsageScore * 0.10);
+    return {
+        score: Math.max(0, Math.min(100, score)),
+        scoreBreakdown: {
+            speedScore: Math.round(speedScore),
+            brakingScore: Math.round(brakingScore),
+            accelerationScore: Math.round(accelerationScore),
+            corneringScore: Math.round(corneringScore),
+            phoneUsageScore: Math.round(phoneUsageScore),
+        },
+    };
+}
+//# sourceMappingURL=helpers.js.map

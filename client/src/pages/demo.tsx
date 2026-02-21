@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { useLocation } from "wouter";
 import { ArrowLeft, Car, TrendingUp, Users, Trophy, Play, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import signinLogo from "@assets/ii_clear_1769111905071.png";
+import signinLogo from "@/assets/driiva-logo-CLEAR-FINAL.png";
 
 /**
  * DEMO PAGE

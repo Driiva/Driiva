@@ -8,7 +8,9 @@
 import * as functions from 'firebase-functions';
 import { insertUserFromFirebase } from '../lib/neon';
 
-export const syncUserOnSignup = functions.auth.user().onCreate(async (user) => {
+export const syncUserOnSignup = functions
+  .runWith({ secrets: ['DATABASE_URL'] })
+  .auth.user().onCreate(async (user) => {
   const { uid, email, displayName } = user;
   const emailStr = email ?? '';
   if (!emailStr) {

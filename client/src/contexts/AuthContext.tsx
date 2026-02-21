@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { auth, isFirebaseConfigured } from "../lib/firebase";
+import { auth, db, isFirebaseConfigured } from "../lib/firebase";
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, User as FirebaseUser } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 
 interface User {
   id: string;
@@ -21,6 +22,24 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+/**
+ * Firestore fallback: read onboardingComplete directly from Firestore.
+ * Used when the Express API is unavailable (e.g. no service account key configured).
+ * Returns false safely on any error.
+ */
+async function readOnboardingFromFirestore(uid: string): Promise<boolean> {
+  if (!db) return false;
+  try {
+    const userSnap = await getDoc(doc(db, 'users', uid));
+    if (userSnap.exists()) {
+      return userSnap.data()?.onboardingComplete === true;
+    }
+  } catch (e) {
+    console.warn('[AuthContext] Firestore onboarding fallback failed:', e);
+  }
+  return false;
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -87,21 +106,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               emailVerified: firebaseUser.emailVerified,
             });
           } else {
+            // API unavailable (e.g. no service account key configured) — fall back to Firestore
+            const onboardingComplete = await readOnboardingFromFirestore(firebaseUser.uid);
             setUser({
               id: firebaseUser.uid,
               email: firebaseUser.email ?? "",
               name: firebaseUser.displayName ?? firebaseUser.email?.split("@")[0] ?? "User",
-              onboardingComplete: false,
+              onboardingComplete,
               emailVerified: firebaseUser.emailVerified,
             });
           }
         } catch (error) {
           console.error("[AuthContext] Error fetching profile from API:", error);
+          // Fall back to Firestore instead of defaulting to onboardingComplete: false
+          const onboardingComplete = await readOnboardingFromFirestore(firebaseUser.uid);
           setUser({
             id: firebaseUser.uid,
             email: firebaseUser.email ?? "",
             name: firebaseUser.displayName ?? firebaseUser.email?.split("@")[0] ?? "User",
-            onboardingComplete: false,
+            onboardingComplete,
             emailVerified: firebaseUser.emailVerified,
           });
         }

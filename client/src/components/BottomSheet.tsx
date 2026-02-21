@@ -25,12 +25,11 @@ export default function BottomSheet({ isOpen, onClose }: BottomSheetProps) {
 
   const reportIncidentMutation = useMutation({
     mutationFn: async (incidentData: any) => {
-      const response = await apiRequest("POST", "/api/incidents", incidentData);
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to submit incident');
-      }
-      return response.json();
+      return apiRequest("/api/incidents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(incidentData),
+      });
     },
     onSuccess: () => {
       toast({

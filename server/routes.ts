@@ -40,6 +40,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // PUBLIC ROUTES (no auth) — login, register, webauthn, read-only leaderboard/achievements/community-pool
   // -------------------------------------------------------------------------
 
+  // Health check
+  app.get("/api/health", (_req, res) => {
+    res.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
   // -------------------------------------------------------------------------
   // Profile API (protected: Firebase token required; identity from token only)
   // -------------------------------------------------------------------------
