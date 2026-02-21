@@ -146,6 +146,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
+    // Set loading=true so ProtectedRoute shows a spinner (not a blank page) during the
+    // sign-out / re-auth gap. onAuthStateChanged(null) will call setLoading(false).
+    setLoading(true);
     // Clear user from state FIRST for instant UI feedback
     setUser(null);
 

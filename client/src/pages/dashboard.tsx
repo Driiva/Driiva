@@ -215,9 +215,9 @@ export default function Dashboard() {
     : (dashboardData?.displayName || user?.name || 'Driver');
 
   // Use demo data or real Firestore data
-  const drivingScore = isDemoMode 
-    ? (demoUser?.drivingScore || demoUser?.overall_score || 82) 
-    : (dashboardData?.drivingScore || 100);
+  const drivingScore = isDemoMode
+    ? (demoUser?.drivingScore || demoUser?.overall_score || 82)
+    : (dashboardData?.drivingScore ?? 0);
   
   const premiumAmount = isDemoMode 
     ? (demoUser?.premiumAmount || demoUser?.premium_amount || 1500) 
@@ -258,7 +258,8 @@ export default function Dashboard() {
     ? 14 
     : (leaderboard?.userRank || null);
 
-  const policyNumber = dashboardData?.policyNumber || "DRV-2025-000001";
+  // Only show a real policy number — never expose a hardcoded placeholder
+  const policyNumber = dashboardData?.policyNumber || null;
   const isNewUser = !isDemoMode && dashboardData?.totalTrips === 0;
 
   // Calculate surplus projection
@@ -302,6 +303,27 @@ export default function Dashboard() {
   return (
     <PageWrapper>
       <div className="pb-24 text-white">
+        {/* Email verification banner — soft prompt, not a hard block */}
+        {user && user.emailVerified === false && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-4 flex items-center justify-between gap-3 px-4 py-3 rounded-xl"
+            style={{ background: 'rgba(234, 179, 8, 0.15)', border: '1px solid rgba(234, 179, 8, 0.3)' }}
+          >
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-yellow-400 flex-shrink-0" />
+              <span className="text-yellow-200 text-sm">Verify your email to secure your account</span>
+            </div>
+            <button
+              onClick={() => setLocation('/verify-email')}
+              className="text-xs font-medium text-yellow-300 hover:text-yellow-100 whitespace-nowrap"
+            >
+              Verify →
+            </button>
+          </motion.div>
+        )}
+
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -316,7 +338,7 @@ export default function Dashboard() {
             </div>
             <div style={{ marginTop: '2px' }}>
               <h1 className="text-xl font-bold text-white">Driiva</h1>
-              <p className="text-sm text-white/50">{getGreeting()}, {displayName}</p>
+              <p className="text-sm text-white/50">Beta Programme</p>
               {isDemoMode && (
                 <span className="inline-block mt-1 px-2 py-0.5 text-xs bg-emerald-500/20 text-emerald-400 rounded-full border border-emerald-500/30">
                   Demo Mode
@@ -345,7 +367,9 @@ export default function Dashboard() {
               className="flex items-center gap-1"
             >
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center">
-                <span className="text-white font-bold text-lg italic">d</span>
+                <span className="text-white font-bold text-lg">
+                  {displayName[0]?.toUpperCase() ?? '?'}
+                </span>
               </div>
               <ChevronDown className={`w-4 h-4 text-white/50 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
             </button>
@@ -370,7 +394,7 @@ export default function Dashboard() {
                   >
                     <div className="p-4">
                       <p className="text-xs text-white/50 mb-1">Policy No:</p>
-                      <p className="text-sm font-medium text-white">{policyNumber}</p>
+                      <p className="text-sm font-medium text-white">{policyNumber ?? '—'}</p>
                     </div>
                     <div className="border-t border-white/10">
                       <button
@@ -387,7 +411,10 @@ export default function Dashboard() {
           </div>
         </motion.div>
 
-        <h2 className="text-2xl font-bold text-white mb-4">Dashboard</h2>
+        {/* Personalised greeting — time-of-day + full registered name */}
+        <h2 className="text-2xl font-bold text-white mb-4">
+          {getGreeting()}, {displayName}
+        </h2>
 
         {/* Error banner */}
         {dataError && (
@@ -413,23 +440,27 @@ export default function Dashboard() {
             <TrendingUp className="w-5 h-5 text-emerald-400" />
           </div>
           <div className="flex items-end gap-2">
-            <span className="text-5xl font-bold text-white">{drivingScore}</span>
-            <span className="text-xl text-white/60 mb-1">/100</span>
+            <span className="text-5xl font-bold text-white">
+              {isNewUser ? '—' : drivingScore}
+            </span>
+            {!isNewUser && <span className="text-xl text-white/60 mb-1">/100</span>}
           </div>
           <p className="text-sm text-white/60 mt-2">
-            {getScoreMessage(drivingScore)}
+            {isNewUser
+              ? 'Complete your first trip to get a driving score.'
+              : getScoreMessage(drivingScore)}
           </p>
           <div className="mt-4 h-2 bg-white/10 rounded-full overflow-hidden">
-            <motion.div 
+            <motion.div
               initial={{ width: 0 }}
-              animate={{ width: `${drivingScore}%` }}
+              animate={{ width: isNewUser ? '0%' : `${drivingScore}%` }}
               transition={{ duration: 1, ease: "easeOut" }}
               className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full"
             />
           </div>
           
-          {/* Score breakdown (only show if we have real data) */}
-          {!isDemoMode && dashboardData?.scoreBreakdown && (
+          {/* Score breakdown — only show once the driver has completed at least one trip */}
+          {!isDemoMode && !isNewUser && dashboardData?.scoreBreakdown && (
             <div className="mt-4 pt-4 border-t border-white/10 grid grid-cols-5 gap-2 text-center">
               <div>
                 <div className="text-xs text-white/40">Speed</div>

@@ -9,6 +9,7 @@ import DeleteAccount from "@/components/DeleteAccount";
 import { ChevronDown, Bell } from "lucide-react";
 import { timing, easing } from "@/lib/animations";
 import { useAuth } from '../contexts/AuthContext';
+import { useDashboardData } from '@/hooks/useDashboardData';
 
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
@@ -126,7 +127,9 @@ export default function Profile() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [locationTracking, setLocationTracking] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(true);
-  const policyNumber = "DRV-2025-000001";
+
+  // Real-time Firestore data (same hook as dashboard)
+  const { data: dashboardData } = useDashboardData(user?.id ?? null);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -140,26 +143,27 @@ export default function Profile() {
     setLocation("/");
     logout();
   };
-  
-  const userData = {
-    id: 8,
-    username: "driiva1",
-    firstName: "Test",
-    lastName: "Driver",
-    email: "test@driiva.com",
-    premiumAmount: "1840.00",
-    phoneNumber: "+44 7700 123456"
-  };
 
-  const profileData = {
-    currentScore: 72,
-    totalTrips: 28,
-    totalMiles: 1168.50,
-    hardBrakingScore: 3,
-    accelerationScore: 2,
-    speedAdherenceScore: 2,
-    nightDrivingScore: 5
-  };
+  // Derive display values from real data
+  const firstName = user?.name?.split(' ')[0] ?? '';
+  const lastName = user?.name?.split(' ').slice(1).join(' ') ?? '';
+  const initials = firstName && lastName
+    ? `${firstName[0]}${lastName[0]}`
+    : (firstName ? firstName[0] : (user?.email?.[0] ?? '?')).toUpperCase();
+  const greetingName = firstName || user?.email?.split('@')[0] || 'Driver';
+  const avatarInitial = (user?.name?.[0] ?? user?.email?.[0] ?? '?').toUpperCase();
+
+  const currentScore = dashboardData?.drivingScore ?? 0;
+  const totalTrips = dashboardData?.totalTrips ?? 0;
+  const totalMiles = dashboardData?.totalMiles ?? 0;
+  const premiumAmount = dashboardData?.premiumAmount
+    ? dashboardData.premiumAmount.toFixed(2)
+    : '—';
+  // Only show a real policy number — never show a hardcoded placeholder
+  const policyNumber = dashboardData?.policyNumber ?? '—';
+  const scoreBreakdown = dashboardData?.scoreBreakdown;
+  // Real account creation date from Firestore (e.g. "January 2025")
+  const memberSince = dashboardData?.memberSince ?? '—';
 
   return (
     <PageWrapper>
@@ -178,7 +182,7 @@ export default function Profile() {
             </div>
             <div style={{ marginTop: '2px' }}>
               <h1 className="text-xl font-bold text-white">Driiva</h1>
-              <p className="text-sm text-white/50">{getGreeting()}, Driver</p>
+              <p className="text-sm text-white/50">{getGreeting()}, {greetingName}</p>
             </div>
           </div>
 
@@ -193,7 +197,7 @@ export default function Profile() {
               className="flex items-center gap-1"
             >
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center">
-                <span className="text-white font-bold text-lg italic">d</span>
+                <span className="text-white font-bold text-lg">{avatarInitial}</span>
               </div>
               <ChevronDown className={`w-4 h-4 text-white/50 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
             </button>
@@ -239,26 +243,24 @@ export default function Profile() {
 
         <div className="backdrop-blur-xl bg-white/[0.04] border border-white/[0.08] rounded-2xl p-6">
           <div className="flex flex-col items-center text-center mb-6">
-            <div 
+            <div
               className="w-20 h-20 rounded-full flex items-center justify-center mb-4 border-2 border-emerald-500/60"
               style={{
                 background: 'radial-gradient(circle at center, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.05) 70%, transparent 100%)',
                 boxShadow: '0 0 20px rgba(16, 185, 129, 0.15), inset 0 0 20px rgba(16, 185, 129, 0.1)'
               }}
             >
-              <span className="text-2xl font-semibold text-white/80">
-                {userData.firstName[0]}{userData.lastName[0]}
-              </span>
+              <span className="text-2xl font-semibold text-white/80">{initials.toUpperCase()}</span>
             </div>
             <h2 className="text-xl font-semibold text-white mb-1">
-              {userData.firstName} {userData.lastName}
+              {user?.name || user?.email?.split('@')[0] || 'Driver'}
             </h2>
-            <p className="text-sm text-white/50">@{userData.username}</p>
+            <p className="text-sm text-white/50">{user?.email || '—'}</p>
           </div>
-          
+
           <div className="grid grid-cols-2 gap-3">
-            <StatCard value={profileData.currentScore} label="Current Score" />
-            <StatCard value={profileData.totalTrips} label="Total Trips" />
+            <StatCard value={totalTrips === 0 ? '—' : currentScore} label="Current Score" />
+            <StatCard value={totalTrips} label="Total Trips" />
           </div>
         </div>
 
@@ -269,15 +271,15 @@ export default function Profile() {
           </h3>
           
           <div className="space-y-1">
-            <DetailRow label="Email" value={userData.email} />
-            <DetailRow label="Phone" value={userData.phoneNumber} />
-            <DetailRow label="Premium" value={`£${userData.premiumAmount}`} />
-            <DetailRow label="Policy Number" value="DRV-2025-000001" />
-            <DetailRow label="Policy Start" value="July 1, 2025" />
+            <DetailRow label="Email" value={user?.email || '—'} />
+            <DetailRow label="Phone" value="—" />
+            <DetailRow label="Premium" value={premiumAmount !== '—' ? `£${premiumAmount}` : '—'} />
+            <DetailRow label="Policy Number" value={policyNumber} />
+            <DetailRow label="Member since" value={memberSince} />
           </div>
         </div>
 
-        <CoverageTypeSection currentScore={profileData.currentScore} />
+        <CoverageTypeSection currentScore={currentScore} />
 
         <div className="backdrop-blur-xl bg-white/[0.04] border border-white/[0.08] rounded-2xl p-4">
           <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
@@ -286,10 +288,10 @@ export default function Profile() {
           </h3>
           
           <div className="grid grid-cols-2 gap-3">
-            <StatCard value={profileData.totalMiles.toFixed(1)} label="Miles This Month" />
-            <StatCard value={profileData.hardBrakingScore} label={profileData.hardBrakingScore === 1 ? 'Harsh Braking Event' : 'Harsh Braking Events'} />
-            <StatCard value={profileData.speedAdherenceScore} label={profileData.speedAdherenceScore === 1 ? 'Speed Violation' : 'Speed Violations'} />
-            <StatCard value={profileData.nightDrivingScore} label={profileData.nightDrivingScore === 1 ? 'Night Trip' : 'Night Trips'} />
+            <StatCard value={totalMiles > 0 ? totalMiles.toFixed(1) : '—'} label="Total Miles" />
+            <StatCard value={totalTrips} label="Total Trips" />
+            <StatCard value={scoreBreakdown ? scoreBreakdown.braking : '—'} label="Braking Score" />
+            <StatCard value={scoreBreakdown ? scoreBreakdown.speed : '—'} label="Speed Score" />
           </div>
         </div>
 
@@ -348,7 +350,7 @@ export default function Profile() {
           </h3>
           
           <div className="space-y-3">
-            <PolicyDownload userId={userData.id} userData={userData} />
+            <PolicyDownload userId={user?.id ? parseInt(user.id, 10) || 0 : 0} userData={{ id: 0, email: user?.email || '', username: user?.name || '' }} />
             <ExportDataButton userId={user?.id ?? ''} />
             <div className="border-t border-white/5 pt-3">
               <DeleteAccount userId={user?.id ?? ''} />

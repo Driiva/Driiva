@@ -94,6 +94,10 @@ export interface DashboardData {
   
   // Computed
   projectedRefund: number;
+
+  // Meta
+  /** Formatted account creation date e.g. "January 2025", null if unavailable */
+  memberSince: string | null;
 }
 
 export interface UseDashboardDataResult {
@@ -136,6 +140,7 @@ const DEFAULT_DASHBOARD_DATA: DashboardData = {
   safetyFactor: 1.0,
   activeParticipants: 0,
   projectedRefund: 0,
+  memberSince: null,
 };
 
 // ============================================================================
@@ -387,9 +392,25 @@ export function useDashboardData(userId: string | null): UseDashboardDataResult 
       policy?.currentPremiumCents || userDoc?.activePolicy?.premiumCents || 0
     );
 
+    // Derive account creation date — createdAt may be a Firestore Timestamp or ISO string
+    let memberSince: string | null = null;
+    const rawCreatedAt = userDoc?.createdAt as unknown;
+    if (rawCreatedAt) {
+      try {
+        const date: Date | null = typeof rawCreatedAt === 'string'
+          ? new Date(rawCreatedAt)
+          : typeof (rawCreatedAt as any)?.toDate === 'function'
+            ? (rawCreatedAt as any).toDate()
+            : null;
+        if (date && !isNaN(date.getTime())) {
+          memberSince = date.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+        }
+      } catch { /* ignore malformed dates */ }
+    }
+
     const dashboardData: DashboardData = {
-      // User Profile
-      displayName: userDoc?.displayName || 'Driver',
+      // User Profile — prefer displayName, fall back to fullName (set by signup before Cloud Function runs)
+      displayName: userDoc?.displayName || (userDoc as any)?.fullName || 'Driver',
       photoURL: userDoc?.photoURL || null,
       
       // Driving Stats
@@ -427,6 +448,9 @@ export function useDashboardData(userId: string | null): UseDashboardDataResult 
       
       // Computed
       projectedRefund,
+
+      // Meta
+      memberSince,
     };
 
     setData(dashboardData);

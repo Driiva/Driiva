@@ -15,34 +15,26 @@ interface ProtectedRouteProps {
  * =========================
  * Guards routes that require authentication.
  *
- * PERFORMANCE FIX (v2):
- *   - useLayoutEffect for redirect → fires BEFORE browser paint, zero flicker
- *   - Resolves synchronously from AuthContext.user (no Firestore reads)
- *   - Demo mode is a fast localStorage check
- *
  * Flow:
- *   1. If AuthContext is still loading → brief spinner
- *   2. Demo mode → allow access instantly
+ *   1. AuthContext loading → spinner
+ *   2. Demo mode → allow immediately
  *   3. No user → redirect to /signin
  *   4. Onboarding not complete → redirect to /quick-onboarding
- *   5. Email not verified → redirect to /verify-email
- *      (skipped for Google accounts since emailVerified=true; skipped for /quick-onboarding)
- *   6. All checks pass → render children
+ *   5. All checks pass → render children
+ *      (Email verification is a soft requirement — shown as a banner on the dashboard,
+ *       not a hard redirect. This avoids blocking users when email delivery is unreliable.)
  */
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   skipOnboardingCheck = false,
-  skipEmailVerificationCheck = false,
+  skipEmailVerificationCheck: _skipEmailVerificationCheck = false, // kept for API compat; no longer used
 }) => {
   const [, setLocation] = useLocation();
   const { user, loading } = useAuth();
   const hasRedirected = useRef(false);
 
-  // Demo mode — instant pass-through (synchronous check)
   const isDemoMode = typeof window !== 'undefined' && localStorage.getItem('driiva-demo-mode') === 'true';
 
-  // useLayoutEffect fires synchronously after DOM mutation but BEFORE paint.
-  // This eliminates the flash of blank content that useEffect causes.
   useLayoutEffect(() => {
     if (loading) return;
     if (hasRedirected.current) return;
@@ -57,16 +49,10 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     if (!skipOnboardingCheck && user.onboardingComplete !== true) {
       hasRedirected.current = true;
       setLocation('/quick-onboarding');
-      return;
     }
+  }, [loading, user, isDemoMode, skipOnboardingCheck, setLocation]);
 
-    if (!skipEmailVerificationCheck && user.emailVerified === false) {
-      hasRedirected.current = true;
-      setLocation('/verify-email');
-    }
-  }, [loading, user, isDemoMode, skipOnboardingCheck, skipEmailVerificationCheck, setLocation]);
-
-  // AuthProvider still bootstrapping — show a BRIEF spinner
+  // AuthProvider still bootstrapping
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -75,19 +61,26 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  // Demo mode → render immediately
   if (isDemoMode) return <>{children}</>;
 
-  // Not authenticated → render nothing (redirect fires in useLayoutEffect)
-  if (!user) return null;
+  // Not authenticated → spinner while redirect fires
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-10 h-10 border-3 border-white/20 border-t-white rounded-full animate-spin" />
+      </div>
+    );
+  }
 
-  // Onboarding not completed → render nothing (redirect fires in useLayoutEffect)
-  if (!skipOnboardingCheck && user.onboardingComplete !== true) return null;
+  // Onboarding not completed → spinner while redirect fires
+  if (!skipOnboardingCheck && user.onboardingComplete !== true) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-10 h-10 border-3 border-white/20 border-t-white rounded-full animate-spin" />
+      </div>
+    );
+  }
 
-  // Email not verified → render nothing (redirect fires in useLayoutEffect)
-  if (!skipEmailVerificationCheck && user.emailVerified === false) return null;
-
-  // All checks pass → render children immediately
   return <>{children}</>;
 };
 
@@ -127,8 +120,15 @@ export const PublicOnlyRoute: React.FC<PublicOnlyRouteProps> = ({
   // Demo mode — always show auth pages (so user can create real account)
   if (isDemoMode) return <>{children}</>;
 
-  // Authenticated real user — render nothing (redirect fires in useLayoutEffect)
-  if (user) return null;
+  // Authenticated real user — show spinner while redirect fires in useLayoutEffect
+  // (null caused a blank-page flash identical to the ProtectedRoute case)
+  if (user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-10 h-10 border-3 border-white/20 border-t-white rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return <>{children}</>;
 };

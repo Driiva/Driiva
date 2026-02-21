@@ -153,6 +153,14 @@ export interface UserDocument {
   age?: number;
   /** Optional: UK postcode e.g. "SW1A 1AA", used for beta premium estimate */
   postcode?: string;
+  /** Soft onboarding: annual driving mileage band */
+  annualMileage?: string | null;
+  /** Soft onboarding: how user heard about Driiva */
+  referralSource?: string | null;
+  /** Soft onboarding: current insurance provider */
+  currentInsurer?: string | null;
+  /** Soft onboarding: current annual premium in pounds */
+  currentPremiumPounds?: number | null;
   createdAt: Timestamp;
   updatedAt: Timestamp;
   

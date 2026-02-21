@@ -50,7 +50,9 @@ export default function VerifyEmail() {
 
     setIsSending(true);
     try {
-      await sendEmailVerification(auth.currentUser);
+      await sendEmailVerification(auth.currentUser, {
+        url: `${window.location.origin}/verify-email`,
+      });
       setResentAt(new Date());
       toast({
         title: "Email sent",

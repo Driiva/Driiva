@@ -15,7 +15,7 @@ import { motion } from "framer-motion";
 import { useLocation } from "wouter";
 import { PageWrapper } from '../components/PageWrapper';
 import { BottomNav } from '../components/BottomNav';
-import { Map, Car, AlertCircle, Loader2, Play, Navigation, RefreshCw } from "lucide-react";
+import { Map, Car, AlertCircle, Loader2, Play, Navigation, RefreshCw, ChevronLeft } from "lucide-react";
 import { useAuth } from '../contexts/AuthContext';
 import { getUserTrips } from '@/lib/firestore';
 import type { TripDocument } from '../../../shared/firestore-types';
@@ -182,18 +182,26 @@ export default function Trips() {
           transition={{ duration: 0.5 }}
           className="flex items-start justify-between mb-6"
         >
-          <div className="flex items-start gap-3">
-            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/30 to-purple-700/30 border border-white/10 flex items-center justify-center overflow-hidden">
-              <img src="/logo.png" alt="Driiva" className="w-full h-full object-cover" />
-            </div>
-            <div style={{ marginTop: '2px' }}>
-              <h1 className="text-xl font-bold text-white">Driiva</h1>
-              <p className="text-sm text-white/50">Your trip history</p>
-              {isDemoMode && (
-                <span className="inline-block mt-1 px-2 py-0.5 text-xs bg-emerald-500/20 text-emerald-400 rounded-full border border-emerald-500/30">
-                  Demo Mode
-                </span>
-              )}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setLocation('/dashboard')}
+              className="p-2 -ml-2 rounded-full hover:bg-white/10 transition-colors"
+            >
+              <ChevronLeft className="w-5 h-5 text-white" />
+            </button>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/30 to-purple-700/30 border border-white/10 flex items-center justify-center overflow-hidden">
+                <img src="/logo.png" alt="Driiva" className="w-full h-full object-cover" />
+              </div>
+              <div style={{ marginTop: '2px' }}>
+                <h1 className="text-xl font-bold text-white">Driiva</h1>
+                <p className="text-sm text-white/50">Your trip history</p>
+                {isDemoMode && (
+                  <span className="inline-block mt-1 px-2 py-0.5 text-xs bg-emerald-500/20 text-emerald-400 rounded-full border border-emerald-500/30">
+                    Demo Mode
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </motion.div>

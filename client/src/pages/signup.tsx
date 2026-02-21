@@ -144,10 +144,17 @@ export default function Signup() {
         batch.commit(),
       ]);
 
-      // Send verification email (non-blocking — failure is logged but doesn't break signup)
-      sendEmailVerification(user).catch((err) => {
-        console.warn('[Signup] Failed to send verification email:', err);
-      });
+      // Send verification email — await so we can show feedback if it fails
+      // continueUrl brings the user back to /verify-email after clicking the link
+      try {
+        await sendEmailVerification(user, {
+          url: `${window.location.origin}/verify-email`,
+        });
+        console.log('[Signup] Verification email sent to', user.email);
+      } catch (verifyErr: any) {
+        // Non-fatal: user can resend from /verify-email; log the real reason
+        console.warn('[Signup] sendEmailVerification failed:', verifyErr?.code, verifyErr?.message);
+      }
 
       // Set user in context with onboarding NOT complete
       setUser({
@@ -160,7 +167,7 @@ export default function Signup() {
 
       toast({
         title: "Account created!",
-        description: "Let's get you set up.",
+        description: "Check your inbox for a verification email, then let's get you set up.",
       });
 
       // Navigate to quick onboarding immediately after successful signup

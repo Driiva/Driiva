@@ -5,33 +5,73 @@ import { ArrowLeft, Bell, Shield, HelpCircle, ChevronRight, Moon, Globe, LogOut 
 import { PageWrapper } from '../components/PageWrapper';
 import { useAuth } from '../contexts/AuthContext';
 
+type NotificationsLevel = 'all' | 'important' | 'off';
+type ThemeMode = 'dark' | 'light';
+
+/**
+ * PillChip — refined segmented selector chip for settings.
+ * Selected: brand-tinted fill with soft inner glow.
+ * Unselected: outlined, neutral, reacts on hover/press.
+ */
+function PillChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className={[
+        'relative px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide',
+        'transition-all duration-[150ms] ease-out outline-none select-none',
+        'active:scale-[0.93] border',
+        active
+          ? [
+              'bg-emerald-500/[0.18] border-emerald-400/50 text-emerald-300',
+              'shadow-[inset_0_1px_0_rgba(52,211,153,0.18),0_0_0_1px_rgba(52,211,153,0.08)]',
+            ].join(' ')
+          : [
+              'bg-white/[0.04] border-white/[0.1] text-white/40',
+              'hover:bg-white/[0.09] hover:border-white/[0.22] hover:text-white/70',
+            ].join(' '),
+      ].join(' ')}
+    >
+      {active && (
+        <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 align-middle -mt-px" />
+      )}
+      {label}
+    </button>
+  );
+}
+
 export default function Settings() {
   const [, setLocation] = useLocation();
   const { logout } = useAuth();
-  const [notifications, setNotifications] = useState(() => {
-    return localStorage.getItem('driiva-notifications') !== 'false';
-  });
-  const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem('driiva-dark-mode') === 'true';
+
+  const [notificationsLevel, setNotificationsLevel] = useState<NotificationsLevel>(() => {
+    const saved = localStorage.getItem('driiva-notifications-level');
+    if (saved === 'all' || saved === 'important' || saved === 'off') return saved;
+    // Migrate from old boolean key
+    return localStorage.getItem('driiva-notifications') === 'false' ? 'off' : 'all';
   });
 
-  useEffect(() => {
-    localStorage.setItem('driiva-notifications', String(notifications));
-  }, [notifications]);
+  const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
+    return localStorage.getItem('driiva-dark-mode') === 'true' ? 'dark' : 'light';
+  });
+
+  const [language] = useState<string>('English');
 
   useEffect(() => {
-    localStorage.setItem('driiva-dark-mode', String(darkMode));
-    if (darkMode) {
+    localStorage.setItem('driiva-notifications-level', notificationsLevel);
+  }, [notificationsLevel]);
+
+  useEffect(() => {
+    const isDark = themeMode === 'dark';
+    localStorage.setItem('driiva-dark-mode', String(isDark));
+    if (isDark) {
       document.documentElement.style.filter = 'brightness(0.88) contrast(1.05)';
     } else {
       document.documentElement.style.filter = '';
     }
-    return () => {
-      // Don't remove on unmount — persist across pages
-    };
-  }, [darkMode]);
+  }, [themeMode]);
 
-  // Apply dark mode on mount if previously enabled
+  // Apply theme on mount
   useEffect(() => {
     if (localStorage.getItem('driiva-dark-mode') === 'true') {
       document.documentElement.style.filter = 'brightness(0.88) contrast(1.05)';
@@ -65,63 +105,42 @@ export default function Settings() {
             <h2 className="text-sm font-medium text-white/60 mb-3 px-1">Preferences</h2>
             <div className="dashboard-glass-card divide-y divide-white/10">
               {/* Notifications */}
-              <button
-                onClick={() => setNotifications(!notifications)}
-                className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors rounded-t-xl"
-              >
+              <div className="flex items-center justify-between p-4 rounded-t-xl">
                 <div className="flex items-center gap-3">
                   <Bell className="w-5 h-5 text-white/60" />
                   <span className="text-white">Notifications</span>
                 </div>
-                <div
-                  className={`w-10 h-6 rounded-full relative transition-colors ${
-                    notifications ? 'bg-emerald-500' : 'bg-white/20'
-                  }`}
-                >
-                  <div
-                    className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                      notifications ? 'translate-x-5' : 'translate-x-1'
-                    }`}
-                  />
+                <div className="flex gap-1.5">
+                  <PillChip label="All" active={notificationsLevel === 'all'} onClick={() => setNotificationsLevel('all')} />
+                  <PillChip label="Important" active={notificationsLevel === 'important'} onClick={() => setNotificationsLevel('important')} />
+                  <PillChip label="Off" active={notificationsLevel === 'off'} onClick={() => setNotificationsLevel('off')} />
                 </div>
-              </button>
+              </div>
 
-              {/* Dark Mode */}
-              <button
-                onClick={() => setDarkMode(!darkMode)}
-                className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors"
-              >
+              {/* Theme */}
+              <div className="flex items-center justify-between p-4">
                 <div className="flex items-center gap-3">
                   <Moon className="w-5 h-5 text-white/60" />
-                  <span className="text-white">Dark Mode</span>
+                  <span className="text-white">Theme</span>
                 </div>
-                <div
-                  className={`w-10 h-6 rounded-full relative transition-colors ${
-                    darkMode ? 'bg-emerald-500' : 'bg-white/20'
-                  }`}
-                >
-                  <div
-                    className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                      darkMode ? 'translate-x-5' : 'translate-x-1'
-                    }`}
-                  />
+                <div className="flex gap-1.5">
+                  <PillChip label="Dark" active={themeMode === 'dark'} onClick={() => setThemeMode('dark')} />
+                  <PillChip label="Light" active={themeMode === 'light'} onClick={() => setThemeMode('light')} />
                 </div>
-              </button>
+              </div>
 
               {/* Language */}
-              <button
-                onClick={() => {}}
-                className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors rounded-b-xl"
-              >
+              <div className="flex items-center justify-between p-4 rounded-b-xl">
                 <div className="flex items-center gap-3">
                   <Globe className="w-5 h-5 text-white/60" />
                   <span className="text-white">Language</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-white/40 text-sm">English</span>
-                  <ChevronRight className="w-4 h-4 text-white/40" />
+                <div className="flex gap-1.5">
+                  <PillChip label="EN" active={language === 'English'} onClick={() => {}} />
+                  <PillChip label="FR" active={false} onClick={() => {}} />
+                  <PillChip label="ES" active={false} onClick={() => {}} />
                 </div>
-              </button>
+              </div>
             </div>
           </motion.div>
 

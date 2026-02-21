@@ -31,7 +31,7 @@ import { doc, setDoc } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import driivaLogo from '@/assets/driiva-logo-CLEAR-FINAL.png';
 
-const TOTAL_STEPS = 3;
+const TOTAL_STEPS = 7;
 
 interface GpsTestResult {
   success: boolean;
@@ -51,6 +51,12 @@ export default function QuickOnboarding() {
   // GPS state
   const [gpsStatus, setGpsStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [gpsResult, setGpsResult] = useState<GpsTestResult | null>(null);
+
+  // Soft onboarding data (steps 3–6)
+  const [annualMileage, setAnnualMileage] = useState<string>('');
+  const [referralSource, setReferralSource] = useState<string>('');
+  const [currentInsurer, setCurrentInsurer] = useState<string>('');
+  const [currentPremiumPounds, setCurrentPremiumPounds] = useState<string>('');
 
   // Use AuthContext instead of a separate onAuthStateChanged listener.
   // AuthContext already tracks the user and their onboarding status,
@@ -177,6 +183,10 @@ export default function QuickOnboarding() {
           onboardingCompleted: true,
           onboardingComplete: true,
           gpsPermissionGranted: gpsStatus === 'success',
+          annualMileage: annualMileage || null,
+          referralSource: referralSource || null,
+          currentInsurer: currentInsurer || null,
+          currentPremiumPounds: currentPremiumPounds ? Number(currentPremiumPounds) : null,
           updatedAt: new Date().toISOString(),
         }, { merge: true });
       }
@@ -398,10 +408,226 @@ export default function QuickOnboarding() {
               </motion.div>
             )}
 
-            {/* STEP 3: Confirm Understanding */}
+            {/* STEP 3: Annual Mileage */}
             {currentStep === 3 && (
               <motion.div
                 key="step3"
+                initial={{ opacity: 0, x: 30 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -30 }}
+                transition={{ duration: 0.3 }}
+                className="text-center"
+              >
+                <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center">
+                  <Car className="w-12 h-12 text-blue-400" />
+                </div>
+
+                <h1 className="text-2xl font-bold text-white mb-3">How much do you drive?</h1>
+                <p className="text-white/60 mb-8 max-w-sm mx-auto">
+                  This helps us personalise your insurance estimate.
+                </p>
+
+                <div className="grid grid-cols-1 gap-3 mb-8">
+                  {['Under 5,000', '5,000–10,000', '10,000–15,000', '15,000+', 'Not sure'].map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => setAnnualMileage(option)}
+                      className={`w-full py-3.5 px-4 rounded-xl text-sm font-medium text-left transition-all border ${
+                        annualMileage === option
+                          ? 'bg-emerald-500/20 border-emerald-400/60 text-emerald-300'
+                          : 'bg-white/5 border-white/15 text-white/70 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      {option} miles/year
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={prevStep}
+                    className="flex-1 bg-white/10 hover:bg-white/15 text-white font-semibold py-4 rounded-xl transition-colors"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={nextStep}
+                    className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-4 rounded-xl transition-colors flex items-center justify-center gap-2"
+                  >
+                    {annualMileage ? 'Continue' : 'Skip'}
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* STEP 4: Referral Source */}
+            {currentStep === 4 && (
+              <motion.div
+                key="step4"
+                initial={{ opacity: 0, x: 30 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -30 }}
+                transition={{ duration: 0.3 }}
+                className="text-center"
+              >
+                <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-pink-500/20 to-rose-500/20 flex items-center justify-center">
+                  <Users className="w-12 h-12 text-pink-400" />
+                </div>
+
+                <h1 className="text-2xl font-bold text-white mb-3">How did you find us?</h1>
+                <p className="text-white/60 mb-8 max-w-sm mx-auto">
+                  We'd love to know how you heard about Driiva.
+                </p>
+
+                <div className="grid grid-cols-1 gap-3 mb-8">
+                  {['Social media', 'Friend or family', 'Search engine', 'Comparison site', 'Other'].map((option) => (
+                    <button
+                      key={option}
+                      onClick={() => setReferralSource(option)}
+                      className={`w-full py-3.5 px-4 rounded-xl text-sm font-medium text-left transition-all border ${
+                        referralSource === option
+                          ? 'bg-emerald-500/20 border-emerald-400/60 text-emerald-300'
+                          : 'bg-white/5 border-white/15 text-white/70 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={prevStep}
+                    className="flex-1 bg-white/10 hover:bg-white/15 text-white font-semibold py-4 rounded-xl transition-colors"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={nextStep}
+                    className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-4 rounded-xl transition-colors flex items-center justify-center gap-2"
+                  >
+                    {referralSource ? 'Continue' : 'Skip'}
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* STEP 5: Current Insurer */}
+            {currentStep === 5 && (
+              <motion.div
+                key="step5"
+                initial={{ opacity: 0, x: 30 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -30 }}
+                transition={{ duration: 0.3 }}
+                className="text-center"
+              >
+                <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-amber-500/20 to-orange-500/20 flex items-center justify-center">
+                  <Shield className="w-12 h-12 text-amber-400" />
+                </div>
+
+                <h1 className="text-2xl font-bold text-white mb-3">Who insures you now?</h1>
+                <p className="text-white/60 mb-8 max-w-sm mx-auto">
+                  Your current insurer helps us compare your savings.
+                </p>
+
+                <div className="mb-4">
+                  <input
+                    type="text"
+                    value={currentInsurer}
+                    onChange={(e) => setCurrentInsurer(e.target.value)}
+                    placeholder="e.g. Admiral, Aviva, Direct Line..."
+                    className="w-full px-4 py-4 rounded-xl bg-white/5 border border-white/20 text-white placeholder-white/30 focus:outline-none focus:border-emerald-400/60 focus:bg-white/10 transition-all text-sm"
+                  />
+                </div>
+
+                <button
+                  onClick={() => { setCurrentInsurer('none'); nextStep(); }}
+                  className="w-full mb-8 py-2 text-sm text-white/40 hover:text-white/60 transition-colors"
+                >
+                  I don't have insurance / Skip
+                </button>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={prevStep}
+                    className="flex-1 bg-white/10 hover:bg-white/15 text-white font-semibold py-4 rounded-xl transition-colors"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={nextStep}
+                    className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-4 rounded-xl transition-colors flex items-center justify-center gap-2"
+                  >
+                    Continue
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* STEP 6: Current Premium */}
+            {currentStep === 6 && (
+              <motion.div
+                key="step6"
+                initial={{ opacity: 0, x: 30 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -30 }}
+                transition={{ duration: 0.3 }}
+                className="text-center"
+              >
+                <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center">
+                  <Wallet className="w-12 h-12 text-emerald-400" />
+                </div>
+
+                <h1 className="text-2xl font-bold text-white mb-3">What's your current premium?</h1>
+                <p className="text-white/60 mb-8 max-w-sm mx-auto">
+                  We'll show you how much you could save with Driiva.
+                </p>
+
+                <div className="mb-4 relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40 font-medium">£</span>
+                  <input
+                    type="number"
+                    value={currentPremiumPounds}
+                    onChange={(e) => setCurrentPremiumPounds(e.target.value)}
+                    placeholder="e.g. 1200"
+                    min="0"
+                    className="w-full pl-8 pr-4 py-4 rounded-xl bg-white/5 border border-white/20 text-white placeholder-white/30 focus:outline-none focus:border-emerald-400/60 focus:bg-white/10 transition-all text-sm"
+                  />
+                </div>
+
+                <button
+                  onClick={nextStep}
+                  className="w-full mb-8 py-2 text-sm text-white/40 hover:text-white/60 transition-colors"
+                >
+                  I don't know / Skip
+                </button>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={prevStep}
+                    className="flex-1 bg-white/10 hover:bg-white/15 text-white font-semibold py-4 rounded-xl transition-colors"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={nextStep}
+                    className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-4 rounded-xl transition-colors flex items-center justify-center gap-2"
+                  >
+                    Continue
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* STEP 7: Confirm Understanding */}
+            {currentStep === 7 && (
+              <motion.div
+                key="step7"
                 initial={{ opacity: 0, x: 30 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -30 }}

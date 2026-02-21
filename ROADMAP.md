@@ -42,7 +42,7 @@
 - [ ] Add push notifications (trip complete, score update, payment due)
 - [ ] Build service worker for offline/PWA support
 - [x] Fix dashboard map — was hardcoded to London; now requests device GPS on load, handles permission denied and GPS unavailable states gracefully
-- [ ] Wire up profile page to real data
+- [x] Wire up profile page to real data — *done: Member since reads from Firestore createdAt; policyNumber never hardcoded; displayName falls back to fullName field; memberSince added to DashboardData*
 - [ ] Implement trip route visualisation on map (show the actual driven path, not just current position)
 - [ ] Phone usage detection for scoring
 - [ ] Build achievements backend
