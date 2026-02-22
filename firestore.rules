@@ -43,11 +43,28 @@ service cloud.firestore {
              request.resource.data[field] == resource.data[field];
     }
 
+    /**
+     * True if the trip status transition is a valid client-side transition.
+     * Only these transitions are allowed from the client:
+     *   recording  → processing  (client signals trip ended, ready for scoring)
+     *   recording  → failed      (client aborts a trip, e.g. too short)
+     * All other transitions (→ completed, → disputed, etc.) must come from
+     * Cloud Functions via the Admin SDK (which bypasses these rules).
+     */
+    function isValidClientStatusTransition() {
+      let current = resource.data.status;
+      let next = request.resource.data.status;
+      return (current == 'recording' && next == 'processing')
+          || (current == 'recording' && next == 'failed');
+    }
+
     // =========================================================================
-    // USERNAMES COLLECTION (username → email lookup for sign-in)
+    // USERNAMES COLLECTION (username → uid lookup for sign-in)
     // =========================================================================
-    // Public read so sign-in page can resolve "johndoe" → "johndoe@example.com".
-    // Only the owning user can create/update their username doc (uid must match auth.uid).
+    // Public read so sign-in page can resolve "johndoe" → uid.
+    // Only the owning user can create/update their username doc.
+    // NOTE: consider replacing public read with a Cloud Function to prevent
+    // username enumeration attacks.
 
     match /usernames/{username} {
       allow read: if true;
@@ -59,8 +76,6 @@ service cloud.firestore {
     // =========================================================================
     // USERS COLLECTION
     // =========================================================================
-    // Each user has one document: users/{userId} where userId == auth.uid.
-    // Authenticated users can read and write their own user document only.
 
     match /users/{userId} {
       allow read: if isOwner(userId);
@@ -75,7 +90,8 @@ service cloud.firestore {
         && unchanged('createdBy')
         && unchanged('drivingProfile')
         && unchanged('poolShare')
-        && unchanged('recentTrips');
+        && unchanged('recentTrips')
+        && unchanged('activePolicy');
 
       allow delete: if false;
 
@@ -89,9 +105,6 @@ service cloud.firestore {
     // =========================================================================
     // TRIPS COLLECTION
     // =========================================================================
-    // Users can only read/write trips where userId matches auth.uid.
-    // Client creates with status 'recording', then updates to 'processing' or
-    // 'failed'; Cloud Functions set final score and 'completed'.
 
     match /trips/{tripId} {
       allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
@@ -99,11 +112,12 @@ service cloud.firestore {
       allow create: if isAuthenticated()
         && request.resource.data.userId == request.auth.uid
         && request.resource.data.createdBy == request.auth.uid
-        && (request.resource.data.status == 'recording' || request.resource.data.status == 'processing');
+        && (request.resource.data.status == 'recording'
+            || request.resource.data.status == 'processing');
 
-      // Client may only advance status (recording→processing, recording→failed)
-      // and update pointsCount. Score, scoreBreakdown, events, anomalies, context
-      // are server-only fields set by Cloud Functions (Admin SDK, bypasses rules).
+      // Client may ONLY advance status via valid transitions (recording→processing
+      // or recording→failed). Score, scoreBreakdown, events, anomalies, context
+      // are locked — Cloud Functions set these via Admin SDK.
       allow update: if isAuthenticated()
         && resource.data.userId == request.auth.uid
         && unchanged('score')
@@ -113,7 +127,8 @@ service cloud.firestore {
         && unchanged('context')
         && unchanged('userId')
         && unchanged('createdBy')
-        && unchanged('createdAt');
+        && unchanged('createdAt')
+        && isValidClientStatusTransition();
 
       allow delete: if false;
     }
@@ -121,17 +136,11 @@ service cloud.firestore {
     // =========================================================================
     // TRIP POINTS COLLECTION
     // =========================================================================
-    // Raw GPS/sensor points for a trip. Users can read/write only their own
-    // (userId on parent or document must match auth.uid).
 
     match /tripPoints/{tripId} {
       allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
-
       allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
-
-      // GPS points are immutable after creation; only Cloud Functions may modify
       allow update: if false;
-
       allow delete: if false;
 
       match /batches/{batchId} {
@@ -146,9 +155,6 @@ service cloud.firestore {
     // =========================================================================
     // DRIVER_STATS COLLECTION
     // =========================================================================
-    // Aggregated driving stats per user. Users can only read their own doc.
-    // All writes must come from Cloud Functions (Admin SDK); client writes
-    // are rejected.
 
     match /driver_stats/{userId} {
       allow read: if isOwner(userId);
@@ -158,8 +164,6 @@ service cloud.firestore {
     // =========================================================================
     // POLICIES COLLECTION
     // =========================================================================
-    // Users can read only their own policies (userId matches auth.uid).
-    // Creation/updates are done by backend or Cloud Functions only.
 
     match /policies/{policyId} {
       allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
@@ -169,8 +173,8 @@ service cloud.firestore {
     // =========================================================================
     // COMMUNITY POOL COLLECTION
     // =========================================================================
-    // Read-only for all users (and optionally public for meta/current).
-    // All writes come from Cloud Functions (e.g. scheduled aggregation).
+    // Read-only for all users. Ensure no per-user financial data is stored
+    // directly on pool documents (pool-level aggregates only).
 
     match /communityPool/{poolId} {
       allow read: if true;
@@ -180,21 +184,15 @@ service cloud.firestore {
     // =========================================================================
     // POOL SHARES COLLECTION
     // =========================================================================
-    // Per-driver pool share snapshots. Users can read their own; listing for
-    // leaderboard is allowed. Writes only from Cloud Functions.
 
     match /poolShares/{shareId} {
       allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
-      // No allow list: clients must read their own doc directly via getShareId.
-      // Listing all pool shares would leak other drivers' financial data.
       allow write: if false;
     }
 
     // =========================================================================
     // LEADERBOARD COLLECTION
     // =========================================================================
-    // Precomputed rankings. Read-only for everyone (public data).
-    // Writes only from Cloud Functions (scheduled job).
 
     match /leaderboard/{leaderboardId} {
       allow read: if true;
@@ -202,12 +200,37 @@ service cloud.firestore {
     }
 
     // =========================================================================
-    // TRIP SEGMENTS COLLECTION (Stop-Go / classifier results)
+    // TRIP SEGMENTS COLLECTION
     // =========================================================================
-    // Users can read their own segments. Writes only from Cloud Functions.
 
     match /tripSegments/{tripId} {
       allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow write: if false;
+    }
+
+    // =========================================================================
+    // TRIP AI INSIGHTS COLLECTION
+    // =========================================================================
+
+    match /tripAiInsights/{tripId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow write: if false;
+    }
+
+    // =========================================================================
+    // AI USAGE TRACKING (admin/analytics only)
+    // =========================================================================
+
+    match /aiUsageTracking/{docId} {
+      allow read, write: if false;
+    }
+
+    // =========================================================================
+    // COUNTERS (sharded counters — Cloud Functions only)
+    // =========================================================================
+
+    match /counters/{docId} {
+      allow read: if isAuthenticated();
       allow write: if false;
     }
 

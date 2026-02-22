@@ -21,5 +21,6 @@ exports.COLLECTION_NAMES = {
     COMMUNITY_POOL: 'communityPool',
     POOL_SHARES: 'poolShares',
     LEADERBOARD: 'leaderboard',
+    COUNTERS: 'counters',
 };
 //# sourceMappingURL=types.js.map

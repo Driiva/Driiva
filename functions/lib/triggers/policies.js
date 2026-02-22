@@ -1,8 +1,13 @@
 "use strict";
 /**
- * POLICY TRIGGERS
- * ===============
- * Cloud Functions triggered by policy document changes.
+ * POLICY TRIGGER
+ * ==============
+ * Syncs policy data to the user document when a policy is created or updated.
+ *
+ * onPolicyWrite:
+ *   - On create/update: if policy is active, write ActivePolicySummary to
+ *     users/{userId}.activePolicy
+ *   - On delete or cancelled/expired: clear users/{userId}.activePolicy
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -43,94 +48,62 @@ const functions = __importStar(require("firebase-functions"));
 const admin = __importStar(require("firebase-admin"));
 const types_1 = require("../types");
 const db = admin.firestore();
-/**
- * Triggered when a policy is created or updated
- * Syncs active policy summary to user document
- */
 exports.onPolicyWrite = functions.firestore
     .document(`${types_1.COLLECTION_NAMES.POLICIES}/{policyId}`)
     .onWrite(async (change, context) => {
-    const policyId = context.params.policyId;
-    // Handle deletion
+    const { policyId } = context.params;
+    // Document deleted — clear activePolicy on user
     if (!change.after.exists) {
-        functions.logger.info(`Policy ${policyId} deleted`);
-        // Note: We don't auto-clear user.activePolicy on delete
-        // This should be handled manually or by a cleanup job
-        return;
+        const before = change.before.data();
+        if (!before?.userId)
+            return null;
+        functions.logger.info(`Policy ${policyId} deleted — clearing activePolicy for user ${before.userId}`);
+        await db
+            .collection(types_1.COLLECTION_NAMES.USERS)
+            .doc(before.userId)
+            .update({
+            activePolicy: null,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedBy: 'system:onPolicyWrite',
+        });
+        return null;
     }
     const policy = change.after.data();
-    const beforeData = change.before.exists ? change.before.data() : null;
-    functions.logger.info(`Policy ${policyId} changed`, {
-        userId: policy.userId,
+    if (!policy?.userId) {
+        functions.logger.warn(`Policy ${policyId} has no userId — skipping sync`);
+        return null;
+    }
+    // Policies that are cancelled/expired clear the activePolicy summary
+    if (policy.status === 'cancelled' || policy.status === 'expired') {
+        functions.logger.info(`Policy ${policyId} is ${policy.status} — clearing activePolicy for user ${policy.userId}`);
+        await db
+            .collection(types_1.COLLECTION_NAMES.USERS)
+            .doc(policy.userId)
+            .update({
+            activePolicy: null,
+            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedBy: 'system:onPolicyWrite',
+        });
+        return null;
+    }
+    // Active / pending / suspended — sync summary to user document
+    const activePolicy = {
+        policyId: policy.policyId,
+        policyNumber: policy.policyNumber, // ← was missing, caused CI failure
         status: policy.status,
-        previousStatus: beforeData?.status,
+        premiumCents: policy.currentPremiumCents,
+        coverageType: policy.coverageType,
+        renewalDate: policy.renewalDate ?? policy.expirationDate,
+    };
+    functions.logger.info(`Syncing policy ${policyId} (${policy.policyNumber}) to user ${policy.userId}`);
+    await db
+        .collection(types_1.COLLECTION_NAMES.USERS)
+        .doc(policy.userId)
+        .update({
+        activePolicy,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedBy: 'system:onPolicyWrite',
     });
-    try {
-        const userRef = db.collection(types_1.COLLECTION_NAMES.USERS).doc(policy.userId);
-        const userDoc = await userRef.get();
-        if (!userDoc.exists) {
-            functions.logger.warn(`User ${policy.userId} not found for policy ${policyId}`);
-            return;
-        }
-        // Only sync if this is an active policy
-        if (policy.status === 'active') {
-            const policySummary = {
-                policyId: policy.policyId,
-                status: policy.status,
-                premiumCents: policy.currentPremiumCents,
-                coverageType: policy.coverageType,
-                renewalDate: policy.renewalDate || policy.expirationDate,
-            };
-            await userRef.update({
-                activePolicy: policySummary,
-                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-                updatedBy: 'cloud-function',
-            });
-            functions.logger.info(`Synced active policy to user ${policy.userId}`);
-        }
-        // If policy was active and is now inactive, clear from user
-        else if (beforeData?.status === 'active') {
-            // Check if user's activePolicy is this one
-            const userData = userDoc.data();
-            if (userData?.activePolicy?.policyId === policyId) {
-                // Try to find another active policy for this user
-                const otherActivePolicy = await findActivePolicy(policy.userId, policyId);
-                await userRef.update({
-                    activePolicy: otherActivePolicy,
-                    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-                    updatedBy: 'cloud-function',
-                });
-                functions.logger.info(`Cleared/replaced active policy for user ${policy.userId}`);
-            }
-        }
-    }
-    catch (error) {
-        functions.logger.error(`Error syncing policy ${policyId}:`, error);
-        throw error;
-    }
-});
-/**
- * Find another active policy for a user (excluding a specific policy)
- */
-async function findActivePolicy(userId, excludePolicyId) {
-    const policiesRef = db.collection(types_1.COLLECTION_NAMES.POLICIES);
-    const query = policiesRef
-        .where('userId', '==', userId)
-        .where('status', '==', 'active')
-        .limit(2);
-    const snapshot = await query.get();
-    for (const doc of snapshot.docs) {
-        if (doc.id !== excludePolicyId) {
-            const policy = doc.data();
-            return {
-                policyId: policy.policyId,
-                status: policy.status,
-                premiumCents: policy.currentPremiumCents,
-                coverageType: policy.coverageType,
-                renewalDate: policy.renewalDate || policy.expirationDate,
-            };
-        }
-    }
     return null;
-}
+});
 //# sourceMappingURL=policies.js.map

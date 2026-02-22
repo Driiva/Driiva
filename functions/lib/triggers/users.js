@@ -80,7 +80,7 @@ exports.onUserCreate = functions.firestore
             return;
         }
         // 2. Generate policy number
-        const policyNumber = generatePolicyNumber();
+        const policyNumber = await generatePolicyNumber();
         // 3. Create timestamps
         const now = admin.firestore.Timestamp.now();
         const oneYearFromNow = admin.firestore.Timestamp.fromDate(new Date(Date.now() + 365 * 24 * 60 * 60 * 1000));
@@ -140,6 +140,14 @@ exports.onUserCreate = functions.firestore
                 streakDays: 0,
                 riskTier: 'low',
             },
+            activePolicy: {
+                policyId,
+                policyNumber,
+                status: 'pending',
+                premiumCents: 0,
+                coverageType: 'standard',
+                renewalDate: oneYearFromNow,
+            },
             poolShare: {
                 currentShareCents: 0,
                 contributionCents: 0,
@@ -168,11 +176,20 @@ exports.onUserCreate = functions.firestore
     }
 });
 /**
- * Generate a unique policy number in format DRV-YYYY-XXXXXX
+ * Generate a unique policy number in format DRV-001, DRV-002, etc.
+ * Uses a Firestore transaction on a counter document for sequential generation.
  */
-function generatePolicyNumber() {
-    const year = new Date().getFullYear();
-    const random = Math.floor(100000 + Math.random() * 900000); // 6-digit number
-    return `DRV-${year}-${random}`;
+async function generatePolicyNumber() {
+    const counterRef = db.collection(types_1.COLLECTION_NAMES.COUNTERS).doc('policy');
+    return await db.runTransaction(async (transaction) => {
+        const counterDoc = await transaction.get(counterRef);
+        let nextValue = 1;
+        if (counterDoc.exists) {
+            nextValue = (counterDoc.data()?.currentValue || 0) + 1;
+        }
+        transaction.set(counterRef, { currentValue: nextValue }, { merge: true });
+        const paddedNumber = String(nextValue).padStart(3, '0');
+        return `DRV-${paddedNumber}`;
+    });
 }
 //# sourceMappingURL=users.js.map

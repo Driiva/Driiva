@@ -1,0 +1,190 @@
+/**
+ * GLOBAL TEST SETUP
+ * =================
+ * Mocks Firebase Admin SDK so unit tests run without real Firestore/Firebase.
+ * All individual test files can override these mocks as needed.
+ */
+
+import { vi } from 'vitest';
+
+// ---------------------------------------------------------------------------
+// Firebase Admin mock — must be hoisted before any imports that use admin
+// ---------------------------------------------------------------------------
+
+const mockTimestamp = {
+  toDate: () => new Date(),
+  seconds: Math.floor(Date.now() / 1000),
+  nanoseconds: 0,
+};
+
+const mockFieldValue = {
+  serverTimestamp: () => ({ _type: 'SERVER_TIMESTAMP' }),
+  arrayUnion: (...items: unknown[]) => ({ _type: 'ARRAY_UNION', items }),
+  arrayRemove: (...items: unknown[]) => ({ _type: 'ARRAY_REMOVE', items }),
+  increment: (n: number) => ({ _type: 'INCREMENT', n }),
+  delete: () => ({ _type: 'DELETE' }),
+};
+
+// Build a chainable Firestore mock
+export const mockGet = vi.fn();
+export const mockSet = vi.fn().mockResolvedValue(undefined);
+export const mockUpdate = vi.fn().mockResolvedValue(undefined);
+export const mockDelete = vi.fn().mockResolvedValue(undefined);
+export const mockAdd = vi.fn().mockResolvedValue({ id: 'auto-id-123' });
+export const mockWhere = vi.fn();
+export const mockOrderBy = vi.fn();
+export const mockLimit = vi.fn();
+export const mockGetAll = vi.fn();
+export const mockBatchSet = vi.fn();
+export const mockBatchUpdate = vi.fn();
+export const mockBatchDelete = vi.fn();
+export const mockBatchCommit = vi.fn().mockResolvedValue(undefined);
+export const mockRunTransaction = vi.fn();
+
+const docRef = (path?: string) => ({
+  id: path?.split('/').pop() ?? 'mock-doc-id',
+  path: path ?? 'mock/doc',
+  get: mockGet,
+  set: mockSet,
+  update: mockUpdate,
+  delete: mockDelete,
+  collection: vi.fn((sub: string) => collectionRef(`${path}/${sub}`)),
+});
+
+const collectionRef = (path?: string) => ({
+  doc: vi.fn((id: string) => docRef(`${path}/${id}`)),
+  add: mockAdd,
+  where: mockWhere.mockReturnThis(),
+  orderBy: mockOrderBy.mockReturnThis(),
+  limit: mockLimit.mockReturnThis(),
+  get: mockGet,
+});
+
+const mockBatch = {
+  set: mockBatchSet,
+  update: mockBatchUpdate,
+  delete: mockBatchDelete,
+  commit: mockBatchCommit,
+};
+
+const mockDb = {
+  collection: vi.fn((path: string) => collectionRef(path)),
+  doc: vi.fn((path: string) => docRef(path)),
+  batch: vi.fn(() => mockBatch),
+  runTransaction: mockRunTransaction,
+  getAll: mockGetAll,
+};
+
+vi.mock('firebase-admin', () => ({
+  default: {
+    initializeApp: vi.fn(),
+    firestore: vi.fn(() => mockDb),
+    auth: vi.fn(() => ({
+      getUser: vi.fn(),
+      deleteUser: vi.fn(),
+      revokeRefreshTokens: vi.fn(),
+    })),
+    apps: [{}],
+  },
+  initializeApp: vi.fn(),
+  firestore: Object.assign(vi.fn(() => mockDb), {
+    Timestamp: {
+      now: () => mockTimestamp,
+      fromDate: (d: Date) => ({
+        ...mockTimestamp,
+        seconds: Math.floor(d.getTime() / 1000),
+        toDate: () => d,
+      }),
+      fromMillis: (ms: number) => ({
+        ...mockTimestamp,
+        seconds: Math.floor(ms / 1000),
+        toDate: () => new Date(ms),
+      }),
+    },
+    FieldValue: mockFieldValue,
+  }),
+  auth: vi.fn(() => ({
+    getUser: vi.fn(),
+    deleteUser: vi.fn(),
+    revokeRefreshTokens: vi.fn(),
+  })),
+}));
+
+vi.mock('firebase-functions', () => ({
+  default: {
+    logger: {
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+      debug: vi.fn(),
+    },
+    firestore: {
+      document: vi.fn(() => ({
+        onCreate: vi.fn((handler: unknown) => handler),
+        onUpdate: vi.fn((handler: unknown) => handler),
+        onWrite: vi.fn((handler: unknown) => handler),
+        onDelete: vi.fn((handler: unknown) => handler),
+      })),
+    },
+    pubsub: {
+      schedule: vi.fn(() => ({
+        onRun: vi.fn((handler: unknown) => handler),
+      })),
+    },
+    https: {
+      onCall: vi.fn((handler: unknown) => handler),
+      onRequest: vi.fn((handler: unknown) => handler),
+      HttpsError: class HttpsError extends Error {
+        code: string;
+        constructor(code: string, message: string) {
+          super(message);
+          this.code = code;
+        }
+      },
+    },
+    region: vi.fn(() => ({
+      firestore: {
+        document: vi.fn(() => ({
+          onWrite: vi.fn((handler: unknown) => handler),
+          onCreate: vi.fn((handler: unknown) => handler),
+          onUpdate: vi.fn((handler: unknown) => handler),
+        })),
+      },
+      https: {
+        onCall: vi.fn((handler: unknown) => handler),
+      },
+    })),
+  },
+  logger: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
+  },
+  firestore: {
+    document: vi.fn(() => ({
+      onCreate: vi.fn((handler: unknown) => handler),
+      onUpdate: vi.fn((handler: unknown) => handler),
+      onWrite: vi.fn((handler: unknown) => handler),
+    })),
+  },
+  https: {
+    onCall: vi.fn((handler: unknown) => handler),
+    onRequest: vi.fn((handler: unknown) => handler),
+    HttpsError: class HttpsError extends Error {
+      code: string;
+      constructor(code: string, message: string) {
+        super(message);
+        this.code = code;
+      }
+    },
+  },
+  pubsub: {
+    schedule: vi.fn(() => ({
+      onRun: vi.fn((handler: unknown) => handler),
+    })),
+  },
+}));
+
+// Export the mock db so individual tests can configure return values
+export { mockDb, mockTimestamp, mockFieldValue };

@@ -18,6 +18,7 @@ export declare const COLLECTION_NAMES: {
     readonly COMMUNITY_POOL: "communityPool";
     readonly POOL_SHARES: "poolShares";
     readonly LEADERBOARD: "leaderboard";
+    readonly COUNTERS: "counters";
 };
 export type RiskTier = 'low' | 'medium' | 'high';
 export type PolicyStatus = 'pending' | 'active' | 'expired' | 'cancelled' | 'suspended';
@@ -104,6 +105,7 @@ export interface PoolShareSummary {
 }
 export interface ActivePolicySummary {
     policyId: string;
+    policyNumber: string;
     status: PolicyStatus;
     premiumCents: number;
     coverageType: CoverageType;
