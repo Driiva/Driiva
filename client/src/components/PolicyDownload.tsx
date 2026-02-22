@@ -4,22 +4,26 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
 interface PolicyDownloadProps {
-  userId: number;
-  userData?: {
-    firstName?: string;
-    lastName?: string;
-    username: string;
-    email: string;
-    premiumAmount: string;
-  };
+    userId: number;
+    userData?: {
+        firstName?: string;
+        lastName?: string;
+        username: string;
+        email: string;
+        premiumAmount: string;
+        policyNumber?: string | null;
+    };
+    policyNumber?: string | null;
 }
 
-export default function PolicyDownload({ userId, userData }: PolicyDownloadProps) {
-  const [isGenerating, setIsGenerating] = useState(false);
-  const { toast } = useToast();
+export default function PolicyDownload({ userId, userData, policyNumber }: PolicyDownloadProps) {
+    const [isGenerating, setIsGenerating] = useState(false);
+    const { toast } = useToast();
 
-  const generatePolicyPDF = () => {
-    const doc = `
+    const displayPolicyNumber = policyNumber || userData?.policyNumber || "—";
+
+    const generatePolicyPDF = () => {
+        const doc = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -60,7 +64,7 @@ export default function PolicyDownload({ userId, userData }: PolicyDownloadProps
             </div>
             <div class="detail-row">
                 <span class="label">Policy Number:</span>
-                <span class="value">DRV-2025-000001</span>
+                <span class="value">${displayPolicyNumber}</span>
             </div>
             <div class="detail-row">
                 <span class="label">Policy Start Date:</span>
@@ -137,53 +141,53 @@ export default function PolicyDownload({ userId, userData }: PolicyDownloadProps
     </div>
 </body>
 </html>`;
-    
-    return doc;
-  };
 
-  const handleDownload = async () => {
-    setIsGenerating(true);
-    try {
-      // Generate the HTML content
-      const htmlContent = generatePolicyPDF();
-      
-      // Create a blob with the HTML content
-      const blob = new Blob([htmlContent], { type: 'text/html' });
-      const url = window.URL.createObjectURL(blob);
-      
-      // Create download link
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `driiva-policy-${userData?.username || 'user'}-${Date.now()}.html`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
+        return doc;
+    };
 
-      toast({
-        title: "Policy Downloaded",
-        description: "Your comprehensive insurance policy has been downloaded successfully.",
-      });
-    } catch (error) {
-      toast({
-        title: "Download Failed",
-        description: "There was an error downloading your policy. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsGenerating(false);
-    }
-  };
+    const handleDownload = async () => {
+        setIsGenerating(true);
+        try {
+            // Generate the HTML content
+            const htmlContent = generatePolicyPDF();
 
-  return (
-    <Button
-      onClick={handleDownload}
-      disabled={isGenerating}
-      variant="outline"
-      className="w-full glass-morphism border-[#3B82F6] text-[#3B82F6] hover:bg-[#3B82F6] hover:text-white"
-    >
-      <FileText className="w-4 h-4 mr-2" />
-      {isGenerating ? 'Generating Policy...' : 'Download My Policy'}
-    </Button>
-  );
+            // Create a blob with the HTML content
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = window.URL.createObjectURL(blob);
+
+            // Create download link
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `driiva-policy-${userData?.username || 'user'}-${Date.now()}.html`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            toast({
+                title: "Policy Downloaded",
+                description: "Your comprehensive insurance policy has been downloaded successfully.",
+            });
+        } catch (error) {
+            toast({
+                title: "Download Failed",
+                description: "There was an error downloading your policy. Please try again.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
+    return (
+        <Button
+            onClick={handleDownload}
+            disabled={isGenerating}
+            variant="outline"
+            className="w-full glass-morphism border-[#3B82F6] text-[#3B82F6] hover:bg-[#3B82F6] hover:text-white"
+        >
+            <FileText className="w-4 h-4 mr-2" />
+            {isGenerating ? 'Generating Policy...' : 'Download My Policy'}
+        </Button>
+    );
 }

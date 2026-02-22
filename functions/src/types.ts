@@ -25,6 +25,7 @@ export const COLLECTION_NAMES = {
   COMMUNITY_POOL: 'communityPool',
   POOL_SHARES: 'poolShares',
   LEADERBOARD: 'leaderboard',
+  COUNTERS: 'counters',
 } as const;
 
 export type RiskTier = 'low' | 'medium' | 'high';
@@ -104,7 +105,7 @@ export interface TripDocument {
   createdAt: Timestamp;
   createdBy: string;
   pointsCount: number;
-  
+
   // Optional: Populated by Stop-Go-Classifier
   segmentation?: TripSegmentationSummary;
 }
@@ -128,6 +129,7 @@ export interface PoolShareSummary {
 
 export interface ActivePolicySummary {
   policyId: string;
+  policyNumber: string;
   status: PolicyStatus;
   premiumCents: number;
   coverageType: CoverageType;
@@ -268,7 +270,7 @@ export interface TripPoint {
   spd: number;                    // Speed in m/s * 100 (integer)
   hdg: number;                    // Heading 0-360
   acc: number;                    // Accuracy in meters
-  
+
   // Optional sensor data
   ax?: number;                    // Accelerometer X
   ay?: number;                    // Accelerometer Y

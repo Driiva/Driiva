@@ -6,38 +6,41 @@ import { useLocation } from "wouter";
 import { timing, easing, microInteractions } from "@/lib/animations";
 
 interface ProfileDropdownProps {
-  user: {
+  user?: {
     firstName?: string;
     lastName?: string;
     username: string;
     email: string;
     premiumAmount: string;
+    policyNumber?: string | null;
   };
+  policyNumber?: string | null;
+  memberSince?: string;
 }
 
-export default function ProfileDropdown({ user }: ProfileDropdownProps) {
+export default function ProfileDropdown({ user, policyNumber, memberSince }: ProfileDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const { logout } = useAuth();
-  const [location, setLocation] = useLocation();
+  const [currentPath, navigate] = useLocation();
 
-  const isHomePage = location === '/' || location === '/dashboard';
+  const isHomePage = currentPath === '/' || currentPath === '/dashboard';
 
   const profileData = {
-    name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username,
+    name: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username : 'Driver',
     vehicle: "2023 Tesla Model 3",
-    policyNumber: "DRV-2024-000001",
-    email: user.email,
-    memberSince: "January 2024"
+    policyNumber: policyNumber || user?.policyNumber || '—',
+    email: user?.email || 'driver@driiva.com',
+    memberSince: memberSince || "January 2024"
   };
 
   const handleNavigate = (path: string) => {
     setIsOpen(false);
-    setLocation(path);
+    navigate(path);
   };
 
   const handleSignOut = async () => {
     setIsOpen(false);
-    setLocation("/");
+    navigate("/");
     await logout();
   };
 
@@ -49,7 +52,7 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
         whileTap={microInteractions.tap}
         transition={{ duration: timing.quick / 1000 }}
       >
-        <div 
+        <div
           className="w-8 h-8 rounded-full flex items-center justify-center border-2 border-emerald-500/60"
           style={{
             background: 'radial-gradient(circle at center, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.05) 70%, transparent 100%)',
@@ -79,7 +82,7 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
               onClick={() => setIsOpen(false)}
               className="fixed inset-0 z-40"
             />
-            
+
             {/* Menu */}
             <motion.div
               initial={{ opacity: 0, y: -10, scale: 0.95 }}
@@ -93,7 +96,7 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
               {/* User info section */}
               <div className="p-4 border-b border-white/[0.08]">
                 <div className="flex items-center gap-3">
-                  <div 
+                  <div
                     className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold border-2 border-emerald-500/60"
                     style={{
                       background: 'radial-gradient(circle at center, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.05) 70%, transparent 100%)',
@@ -107,7 +110,7 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
                     <p className="text-xs text-white/50 truncate">{profileData.email}</p>
                   </div>
                 </div>
-                
+
                 {/* Conditional: Only show policy details if NOT on home page */}
                 {!isHomePage && (
                   <>
@@ -121,7 +124,7 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
                         <p className="text-white">{profileData.policyNumber}</p>
                       </div>
                     </div>
-                    
+
                     <div className="mt-2 px-2 py-1 bg-emerald-500/10 rounded-lg 
                                   flex items-center justify-between">
                       <span className="text-xs text-white/70">Member Since</span>
@@ -133,7 +136,7 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
 
               {/* Menu items */}
               <div className="p-2">
-                <button 
+                <button
                   onClick={() => handleNavigate('/documents')}
                   className="w-full flex items-center gap-3 px-3 py-2.5 
                            hover:bg-white/5 rounded-lg transition-colors text-left min-h-[44px]"
@@ -141,8 +144,8 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
                   <span className="text-white/70">📄</span>
                   <span className="text-sm text-white">Documents</span>
                 </button>
-                
-                <button 
+
+                <button
                   onClick={() => handleNavigate('/profile')}
                   className="w-full flex items-center gap-3 px-3 py-2.5 
                            hover:bg-white/5 rounded-lg transition-colors text-left min-h-[44px]"
@@ -150,8 +153,8 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
                   <span className="text-white/70">📊</span>
                   <span className="text-sm text-white">Export Data</span>
                 </button>
-                
-                <button 
+
+                <button
                   onClick={() => handleNavigate('/support')}
                   className="w-full flex items-center gap-3 px-3 py-2.5 
                            hover:bg-white/5 rounded-lg transition-colors text-left min-h-[44px]"
@@ -159,10 +162,10 @@ export default function ProfileDropdown({ user }: ProfileDropdownProps) {
                   <span className="text-white/70">💬</span>
                   <span className="text-sm text-white">Support</span>
                 </button>
-                
+
                 <div className="h-px bg-white/[0.08] my-2" />
-                
-                <button 
+
+                <button
                   onClick={handleSignOut}
                   className="w-full flex items-center gap-3 px-3 py-2.5 
                            hover:bg-red-500/10 rounded-lg transition-colors text-left min-h-[44px]"

@@ -5,6 +5,24 @@
 
 ## Entries
 
+### 2026‑02‑22 – Architecture Agent – Refined ARCHITECTURE.md & Language Sanitation
+- Files: ARCHITECTURE.md, ROADMAP.md, DRIIVA_CHANGELOG.md
+- Change: Refined ARCHITECTURE.md with verified technical specifications, including event thresholds, classifier parameters, scoring weights, and refund constants. Sanitized all documentation language to maintain professional and investor-ready standards.
+- Reason: To ensure documentation accurately reflects system implementation and adheres to formal business standards required for stakeholders and auditors.
+- Tests: Verified technical constants in `functions/src/utils/helpers.ts`, `server/lib/telematics.ts`, and `functions-python/stop_go_classifier.py`. Manual review of documentation for tone and clarity. Passed.
+
+### 2026-02-21 – Antigravity – Project Architecture Documentation
+- Files: ARCHITECTURE.md
+- Change: Created a comprehensive ARCHITECTURE.md file in the root directory providing a technical overview of the Driiva system, including stack details, data models, scoring pipelines, and AI usage rules.
+- Reason: User requested a "real picture" architecture document to guide future development and ensure AI/Sonnet sessions follow established ground rules.
+- Tests: No functional code changes; documentation verified for consistency with codebase layout and ROADMAP.md.
+
+### 2026-02-23 – Antigravity – Policy Number Generation & UI Cleanup
+- Files: functions/src/triggers/users.ts, functions/src/types.ts, shared/firestore-types.ts, client/src/pages/policy.tsx, client/src/pages/rewards.tsx, client/src/components/PolicyDownload.tsx, client/src/components/DashboardHeader.tsx, client/src/components/ProfileDropdown.tsx, client/src/components/PolicyStatusWidget.tsx
+- Change: Implemented sequential policy number generation ("DRV-001", etc.) using Firestore transactions. Removed all hardcoded policy numbers ("DRV-2025-000001", etc.) from the UI and replaced with dynamic data fetched from user profiles and dashboard data hooks.
+- Reason: Required to ensure unique, professional policy identification for users and to remove placeholder data from the production MVP UI.
+- Tests: MANUAL_TEST_CHECKLIST 1.1–1.6 (Signup), 2.1–2.4 (Auth), 3.1–3.3 (Onboarding) passed; verified policy number generation in trigger code and dynamic display on Dashboard, Profile, Policy, and Rewards pages.
+
 ### 2026‑02‑19 – Antigravity – GDPR Compliance, AI Models & Trip Optimization
 - Files: server/routes.ts, server/storage.ts, server/lib/aiInsights.ts, functions/src/triggers/trips.ts, client/src/components/LeafletMap.tsx, client/src/hooks/useOnboardingGuard.ts
 - Change: Implemented GDPR export/delete endpoints; finalized AI risk scoring and insights engine; added trip anomaly detection (impossible speed, duplicates); optimized time-series queries with date range filters; map now uses device GPS; fixed onboarding redirect loop and implemented zero-flicker auth redirects.

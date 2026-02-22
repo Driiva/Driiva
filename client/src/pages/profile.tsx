@@ -79,7 +79,7 @@ function CoverageTypeSection({ currentScore }: { currentScore: number }) {
                 <h4 className="text-xs font-semibold text-white/80 uppercase tracking-wide">
                   What's Included
                 </h4>
-                
+
                 <PolicyFeature icon="✅" title="Collision Coverage" description="Damage to your vehicle from accidents" />
                 <PolicyFeature icon="✅" title="Comprehensive Coverage" description="Theft, vandalism, weather damage" />
                 <PolicyFeature icon="✅" title="Third-Party Liability" description="Up to £20M coverage for injuries & property" />
@@ -191,8 +191,8 @@ export default function Profile() {
             <button className="p-2 rounded-full hover:bg-white/5 transition-colors">
               <Bell className="w-5 h-5 text-white/60" />
             </button>
-            
-            <button 
+
+            <button
               onClick={() => setShowDropdown(!showDropdown)}
               className="flex items-center gap-1"
             >
@@ -269,7 +269,7 @@ export default function Profile() {
             <span>📋</span>
             Account Details
           </h3>
-          
+
           <div className="space-y-1">
             <DetailRow label="Email" value={user?.email || '—'} />
             <DetailRow label="Phone" value="—" />
@@ -286,7 +286,7 @@ export default function Profile() {
             <span>🚗</span>
             Driving Statistics
           </h3>
-          
+
           <div className="grid grid-cols-2 gap-3">
             <StatCard value={totalMiles > 0 ? totalMiles.toFixed(1) : '—'} label="Total Miles" />
             <StatCard value={totalTrips} label="Total Trips" />
@@ -300,7 +300,7 @@ export default function Profile() {
             <span>⚙️</span>
             Preferences
           </h3>
-          
+
           <div className="space-y-4">
             <div className="flex justify-between items-center py-2">
               <div>
@@ -309,12 +309,11 @@ export default function Profile() {
               </div>
               <motion.button
                 onClick={() => setLocationTracking(!locationTracking)}
-                className={`w-12 h-7 rounded-full transition-colors duration-200 relative ${
-                  locationTracking ? 'bg-emerald-500' : 'bg-white/20'
-                }`}
+                className={`w-12 h-7 rounded-full transition-colors duration-200 relative ${locationTracking ? 'bg-emerald-500' : 'bg-white/20'
+                  }`}
                 whileTap={{ scale: 0.95 }}
               >
-                <motion.div 
+                <motion.div
                   className="absolute top-1 w-5 h-5 bg-white rounded-full shadow-md"
                   animate={{ left: locationTracking ? 24 : 4 }}
                   transition={{ duration: timing.interaction / 1000, ease: easing.button }}
@@ -328,12 +327,11 @@ export default function Profile() {
               </div>
               <motion.button
                 onClick={() => setPushNotifications(!pushNotifications)}
-                className={`w-12 h-7 rounded-full transition-colors duration-200 relative ${
-                  pushNotifications ? 'bg-emerald-500' : 'bg-white/20'
-                }`}
+                className={`w-12 h-7 rounded-full transition-colors duration-200 relative ${pushNotifications ? 'bg-emerald-500' : 'bg-white/20'
+                  }`}
                 whileTap={{ scale: 0.95 }}
               >
-                <motion.div 
+                <motion.div
                   className="absolute top-1 w-5 h-5 bg-white rounded-full shadow-md"
                   animate={{ left: pushNotifications ? 24 : 4 }}
                   transition={{ duration: timing.interaction / 1000, ease: easing.button }}
@@ -348,9 +346,19 @@ export default function Profile() {
             <span>🔒</span>
             Privacy & Data
           </h3>
-          
+
           <div className="space-y-3">
-            <PolicyDownload userId={user?.id ? parseInt(user.id, 10) || 0 : 0} userData={{ id: 0, email: user?.email || '', username: user?.name || '' }} />
+            <PolicyDownload
+              userId={user?.id ? parseInt(user.id, 10) || 0 : 0}
+              userData={{
+                id: 0,
+                email: user?.email || '',
+                username: user?.name || '',
+                premiumAmount: premiumAmount,
+                policyNumber: policyNumber
+              } as any}
+              policyNumber={policyNumber}
+            />
             <ExportDataButton userId={user?.id ?? ''} />
             <div className="border-t border-white/5 pt-3">
               <DeleteAccount userId={user?.id ?? ''} />

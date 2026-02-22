@@ -12,10 +12,13 @@ interface DashboardHeaderProps {
     username: string;
     email: string;
     premiumAmount: string;
+    policyNumber?: string | null;
   };
+  policyNumber?: string | null;
+  memberSince?: string;
 }
 
-export default function DashboardHeader({ user }: DashboardHeaderProps) {
+export default function DashboardHeader({ user, policyNumber, memberSince }: DashboardHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const { logout } = useAuth();
@@ -34,8 +37,8 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
     name: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username : 'Driver',
     email: user?.email || 'driver@driiva.com',
     vehicle: "2023 Tesla Model 3",
-    policyNumber: "DRV-2024-000001",
-    memberSince: "January 2024"
+    policyNumber: policyNumber || user?.policyNumber || '—',
+    memberSince: memberSince || "January 2024"
   };
 
   const handleNavigate = (path: string) => {
@@ -62,9 +65,9 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
               whileTap={microInteractions.tap}
               className="w-10 h-10 rounded-xl overflow-hidden flex items-center justify-center bg-gradient-to-br from-purple-500/20 via-pink-500/20 to-emerald-500/20 backdrop-blur-sm"
             >
-              <img 
-                src="/logo.png" 
-                alt="Driiva" 
+              <img
+                src="/logo.png"
+                alt="Driiva"
                 className="w-full h-full object-cover"
               />
             </motion.button>
@@ -73,11 +76,11 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
               <p className="text-sm text-white/50">{getGreeting()}, {user?.firstName || user?.username || 'Driver'}</p>
             </div>
           </div>
-          
+
           {/* Right: Actions */}
           <div className="flex items-center gap-2">
             {/* Bell - transparent */}
-            <motion.button 
+            <motion.button
               onClick={() => {
                 setNotificationsOpen(!notificationsOpen);
                 setMenuOpen(false);
@@ -87,9 +90,9 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
             >
               <Bell className="w-5 h-5" />
             </motion.button>
-            
+
             {/* Profile - radial blur, no hover */}
-            <motion.button 
+            <motion.button
               onClick={() => {
                 setMenuOpen(!menuOpen);
                 setNotificationsOpen(false);
@@ -128,7 +131,7 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
               onClick={() => setNotificationsOpen(false)}
               className="fixed inset-0 z-40"
             />
-            
+
             <motion.div
               initial={{ opacity: 0, y: -10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -141,7 +144,7 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
               <div className="p-4 border-b border-white/[0.08]">
                 <h3 className="text-sm font-semibold text-white">Notifications</h3>
               </div>
-              
+
               <div className="p-4">
                 <div className="flex flex-col items-center justify-center py-6 text-center">
                   <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mb-3">
@@ -167,7 +170,7 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
               onClick={() => setMenuOpen(false)}
               className="fixed inset-0 z-40"
             />
-            
+
             <motion.div
               initial={{ opacity: 0, y: -10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -179,7 +182,7 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
             >
               <div className="p-4 border-b border-white/[0.08]">
                 <div className="flex items-center gap-3">
-                  <div 
+                  <div
                     className="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold border-2 border-emerald-500/60"
                     style={{
                       background: 'radial-gradient(circle at center, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.05) 70%, transparent 100%)',
@@ -193,7 +196,7 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
                     <p className="text-xs text-white/50 truncate">{profileData.email}</p>
                   </div>
                 </div>
-                
+
                 {!isHomePage && (
                   <>
                     <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
@@ -206,7 +209,7 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
                         <p className="text-white">{profileData.policyNumber}</p>
                       </div>
                     </div>
-                    
+
                     <div className="mt-2 px-2 py-1 bg-emerald-500/10 rounded-lg 
                                   flex items-center justify-between">
                       <span className="text-xs text-white/70">Member Since</span>
@@ -217,7 +220,7 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
               </div>
 
               <div className="p-2">
-                <button 
+                <button
                   onClick={() => handleNavigate('/documents')}
                   className="w-full flex items-center gap-3 px-3 py-2.5 
                            hover:bg-white/5 rounded-lg transition-colors text-left min-h-[44px]"
@@ -225,8 +228,8 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
                   <span className="text-white/70">📄</span>
                   <span className="text-sm text-white">Documents</span>
                 </button>
-                
-                <button 
+
+                <button
                   onClick={() => handleNavigate('/profile')}
                   className="w-full flex items-center gap-3 px-3 py-2.5 
                            hover:bg-white/5 rounded-lg transition-colors text-left min-h-[44px]"
@@ -234,8 +237,8 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
                   <span className="text-white/70">📊</span>
                   <span className="text-sm text-white">Export Data</span>
                 </button>
-                
-                <button 
+
+                <button
                   onClick={() => handleNavigate('/support')}
                   className="w-full flex items-center gap-3 px-3 py-2.5 
                            hover:bg-white/5 rounded-lg transition-colors text-left min-h-[44px]"
@@ -243,10 +246,10 @@ export default function DashboardHeader({ user }: DashboardHeaderProps) {
                   <span className="text-white/70">💬</span>
                   <span className="text-sm text-white">Support</span>
                 </button>
-                
+
                 <div className="h-px bg-white/[0.08] my-2" />
-                
-                <button 
+
+                <button
                   onClick={handleSignOut}
                   className="w-full flex items-center gap-3 px-3 py-2.5 
                            hover:bg-red-500/10 rounded-lg transition-colors text-left min-h-[44px]"

@@ -7,24 +7,29 @@ import { GlassCard } from './GlassCard';
 import { timing, easing, loopAnimations, microInteractions } from "@/lib/animations";
 
 interface PolicyStatusWidgetProps {
-  user: {
-    premiumAmount: string;
-    firstName?: string;
-    lastName?: string;
-  };
+  policyNumber?: string | null;
+  status?: string;
+  premiumAmount?: string;
+  renewalDate?: string;
 }
 
-export default function PolicyStatusWidget({ user }: PolicyStatusWidgetProps) {
-  const [isActive] = useState(true);
+export default function PolicyStatusWidget({
+  policyNumber,
+  status = "Active",
+  premiumAmount = "1,840",
+  renewalDate = "Jul 01, 2026"
+}: PolicyStatusWidgetProps) {
+  const [isActive] = useState(status === "Active"); // Derive isActive from status prop
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  
+
   const policyData = {
-    policyNumber: "DRV-2025-000001",
-    policyType: "Comprehensive Telematics",
-    startDate: "Jul 01, 2025",
-    renewalDate: "Jul 01, 2026",
-    premiumAmount: user.premiumAmount
+    policyNumber: policyNumber || "—",
+    policyType: "Comprehensive Telematics", // Retained from original
+    startDate: "Jul 01, 2025", // Retained from original
+    renewalDate: renewalDate, // Use prop
+    premiumAmount: premiumAmount, // Use prop
+    status: status // Add status to policyData
   };
 
   return (
@@ -39,17 +44,15 @@ export default function PolicyStatusWidget({ user }: PolicyStatusWidgetProps) {
             })}
             {...loopAnimations.pulse}
             whileTap={microInteractions.press}
-            className={`px-4 py-2 min-h-[44px] rounded-xl font-semibold text-sm flex items-center ${
-              isActive
-                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                : 'bg-red-500/20 text-red-400 border border-red-500/30'
-            }`}
+            className={`px-4 py-2 min-h-[44px] rounded-xl font-semibold text-sm flex items-center ${isActive
+              ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+              : 'bg-red-500/20 text-red-400 border border-red-500/30'
+              }`}
           >
             <motion.div
               {...loopAnimations.glow}
-              className={`w-2 h-2 rounded-full mr-2 ${
-                isActive ? 'bg-emerald-400' : 'bg-red-400'
-              }`}
+              className={`w-2 h-2 rounded-full mr-2 ${isActive ? 'bg-emerald-400' : 'bg-red-400'
+                }`}
             />
             {isActive ? 'Active' : 'Inactive'}
           </motion.button>
@@ -78,7 +81,7 @@ export default function PolicyStatusWidget({ user }: PolicyStatusWidgetProps) {
                 <div className="text-sm font-medium text-white">{policyData.startDate}</div>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center">
                 <Calendar className="w-5 h-5 text-white/60" />

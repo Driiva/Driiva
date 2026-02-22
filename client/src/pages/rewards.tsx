@@ -7,6 +7,7 @@ import { GlassCard } from "@/components/GlassCard";
 import { Gift, TrendingUp, Check, Bell, ChevronDown } from "lucide-react";
 import { container, item, timing, easing, microInteractions } from "@/lib/animations";
 import { useAuth } from '../contexts/AuthContext';
+import { useDashboardData } from "../hooks/useDashboardData";
 
 interface Achievement {
   id: number;
@@ -32,10 +33,11 @@ interface Reward {
 
 export default function Rewards() {
   const [, setLocation] = useLocation();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
+  const { data: dashboardData } = useDashboardData(user?.id || null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [activeTab, setActiveTab] = useState<"achievements" | "rewards" | "progress">("achievements");
-  const policyNumber = "DRV-2025-000001";
+  const policyNumber = dashboardData?.policyNumber ?? '—';
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -169,8 +171,8 @@ export default function Rewards() {
             <button className="p-2 rounded-full hover:bg-white/5 transition-colors">
               <Bell className="w-5 h-5 text-white/60" />
             </button>
-            
-            <button 
+
+            <button
               onClick={() => setShowDropdown(!showDropdown)}
               className="flex items-center gap-1"
             >
@@ -218,8 +220,8 @@ export default function Rewards() {
         </motion.div>
 
         <h2 className="text-2xl font-bold text-white mb-4">Rewards</h2>
-        
-        <motion.div 
+
+        <motion.div
           className="mb-6"
           variants={item}
           initial="hidden"
@@ -230,7 +232,7 @@ export default function Rewards() {
               <Gift className="w-5 h-5 text-white/60" />
               Rewards Dashboard
             </h1>
-            
+
             <div className="grid grid-cols-2 gap-4">
               {[
                 { value: stats.totalPoints, label: "Total Points", accent: true },
@@ -238,7 +240,7 @@ export default function Rewards() {
                 { value: stats.currentStreak, label: "Day Streak" },
                 { value: `£${stats.totalRefunds}`, label: "Total Refunds", accent: true }
               ].map((stat, index) => (
-                <motion.div 
+                <motion.div
                   key={index}
                   className="text-center p-3 bg-white/5 rounded-xl"
                   whileHover={microInteractions.hover}
@@ -257,7 +259,7 @@ export default function Rewards() {
           </GlassCard>
         </motion.div>
 
-        <motion.div 
+        <motion.div
           className="mb-6"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -268,11 +270,10 @@ export default function Rewards() {
               <motion.button
                 key={tab}
                 onClick={() => setActiveTab(tab as any)}
-                className={`flex-1 py-3 px-4 rounded-xl font-medium text-sm min-h-[44px] transition-colors duration-200 ${
-                  activeTab === tab
-                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                    : "text-white/50 hover:text-white hover:bg-white/5"
-                }`}
+                className={`flex-1 py-3 px-4 rounded-xl font-medium text-sm min-h-[44px] transition-colors duration-200 ${activeTab === tab
+                  ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                  : "text-white/50 hover:text-white hover:bg-white/5"
+                  }`}
                 whileTap={microInteractions.tap}
               >
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -290,7 +291,7 @@ export default function Rewards() {
             transition={{ duration: timing.interaction, ease: easing.button }}
           >
             {activeTab === "achievements" && (
-              <motion.div 
+              <motion.div
                 className="space-y-3"
                 variants={container}
                 initial="hidden"
@@ -299,7 +300,7 @@ export default function Rewards() {
                 {achievements.map((achievement) => {
                   const isUnlocked = !!achievement.unlockedAt;
                   const hasProgress = achievement.progress !== undefined;
-                  
+
                   return (
                     <motion.div
                       key={achievement.id}
@@ -309,19 +310,19 @@ export default function Rewards() {
                     >
                       <GlassCard className={`p-5 ${!isUnlocked && !hasProgress ? 'opacity-50' : ''}`}>
                         <div className="flex items-start gap-4">
-                          <motion.div 
+                          <motion.div
                             className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0"
                             whileHover={{ rotate: 5, scale: 1.05 }}
                             transition={{ duration: timing.interaction }}
                           >
                             <span className="text-xl">{achievement.iconUrl}</span>
                           </motion.div>
-                          
+
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
                               <h3 className="font-semibold text-white text-sm">{achievement.title}</h3>
                               {isUnlocked && (
-                                <motion.div 
+                                <motion.div
                                   className="w-5 h-5 bg-emerald-500/20 border border-emerald-500/30 rounded-full flex items-center justify-center"
                                   initial={{ scale: 0 }}
                                   animate={{ scale: 1 }}
@@ -331,15 +332,15 @@ export default function Rewards() {
                                 </motion.div>
                               )}
                             </div>
-                            
+
                             <p className="text-xs text-white/50 mb-2">{achievement.description}</p>
-                            
+
                             {achievement.reward && isUnlocked && (
                               <div className="text-xs text-emerald-400 font-medium mb-2">
                                 Reward: {achievement.reward}
                               </div>
                             )}
-                            
+
                             {hasProgress && (
                               <div className="space-y-1.5">
                                 <div className="flex justify-between text-xs">
@@ -356,7 +357,7 @@ export default function Rewards() {
                                 </div>
                               </div>
                             )}
-                            
+
                             {isUnlocked && achievement.unlockedAt && (
                               <div className="text-xs text-white/40 mt-2">
                                 Unlocked: {new Date(achievement.unlockedAt).toLocaleDateString()}
@@ -372,7 +373,7 @@ export default function Rewards() {
             )}
 
             {activeTab === "rewards" && (
-              <motion.div 
+              <motion.div
                 className="space-y-3"
                 variants={container}
                 initial="hidden"
@@ -397,13 +398,12 @@ export default function Rewards() {
                             </div>
                           </div>
                         </div>
-                        
+
                         <motion.button
-                          className={`px-4 py-2.5 min-h-[44px] rounded-xl font-medium text-sm transition-colors duration-200 ${
-                            reward.available
-                              ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30"
-                              : "bg-white/5 text-white/30 cursor-not-allowed"
-                          }`}
+                          className={`px-4 py-2.5 min-h-[44px] rounded-xl font-medium text-sm transition-colors duration-200 ${reward.available
+                            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30"
+                            : "bg-white/5 text-white/30 cursor-not-allowed"
+                            }`}
                           disabled={!reward.available}
                           whileTap={reward.available ? microInteractions.press : undefined}
                         >
@@ -417,7 +417,7 @@ export default function Rewards() {
             )}
 
             {activeTab === "progress" && (
-              <motion.div 
+              <motion.div
                 className="space-y-6"
                 variants={container}
                 initial="hidden"
@@ -429,25 +429,24 @@ export default function Rewards() {
                       <TrendingUp className="w-4 h-4 text-white/60" />
                       Weekly Progress
                     </h3>
-                    
+
                     <div className="grid grid-cols-7 gap-2">
                       {[85, 88, 92, 87, 90, 94, 89].map((dayScore, i) => {
                         const isToday = i === 6;
-                        
+
                         return (
-                          <motion.div 
-                            key={i} 
+                          <motion.div
+                            key={i}
                             className="text-center"
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.05, duration: timing.cardEntrance, ease: easing.button }}
                           >
-                            <motion.div 
-                              className={`w-10 h-10 rounded-lg mx-auto mb-1 flex items-center justify-center text-xs font-semibold ${
-                                isToday 
-                                  ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" 
-                                  : "bg-white/5 text-white/70"
-                              }`}
+                            <motion.div
+                              className={`w-10 h-10 rounded-lg mx-auto mb-1 flex items-center justify-center text-xs font-semibold ${isToday
+                                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
+                                : "bg-white/5 text-white/70"
+                                }`}
                               whileHover={{ scale: 1.1 }}
                               transition={{ duration: timing.quick }}
                             >
@@ -466,7 +465,7 @@ export default function Rewards() {
                 <motion.div variants={item}>
                   <GlassCard className="p-6">
                     <h3 className="font-semibold text-white text-sm mb-4">Monthly Summary</h3>
-                    
+
                     <div className="grid grid-cols-2 gap-4">
                       {[
                         { value: "89", label: "Average Score", accent: true },
@@ -474,7 +473,7 @@ export default function Rewards() {
                         { value: "245", label: "Miles Driven" },
                         { value: "£42", label: "Refund Earned", accent: true }
                       ].map((stat, index) => (
-                        <motion.div 
+                        <motion.div
                           key={index}
                           className="text-center p-4 bg-white/5 rounded-xl"
                           whileHover={microInteractions.hover}
@@ -494,7 +493,7 @@ export default function Rewards() {
           </motion.div>
         </AnimatePresence>
       </div>
-        
+
       <BottomNav />
     </PageWrapper>
   );

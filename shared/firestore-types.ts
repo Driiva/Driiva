@@ -32,6 +32,7 @@ export const COLLECTION_NAMES = {
   COMMUNITY_POOL: 'communityPool',
   POOL_SHARES: 'poolShares',
   LEADERBOARD: 'leaderboard',
+  COUNTERS: 'counters',
 } as const;
 
 export type RiskTier = 'low' | 'medium' | 'high';
@@ -79,6 +80,7 @@ export interface DrivingProfileData {
  */
 export interface ActivePolicySummary {
   policyId: string;
+  policyNumber: string;
   status: PolicyStatus;
   premiumCents: number;           // monthly premium in cents
   coverageType: CoverageType;

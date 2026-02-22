@@ -56,7 +56,7 @@ export const onUserCreate = functions.firestore
       }
 
       // 2. Generate policy number
-      const policyNumber = generatePolicyNumber();
+      const policyNumber = await generatePolicyNumber();
 
       // 3. Create timestamps
       const now = admin.firestore.Timestamp.now();
@@ -66,7 +66,7 @@ export const onUserCreate = functions.firestore
 
       // 4. Create the policy document
       const policyId = `policy_${userId}`;
-      const policyData: Partial<PolicyDocument> = {
+      const policyData: PolicyDocument = {
         policyId,
         userId,
         policyNumber,
@@ -123,6 +123,14 @@ export const onUserCreate = functions.firestore
           streakDays: 0,
           riskTier: 'low',
         },
+        activePolicy: {
+          policyId,
+          policyNumber,
+          status: 'pending' as PolicyStatus,
+          premiumCents: 0,
+          coverageType: 'standard' as CoverageType,
+          renewalDate: oneYearFromNow,
+        },
         poolShare: {
           currentShareCents: 0,
           contributionCents: 0,
@@ -153,10 +161,23 @@ export const onUserCreate = functions.firestore
   });
 
 /**
- * Generate a unique policy number in format DRV-YYYY-XXXXXX
+ * Generate a unique policy number in format DRV-001, DRV-002, etc.
+ * Uses a Firestore transaction on a counter document for sequential generation.
  */
-function generatePolicyNumber(): string {
-  const year = new Date().getFullYear();
-  const random = Math.floor(100000 + Math.random() * 900000); // 6-digit number
-  return `DRV-${year}-${random}`;
+async function generatePolicyNumber(): Promise<string> {
+  const counterRef = db.collection(COLLECTION_NAMES.COUNTERS).doc('policy');
+
+  return await db.runTransaction(async (transaction) => {
+    const counterDoc = await transaction.get(counterRef);
+    let nextValue = 1;
+
+    if (counterDoc.exists) {
+      nextValue = (counterDoc.data()?.currentValue || 0) + 1;
+    }
+
+    transaction.set(counterRef, { currentValue: nextValue }, { merge: true });
+
+    const paddedNumber = String(nextValue).padStart(3, '0');
+    return `DRV-${paddedNumber}`;
+  });
 }

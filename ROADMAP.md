@@ -73,7 +73,7 @@ These are known gaps that don't have tickets yet:
 - [x] AI insights feature flag
 - [x] Root Platform integration scaffolded
 - [x] CORS fixed (origin allowlist via `CORS_ORIGINS`; no wildcard)
-- [x] CLAUDE.md and ROADMAP.md added; trip-processor source of truth; regression report and investor doc
+- [x] CLAUDE.md, ROADMAP.md, and ARCHITECTURE.md added; trip-processor source of truth; regression report and investor doc
 - [x] Dashboard map now uses device GPS instead of hardcoded London coordinates
 - [x] AI Risk Scoring & Insights engines finalized
 - [x] GDPR export/delete endpoints live

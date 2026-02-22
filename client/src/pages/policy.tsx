@@ -2,9 +2,14 @@ import { useLocation } from 'wouter';
 import { ArrowLeft, Shield, FileText, AlertCircle, CheckCircle } from 'lucide-react';
 import { PageWrapper } from '../components/PageWrapper';
 import { BottomNav } from '../components/BottomNav';
+import { useAuth } from '../contexts/AuthContext';
+import { useDashboardData } from '../hooks/useDashboardData';
 
 export default function PolicyPage() {
   const [, setLocation] = useLocation();
+  const { user } = useAuth();
+  const { data: dashboardData } = useDashboardData(user?.id || null);
+  const policyNumber = dashboardData?.policyNumber ?? '—';
 
   return (
     <PageWrapper>
@@ -16,7 +21,7 @@ export default function PolicyPage() {
           <ArrowLeft className="w-4 h-4" />
           Back to Dashboard
         </button>
-        
+
         <div className="backdrop-blur-xl bg-white/[0.04] border border-white/[0.08] rounded-2xl p-6">
           <div className="flex items-center gap-3 mb-6">
             <Shield className="w-6 h-6 text-blue-400" />
@@ -29,7 +34,7 @@ export default function PolicyPage() {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span className="text-gray-400">Policy Number:</span>
-                  <span className="text-white">DRV-2025-000001</span>
+                  <span className="text-white">{policyNumber}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Policy Start:</span>
