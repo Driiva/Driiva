@@ -25,6 +25,7 @@ import {
   ClassificationSummary,
   TripSegmentsDocument,
 } from '../types';
+import { EUROPE_LONDON } from '../lib/region';
 
 const db = admin.firestore();
 
@@ -260,7 +261,9 @@ async function readTripPoints(tripId: string): Promise<TripPoint[]> {
  * @param data.tripId - The trip ID to classify
  * @returns Classification results
  */
-export const classifyTrip = functions.https.onCall(async (data, context) => {
+export const classifyTrip = functions
+  .region(EUROPE_LONDON)
+  .https.onCall(async (data, context) => {
   const userId = requireAuth(context);
 
   // TODO: Rate limiting – e.g. max N classifyTrip calls per user per minute
@@ -342,7 +345,9 @@ export const classifyTrip = functions.https.onCall(async (data, context) => {
  *
  * Admin-only. Reject unauthenticated with 401, non-admin with 403.
  */
-export const batchClassifyTrips = functions.https.onCall(async (data, context) => {
+export const batchClassifyTrips = functions
+  .region(EUROPE_LONDON)
+  .https.onCall(async (data, context) => {
   requireAuth(context);
   requireAdmin(context);
 

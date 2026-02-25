@@ -1,4 +1,5 @@
 import { useLocation, Link } from 'wouter';
+import { motion } from 'framer-motion';
 import { Home, Map, TrendingUp, User } from 'lucide-react';
 
 const navItems = [
@@ -33,45 +34,55 @@ export const BottomNav: React.FC = () => {
               <Link
                 key={path}
                 href={path}
-                className="flex flex-col items-center gap-1 px-4 py-2 transition-all duration-150 relative min-h-[44px] min-w-[44px] justify-center active:scale-95"
+                className="relative min-h-[44px] min-w-[44px]"
               >
-                <div className={`
-                  relative w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-150
-                  ${isActive 
-                    ? 'scale-105' 
-                    : 'opacity-60 hover:opacity-100 hover:scale-105'
-                  }
-                `}>
-                  {/* Active background glow */}
+                <motion.div
+                  whileTap={{ scale: 0.92 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                  className="flex flex-col items-center gap-1 px-4 py-2 justify-center"
+                >
+                  <div className={`
+                    relative w-10 h-10 rounded-xl flex items-center justify-center transition-colors duration-150
+                    ${isActive 
+                      ? 'scale-105' 
+                      : 'opacity-60 hover:opacity-100 hover:scale-105'
+                    }
+                  `}>
+                    {isActive && (
+                      <motion.div 
+                        layoutId="nav-active-bg"
+                        className="absolute inset-0 rounded-xl"
+                        style={{
+                          background: 'rgba(16, 185, 129, 0.15)',
+                          border: '1px solid rgba(16, 185, 129, 0.2)',
+                        }}
+                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                      />
+                    )}
+                    
+                    <Icon className={`w-5 h-5 relative z-10 transition-colors duration-150 ${
+                      isActive 
+                        ? 'text-emerald-400 drop-shadow-sm' 
+                        : 'text-white/60'
+                    }`} />
+                  </div>
+                  
+                  <span className={`text-[10px] font-medium transition-colors duration-150 ${
+                    isActive 
+                      ? 'text-emerald-400' 
+                      : 'text-white/40'
+                  }`}>
+                    {label}
+                  </span>
+                  
                   {isActive && (
-                    <div 
-                      className="absolute inset-0 rounded-xl"
-                      style={{
-                        background: 'rgba(16, 185, 129, 0.15)',
-                        border: '1px solid rgba(16, 185, 129, 0.2)',
-                      }}
+                    <motion.div
+                      layoutId="nav-indicator"
+                      className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400/50"
+                      transition={{ type: "spring", stiffness: 500, damping: 30 }}
                     />
                   )}
-                  
-                  <Icon className={`w-5 h-5 relative z-10 transition-colors duration-150 ${
-                    isActive 
-                      ? 'text-emerald-400 drop-shadow-sm' 
-                      : 'text-white/60'
-                  }`} />
-                </div>
-                
-                <span className={`text-[10px] font-medium transition-colors duration-150 ${
-                  isActive 
-                    ? 'text-emerald-400' 
-                    : 'text-white/40'
-                }`}>
-                  {label}
-                </span>
-                
-                {/* Active indicator dot */}
-                {isActive && (
-                  <div className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-emerald-400 shadow-sm shadow-emerald-400/50" />
-                )}
+                </motion.div>
               </Link>
             );
           })}

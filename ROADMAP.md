@@ -77,6 +77,7 @@ These are known gaps that don't have tickets yet:
 - [x] Dashboard map now uses device GPS instead of hardcoded London coordinates
 - [x] AI Risk Scoring & Insights engines finalized
 - [x] GDPR export/delete endpoints live
+- [x] Sentry set up (error monitoring)
 
 ---
 

@@ -22,12 +22,13 @@ import {
 import { PageWrapper } from '../components/PageWrapper';
 import { BottomNav } from '../components/BottomNav';
 import { useAuth } from "@/contexts/AuthContext";
-// Firebase config not needed here — AuthContext handles all auth state
 import MapLoader from '../components/MapLoader';
 import { useDashboardData, DashboardData } from '@/hooks/useDashboardData';
 import { useCommunityData } from '@/hooks/useCommunityData';
 import { useBetaEstimate } from '@/hooks/useBetaEstimate';
 import { BetaEstimateCard } from '@/components/BetaEstimateCard';
+import ScoreRing from '@/components/ScoreRing';
+import { container, item } from '@/lib/animations';
 
 const LeafletMap = lazy(() => import('../components/LeafletMap'));
 
@@ -428,38 +429,34 @@ export default function Dashboard() {
           </motion.div>
         )}
 
+        {/* Staggered card container */}
+        <motion.div variants={container} initial="hidden" animate="show">
+
         {/* Driving Score Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1, duration: 0.5 }}
-          className="dashboard-glass-card mb-4"
-        >
+        <motion.div variants={item} className="dashboard-glass-card mb-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-white">Driving Score</h2>
             <TrendingUp className="w-5 h-5 text-emerald-400" />
           </div>
-          <div className="flex items-end gap-2">
-            <span className="text-5xl font-bold text-white">
-              {isNewUser ? '—' : drivingScore}
-            </span>
-            {!isNewUser && <span className="text-xl text-white/60 mb-1">/100</span>}
-          </div>
-          <p className="text-sm text-white/60 mt-2">
-            {isNewUser
-              ? 'Complete your first trip to get a driving score.'
-              : getScoreMessage(drivingScore)}
-          </p>
-          <div className="mt-4 h-2 bg-white/10 rounded-full overflow-hidden">
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: isNewUser ? '0%' : `${drivingScore}%` }}
-              transition={{ duration: 1, ease: "easeOut" }}
-              className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full"
-            />
-          </div>
+
+          {isNewUser ? (
+            <div className="flex flex-col items-center py-4">
+              <div className="w-[140px] h-[140px] rounded-full border-[6px] border-white/8 flex items-center justify-center mb-3">
+                <span className="text-4xl font-bold text-white/30">—</span>
+              </div>
+              <p className="text-sm text-white/60 text-center">
+                Complete your first trip to get a driving score.
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center">
+              <ScoreRing score={drivingScore} size={140} strokeWidth={8} />
+              <p className="text-sm text-white/60 mt-3 text-center">
+                {getScoreMessage(drivingScore)}
+              </p>
+            </div>
+          )}
           
-          {/* Score breakdown — only show once the driver has completed at least one trip */}
           {!isDemoMode && !isNewUser && dashboardData?.scoreBreakdown && (
             <div className="mt-4 pt-4 border-t border-white/10 grid grid-cols-5 gap-2 text-center">
               <div>
@@ -488,11 +485,7 @@ export default function Dashboard() {
 
         {/* Beta Estimate Card (non-binding premium + refund) */}
         {!isDemoMode && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.12, duration: 0.5 }}
-          >
+          <motion.div variants={item}>
             <BetaEstimateCard
               estimate={betaEstimate}
               loading={betaEstimateLoading}
@@ -503,12 +496,7 @@ export default function Dashboard() {
         )}
 
         {/* GPS Map Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15, duration: 0.5 }}
-          className="dashboard-glass-card mb-4"
-        >
+        <motion.div variants={item} className="dashboard-glass-card mb-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-white">GPS Location</h2>
             <MapPin className="w-5 h-5 text-emerald-400" />
@@ -523,12 +511,7 @@ export default function Dashboard() {
         </motion.div>
 
         {/* Your Trips Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-          className="dashboard-glass-card mb-4"
-        >
+        <motion.div variants={item} className="dashboard-glass-card mb-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-white">Your Trips</h2>
             <Car className="w-5 h-5 text-white/60" />
@@ -536,7 +519,12 @@ export default function Dashboard() {
           {trips.length > 0 ? (
             <div className="space-y-3">
               {trips.map((trip) => (
-                <div key={trip.id} className="bg-white/5 rounded-xl p-3 border border-white/10">
+                <motion.div
+                  key={trip.id}
+                  whileHover={{ y: -2, boxShadow: '0 8px 24px rgba(0,0,0,0.25)' }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                  className="bg-white/5 rounded-xl p-3 border border-white/10 cursor-pointer"
+                >
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-white font-medium">{trip.from} → {trip.to}</span>
                     <span className={`text-sm font-bold ${trip.score >= 90 ? 'text-emerald-400' : trip.score >= 80 ? 'text-blue-400' : 'text-amber-400'}`}>
@@ -547,7 +535,7 @@ export default function Dashboard() {
                     <span>{trip.distance} mi</span>
                     <span>{trip.date}</span>
                   </div>
-                </div>
+                </motion.div>
               ))}
               <div className="pt-2 border-t border-white/10">
                 <div className="flex items-center justify-between">
@@ -578,12 +566,7 @@ export default function Dashboard() {
         </motion.div>
 
         {/* Community Pool Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.25, duration: 0.5 }}
-          className="dashboard-glass-card mb-4"
-        >
+        <motion.div variants={item} className="dashboard-glass-card mb-4">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-lg font-semibold text-white">Community Pool</h2>
@@ -660,12 +643,7 @@ export default function Dashboard() {
         </motion.div>
 
         {/* Refund Goals Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-          className="dashboard-glass-card mb-4"
-        >
+        <motion.div variants={item} className="dashboard-glass-card mb-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-white">Refund Goals</h2>
             <Target className="w-5 h-5 text-amber-400" />
@@ -696,12 +674,7 @@ export default function Dashboard() {
         </motion.div>
 
         {/* Achievements Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.35, duration: 0.5 }}
-          className="dashboard-glass-card mb-6"
-        >
+        <motion.div variants={item} className="dashboard-glass-card mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-white">Achievements</h2>
             <Trophy className="w-5 h-5 text-amber-400" />
@@ -747,12 +720,7 @@ export default function Dashboard() {
         </motion.div>
 
         {/* Bottom Action Buttons */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.5 }}
-          className="grid grid-cols-2 gap-3"
-        >
+        <motion.div variants={item} className="grid grid-cols-2 gap-3">
           <button
             onClick={() => setLocation('/profile')}
             className="dashboard-glass-card flex items-center justify-center gap-2 py-4 hover:bg-white/15 transition-colors"
@@ -769,6 +737,8 @@ export default function Dashboard() {
             <span className="font-medium text-white">Settings</span>
           </button>
         </motion.div>
+
+        </motion.div>{/* close staggered container */}
       </div>
 
       <BottomNav />

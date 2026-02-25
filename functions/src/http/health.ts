@@ -8,12 +8,15 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { COLLECTION_NAMES } from '../types';
+import { EUROPE_LONDON } from '../lib/region';
 
 const db = admin.firestore();
 
 const FIRESTORE_CHECK_TIMEOUT_MS = 5000;
 
-export const health = functions.https.onRequest(async (req, res) => {
+export const health = functions
+  .region(EUROPE_LONDON)
+  .https.onRequest(async (req, res) => {
   if (req.method !== 'GET') {
     res.status(405).set('Allow', 'GET').send();
     return;

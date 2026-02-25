@@ -8,8 +8,10 @@
 import * as functions from 'firebase-functions';
 import { COLLECTION_NAMES, TripDocument } from '../types';
 import { getPgUserIdByFirebaseUid, insertTripSummary } from '../lib/neon';
+import { EUROPE_LONDON } from '../lib/region';
 
 export const syncTripOnComplete = functions
+  .region(EUROPE_LONDON)
   .runWith({ secrets: ['DATABASE_URL'] })
   .firestore
   .document(`${COLLECTION_NAMES.TRIPS}/{tripId}`)
