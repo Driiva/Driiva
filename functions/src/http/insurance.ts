@@ -20,6 +20,7 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { COLLECTION_NAMES, UserDocument, PolicyDocument, CoverageType } from '../types';
+import { EUROPE_LONDON } from '../lib/region';
 
 // ============================================================================
 // CONFIG
@@ -169,7 +170,9 @@ const db = admin.firestore();
  * Input: { coverageType: 'basic' | 'standard' | 'premium' }
  * Output: { quoteId, premiumCents, billingAmountCents, expiresAt, coverageType }
  */
-export const getInsuranceQuote = functions.https.onCall(async (data, context) => {
+export const getInsuranceQuote = functions
+  .region(EUROPE_LONDON)
+  .https.onCall(async (data, context) => {
   // Auth check
   if (!context.auth) {
     throw new functions.https.HttpsError('unauthenticated', 'Must be signed in');
@@ -246,7 +249,9 @@ export const getInsuranceQuote = functions.https.onCall(async (data, context) =>
  * Input: { quoteId: string }
  * Output: { policyId, policyNumber, status, monthlyPremiumCents }
  */
-export const acceptInsuranceQuote = functions.https.onCall(async (data, context) => {
+export const acceptInsuranceQuote = functions
+  .region(EUROPE_LONDON)
+  .https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError('unauthenticated', 'Must be signed in');
   }
@@ -344,7 +349,9 @@ export const acceptInsuranceQuote = functions.https.onCall(async (data, context)
  * Input: { policyId: string }
  * Output: Root policy details synced with local Firestore
  */
-export const syncInsurancePolicy = functions.https.onCall(async (data, context) => {
+export const syncInsurancePolicy = functions
+  .region(EUROPE_LONDON)
+  .https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError('unauthenticated', 'Must be signed in');
   }

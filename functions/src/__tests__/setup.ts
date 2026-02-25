@@ -142,18 +142,32 @@ vi.mock('firebase-functions', () => ({
         }
       },
     },
-    region: vi.fn(() => ({
-      firestore: {
-        document: vi.fn(() => ({
-          onWrite: vi.fn((handler: unknown) => handler),
-          onCreate: vi.fn((handler: unknown) => handler),
-          onUpdate: vi.fn((handler: unknown) => handler),
-        })),
-      },
-      https: {
-        onCall: vi.fn((handler: unknown) => handler),
-      },
-    })),
+    region: vi.fn(function regionMock() {
+      const builder = {
+        runWith: vi.fn(() => builder),
+        firestore: {
+          document: vi.fn(() => ({
+            onWrite: vi.fn((handler: unknown) => handler),
+            onCreate: vi.fn((handler: unknown) => handler),
+            onUpdate: vi.fn((handler: unknown) => handler),
+          })),
+        },
+        https: {
+          onCall: vi.fn((handler: unknown) => handler),
+          onRequest: vi.fn((handler: unknown) => handler),
+        },
+        pubsub: {
+          schedule: vi.fn(() => ({
+            timeZone: vi.fn(() => ({ onRun: vi.fn((handler: unknown) => handler) })),
+            onRun: vi.fn((handler: unknown) => handler),
+          })),
+        },
+        auth: {
+          user: vi.fn(() => ({ onCreate: vi.fn((handler: unknown) => handler) })),
+        },
+      };
+      return builder;
+    }),
   },
   logger: {
     info: vi.fn(),

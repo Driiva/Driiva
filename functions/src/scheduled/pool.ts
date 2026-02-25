@@ -16,6 +16,7 @@ import {
   getCurrentPoolPeriod,
   calculateProjectedRefund,
 } from '../utils/helpers';
+import { EUROPE_LONDON } from '../lib/region';
 
 const db = admin.firestore();
 
@@ -25,7 +26,9 @@ const db = admin.firestore();
  * - Calculate final refund amounts
  * - Prepare for payout
  */
-export const finalizePoolPeriod = functions.pubsub
+export const finalizePoolPeriod = functions
+  .region(EUROPE_LONDON)
+  .pubsub
   .schedule('0 0 1 * *') // 1st of each month at midnight UTC
   .timeZone('America/New_York')
   .onRun(async (_context) => {
@@ -157,7 +160,9 @@ export const finalizePoolPeriod = functions.pubsub
  * Recalculate pool share projections daily
  * Updates projected refund amounts based on current pool state
  */
-export const recalculatePoolShares = functions.pubsub
+export const recalculatePoolShares = functions
+  .region(EUROPE_LONDON)
+  .pubsub
   .schedule('0 6 * * *') // Daily at 6 AM UTC
   .timeZone('America/New_York')
   .onRun(async (_context) => {

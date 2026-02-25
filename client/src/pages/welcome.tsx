@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
-import { BarChart3, Wallet, Trophy } from "lucide-react";
+import { BarChart3, Wallet, Trophy, ChevronRight } from "lucide-react";
 import driivaLogo from '@/assets/driiva-logo-CLEAR-FINAL.png';
 
 const features = [
@@ -14,6 +14,13 @@ export default function Welcome() {
   const [, setLocation] = useLocation();
   const [currentCard, setCurrentCard] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
+
+  const [returningUser] = useState<{ name: string; email: string } | null>(() => {
+    try {
+      const raw = localStorage.getItem('driiva-last-user');
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  });
 
   // Navigate to the demo page - demo mode is activated there, NOT here
   const goToDemo = () => {
@@ -164,6 +171,27 @@ export default function Welcome() {
           transition={{ delay: 0.35, duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
           className="flex flex-col items-center gap-3 pb-20 mt-6"
         >
+          {returningUser && (
+            <button
+              onClick={() => setLocation('/signin')}
+              className="w-full max-w-[280px] flex items-center justify-between gap-3 px-5 py-3 rounded-2xl text-sm font-medium transition-all duration-200 mb-1"
+              style={{
+                background: 'rgba(16, 185, 129, 0.12)',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                color: 'rgba(255, 255, 255, 0.95)',
+              }}
+              aria-label={`Continue as ${returningUser.name}`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center flex-shrink-0">
+                  <span className="text-white font-bold text-sm">{returningUser.name.charAt(0).toUpperCase()}</span>
+                </div>
+                <span>Continue as {returningUser.name.split(' ')[0]}</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-emerald-400" />
+            </button>
+          )}
+
           <button
             onClick={() => setLocation('/signup')}
             className="hero-cta-primary hero-cta-green"

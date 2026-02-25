@@ -17,6 +17,7 @@ import {
 } from '../types';
 import { getCurrentPoolPeriod, getShareId } from '../utils/helpers';
 import { requireAuth, requireAdmin } from './auth';
+import { EUROPE_LONDON } from '../lib/region';
 
 const db = admin.firestore();
 
@@ -24,7 +25,9 @@ const db = admin.firestore();
  * Initialize community pool (admin only)
  * Call this once to set up the pool document
  */
-export const initializePool = functions.https.onCall(async (data, context) => {
+export const initializePool = functions
+  .region(EUROPE_LONDON)
+  .https.onCall(async (data, context) => {
   requireAuth(context);
   requireAdmin(context);
 
@@ -119,7 +122,9 @@ function getPoolPeriodDates(periodType: 'monthly' | 'quarterly'): {
  * - Trip documents cannot be updated by clients (security rules: allow update: if false)
  * - Only the admin SDK can update trip status
  */
-export const cancelTrip = functions.https.onCall(async (data, context) => {
+export const cancelTrip = functions
+  .region(EUROPE_LONDON)
+  .https.onCall(async (data, context) => {
   const userId = requireAuth(context);
 
   // TODO: Rate limiting – e.g. max N cancelTrip calls per user per minute
@@ -214,7 +219,9 @@ export const cancelTrip = functions.https.onCall(async (data, context) => {
  *
  * Authorization: userId is always context.auth.uid (no client-supplied userId).
  */
-export const addPoolContribution = functions.https.onCall(async (data, context) => {
+export const addPoolContribution = functions
+  .region(EUROPE_LONDON)
+  .https.onCall(async (data, context) => {
   const userId = requireAuth(context);
 
   // TODO: Rate limiting – e.g. max N contributions per user per day, or per amount

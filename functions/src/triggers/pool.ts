@@ -11,6 +11,7 @@ import {
   PoolShareDocument,
   PoolShareSummary,
 } from '../types';
+import { EUROPE_LONDON } from '../lib/region';
 
 const db = admin.firestore();
 
@@ -18,7 +19,9 @@ const db = admin.firestore();
  * Triggered when a pool share is created or updated
  * Syncs pool share summary to user document
  */
-export const onPoolShareWrite = functions.firestore
+export const onPoolShareWrite = functions
+  .region(EUROPE_LONDON)
+  .firestore
   .document(`${COLLECTION_NAMES.POOL_SHARES}/{shareId}`)
   .onWrite(async (change, context) => {
     const shareId = context.params.shareId;

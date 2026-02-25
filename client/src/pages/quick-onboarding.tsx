@@ -11,7 +11,7 @@
  * On completion, sets `onboardingCompleted: true` in Firestore.
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'wouter';
 import { 
@@ -24,14 +24,15 @@ import {
   Wallet,
   Users,
   Navigation,
-  AlertCircle
+  AlertCircle,
+  Sparkles
 } from 'lucide-react';
 import { auth, db, isFirebaseConfigured } from '../lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import driivaLogo from '@/assets/driiva-logo-CLEAR-FINAL.png';
 
-const TOTAL_STEPS = 7;
+const TOTAL_STEPS = 8;
 
 interface GpsTestResult {
   success: boolean;
@@ -137,36 +138,24 @@ export default function QuickOnboarding() {
   };
 
   /**
-   * Complete onboarding and navigate to dashboard.
-   * Persists onboarding_complete to PostgreSQL (source of truth) and optionally Firestore.
+   * Persist onboarding completion to backend, then advance to celebration step.
    */
   const handleComplete = async () => {
     if (!confirmed) return;
 
     setIsLoading(true);
 
-    // 1. Update AuthContext FIRST so ProtectedRoute won't bounce back
     if (user) {
-      setUser({
-        ...user,
-        onboardingComplete: true,
-      });
+      setUser({ ...user, onboardingComplete: true });
     }
 
-    // 2. Navigate immediately — don't block on backend writes
-    setLocation('/dashboard');
-
-    // 3. Persist to PostgreSQL (single source of truth for onboarding)
     const firebaseUser = auth?.currentUser;
     if (firebaseUser) {
       try {
         const token = await firebaseUser.getIdToken();
         await fetch('/api/profile/me', {
           method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           credentials: 'include',
           body: JSON.stringify({ onboardingComplete: true }),
         });
@@ -175,7 +164,6 @@ export default function QuickOnboarding() {
       }
     }
 
-    // 4. Optional: keep Firestore in sync for legacy/telematics
     try {
       if (firebaseUser && isFirebaseConfigured && db) {
         const userDocRef = doc(db, 'users', firebaseUser.uid);
@@ -193,7 +181,14 @@ export default function QuickOnboarding() {
     } catch (err) {
       console.error('[QuickOnboarding] Failed to update Firestore:', err);
     }
+
+    setIsLoading(false);
+    nextStep();
   };
+
+  const goToDashboard = useCallback(() => {
+    setLocation('/dashboard');
+  }, [setLocation]);
 
   /**
    * Handle navigation between steps
@@ -228,22 +223,24 @@ export default function QuickOnboarding() {
       </div>
 
       <div className="relative z-10 flex-1 flex flex-col p-6 max-w-lg mx-auto w-full">
-        {/* Progress indicator */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-2">
-            {Array.from({ length: TOTAL_STEPS }, (_, i) => (
-              <div
-                key={i}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  i + 1 <= currentStep 
-                    ? 'bg-emerald-500 w-10' 
-                    : 'bg-white/20 w-6'
-                }`}
-              />
-            ))}
+        {/* Progress indicator (hidden on celebration step) */}
+        {currentStep < 8 && (
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-2">
+              {Array.from({ length: 7 }, (_, i) => (
+                <div
+                  key={i}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    i + 1 <= currentStep 
+                      ? 'bg-emerald-500 w-10' 
+                      : 'bg-white/20 w-6'
+                  }`}
+                />
+              ))}
+            </div>
+            <span className="text-sm text-white/50">Step {currentStep} of 7</span>
           </div>
-          <span className="text-sm text-white/50">Step {currentStep} of {TOTAL_STEPS}</span>
-        </div>
+        )}
 
         {/* Step content */}
         <div className="flex-1 flex flex-col justify-center">
@@ -725,9 +722,97 @@ export default function QuickOnboarding() {
                 </div>
               </motion.div>
             )}
+            {/* STEP 8: Celebration — You're all set! */}
+            {currentStep === 8 && (
+              <CelebrationStep onContinue={goToDashboard} userName={user?.name} />
+            )}
           </AnimatePresence>
         </div>
       </div>
     </div>
+  );
+}
+
+function CelebrationStep({ onContinue, userName }: { onContinue: () => void; userName?: string }) {
+  const [showContent, setShowContent] = useState(false);
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setShowContent(true), 200);
+    const t2 = setTimeout(onContinue, 3200);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, [onContinue]);
+
+  return (
+    <motion.div
+      key="step8"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.4 }}
+      className="flex flex-col items-center justify-center text-center min-h-[60vh]"
+      onClick={onContinue}
+    >
+      {/* Animated ring */}
+      <motion.div
+        initial={{ scale: 0, rotate: -90 }}
+        animate={{ scale: 1, rotate: 0 }}
+        transition={{ type: 'spring', stiffness: 200, damping: 18, delay: 0.1 }}
+        className="relative mb-8"
+      >
+        <svg width="120" height="120" viewBox="0 0 120 120" className="drop-shadow-lg">
+          <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="6" />
+          <motion.circle
+            cx="60" cy="60" r="52"
+            fill="none"
+            stroke="url(#celebGrad)"
+            strokeWidth="6"
+            strokeLinecap="round"
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: 1 }}
+            transition={{ duration: 1.2, ease: 'easeOut', delay: 0.3 }}
+            style={{ transform: 'rotate(-90deg)', transformOrigin: '50% 50%' }}
+          />
+          <defs>
+            <linearGradient id="celebGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#10B981" />
+              <stop offset="100%" stopColor="#06B6D4" />
+            </linearGradient>
+          </defs>
+        </svg>
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 20, delay: 0.6 }}
+          className="absolute inset-0 flex items-center justify-center"
+        >
+          <Check className="w-12 h-12 text-emerald-400" />
+        </motion.div>
+      </motion.div>
+
+      {showContent && (
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="flex flex-col items-center gap-3"
+        >
+          <h1 className="text-3xl font-bold text-white">You're all set!</h1>
+          <p className="text-white/60 max-w-xs">
+            {userName ? `${userName.split(' ')[0]}, your` : 'Your'} dashboard is ready.
+            Start driving to earn your first score.
+          </p>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 1, 0.6, 1] }}
+            transition={{ delay: 0.8, duration: 1.5 }}
+            className="flex items-center gap-2 mt-4 text-emerald-400"
+          >
+            <Sparkles className="w-5 h-5" />
+            <span className="text-sm font-medium">Loading your dashboard...</span>
+          </motion.div>
+        </motion.div>
+      )}
+    </motion.div>
   );
 }

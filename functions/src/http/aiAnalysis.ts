@@ -18,6 +18,7 @@ import {
   TripAIInsightDocument,
 } from '../types';
 import { analyzeTrip } from '../ai/tripAnalysis';
+import { EUROPE_LONDON } from '../lib/region';
 
 const db = admin.firestore();
 
@@ -30,6 +31,7 @@ const db = admin.firestore();
  * Auth required. Users can only analyze their own trips.
  */
 export const analyzeTripAI = functions
+  .region(EUROPE_LONDON)
   .runWith({ secrets: ['ANTHROPIC_API_KEY'] })
   .https.onCall(async (data, context) => {
   // Auth check
@@ -150,6 +152,7 @@ export const analyzeTripAI = functions
  * Auth required. Users can only view insights for their own trips.
  */
 export const getAIInsights = functions
+  .region(EUROPE_LONDON)
   .runWith({ secrets: ['ANTHROPIC_API_KEY'] })
   .https.onCall(async (data, context) => {
   if (!context.auth) {

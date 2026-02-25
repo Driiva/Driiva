@@ -184,10 +184,10 @@ export default function Onboarding() {
             {currentStep === 1 && (
               <motion.div
                 key="step1"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
+                initial={{ opacity: 0, scale: 0.92 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.92 }}
+                transition={{ duration: 0.35, ease: [0.34, 1.56, 0.64, 1] }}
                 className="flex-1"
               >
                 <h1 className="text-2xl font-bold text-white mt-1 mb-1">Personal Details</h1>
@@ -239,10 +239,10 @@ export default function Onboarding() {
             {currentStep === 2 && (
               <motion.div
                 key="step2"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
+                initial={{ opacity: 0, scale: 0.92 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.92 }}
+                transition={{ duration: 0.35, ease: [0.34, 1.56, 0.64, 1] }}
                 className="flex-1"
               >
                 <h1 className="text-2xl font-bold text-white mt-1 mb-1">Vehicle Details</h1>
@@ -311,10 +311,10 @@ export default function Onboarding() {
             {currentStep === 3 && (
               <motion.div
                 key="step3"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
+                initial={{ opacity: 0, scale: 0.92 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.92 }}
+                transition={{ duration: 0.35, ease: [0.34, 1.56, 0.64, 1] }}
                 className="flex-1"
               >
                 <h1 className="text-2xl font-bold text-white mt-1 mb-1">Driving History</h1>
@@ -373,10 +373,10 @@ export default function Onboarding() {
             {currentStep === 4 && (
               <motion.div
                 key="step4"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
+                initial={{ opacity: 0, scale: 0.92 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.92 }}
+                transition={{ duration: 0.35, ease: [0.34, 1.56, 0.64, 1] }}
                 className="flex-1"
               >
                 <h1 className="text-2xl font-bold text-white mt-1 mb-1">Terms & Conditions</h1>

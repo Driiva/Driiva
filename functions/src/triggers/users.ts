@@ -15,6 +15,7 @@ import {
   PolicyStatus,
   CoverageType,
 } from '../types';
+import { EUROPE_LONDON } from '../lib/region';
 
 const db = admin.firestore();
 
@@ -31,7 +32,9 @@ const db = admin.firestore();
  *   - Premium defaults to 0 cents until a quote is generated
  *   - Uses integer cents for all financial fields (never floats)
  */
-export const onUserCreate = functions.firestore
+export const onUserCreate = functions
+  .region(EUROPE_LONDON)
+  .firestore
   .document(`${COLLECTION_NAMES.USERS}/{userId}`)
   .onCreate(async (snap, context) => {
     const userId = context.params.userId;

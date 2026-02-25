@@ -14,6 +14,7 @@ import {
   LeaderboardPeriodType,
 } from '../types';
 import { getCurrentPeriodForType, getWeekNumber } from '../utils/helpers';
+import { EUROPE_LONDON } from '../lib/region';
 
 const db = admin.firestore();
 
@@ -23,7 +24,9 @@ const MAX_RANKINGS = 100;
 /**
  * Update all leaderboards every 15 minutes
  */
-export const updateLeaderboards = functions.pubsub
+export const updateLeaderboards = functions
+  .region(EUROPE_LONDON)
+  .pubsub
   .schedule('every 15 minutes')
   .onRun(async (_context) => {
     functions.logger.info('Starting leaderboard update');

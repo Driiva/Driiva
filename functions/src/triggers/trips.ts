@@ -30,6 +30,7 @@ import {
 } from '../utils/helpers';
 import { classifyCompletedTrip } from '../http/classifier';
 import { analyzeTrip } from '../ai/tripAnalysis';
+import { EUROPE_LONDON } from '../lib/region';
 
 const db = admin.firestore();
 
@@ -95,7 +96,9 @@ function analyzeCompletedTripAsync(
  * - Enriches with context (night driving, rush hour)
  * - Updates trip status
  */
-export const onTripCreate = functions.firestore
+export const onTripCreate = functions
+  .region(EUROPE_LONDON)
+  .firestore
   .document(`${COLLECTION_NAMES.TRIPS}/{tripId}`)
   .onCreate(async (snap, context) => {
     const tripId = context.params.tripId;
@@ -169,7 +172,9 @@ export const onTripCreate = functions.firestore
  * 1. Trip finalization (recording → processing): Compute metrics from GPS points
  * 2. Manual review completion (processing → completed): Update driver profile
  */
-export const onTripStatusChange = functions.firestore
+export const onTripStatusChange = functions
+  .region(EUROPE_LONDON)
+  .firestore
   .document(`${COLLECTION_NAMES.TRIPS}/{tripId}`)
   .onUpdate(async (change, context) => {
     const tripId = context.params.tripId;

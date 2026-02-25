@@ -7,8 +7,10 @@
 
 import * as functions from 'firebase-functions';
 import { insertUserFromFirebase } from '../lib/neon';
+import { EUROPE_LONDON } from '../lib/region';
 
 export const syncUserOnSignup = functions
+  .region(EUROPE_LONDON)
   .runWith({ secrets: ['DATABASE_URL'] })
   .auth.user().onCreate(async (user) => {
   const { uid, email, displayName } = user;

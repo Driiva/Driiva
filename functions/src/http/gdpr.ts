@@ -11,6 +11,7 @@ import * as admin from 'firebase-admin';
 import { COLLECTION_NAMES } from '../types';
 import { requireAuth, requireSelf } from './auth';
 import type { CallableContext } from './auth';
+import { EUROPE_LONDON } from '../lib/region';
 
 const db = admin.firestore();
 const auth = admin.auth();
@@ -38,7 +39,9 @@ function serializeForExport(obj: unknown): unknown {
  * Export all user data for GDPR data portability.
  * Authenticated user must request their own userId.
  */
-export const exportUserData = functions.https.onCall(async (data: { userId?: string }, context: CallableContext) => {
+export const exportUserData = functions
+  .region(EUROPE_LONDON)
+  .https.onCall(async (data: { userId?: string }, context: CallableContext) => {
   requireAuth(context);
   const requestedUserId = data?.userId as string | undefined;
   requireSelf(context, requestedUserId);
@@ -134,7 +137,9 @@ export const exportUserData = functions.https.onCall(async (data: { userId?: str
  * Delete user account and all associated data (GDPR right to erasure).
  * Uses batched deletes for atomicity where possible; then deletes Firebase Auth user.
  */
-export const deleteUserAccount = functions.https.onCall(async (data: { userId?: string }, context: CallableContext) => {
+export const deleteUserAccount = functions
+  .region(EUROPE_LONDON)
+  .https.onCall(async (data: { userId?: string }, context: CallableContext) => {
   requireAuth(context);
   const requestedUserId = data?.userId as string | undefined;
   requireSelf(context, requestedUserId);

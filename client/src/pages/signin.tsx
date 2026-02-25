@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, LogIn, Mail, Lock, ArrowLeft, AlertCircle } from "lucide-react";
@@ -11,6 +11,17 @@ import { useAuth } from "../contexts/AuthContext";
 import { auth, db, isFirebaseConfigured, googleProvider } from "@/lib/firebase";
 import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
+import WelcomeBackOverlay from "@/components/WelcomeBackOverlay";
+import BiometricAuth from "@/components/BiometricAuth";
+
+const LAST_USER_KEY = 'driiva-last-user';
+
+interface LastUserData {
+  name: string;
+  email: string;
+  score?: number;
+  lastTrip?: string;
+}
 
 /**
  * SIGN-IN PAGE
@@ -19,11 +30,25 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
  * NO demo accounts - demo mode is accessed via /demo route.
  */
 
+function getLastUser(): LastUserData | null {
+  try {
+    const raw = localStorage.getItem(LAST_USER_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function saveLastUser(data: LastUserData) {
+  localStorage.setItem(LAST_USER_KEY, JSON.stringify(data));
+}
+
 export default function SignIn() {
   const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'unavailable'>('checking');
   const [, setLocation] = useLocation();
-  // Single field: user can enter email or username (e.g. driiva1 → driiva1@driiva.co.uk)
-  const [emailOrUsername, setEmailOrUsername] = useState("");
+
+  const [lastUser] = useState<LastUserData | null>(getLastUser);
+  const isReturningUser = lastUser !== null;
+
+  const [emailOrUsername, setEmailOrUsername] = useState(lastUser?.email ?? "");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -32,6 +57,17 @@ export default function SignIn() {
   const { ref: cardRef, style: cardParallaxStyle } = useParallax({ speed: 0.3 });
   const { setUser } = useAuth();
   const errorRef = useRef<HTMLDivElement>(null);
+
+  const [showWelcomeOverlay, setShowWelcomeOverlay] = useState(false);
+  const [welcomeData, setWelcomeData] = useState<{ name: string; score?: number; lastTrip?: string } | null>(null);
+  const pendingDestination = useRef<string | null>(null);
+
+  const dismissOverlay = useCallback(() => {
+    if (pendingDestination.current) {
+      setLocation(pendingDestination.current);
+      pendingDestination.current = null;
+    }
+  }, [setLocation]);
 
   useEffect(() => {
     if (!isFirebaseConfigured) {
@@ -127,23 +163,45 @@ export default function SignIn() {
         console.error('[SignIn] Profile check/create error:', profileErr);
       }
 
+      const displayName = user.displayName || user.email?.split('@')[0] || 'User';
+
       setUser({
         id: user.uid,
         email: user.email || email,
-        name: user.displayName || user.email?.split('@')[0] || 'User',
+        name: displayName,
         onboardingComplete,
         emailVerified: user.emailVerified,
       });
 
-      toast({
-        title: "Welcome back!",
-        description: "Successfully signed in",
-      });
+      // Read score + last trip for the overlay
+      let score: number | undefined;
+      let lastTripLabel: string | undefined;
+      try {
+        if (db) {
+          const userSnap = await getDoc(doc(db, 'users', user.uid));
+          if (userSnap.exists()) {
+            const d = userSnap.data();
+            score = d?.drivingProfile?.score ?? d?.drivingScore;
+            const recent = d?.recentTrips;
+            if (Array.isArray(recent) && recent.length > 0) {
+              const last = recent[0];
+              lastTripLabel = last.from && last.to ? `${last.from} → ${last.to}` : last.date;
+            }
+          }
+        }
+      } catch { /* non-critical */ }
 
-      // Navigate based on onboarding status
+      saveLastUser({ name: displayName, email: user.email || email, score, lastTrip: lastTripLabel });
+
       const destination = onboardingComplete ? "/dashboard" : "/quick-onboarding";
-      console.log('[SignIn] Redirecting to', destination);
-      setLocation(destination);
+
+      if (onboardingComplete) {
+        pendingDestination.current = destination;
+        setWelcomeData({ name: displayName, score, lastTrip: lastTripLabel });
+        setShowWelcomeOverlay(true);
+      } else {
+        setLocation(destination);
+      }
 
     } catch (error: unknown) {
       const err = error as { code?: string; message?: string };
@@ -218,21 +276,44 @@ export default function SignIn() {
         console.error('[SignIn] Google user profile check/create error:', profileErr);
       }
 
+      const gDisplayName = user.displayName || user.email?.split('@')[0] || 'User';
+
       setUser({
         id: user.uid,
         email: user.email || '',
-        name: user.displayName || user.email?.split('@')[0] || 'User',
+        name: gDisplayName,
         onboardingComplete,
-        emailVerified: user.emailVerified, // Google accounts are always pre-verified
+        emailVerified: user.emailVerified,
       });
 
-      toast({
-        title: "Welcome!",
-        description: "Signed in with Google",
-      });
+      let gScore: number | undefined;
+      let gLastTrip: string | undefined;
+      try {
+        if (db) {
+          const uSnap = await getDoc(doc(db, 'users', user.uid));
+          if (uSnap.exists()) {
+            const d = uSnap.data();
+            gScore = d?.drivingProfile?.score ?? d?.drivingScore;
+            const recent = d?.recentTrips;
+            if (Array.isArray(recent) && recent.length > 0) {
+              const last = recent[0];
+              gLastTrip = last.from && last.to ? `${last.from} → ${last.to}` : last.date;
+            }
+          }
+        }
+      } catch { /* non-critical */ }
 
-      console.log('[SignIn] Redirecting after Google sign-in');
-      setLocation(onboardingComplete ? "/dashboard" : "/quick-onboarding");
+      saveLastUser({ name: gDisplayName, email: user.email || '', score: gScore, lastTrip: gLastTrip });
+
+      const gDest = onboardingComplete ? "/dashboard" : "/quick-onboarding";
+
+      if (onboardingComplete) {
+        pendingDestination.current = gDest;
+        setWelcomeData({ name: gDisplayName, score: gScore, lastTrip: gLastTrip });
+        setShowWelcomeOverlay(true);
+      } else {
+        setLocation(gDest);
+      }
 
     } catch (error: any) {
       console.error('[SignIn] Google sign-in failed:', error);
@@ -310,21 +391,39 @@ export default function SignIn() {
                 }}
                 className="flex flex-col items-center mb-4"
               >
-                <img
-                  src={signinLogo}
-                  alt="Driiva"
-                  className="h-10 w-auto mb-2"
-                />
-                <p className="text-center text-white/70 text-sm">
-                  Sign in to your telematics insurance account
-                </p>
+                {isReturningUser ? (
+                  <>
+                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center mb-3 shadow-lg shadow-emerald-500/20">
+                      <span className="text-white font-bold text-2xl">
+                        {lastUser.name.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <h2 className="text-white text-lg font-bold mb-0.5">
+                      Welcome back, {lastUser.name.split(' ')[0]}
+                    </h2>
+                    <p className="text-center text-white/50 text-sm">
+                      Sign in to continue
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <img
+                      src={signinLogo}
+                      alt="Driiva"
+                      className="h-10 w-auto mb-2"
+                    />
+                    <p className="text-center text-white/70 text-sm">
+                      Sign in to your telematics insurance account
+                    </p>
+                  </>
+                )}
 
                 {connectionStatus === 'unavailable' && (
                   <div className="mt-3 px-3 py-1 rounded-full text-xs bg-red-500/20 text-red-300 border border-red-500/30">
                     Service Unavailable
                   </div>
                 )}
-                {connectionStatus === 'connected' && (
+                {connectionStatus === 'connected' && !isReturningUser && (
                   <div className="mt-3 px-3 py-1 rounded-full text-xs bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                     Connected
                   </div>
@@ -473,6 +572,31 @@ export default function SignIn() {
                   <span>Continue with Google</span>
                 </button>
 
+                {isReturningUser && (
+                  <>
+                    <div className="flex items-center gap-3 py-1">
+                      <div className="flex-1 h-px bg-white/15" />
+                      <span className="text-white/40 text-xs uppercase tracking-wider">or</span>
+                      <div className="flex-1 h-px bg-white/15" />
+                    </div>
+                    <BiometricAuth
+                      username={emailOrUsername || lastUser?.email || ''}
+                      onSuccess={(userData) => {
+                        setUser({
+                          id: userData.id,
+                          email: userData.email,
+                          name: userData.name || 'User',
+                          onboardingComplete: true,
+                          emailVerified: true,
+                        });
+                        pendingDestination.current = '/dashboard';
+                        setWelcomeData({ name: userData.name || 'User' });
+                        setShowWelcomeOverlay(true);
+                      }}
+                    />
+                  </>
+                )}
+
                 {/* Links */}
                 <div className="text-center space-y-2 pt-2">
                   <p className="text-white/50 text-sm">
@@ -495,12 +619,34 @@ export default function SignIn() {
                       Try demo mode
                     </button>
                   </p>
+                  {isReturningUser && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        localStorage.removeItem(LAST_USER_KEY);
+                        setEmailOrUsername('');
+                        window.location.reload();
+                      }}
+                      className="text-white/30 hover:text-white/50 text-xs transition-colors"
+                    >
+                      Not {lastUser.name.split(' ')[0]}? Switch account
+                    </button>
+                  )}
                 </div>
               </motion.form>
             </CardContent>
           </Card>
         </motion.div>
       </div>
+
+      {showWelcomeOverlay && welcomeData && (
+        <WelcomeBackOverlay
+          name={welcomeData.name}
+          score={welcomeData.score}
+          lastTrip={welcomeData.lastTrip}
+          onDismiss={dismissOverlay}
+        />
+      )}
     </div>
   );
 }
