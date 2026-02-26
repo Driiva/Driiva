@@ -144,6 +144,13 @@ export interface UserDocument {
   phoneNumber: string | null;
   age?: number;
   postcode?: string;
+  vehicle?: {
+    vin: string | null;
+    make: string;
+    model: string;
+    year: number;
+    color: string | null;
+  } | null;
   createdAt: Timestamp;
   updatedAt: Timestamp;
   drivingProfile: DrivingProfileData;

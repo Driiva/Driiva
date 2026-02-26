@@ -62,7 +62,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.health = exports.onUserUpdateRecalcBetaEstimate = exports.calculateBetaEstimateForUser = exports.syncInsurancePolicy = exports.acceptInsuranceQuote = exports.getInsuranceQuote = exports.getAIInsights = exports.analyzeTripAI = exports.deleteUserAccount = exports.exportUserData = exports.batchClassifyTrips = exports.classifyTrip = exports.cancelTrip = exports.addPoolContribution = exports.initializePool = exports.recalculatePoolShares = exports.finalizePoolPeriod = exports.updateLeaderboards = exports.syncTripOnComplete = exports.syncUserOnSignup = exports.onUserCreate = exports.onPoolShareWrite = exports.onPolicyWrite = exports.onTripStatusChange = exports.onTripCreate = exports.db = void 0;
+exports.health = exports.seedAchievements = exports.onUserUpdateRecalcBetaEstimate = exports.calculateBetaEstimateForUser = exports.syncInsurancePolicy = exports.acceptInsuranceQuote = exports.getInsuranceQuote = exports.getAIInsights = exports.analyzeTripAI = exports.deleteUserAccount = exports.exportUserData = exports.batchClassifyTrips = exports.classifyTrip = exports.cancelTrip = exports.addPoolContribution = exports.initializePool = exports.sendWeeklySummary = exports.recalculatePoolShares = exports.finalizePoolPeriod = exports.updateLeaderboards = exports.syncTripOnComplete = exports.syncUserOnSignup = exports.onUserCreate = exports.onPoolShareWrite = exports.onPolicyWrite = exports.onTripStatusChange = exports.onTripCreate = exports.db = void 0;
 const admin = __importStar(require("firebase-admin"));
 // Initialize Firebase Admin
 admin.initializeApp();
@@ -92,6 +92,8 @@ Object.defineProperty(exports, "updateLeaderboards", { enumerable: true, get: fu
 var pool_2 = require("./scheduled/pool");
 Object.defineProperty(exports, "finalizePoolPeriod", { enumerable: true, get: function () { return pool_2.finalizePoolPeriod; } });
 Object.defineProperty(exports, "recalculatePoolShares", { enumerable: true, get: function () { return pool_2.recalculatePoolShares; } });
+var notifications_1 = require("./scheduled/notifications");
+Object.defineProperty(exports, "sendWeeklySummary", { enumerable: true, get: function () { return notifications_1.sendWeeklySummary; } });
 // ============================================================================
 // HTTP CALLABLE FUNCTIONS
 // ============================================================================
@@ -123,6 +125,9 @@ Object.defineProperty(exports, "syncInsurancePolicy", { enumerable: true, get: f
 var betaEstimate_1 = require("./http/betaEstimate");
 Object.defineProperty(exports, "calculateBetaEstimateForUser", { enumerable: true, get: function () { return betaEstimate_1.calculateBetaEstimateForUser; } });
 Object.defineProperty(exports, "onUserUpdateRecalcBetaEstimate", { enumerable: true, get: function () { return betaEstimate_1.onUserUpdateRecalcBetaEstimate; } });
+// Achievements: seed definitions (admin)
+var achievements_1 = require("./http/achievements");
+Object.defineProperty(exports, "seedAchievements", { enumerable: true, get: function () { return achievements_1.seedAchievements; } });
 // ============================================================================
 // HTTP REQUEST (PUBLIC) — Uptime monitoring
 // ============================================================================

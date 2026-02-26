@@ -1099,6 +1099,45 @@ export async function syncInsurancePolicy(
 }
 
 // ============================================================================
+// ACHIEVEMENTS
+// ============================================================================
+
+export interface AchievementDef {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  category: 'safety' | 'community' | 'milestone' | 'refund';
+  points: number;
+  maxProgress: number | null;
+}
+
+export interface UserAchievementRecord {
+  achievementId: string;
+  unlockedAt: Timestamp;
+  tripId: string | null;
+}
+
+/**
+ * Fetch all achievement definitions from the achievements collection.
+ */
+export async function getAchievementDefinitions(): Promise<AchievementDef[]> {
+  assertFirestore();
+  const snapshot = await getDocs(collection(db!, 'achievements'));
+  return snapshot.docs.map(d => d.data() as AchievementDef);
+}
+
+/**
+ * Fetch achievements unlocked by a specific user.
+ */
+export async function getUserAchievements(userId: string): Promise<UserAchievementRecord[]> {
+  assertFirestore();
+  const userAchRef = collection(db!, COLLECTION_NAMES.USERS, userId, 'achievements');
+  const snapshot = await getDocs(userAchRef);
+  return snapshot.docs.map(d => d.data() as UserAchievementRecord);
+}
+
+// ============================================================================
 // EXPORTS
 // ============================================================================
 

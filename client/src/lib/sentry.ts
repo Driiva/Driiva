@@ -33,7 +33,7 @@ export function initSentry(): void {
   Sentry.init({
     dsn: SENTRY_DSN,
     environment: ENVIRONMENT,
-    release: `driiva-client@${__APP_VERSION__}`,
+    release: `driiva-client@${typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'unknown'}`,
 
     // Send default PII (IP address, user details) — configured in Sentry project
     sendDefaultPii: true,

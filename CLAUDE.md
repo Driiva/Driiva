@@ -26,7 +26,7 @@
 
 ## Firebase schema (Firestore)
 
-- **users/{userId}** — Driver profile, `drivingProfile` (score, totalTrips, totalMiles, totalDrivingMinutes, scoreBreakdown), `activePolicy`, `poolShare`, `recentTrips[]`, `fcmTokens`, `settings`, `createdBy`/`updatedBy`.
+- **users/{userId}** — Driver profile, `drivingProfile` (score, totalTrips, totalMiles, totalDrivingMinutes, scoreBreakdown), `activePolicy`, `poolShare`, `recentTrips[]`, `vehicle?` (make, model, year, color, VIN), `fcmTokens`, `settings`, `createdBy`/`updatedBy`.
 - **trips/{tripId}** — `userId`, `startedAt`/`endedAt`, `durationSeconds`, `startLocation`/`endLocation` (lat, lng, address, placeType), `distanceMeters`, `score`, `scoreBreakdown`, `events` (hardBraking, hardAcceleration, speedingSeconds, sharpTurnCount, phonePickupCount), `anomalies`, `status` (recording|processing|completed|failed|disputed), `context`, `pointsCount`, optional `segmentation` (classifier).
 - **tripPoints/{tripId}** — Raw GPS: `points[]` with `t` (offset ms), `lat`, `lng`, `spd` (m/s×100), `hdg`, `acc`; optional `ax/ay/az`, `gx/gy/gz`. Batches for long trips under `tripPoints/{tripId}/batches/{batchIndex}`.
 - **policies/{policyId}** — Policy metadata, Root sync.

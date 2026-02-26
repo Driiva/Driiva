@@ -45,6 +45,7 @@ exports.onUserCreate = void 0;
 const functions = __importStar(require("firebase-functions"));
 const admin = __importStar(require("firebase-admin"));
 const types_1 = require("../types");
+const region_1 = require("../lib/region");
 const db = admin.firestore();
 /**
  * Triggered when a new user document is created in Firestore.
@@ -59,7 +60,9 @@ const db = admin.firestore();
  *   - Premium defaults to 0 cents until a quote is generated
  *   - Uses integer cents for all financial fields (never floats)
  */
-exports.onUserCreate = functions.firestore
+exports.onUserCreate = functions
+    .region(region_1.EUROPE_LONDON)
+    .firestore
     .document(`${types_1.COLLECTION_NAMES.USERS}/{userId}`)
     .onCreate(async (snap, context) => {
     const userId = context.params.userId;

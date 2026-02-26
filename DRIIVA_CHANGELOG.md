@@ -5,6 +5,66 @@
 
 ## Entries
 
+### 2026‑02‑25 – Opus Revamp Session 2 — Security + Visual Polish
+
+**Phase 0 — Security Incident Resolution**
+- Merged open PR #1 (`feat/region-refactor-and-ui-updates`) to unblock history rewrite
+- Purged `.env` from entire git history via `git filter-repo --path .env --invert-paths`
+- Force pushed all branches with clean history; no secrets in any commit
+- Rotated Firebase API key in local `.env` to new restricted key (`AIzaSyCfm-...`)
+- Secrets audit: confirmed no `AIza`, `sk-ant`, `npg_`, or hardcoded API keys in source
+- Flagged for user: Anthropic API key + Neon DB password need manual rotation
+
+**Phase 2 — Visual Polish (continued)**
+- `index.css`: updated `.dashboard-glass-card` to match spec — `rgba(30, 41, 59, 0.4)` bg, `blur(16px) saturate(180%)`, `border: 1px solid rgba(255,255,255,0.1)`
+- Score color consistency: standardized all `getScoreColor` functions across `trips.tsx`, `dashboard.tsx`, `TripTimeline.tsx`, `RecentTrips.tsx`, `ScoreRing.tsx` to spec thresholds (red < 60, amber 60-79, green 80+)
+- `trips.tsx`: replaced spinner-only loading state with proper skeleton cards
+- `trip-detail.tsx`: replaced spinner with content-matching skeleton (map, stats, score breakdown)
+- `achievements.tsx`: replaced spinner with skeleton (header, category tabs, achievement cards)
+- `profile.tsx`: fixed vehicle display to show existing data; phone field reads from Firestore; `CoverageTypeSection` uses real premium instead of hardcoded 1840; `useDashboardData` extended with `phoneNumber`, `vehicle`, `email` fields
+- Recreated `usePushNotifications.ts` hook and `firebase-messaging-sw.js` (lost during filter-repo)
+
+**Tests:** 180/180 passing. TypeScript: 0 new errors (2 pre-existing in `auth-flow.test.tsx`).
+
+---
+
+### 2026‑02‑25 – Opus Revamp (Phases 1–3)
+
+**Phase 1 — Critical Fixes**
+- `.env.example`: added `ENCRYPTION_KEY` placeholder with Firebase Secret Manager instructions
+- `UserDocument` schema: added optional `vehicle?: VehicleInfo` field in `shared/firestore-types.ts` and `functions/src/types.ts`; documented in `ARCHITECTURE.md` and `CLAUDE.md`
+- `profile.tsx`: full rewrite — real Firestore data via `useDashboardData`; edit mode for name/phone/vehicle with `updateDoc` writes; loading skeletons on every section; error state with retry; data privacy trust line
+- `policy.tsx`: full rewrite — all values from `useDashboardData` (no hardcoded dates/premium/refund); inline skeletons; refund timeline trust line; score color consistency
+- `LeafletMap.tsx`: added `routePoints` prop + "Live"/"Last Trip" toggle; polyline with start/end markers in Last Trip mode; `FitBounds` auto-fits to trace
+- `dashboard.tsx`: fetches last trip's `tripPoints` and passes to LeafletMap; updated notification opt-in copy; refund progress messaging
+
+**Phase 2 — Polish Pass**
+- Loading/error/empty states audited across all pages (dashboard, trips, policy, rewards, leaderboard, profile, achievements all covered)
+- Created missing `trip-detail.tsx` page (score breakdown, route map, driving events, trip context) and `TripRouteMap.tsx` component
+- Navigation audit: all routes resolve; 404 catch-all confirmed; back buttons verified
+- Removed hardcoded demo values: `PolicyDownload.tsx` ("1,840" → "—"), `PolicyStatusWidget.tsx` ("1,840"/"Jul 01, 2026" → "—")
+- `permissions.tsx`: added notification rationale card ("So we can tell you when your trip is scored and when your refund is ready")
+- `rewards.tsx`: full rewrite — real Firestore achievements via `getAchievementDefinitions` + `getUserAchievements`; pool/refund data from `useDashboardData`; loading skeletons; refund progress bar
+
+**Phase 3 — Weather Enrichment**
+- Created `functions/src/utils/weather.ts`: Open-Meteo archive API; WMO code → condition mapping (clear/cloudy/rain/snow/fog/storm); 3s timeout + null fallback
+- Wired into both trip context blocks in `functions/src/triggers/trips.ts`
+- Created missing Cloud Functions files: `functions/src/utils/achievements.ts` (8 achievement definitions + unlock engine), `functions/src/utils/notifications.ts` (FCM push helpers), `functions/src/scheduled/notifications.ts` (weekly summary), `functions/src/http/achievements.ts` (seed callable)
+- Functions build: 0 errors (fixed all pre-existing module-not-found errors)
+
+---
+
+### 2026‑02‑25 – Tier 3 Animation Polish (Revolut-level)
+- Files: `client/src/components/ScoreRing.tsx` (new), `client/src/components/BottomNav.tsx`, `client/src/pages/dashboard.tsx`, `client/src/pages/onboarding.tsx`, `client/src/lib/animations.ts` (unchanged, consumed)
+- Changes:
+  1. **Score ring / radial gauge** — Replaced the flat `h-2` progress bar on the driving score card with a dedicated `ScoreRing` SVG component. Animated arc via Framer Motion `strokeDashoffset`, animated counter (0 → score), and color-coded gradient (green ≥80, blue ≥70, amber ≥50, red below).
+  2. **Staggered card entrance** — Wrapped all dashboard cards in a single `motion.div` using the existing `container`/`item` variants from `animations.ts` (`staggerChildren: 0.08`). Replaced 8 individual `transition={{ delay: 0.1n }}` props with `variants={item}`.
+  3. **Bottom nav spring scale + sliding indicator** — Added `whileTap={{ scale: 0.92 }}` with spring physics (`stiffness: 400, damping: 17`). Converted the active background glow and indicator dot to `motion.div` with `layoutId` (`"nav-active-bg"`, `"nav-indicator"`), creating a smooth spring-animated slide between tabs.
+  4. **Trip card hover lift** — Changed trip list rows from `<div>` to `<motion.div>` with `whileHover={{ y: -2, boxShadow: '0 8px 24px rgba(0,0,0,0.25)' }}` and spring transition.
+  5. **Onboarding scaleIn** — Replaced the flat `x: 20` slide on all 4 onboarding steps with `scale: 0.92` entrance/exit using the elastic cubic-bezier `[0.34, 1.56, 0.64, 1]` from `animations.ts`.
+- Reason: UI polish pass to bring micro-interactions and motion design up to fintech-grade quality (Revolut/Monzo tier). No logic, data, or scoring changes.
+- Tests: Visual verification via browser automation — dashboard renders score ring, stagger fires, bottom nav indicator slides between tabs, onboarding steps scale in. No functional regressions; all existing behaviour preserved.
+
 ### 2026‑02‑22 – Architecture Agent – Refined ARCHITECTURE.md & Language Sanitation
 - Files: ARCHITECTURE.md, ROADMAP.md, DRIIVA_CHANGELOG.md
 - Change: Refined ARCHITECTURE.md with verified technical specifications, including event thresholds, classifier parameters, scoring weights, and refund constants. Sanitized all documentation language to maintain professional and investor-ready standards.

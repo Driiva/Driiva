@@ -1,22 +1,83 @@
 import { useLocation } from 'wouter';
-import { ArrowLeft, Shield, FileText, AlertCircle, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Shield, FileText, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { PageWrapper } from '../components/PageWrapper';
 import { BottomNav } from '../components/BottomNav';
 import { useAuth } from '../contexts/AuthContext';
 import { useDashboardData } from '../hooks/useDashboardData';
 
+function Skeleton({ className = "" }: { className?: string }) {
+  return (
+    <div className={`animate-pulse bg-white/[0.08] rounded ${className}`} />
+  );
+}
+
+function formatDate(date: Date | null | undefined): string {
+  if (!date) return '—';
+  return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+function formatCurrency(amount: number): string {
+  if (!amount) return '—';
+  return `£${amount.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function getScoreColor(score: number): string {
+  if (score < 60) return 'text-red-400';
+  if (score < 80) return 'text-amber-400';
+  return 'text-emerald-400';
+}
+
+function getScoreLabel(score: number): string {
+  if (score < 60) return 'Needs Improvement';
+  if (score < 80) return 'Above Average';
+  return 'Excellent';
+}
+
 export default function PolicyPage() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
-  const { data: dashboardData } = useDashboardData(user?.id || null);
-  const policyNumber = dashboardData?.policyNumber ?? '—';
+  const { data: dashboardData, loading, error, refresh } = useDashboardData(user?.id || null);
+
+  const policyNumber = dashboardData?.policyNumber ?? null;
+  const premiumAmount = dashboardData?.premiumAmount ?? 0;
+  const currentScore = dashboardData?.drivingScore ?? 0;
+  const totalTrips = dashboardData?.totalTrips ?? 0;
+  const totalMiles = dashboardData?.totalMiles ?? 0;
+  const projectedRefund = dashboardData?.projectedRefund ?? 0;
+  const renewalDate = dashboardData?.renewalDate ?? null;
+
+  const refundRate = currentScore >= 70
+    ? (((currentScore - 70) / 30 * 10 + 5)).toFixed(2)
+    : '0.00';
+
+  const policyStart = renewalDate
+    ? new Date(renewalDate.getFullYear() - 1, renewalDate.getMonth(), renewalDate.getDate())
+    : null;
+
+  if (error && !dashboardData) {
+    return (
+      <PageWrapper>
+        <div className="pb-24 text-white flex flex-col items-center justify-center min-h-[60vh] gap-4">
+          <span className="text-4xl">⚠️</span>
+          <p className="text-white/70 text-sm font-medium">Could not load policy details.</p>
+          <button
+            onClick={refresh}
+            className="px-4 py-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-xl text-sm font-medium hover:bg-emerald-500/30 transition-colors min-h-[44px]"
+          >
+            Try Again
+          </button>
+        </div>
+        <BottomNav />
+      </PageWrapper>
+    );
+  }
 
   return (
     <PageWrapper>
       <div className="pb-24 text-white">
         <button
           onClick={() => setLocation('/dashboard')}
-          className="flex items-center gap-2 text-white/80 hover:text-white mb-4 transition-colors"
+          className="flex items-center gap-2 text-white/80 hover:text-white mb-4 transition-colors min-h-[44px]"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to Dashboard
@@ -34,23 +95,45 @@ export default function PolicyPage() {
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span className="text-gray-400">Policy Number:</span>
-                  <span className="text-white">{policyNumber}</span>
+                  {loading ? (
+                    <Skeleton className="h-5 w-32" />
+                  ) : (
+                    <span className="text-white">{policyNumber ?? '—'}</span>
+                  )}
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Policy Start:</span>
-                  <span className="text-white">July 1, 2025</span>
+                  {loading ? (
+                    <Skeleton className="h-5 w-36" />
+                  ) : (
+                    <span className="text-white">{formatDate(policyStart)}</span>
+                  )}
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Policy End:</span>
-                  <span className="text-white">June 30, 2026</span>
+                  <span className="text-gray-400">Renewal Date:</span>
+                  {loading ? (
+                    <Skeleton className="h-5 w-36" />
+                  ) : (
+                    <span className="text-white">{formatDate(renewalDate)}</span>
+                  )}
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Annual Premium:</span>
-                  <span className="text-white font-semibold">£1,840.00</span>
+                  {loading ? (
+                    <Skeleton className="h-5 w-24" />
+                  ) : (
+                    <span className="text-white font-semibold">{formatCurrency(premiumAmount)}</span>
+                  )}
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Current Refund:</span>
-                  <span className="text-green-400 font-semibold">£100.80</span>
+                  <span className="text-gray-400">Projected Refund:</span>
+                  {loading ? (
+                    <Skeleton className="h-5 w-24" />
+                  ) : (
+                    <span className="text-green-400 font-semibold">
+                      {projectedRefund > 0 ? formatCurrency(projectedRefund) : '—'}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -58,26 +141,12 @@ export default function PolicyPage() {
             <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.05] rounded-xl p-4">
               <h3 className="text-lg font-semibold mb-3 text-purple-300">Coverage Details</h3>
               <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-400" />
-                  <span className="text-sm">Comprehensive Coverage</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-400" />
-                  <span className="text-sm">Third Party Liability</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-400" />
-                  <span className="text-sm">Personal Injury Protection</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-400" />
-                  <span className="text-sm">Telematics Monitoring</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-green-400" />
-                  <span className="text-sm">24/7 Roadside Assistance</span>
-                </div>
+                {['Comprehensive Coverage', 'Third Party Liability', 'Personal Injury Protection', 'Telematics Monitoring', '24/7 Roadside Assistance'].map((item) => (
+                  <div key={item} className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-green-400" />
+                    <span className="text-sm">{item}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -87,23 +156,50 @@ export default function PolicyPage() {
               <FileText className="w-5 h-5" />
               Driiva Telematics Program
             </h3>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-400">72</div>
-                <div className="text-sm text-gray-400">Current Score</div>
-                <div className="text-xs text-gray-500 mt-1">Above Average</div>
+            {loading ? (
+              <div className="grid grid-cols-3 gap-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="text-center">
+                    <Skeleton className="h-8 w-12 mx-auto mb-2" />
+                    <Skeleton className="h-3 w-16 mx-auto mb-1" />
+                    <Skeleton className="h-3 w-20 mx-auto" />
+                  </div>
+                ))}
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-400">5.48%</div>
-                <div className="text-sm text-gray-400">Refund Rate</div>
-                <div className="text-xs text-gray-500 mt-1">£100.80 annual</div>
+            ) : (
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center">
+                  <div className={`text-2xl font-bold ${getScoreColor(currentScore)}`}>
+                    {totalTrips > 0 ? currentScore : '—'}
+                  </div>
+                  <div className="text-sm text-gray-400">Current Score</div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {totalTrips > 0 ? getScoreLabel(currentScore) : 'No trips yet'}
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-400">{refundRate}%</div>
+                  <div className="text-sm text-gray-400">Refund Rate</div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {projectedRefund > 0 ? `${formatCurrency(projectedRefund)} projected` : '—'}
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-purple-400">{totalTrips}</div>
+                  <div className="text-sm text-gray-400">Monitored Trips</div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {totalMiles > 0 ? `${totalMiles.toLocaleString()} miles` : '—'}
+                  </div>
+                </div>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-purple-400">28</div>
-                <div className="text-sm text-gray-400">Monitored Trips</div>
-                <div className="text-xs text-gray-500 mt-1">1,107 miles</div>
-              </div>
-            </div>
+            )}
+          </div>
+
+          {/* Refund timeline trust line */}
+          <div className="backdrop-blur-xl bg-emerald-500/[0.06] border border-emerald-500/[0.15] rounded-xl p-4 mb-6">
+            <p className="text-sm text-emerald-200/80 text-center">
+              Refunds are calculated at the end of each period and paid out within 14 days of the period close.
+            </p>
           </div>
 
           <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.05] rounded-xl p-6">

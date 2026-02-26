@@ -1,43 +1,92 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
 import { PageWrapper } from '../components/PageWrapper';
 import { BottomNav } from '../components/BottomNav';
 import { GlassCard } from "@/components/GlassCard";
-import { Gift, TrendingUp, Check, Bell, ChevronDown } from "lucide-react";
+import { Gift, TrendingUp, Check, Bell, ChevronDown, Loader2 } from "lucide-react";
 import { container, item, timing, easing, microInteractions } from "@/lib/animations";
 import { useAuth } from '../contexts/AuthContext';
 import { useDashboardData } from "../hooks/useDashboardData";
+import { getAchievementDefinitions, getUserAchievements } from "@/lib/firestore";
+import type { AchievementDef, UserAchievementRecord } from "@/lib/firestore";
+import { isFirebaseConfigured } from "@/lib/firebase";
 
-interface Achievement {
-  id: number;
+function Skeleton({ className = "" }: { className?: string }) {
+  return <div className={`animate-pulse bg-white/[0.08] rounded ${className}`} />;
+}
+
+interface DisplayAchievement {
+  id: string;
   title: string;
   description: string;
-  iconUrl: string;
+  icon: string;
+  unlocked: boolean;
   unlockedAt?: string;
-  progress?: number;
-  maxProgress?: number;
-  reward?: string;
-  category: "safety" | "distance" | "consistency" | "community";
+  category: string;
 }
 
-interface Reward {
-  id: number;
-  title: string;
-  description: string;
-  points: number;
-  category: "discount" | "cashback" | "premium";
-  value: string;
-  available: boolean;
-}
+const ICON_FALLBACK: Record<string, string> = {
+  Car: '🚗', Shield: '🛡️', Target: '🎯', Users: '👥', Zap: '⚡',
+  Star: '⭐', Flame: '🔥', Route: '🛣️', Moon: '🌙', Gauge: '📊',
+  Award: '🏅', Trophy: '🏆',
+};
 
 export default function Rewards() {
   const [, setLocation] = useLocation();
   const { user, logout } = useAuth();
-  const { data: dashboardData } = useDashboardData(user?.id || null);
+  const { data: dashboardData, loading: dataLoading } = useDashboardData(user?.id || null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [activeTab, setActiveTab] = useState<"achievements" | "rewards" | "progress">("achievements");
   const policyNumber = dashboardData?.policyNumber ?? '—';
+
+  const [achievements, setAchievements] = useState<DisplayAchievement[]>([]);
+  const [achievementsLoading, setAchievementsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user?.id || !isFirebaseConfigured) {
+      setAchievementsLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const [defs, userRecords] = await Promise.all([
+          getAchievementDefinitions(),
+          getUserAchievements(user.id),
+        ]);
+
+        if (cancelled) return;
+
+        const unlockMap = new Map(userRecords.map(r => [r.achievementId, r]));
+
+        setAchievements(
+          defs.map((def: AchievementDef) => {
+            const unlock = unlockMap.get(def.id);
+            return {
+              id: def.id,
+              title: def.name,
+              description: def.description,
+              icon: ICON_FALLBACK[def.icon] ?? '🏆',
+              unlocked: !!unlock,
+              unlockedAt: unlock?.unlockedAt?.toDate?.()?.toLocaleDateString('en-GB', {
+                day: 'numeric', month: 'short', year: 'numeric',
+              }),
+              category: def.category,
+            };
+          })
+        );
+      } catch (err) {
+        console.error('[Rewards] Failed to load achievements:', err);
+      } finally {
+        if (!cancelled) setAchievementsLoading(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [user?.id]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -52,98 +101,17 @@ export default function Rewards() {
     logout();
   };
 
-  const achievements: Achievement[] = [
-    {
-      id: 1,
-      title: "Long Distance Driver",
-      description: "Drive over 1000 miles safely",
-      iconUrl: "🚗",
-      unlockedAt: "2025-07-20",
-      category: "distance",
-      reward: "£25 refund bonus"
-    },
-    {
-      id: 2,
-      title: "Consistent Driver",
-      description: "30 days of safe driving",
-      iconUrl: "⭐",
-      unlockedAt: "2025-07-25",
-      category: "consistency"
-    },
-    {
-      id: 3,
-      title: "Safety Champion",
-      description: "Maintain 90+ score for 7 days",
-      iconUrl: "🏆",
-      progress: 5,
-      maxProgress: 7,
-      category: "safety"
-    },
-    {
-      id: 4,
-      title: "Community Leader",
-      description: "Be in top 10% of community pool",
-      iconUrl: "👑",
-      progress: 8,
-      maxProgress: 10,
-      category: "community"
-    },
-    {
-      id: 5,
-      title: "Perfect Week",
-      description: "7 days with zero incidents",
-      iconUrl: "💎",
-      category: "safety"
-    },
-    {
-      id: 6,
-      title: "Miles Milestone",
-      description: "Drive 2000 miles safely",
-      iconUrl: "🛣️",
-      progress: 1107,
-      maxProgress: 2000,
-      category: "distance",
-      reward: "£60 refund bonus"
-    }
-  ];
+  const firstName = user?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'Driver';
 
-  const rewards: Reward[] = [
-    {
-      id: 1,
-      title: "Premium Discount",
-      description: "5% off next year's premium",
-      points: 1000,
-      category: "discount",
-      value: "£92",
-      available: true
-    },
-    {
-      id: 2,
-      title: "Cashback Bonus",
-      description: "Direct cash refund",
-      points: 800,
-      category: "cashback",
-      value: "£40",
-      available: true
-    },
-    {
-      id: 3,
-      title: "Premium Freeze",
-      description: "Lock current premium rate",
-      points: 1500,
-      category: "premium",
-      value: "Rate Lock",
-      available: false
-    }
-  ];
+  const unlockedCount = achievements.filter(a => a.unlocked).length;
+  const totalAchievements = achievements.length;
+  const drivingScore = dashboardData?.drivingScore ?? 0;
+  const streakDays = dashboardData?.streakDays ?? 0;
+  const projectedRefund = dashboardData?.projectedRefund ?? 0;
+  const poolShare = dashboardData?.poolShare ?? 0;
+  const totalTrips = dashboardData?.totalTrips ?? 0;
 
-  const stats = {
-    totalPoints: 1250,
-    achievementsUnlocked: 2,
-    totalAchievements: 6,
-    currentStreak: 12,
-    totalRefunds: 138.00
-  };
+  const loading = dataLoading && !dashboardData;
 
   return (
     <PageWrapper>
@@ -155,18 +123,16 @@ export default function Rewards() {
           transition={{ duration: 0.5 }}
           className="flex items-start justify-between mb-6"
         >
-          {/* Left side - Logo and greeting */}
           <div className="flex items-start gap-3">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/30 to-purple-700/30 border border-white/10 flex items-center justify-center overflow-hidden">
               <img src="/logo.png" alt="Driiva" className="w-full h-full object-cover" />
             </div>
             <div style={{ marginTop: '2px' }}>
               <h1 className="text-xl font-bold text-white">Driiva</h1>
-              <p className="text-sm text-white/50">{getGreeting()}, Driver</p>
+              <p className="text-sm text-white/50">{getGreeting()}, {firstName}</p>
             </div>
           </div>
 
-          {/* Right side - Bell and avatar with dropdown */}
           <div className="flex items-center gap-3 relative">
             <button className="p-2 rounded-full hover:bg-white/5 transition-colors">
               <Bell className="w-5 h-5 text-white/60" />
@@ -177,12 +143,13 @@ export default function Rewards() {
               className="flex items-center gap-1"
             >
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-400 to-teal-600 flex items-center justify-center">
-                <span className="text-white font-bold text-lg italic">d</span>
+                <span className="text-white font-bold text-lg">
+                  {(user?.name?.[0] ?? user?.email?.[0] ?? 'd').toUpperCase()}
+                </span>
               </div>
               <ChevronDown className={`w-4 h-4 text-white/50 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
             </button>
 
-            {/* Dropdown Menu */}
             <AnimatePresence>
               {showDropdown && (
                 <>
@@ -221,6 +188,7 @@ export default function Rewards() {
 
         <h2 className="text-2xl font-bold text-white mb-4">Rewards</h2>
 
+        {/* Summary Card */}
         <motion.div
           className="mb-6"
           variants={item}
@@ -228,37 +196,49 @@ export default function Rewards() {
           animate="show"
         >
           <GlassCard className="p-6">
-            <h1 className="text-xl font-semibold mb-4 flex items-center gap-2 text-white">
+            <h3 className="text-xl font-semibold mb-4 flex items-center gap-2 text-white">
               <Gift className="w-5 h-5 text-white/60" />
               Rewards Dashboard
-            </h1>
+            </h3>
 
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { value: stats.totalPoints, label: "Total Points", accent: true },
-                { value: `${stats.achievementsUnlocked}/${stats.totalAchievements}`, label: "Achievements" },
-                { value: stats.currentStreak, label: "Day Streak" },
-                { value: `£${stats.totalRefunds}`, label: "Total Refunds", accent: true }
-              ].map((stat, index) => (
-                <motion.div
-                  key={index}
-                  className="text-center p-3 bg-white/5 rounded-xl"
-                  whileHover={microInteractions.hover}
-                  transition={{ duration: timing.quick }}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  style={{ transitionDelay: `${index * 0.05}s` }}
-                >
-                  <div className={`text-2xl font-semibold ${stat.accent ? 'text-emerald-400' : 'text-white'}`}>
-                    {stat.value}
+            {loading ? (
+              <div className="grid grid-cols-2 gap-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="text-center p-3 bg-white/5 rounded-xl">
+                    <Skeleton className="h-7 w-12 mx-auto mb-2" />
+                    <Skeleton className="h-3 w-16 mx-auto" />
                   </div>
-                  <div className="text-xs text-white/50 mt-1">{stat.label}</div>
-                </motion.div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { value: `${unlockedCount}/${totalAchievements || '—'}`, label: "Achievements" },
+                  { value: streakDays > 0 ? streakDays : '—', label: "Day Streak" },
+                  { value: projectedRefund > 0 ? `£${projectedRefund}` : '—', label: "Projected Refund", accent: true },
+                  { value: totalTrips, label: "Safe Trips" },
+                ].map((stat, index) => (
+                  <motion.div
+                    key={index}
+                    className="text-center p-3 bg-white/5 rounded-xl"
+                    whileHover={microInteractions.hover}
+                    transition={{ duration: timing.quick }}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    style={{ transitionDelay: `${index * 0.05}s` }}
+                  >
+                    <div className={`text-2xl font-semibold ${stat.accent ? 'text-emerald-400' : 'text-white'}`}>
+                      {stat.value}
+                    </div>
+                    <div className="text-xs text-white/50 mt-1">{stat.label}</div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
           </GlassCard>
         </motion.div>
 
+        {/* Tab switcher */}
         <motion.div
           className="mb-6"
           initial={{ opacity: 0, y: 10 }}
@@ -290,6 +270,7 @@ export default function Rewards() {
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: timing.interaction, ease: easing.button }}
           >
+            {/* Achievements Tab */}
             {activeTab === "achievements" && (
               <motion.div
                 className="space-y-3"
@@ -297,31 +278,46 @@ export default function Rewards() {
                 initial="hidden"
                 animate="show"
               >
-                {achievements.map((achievement) => {
-                  const isUnlocked = !!achievement.unlockedAt;
-                  const hasProgress = achievement.progress !== undefined;
-
-                  return (
+                {achievementsLoading ? (
+                  [1, 2, 3].map((i) => (
+                    <GlassCard key={i} className="p-5">
+                      <div className="flex items-start gap-4 animate-pulse">
+                        <Skeleton className="w-12 h-12 rounded-xl" />
+                        <div className="flex-1">
+                          <Skeleton className="h-4 w-32 mb-2" />
+                          <Skeleton className="h-3 w-48" />
+                        </div>
+                      </div>
+                    </GlassCard>
+                  ))
+                ) : achievements.length === 0 ? (
+                  <GlassCard className="p-8 text-center">
+                    <Gift className="w-10 h-10 text-white/20 mx-auto mb-3" />
+                    <p className="text-white/60 text-sm">No achievements available yet.</p>
+                    <p className="text-white/40 text-xs mt-1">Complete trips to start unlocking achievements!</p>
+                  </GlassCard>
+                ) : (
+                  achievements.map((achievement) => (
                     <motion.div
                       key={achievement.id}
                       variants={item}
                       whileHover={microInteractions.hoverSubtle}
                       whileTap={microInteractions.tap}
                     >
-                      <GlassCard className={`p-5 ${!isUnlocked && !hasProgress ? 'opacity-50' : ''}`}>
+                      <GlassCard className={`p-5 ${!achievement.unlocked ? 'opacity-50' : ''}`}>
                         <div className="flex items-start gap-4">
                           <motion.div
                             className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0"
                             whileHover={{ rotate: 5, scale: 1.05 }}
                             transition={{ duration: timing.interaction }}
                           >
-                            <span className="text-xl">{achievement.iconUrl}</span>
+                            <span className="text-xl">{achievement.icon}</span>
                           </motion.div>
 
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
                               <h3 className="font-semibold text-white text-sm">{achievement.title}</h3>
-                              {isUnlocked && (
+                              {achievement.unlocked && (
                                 <motion.div
                                   className="w-5 h-5 bg-emerald-500/20 border border-emerald-500/30 rounded-full flex items-center justify-center"
                                   initial={{ scale: 0 }}
@@ -333,45 +329,23 @@ export default function Rewards() {
                               )}
                             </div>
 
-                            <p className="text-xs text-white/50 mb-2">{achievement.description}</p>
+                            <p className="text-xs text-white/50 mb-1">{achievement.description}</p>
 
-                            {achievement.reward && isUnlocked && (
-                              <div className="text-xs text-emerald-400 font-medium mb-2">
-                                Reward: {achievement.reward}
-                              </div>
-                            )}
-
-                            {hasProgress && (
-                              <div className="space-y-1.5">
-                                <div className="flex justify-between text-xs">
-                                  <span className="text-white/40">Progress</span>
-                                  <span className="text-white/70">{achievement.progress}/{achievement.maxProgress}</span>
-                                </div>
-                                <div className="w-full bg-white/10 rounded-full h-1.5 overflow-hidden">
-                                  <motion.div
-                                    className="bg-emerald-500/60 h-1.5 rounded-full"
-                                    initial={{ width: 0 }}
-                                    animate={{ width: `${(achievement.progress! / achievement.maxProgress!) * 100}%` }}
-                                    transition={{ duration: timing.counter, ease: easing.smoothDecel, delay: timing.pageTransition }}
-                                  />
-                                </div>
-                              </div>
-                            )}
-
-                            {isUnlocked && achievement.unlockedAt && (
-                              <div className="text-xs text-white/40 mt-2">
-                                Unlocked: {new Date(achievement.unlockedAt).toLocaleDateString()}
+                            {achievement.unlocked && achievement.unlockedAt && (
+                              <div className="text-xs text-white/40">
+                                Unlocked: {achievement.unlockedAt}
                               </div>
                             )}
                           </div>
                         </div>
                       </GlassCard>
                     </motion.div>
-                  );
-                })}
+                  ))
+                )}
               </motion.div>
             )}
 
+            {/* Rewards Tab */}
             {activeTab === "rewards" && (
               <motion.div
                 className="space-y-3"
@@ -379,43 +353,57 @@ export default function Rewards() {
                 initial="hidden"
                 animate="show"
               >
-                {rewards.map((reward) => (
-                  <motion.div
-                    key={reward.id}
-                    variants={item}
-                    whileHover={reward.available ? microInteractions.hoverSubtle : undefined}
-                    whileTap={reward.available ? microInteractions.tap : undefined}
-                  >
-                    <GlassCard className={`p-5 ${!reward.available ? 'opacity-40' : ''}`}>
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-white text-sm mb-1">{reward.title}</h3>
-                          <p className="text-xs text-white/50 mb-2">{reward.description}</p>
-                          <div className="flex items-center gap-4">
-                            <div className="text-sm font-semibold text-white/70">{reward.points} pts</div>
-                            <div className={`text-sm font-semibold ${reward.available ? 'text-emerald-400' : 'text-white/30'}`}>
-                              {reward.value}
-                            </div>
-                          </div>
-                        </div>
+                <motion.div variants={item}>
+                  <GlassCard className="p-6 text-center">
+                    <Gift className="w-10 h-10 text-emerald-400/60 mx-auto mb-3" />
+                    <h3 className="text-white font-semibold mb-2">Refund Rewards</h3>
+                    {projectedRefund > 0 ? (
+                      <>
+                        <p className="text-3xl font-bold text-emerald-400 mb-2">£{projectedRefund}</p>
+                        <p className="text-sm text-white/50">
+                          Projected refund based on your {drivingScore} score
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-sm text-white/50">
+                        {drivingScore >= 70
+                          ? 'Your refund will be calculated at the end of the period.'
+                          : 'Score 70+ to qualify for premium refunds.'}
+                      </p>
+                    )}
+                  </GlassCard>
+                </motion.div>
 
-                        <motion.button
-                          className={`px-4 py-2.5 min-h-[44px] rounded-xl font-medium text-sm transition-colors duration-200 ${reward.available
-                            ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30"
-                            : "bg-white/5 text-white/30 cursor-not-allowed"
-                            }`}
-                          disabled={!reward.available}
-                          whileTap={reward.available ? microInteractions.press : undefined}
-                        >
-                          {reward.available ? "Claim" : "Locked"}
-                        </motion.button>
-                      </div>
-                    </GlassCard>
-                  </motion.div>
-                ))}
+                <motion.div variants={item}>
+                  <GlassCard className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm text-white/60">Pool Share</span>
+                      <span className="text-sm font-semibold text-white">
+                        {poolShare > 0 ? `£${poolShare.toFixed(2)}` : '—'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-white/60">Share %</span>
+                      <span className="text-sm font-semibold text-white">
+                        {dashboardData?.sharePercentage
+                          ? `${dashboardData.sharePercentage.toFixed(2)}%`
+                          : '—'}
+                      </span>
+                    </div>
+                  </GlassCard>
+                </motion.div>
+
+                <motion.div variants={item}>
+                  <div className="p-3 bg-emerald-500/[0.06] border border-emerald-500/[0.15] rounded-xl">
+                    <p className="text-xs text-emerald-200/80 text-center">
+                      Refunds are calculated at the end of each period and paid out within 14 days.
+                    </p>
+                  </div>
+                </motion.div>
               </motion.div>
             )}
 
+            {/* Progress Tab */}
             {activeTab === "progress" && (
               <motion.div
                 className="space-y-6"
@@ -427,67 +415,75 @@ export default function Rewards() {
                   <GlassCard className="p-6">
                     <h3 className="font-semibold text-white text-sm mb-4 flex items-center gap-2">
                       <TrendingUp className="w-4 h-4 text-white/60" />
-                      Weekly Progress
+                      Your Stats
                     </h3>
 
-                    <div className="grid grid-cols-7 gap-2">
-                      {[85, 88, 92, 87, 90, 94, 89].map((dayScore, i) => {
-                        const isToday = i === 6;
-
-                        return (
-                          <motion.div
-                            key={i}
-                            className="text-center"
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: i * 0.05, duration: timing.cardEntrance, ease: easing.button }}
-                          >
-                            <motion.div
-                              className={`w-10 h-10 rounded-lg mx-auto mb-1 flex items-center justify-center text-xs font-semibold ${isToday
-                                ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                                : "bg-white/5 text-white/70"
-                                }`}
-                              whileHover={{ scale: 1.1 }}
-                              transition={{ duration: timing.quick }}
-                            >
-                              {dayScore}
-                            </motion.div>
-                            <div className="text-xs text-white/40">
-                              {["M", "T", "W", "T", "F", "S", "S"][i]}
-                            </div>
-                          </motion.div>
-                        );
-                      })}
-                    </div>
-                  </GlassCard>
-                </motion.div>
-
-                <motion.div variants={item}>
-                  <GlassCard className="p-6">
-                    <h3 className="font-semibold text-white text-sm mb-4">Monthly Summary</h3>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      {[
-                        { value: "89", label: "Average Score", accent: true },
-                        { value: "28", label: "Safe Days" },
-                        { value: "245", label: "Miles Driven" },
-                        { value: "£42", label: "Refund Earned", accent: true }
-                      ].map((stat, index) => (
-                        <motion.div
-                          key={index}
-                          className="text-center p-4 bg-white/5 rounded-xl"
-                          whileHover={microInteractions.hover}
-                          transition={{ duration: timing.quick }}
-                        >
-                          <div className={`text-2xl font-semibold ${stat.accent ? 'text-emerald-400' : 'text-white'}`}>
-                            {stat.value}
+                    {loading ? (
+                      <div className="grid grid-cols-2 gap-4">
+                        {[1, 2, 3, 4].map((i) => (
+                          <div key={i} className="text-center p-4 bg-white/5 rounded-xl">
+                            <Skeleton className="h-7 w-12 mx-auto mb-2" />
+                            <Skeleton className="h-3 w-16 mx-auto" />
                           </div>
-                          <div className="text-xs text-white/50 mt-1">{stat.label}</div>
-                        </motion.div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-4">
+                        {[
+                          { value: drivingScore > 0 ? String(drivingScore) : '—', label: "Current Score", accent: true },
+                          { value: streakDays > 0 ? String(streakDays) : '—', label: "Streak Days" },
+                          { value: dashboardData?.totalMiles ? String(dashboardData.totalMiles) : '—', label: "Miles Driven" },
+                          { value: projectedRefund > 0 ? `£${projectedRefund}` : '—', label: "Refund Earned", accent: true },
+                        ].map((stat, index) => (
+                          <motion.div
+                            key={index}
+                            className="text-center p-4 bg-white/5 rounded-xl"
+                            whileHover={microInteractions.hover}
+                            transition={{ duration: timing.quick }}
+                          >
+                            <div className={`text-2xl font-semibold ${stat.accent ? 'text-emerald-400' : 'text-white'}`}>
+                              {stat.value}
+                            </div>
+                            <div className="text-xs text-white/50 mt-1">{stat.label}</div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    )}
                   </GlassCard>
                 </motion.div>
+
+                {/* Refund progress bar */}
+                {drivingScore > 0 && (
+                  <motion.div variants={item}>
+                    <GlassCard className="p-6">
+                      <h3 className="font-semibold text-white text-sm mb-3">Refund Progress</h3>
+                      <div className="flex items-center justify-between mb-2 text-sm">
+                        <span className="text-white/60">Current score</span>
+                        <span className="text-white font-semibold">{drivingScore}</span>
+                      </div>
+                      <div className="h-3 bg-white/10 rounded-full overflow-hidden mb-2">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${drivingScore}%` }}
+                          transition={{ duration: 1, ease: "easeOut", delay: 0.3 }}
+                          className={`h-full rounded-full ${
+                            drivingScore >= 80 ? 'bg-emerald-500' : drivingScore >= 70 ? 'bg-amber-500' : 'bg-red-500'
+                          }`}
+                        />
+                      </div>
+                      <div className="flex justify-between text-xs text-white/40">
+                        <span>0</span>
+                        <span className="text-amber-400/60">70 (qualify)</span>
+                        <span>100</span>
+                      </div>
+                      {projectedRefund > 0 && (
+                        <p className="text-emerald-300/70 text-xs text-center mt-3">
+                          You're on track for £{projectedRefund} back this period
+                        </p>
+                      )}
+                    </GlassCard>
+                  </motion.div>
+                )}
               </motion.div>
             )}
           </motion.div>

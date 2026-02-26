@@ -121,6 +121,7 @@ export default function TripRecording() {
   const streamerRef = useRef<TripPointStreamer | null>(null);
   const tripStartTimeRef = useRef<number>(0);
   const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
   // Telematics hook (for sensor data)
   const telematics = useTelematics();
@@ -201,6 +202,33 @@ export default function TripRecording() {
       }
     };
   }, [recordingState, tracker.totalDistance]);
+
+  // Wake Lock: keep the screen on while recording so GPS doesn't stop
+  const acquireWakeLock = useCallback(async () => {
+    try {
+      if ('wakeLock' in navigator) {
+        wakeLockRef.current = await navigator.wakeLock.request('screen');
+      }
+    } catch {
+      // Unsupported or denied — non-fatal; user will see the guidance text
+    }
+  }, []);
+
+  const releaseWakeLock = useCallback(() => {
+    wakeLockRef.current?.release();
+    wakeLockRef.current = null;
+  }, []);
+
+  // Re-acquire wake lock when tab becomes visible again (browser releases it on hide)
+  useEffect(() => {
+    const handler = async () => {
+      if (document.visibilityState === 'visible' && recordingState === 'recording') {
+        await acquireWakeLock();
+      }
+    };
+    document.addEventListener('visibilitychange', handler);
+    return () => document.removeEventListener('visibilitychange', handler);
+  }, [recordingState, acquireWakeLock]);
 
   // Get user ID (handle demo mode)
   const getUserId = useCallback((): string => {
@@ -314,6 +342,7 @@ export default function TripRecording() {
         });
 
         setRecordingState('recording');
+        await acquireWakeLock();
 
         toast({
           title: 'Trip Started',
@@ -411,6 +440,7 @@ export default function TripRecording() {
       });
 
       // Reset state
+      releaseWakeLock();
       setRecordingState('idle');
       setActiveTrip(null);
       tripStartTimeRef.current = 0;
@@ -419,6 +449,7 @@ export default function TripRecording() {
       setTimeout(() => setLocation('/'), 1500);
     } catch (error) {
       console.error('[TripRecording] Stop error:', error);
+      releaseWakeLock();
       setRecordingState('idle');
       toast({
         title: 'Error Ending Trip',
@@ -453,6 +484,7 @@ export default function TripRecording() {
       }
     }
 
+    releaseWakeLock();
     setRecordingState('idle');
     setActiveTrip(null);
     tripStartTimeRef.current = 0;
@@ -591,6 +623,11 @@ export default function TripRecording() {
               </div>
             )}
           </div>
+          {isRecording && (
+            <p className="text-xs text-gray-500 mt-3">
+              Keep your screen on during the trip for accurate GPS tracking.
+            </p>
+          )}
         </div>
 
         {/* Driving Events (during recording) */}

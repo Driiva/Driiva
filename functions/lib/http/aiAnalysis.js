@@ -46,6 +46,7 @@ const functions = __importStar(require("firebase-functions"));
 const admin = __importStar(require("firebase-admin"));
 const types_1 = require("../types");
 const tripAnalysis_1 = require("../ai/tripAnalysis");
+const region_1 = require("../lib/region");
 const db = admin.firestore();
 /**
  * Callable: Re-analyze a trip with Claude AI
@@ -56,6 +57,7 @@ const db = admin.firestore();
  * Auth required. Users can only analyze their own trips.
  */
 exports.analyzeTripAI = functions
+    .region(region_1.EUROPE_LONDON)
     .runWith({ secrets: ['ANTHROPIC_API_KEY'] })
     .https.onCall(async (data, context) => {
     // Auth check
@@ -147,6 +149,7 @@ exports.analyzeTripAI = functions
  * Auth required. Users can only view insights for their own trips.
  */
 exports.getAIInsights = functions
+    .region(region_1.EUROPE_LONDON)
     .runWith({ secrets: ['ANTHROPIC_API_KEY'] })
     .https.onCall(async (data, context) => {
     if (!context.auth) {

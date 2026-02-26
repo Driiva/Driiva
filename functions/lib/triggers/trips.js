@@ -43,8 +43,11 @@ const functions = __importStar(require("firebase-functions"));
 const admin = __importStar(require("firebase-admin"));
 const types_1 = require("../types");
 const helpers_1 = require("../utils/helpers");
+const achievements_1 = require("../utils/achievements");
+const notifications_1 = require("../utils/notifications");
 const classifier_1 = require("../http/classifier");
 const tripAnalysis_1 = require("../ai/tripAnalysis");
+const region_1 = require("../lib/region");
 const db = admin.firestore();
 /**
  * Async wrapper for trip classification
@@ -94,12 +97,42 @@ function analyzeCompletedTripAsync(tripId, trip, points, profile) {
     });
 }
 /**
+ * Async wrapper for achievement checking + push notifications.
+ * Non-blocking: these are enhancements, not critical to trip completion.
+ */
+function checkAchievementsAsync(userId, trip, tripId) {
+    (async () => {
+        try {
+            // Send trip-complete push notification
+            (0, notifications_1.notifyTripComplete)(userId, tripId, trip.score).catch(err => functions.logger.warn(`[Push] Trip-complete notification error:`, err));
+            // Check & unlock achievements
+            const userDoc = await db.collection(types_1.COLLECTION_NAMES.USERS).doc(userId).get();
+            if (!userDoc.exists)
+                return;
+            const profile = userDoc.data().drivingProfile;
+            const unlocked = await (0, achievements_1.checkAndUnlockAchievements)(userId, profile, trip, tripId);
+            if (unlocked.length > 0) {
+                functions.logger.info(`[Achievements] Unlocked ${unlocked.length} for user ${userId}: ${unlocked.join(', ')}`);
+                const names = unlocked
+                    .map(id => achievements_1.ACHIEVEMENT_DEFINITIONS.find(d => d.id === id)?.name)
+                    .filter(Boolean);
+                (0, notifications_1.notifyAchievementsUnlocked)(userId, names).catch(err => functions.logger.warn(`[Push] Achievement notification error:`, err));
+            }
+        }
+        catch (err) {
+            functions.logger.warn(`[Achievements] Non-blocking error for user ${userId}:`, err);
+        }
+    })();
+}
+/**
  * Triggered when a new trip is created
  * - Detects anomalies
  * - Enriches with context (night driving, rush hour)
  * - Updates trip status
  */
-exports.onTripCreate = functions.firestore
+exports.onTripCreate = functions
+    .region(region_1.EUROPE_LONDON)
+    .firestore
     .document(`${types_1.COLLECTION_NAMES.TRIPS}/{tripId}`)
     .onCreate(async (snap, context) => {
     const tripId = context.params.tripId;
@@ -141,9 +174,10 @@ exports.onTripCreate = functions.firestore
             status: newStatus,
             flagged: anomalies.flaggedForReview
         });
-        // 5. If trip is completed (no anomalies), trigger profile update
+        // 5. If trip is completed (no anomalies), trigger profile update + achievements
         if (newStatus === 'completed') {
             await updateDriverProfileAndPoolShare(trip, tripId);
+            checkAchievementsAsync(trip.userId, trip, tripId);
         }
     }
     catch (error) {
@@ -162,7 +196,9 @@ exports.onTripCreate = functions.firestore
  * 1. Trip finalization (recording → processing): Compute metrics from GPS points
  * 2. Manual review completion (processing → completed): Update driver profile
  */
-exports.onTripStatusChange = functions.firestore
+exports.onTripStatusChange = functions
+    .region(region_1.EUROPE_LONDON)
+    .firestore
     .document(`${types_1.COLLECTION_NAMES.TRIPS}/{tripId}`)
     .onUpdate(async (change, context) => {
     const tripId = context.params.tripId;
@@ -197,6 +233,7 @@ exports.onTripStatusChange = functions.firestore
             functions.logger.info(`Set processedAt timestamp for trip ${tripId}`);
         }
         await updateDriverProfileAndPoolShare(after, tripId);
+        checkAchievementsAsync(after.userId, after, tripId);
         // Trigger intelligent trip segmentation (async, non-blocking)
         classifyCompletedTripAsync(tripId, after);
         // Trigger AI analysis (async, non-blocking)
@@ -288,6 +325,7 @@ async function finalizeTripFromPoints(tripId, tripData) {
             // Re-fetch the updated trip data
             const updatedTrip = (await tripRef.get()).data();
             await updateDriverProfileAndPoolShare(updatedTrip, tripId);
+            checkAchievementsAsync(updatedTrip.userId, updatedTrip, tripId);
             // 8. Trigger intelligent trip segmentation (async, non-blocking)
             // This calls the Python Stop-Go-Classifier to detect stops and trip segments
             classifyCompletedTripAsync(tripId, updatedTrip);

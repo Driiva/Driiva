@@ -15,9 +15,9 @@ interface RecentTripsProps {
 
 export default function RecentTrips({ trips }: RecentTripsProps) {
   const getScoreColor = (score: number) => {
-    if (score >= 90) return 'text-white';
-    if (score >= 70) return 'text-gray-300';
-    return 'text-gray-400';
+    if (score >= 80) return 'text-emerald-400';
+    if (score >= 60) return 'text-amber-400';
+    return 'text-red-400';
   };
 
   return (

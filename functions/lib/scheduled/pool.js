@@ -43,6 +43,7 @@ const functions = __importStar(require("firebase-functions"));
 const admin = __importStar(require("firebase-admin"));
 const types_1 = require("../types");
 const helpers_1 = require("../utils/helpers");
+const region_1 = require("../lib/region");
 const db = admin.firestore();
 /**
  * Finalize pool period on the 1st of each month
@@ -50,7 +51,9 @@ const db = admin.firestore();
  * - Calculate final refund amounts
  * - Prepare for payout
  */
-exports.finalizePoolPeriod = functions.pubsub
+exports.finalizePoolPeriod = functions
+    .region(region_1.EUROPE_LONDON)
+    .pubsub
     .schedule('0 0 1 * *') // 1st of each month at midnight UTC
     .timeZone('America/New_York')
     .onRun(async (_context) => {
@@ -149,7 +152,9 @@ exports.finalizePoolPeriod = functions.pubsub
  * Recalculate pool share projections daily
  * Updates projected refund amounts based on current pool state
  */
-exports.recalculatePoolShares = functions.pubsub
+exports.recalculatePoolShares = functions
+    .region(region_1.EUROPE_LONDON)
+    .pubsub
     .schedule('0 6 * * *') // Daily at 6 AM UTC
     .timeZone('America/New_York')
     .onRun(async (_context) => {

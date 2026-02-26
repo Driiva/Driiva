@@ -45,6 +45,7 @@ const admin = __importStar(require("firebase-admin"));
 const index_1 = require("../index");
 const types_1 = require("../types");
 const betaEstimateService_1 = require("../lib/betaEstimateService");
+const region_1 = require("../lib/region");
 const Timestamp = admin.firestore.Timestamp;
 const FieldValue = admin.firestore.FieldValue;
 const BETA_PRICING_SUBCOLLECTION = 'betaPricing';
@@ -69,7 +70,9 @@ async function getCommunityPoolSafety() {
  * Recompute beta estimate for a user and write to users/{userId}/betaPricing/currentEstimate.
  * Callable by the authenticated user for their own userId (or pass no arg = use context.auth.uid).
  */
-exports.calculateBetaEstimateForUser = functions.https.onCall(async (data, context) => {
+exports.calculateBetaEstimateForUser = functions
+    .region(region_1.EUROPE_LONDON)
+    .https.onCall(async (data, context) => {
     if (!context.auth) {
         throw new functions.https.HttpsError('unauthenticated', 'Must be signed in');
     }
@@ -128,7 +131,9 @@ exports.calculateBetaEstimateForUser = functions.https.onCall(async (data, conte
  * When user profile (or pool) changes, recompute beta estimate and upsert.
  * Runs on user document update so estimate stays in sync with score, age, postcode.
  */
-exports.onUserUpdateRecalcBetaEstimate = functions.firestore
+exports.onUserUpdateRecalcBetaEstimate = functions
+    .region(region_1.EUROPE_LONDON)
+    .firestore
     .document(`${types_1.COLLECTION_NAMES.USERS}/{userId}`)
     .onUpdate(async (change, context) => {
     const userId = context.params.userId;

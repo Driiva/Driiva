@@ -76,7 +76,7 @@ export default function PolicyDownload({ userId, userData, policyNumber }: Polic
             </div>
             <div class="detail-row">
                 <span class="label">Annual Premium:</span>
-                <span class="value">£${userData?.premiumAmount || '1,840'}</span>
+                <span class="value">£${userData?.premiumAmount || '—'}</span>
             </div>
         </div>
 

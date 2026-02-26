@@ -43,9 +43,12 @@ exports.health = void 0;
 const functions = __importStar(require("firebase-functions"));
 const admin = __importStar(require("firebase-admin"));
 const types_1 = require("../types");
+const region_1 = require("../lib/region");
 const db = admin.firestore();
 const FIRESTORE_CHECK_TIMEOUT_MS = 5000;
-exports.health = functions.https.onRequest(async (req, res) => {
+exports.health = functions
+    .region(region_1.EUROPE_LONDON)
+    .https.onRequest(async (req, res) => {
     if (req.method !== 'GET') {
         res.status(405).set('Allow', 'GET').send();
         return;

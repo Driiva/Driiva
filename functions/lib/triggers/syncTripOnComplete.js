@@ -43,7 +43,9 @@ exports.syncTripOnComplete = void 0;
 const functions = __importStar(require("firebase-functions"));
 const types_1 = require("../types");
 const neon_1 = require("../lib/neon");
+const region_1 = require("../lib/region");
 exports.syncTripOnComplete = functions
+    .region(region_1.EUROPE_LONDON)
     .runWith({ secrets: ['DATABASE_URL'] })
     .firestore
     .document(`${types_1.COLLECTION_NAMES.TRIPS}/{tripId}`)

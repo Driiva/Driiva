@@ -47,8 +47,11 @@ exports.onPolicyWrite = void 0;
 const functions = __importStar(require("firebase-functions"));
 const admin = __importStar(require("firebase-admin"));
 const types_1 = require("../types");
+const region_1 = require("../lib/region");
 const db = admin.firestore();
-exports.onPolicyWrite = functions.firestore
+exports.onPolicyWrite = functions
+    .region(region_1.EUROPE_LONDON)
+    .firestore
     .document(`${types_1.COLLECTION_NAMES.POLICIES}/{policyId}`)
     .onWrite(async (change, context) => {
     const { policyId } = context.params;

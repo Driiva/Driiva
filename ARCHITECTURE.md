@@ -43,6 +43,7 @@ High‑level flow:
 | Layer                    | Technology                                                                      |
 | ------------------------ | ------------------------------------------------------------------------------- |
 | Frontend                 | React 18, TypeScript, Vite, Tailwind CSS, Framer Motion, Wouter, TanStack Query |
+| Animation system         | Framer Motion variants (`client/src/lib/animations.ts`); stagger, spring, layoutId transitions |
 | Maps                     | Leaflet (OpenStreetMap)                                                         |
 | Auth                     | Firebase Authentication (email/password + Google)                               |
 | Database                 | Cloud Firestore (NoSQL, real-time)                                              |
@@ -79,6 +80,7 @@ If you add a new service or folder that matters for architecture, update this se
   - `poolShare` – current community pool share
   - `recentTrips[]` – cached summary for dashboard
   - `fcmTokens`, `settings`
+  - `vehicle` – optional `VehicleInfo` (make, model, year, color, VIN); populated from onboarding
   - `createdBy` / `updatedBy` for audit
 
 - **`trips/{tripId}`**  
@@ -416,7 +418,7 @@ Keep this table honest. Investors and auditors screenshot this.
 
 | Layer / Component       | Status (Today)                 | Notes                                                    |
 |-------------------------|--------------------------------|----------------------------------------------------------|
-| React frontend          | Production MVP                 | Core flows live; design system maturing                  |
+| React frontend          | Production MVP                 | Core flows live; design system and animation polish production-ready |
 | Trip storage            | Production MVP                 | `tripPoints` + `trips` + `tripSegments`                  |
 | Classifier              | Production MVP                 | Python Stop‑Go; called via HTTP                          |
 | Scoring (0–100)         | Production MVP                 | Deterministic rules from GPS + events                    |

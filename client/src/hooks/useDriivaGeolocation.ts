@@ -99,8 +99,8 @@ export type UseDriivaGeolocationOptions = {
   pollIntervalMs?: number;
   /**
    * Discard readings whose accuracy radius exceeds this value.
-   * 50 m covers urban canyons without being overly aggressive.
-   * Raise to ~100 m in low-signal rural areas if needed.
+   * 25 m balances urban canyon filtering with signal availability.
+   * Raise to ~50 m in low-signal rural areas if needed.
    */
   minAccuracyMeters?: number;
   /**
@@ -173,7 +173,7 @@ export function useDriivaGeolocation(
 ): UseDriivaGeolocationResult {
   const {
     pollIntervalMs = 1_000,
-    minAccuracyMeters = 50,
+    minAccuracyMeters = 25,
     maxStationarySeconds = 30,
     highAccuracy = true,
     debug = false,

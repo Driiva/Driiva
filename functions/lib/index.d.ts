@@ -37,6 +37,7 @@ export { syncUserOnSignup } from './triggers/syncUserOnSignup';
 export { syncTripOnComplete } from './triggers/syncTripOnComplete';
 export { updateLeaderboards } from './scheduled/leaderboard';
 export { finalizePoolPeriod, recalculatePoolShares } from './scheduled/pool';
+export { sendWeeklySummary } from './scheduled/notifications';
 export { initializePool } from './http/admin';
 export { addPoolContribution, cancelTrip } from './http/admin';
 export { classifyTrip, batchClassifyTrips } from './http/classifier';
@@ -44,5 +45,6 @@ export { exportUserData, deleteUserAccount } from './http/gdpr';
 export { analyzeTripAI, getAIInsights } from './http/aiAnalysis';
 export { getInsuranceQuote, acceptInsuranceQuote, syncInsurancePolicy } from './http/insurance';
 export { calculateBetaEstimateForUser, onUserUpdateRecalcBetaEstimate, } from './http/betaEstimate';
+export { seedAchievements } from './http/achievements';
 export { health } from './http/health';
 //# sourceMappingURL=index.d.ts.map

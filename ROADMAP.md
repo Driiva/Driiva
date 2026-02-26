@@ -39,30 +39,31 @@
 
 ## Sprint: "Make It Polished" (Week 7–8)
 
-- [ ] Add push notifications (trip complete, score update, payment due)
+- [x] Add push notifications (trip complete, score update, payment due) — *done: FCM init in firebase.ts, firebase-messaging-sw.js service worker, usePushNotifications hook, Cloud Function triggers on trip complete + achievement unlock, sendWeeklySummary scheduled function (Mondays 9AM UK)*
 - [ ] Build service worker for offline/PWA support
 - [x] Fix dashboard map — was hardcoded to London; now requests device GPS on load, handles permission denied and GPS unavailable states gracefully
 - [x] Wire up profile page to real data — *done: Member since reads from Firestore createdAt; policyNumber never hardcoded; displayName falls back to fullName field; memberSince added to DashboardData*
-- [ ] Implement trip route visualisation on map (show the actual driven path, not just current position)
+- [x] Tier 3 animation polish (Revolut-level) — *done: ScoreRing radial gauge replaces flat bar; dashboard cards use container/item stagger variants; BottomNav has whileTap spring scale + layoutId sliding indicator; trip cards have whileHover lift; onboarding steps use scaleIn with elastic easing*
+- [x] Implement trip route visualisation on map (show the actual driven path, not just current position) — *done: TripRouteMap component with Polyline + start/end markers; TripDetail page at /trips/:tripId; trip cards clickable in trips list*
 - [ ] Phone usage detection for scoring
-- [ ] Build achievements backend
-- [ ] Weather API integration (currently returns null in trip context — affects isRushHour/isNightDriving accuracy)
+- [x] Build achievements backend — *done: 8 achievement definitions in functions/src/utils/achievements.ts; checkAndUnlockAchievements called after trip completion; Firestore collections (achievements/{id}, users/{uid}/achievements/{achId}); seedAchievements admin callable; frontend wired to real data*
+- [x] Weather API integration — *done: Open-Meteo archive API in functions/src/utils/weather.ts; maps WMO codes to clear/cloudy/rain/snow/fog/storm; 3s timeout + graceful null fallback; wired into both trip triggers in trips.ts*
 
 ## Remaining features not yet in any sprint
 
 These are known gaps that don't have tickets yet:
 
-- [ ] **Weather API** — trip context has a `weatherCondition` field that always returns `null`. Need to wire a weather API (e.g. Open-Meteo, free and no key required) to enrich trips with weather conditions at time of drive. Affects future AI analysis accuracy and could be used to weight scoring (e.g. driving well in rain is harder).
+- [x] **Weather API** — *done: Open-Meteo archive API (free, no key). `functions/src/utils/weather.ts` fetches WMO weather codes and maps to clear/cloudy/rain/snow/fog/storm. Wired into trip processing triggers. 3s timeout, graceful fallback to null.*
 - [ ] **Root Platform credentials** — scaffolded but not wired. Needs sandbox creds from Root to test quote → bind → policy flow. Once wired, the `/api/insurance` endpoints become live.
 - [ ] **Stripe wiring** — dependencies installed, tables exist, webhooks scaffolded. Premium payments and pool contributions not yet connected end-to-end.
-- [ ] **Profile page real data** — profile.tsx is a static/demo page. Needs to read from Firestore user document and allow editing name, phone, vehicle info.
-- [ ] **Trip route visualisation** — map currently shows current location only. Need to draw the driven GPS path as a polyline using the `tripPoints` collection after a trip completes.
+- [x] **Profile page real data** — *done: profile.tsx reads from useDashboardData hook; edit mode for name/phone/vehicle writes to Firestore via updateDoc; loading skeletons on every section; error state with retry*
+- [x] **Trip route visualisation** — TripRouteMap component + TripDetail page wired.
 - [ ] **Phone pickup detection** — scoring has a 10% weight for phone usage but it's hardcoded to 100 (no penalty). Needs accelerometer pattern recognition to detect phone pickups while driving.
-- [ ] **Push notifications** — FCM token fields exist on user documents, but no notification triggers are wired. Needs Cloud Functions to send on: trip complete, weekly score summary, refund available.
-- [ ] **Leaderboard rank recalculation** — the PostgreSQL leaderboard table inserts with `rank: 1` and doesn't recalculate ranks. Fine for now since rankings are served from Firestore (pre-computed by scheduled function), but the PG table is stale.
+- [x] **Push notifications** — FCM wired end-to-end: trip complete, achievement unlock, weekly summary.
+- [x] **Leaderboard rank recalculation** — Firestore scheduled function now filters weekly/monthly by lastTripAt period bounds and uses dense ranking for tied scores. PG table remains stale (not primary).
 - [x] GDPR data export — implemented GET /api/gdpr/export/:userId; returns JSON of all user data
 - [x] GDPR data delete — implemented DELETE /api/gdpr/delete/:userId; strictly rate-limited
-- [ ] **Achievements backend** — achievement criteria exist in the schema (`achievements` table) but the unlock logic isn't implemented. No Cloud Function checks trip completion against criteria.
+- [x] **Achievements backend** — 8 definitions, unlock logic in Cloud Functions, frontend wired to real Firestore data.
 - [ ] **WebAuthn/Passkey login** — `server/webauthn.ts` is scaffolded but not exposed as a real login flow in the frontend.
 - [ ] **Staging environment** — no Firebase staging project exists yet. Recommended before any production payments go live.
 

@@ -11,8 +11,7 @@ interface ScoreRingProps {
 
 function getScoreColor(score: number): { from: string; to: string } {
   if (score >= 80) return { from: '#10B981', to: '#06B6D4' };
-  if (score >= 70) return { from: '#3B82F6', to: '#8B5CF6' };
-  if (score >= 50) return { from: '#F59E0B', to: '#EF4444' };
+  if (score >= 60) return { from: '#F59E0B', to: '#D97706' };
   return { from: '#EF4444', to: '#DC2626' };
 }
 

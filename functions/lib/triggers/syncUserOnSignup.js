@@ -42,7 +42,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.syncUserOnSignup = void 0;
 const functions = __importStar(require("firebase-functions"));
 const neon_1 = require("../lib/neon");
+const region_1 = require("../lib/region");
 exports.syncUserOnSignup = functions
+    .region(region_1.EUROPE_LONDON)
     .runWith({ secrets: ['DATABASE_URL'] })
     .auth.user().onCreate(async (user) => {
     const { uid, email, displayName } = user;

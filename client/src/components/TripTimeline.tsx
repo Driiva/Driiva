@@ -49,8 +49,8 @@ const TripTimeline: React.FC<TripTimelineProps> = ({ trips }) => {
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 90) return 'text-[#10B981]';
-    if (score >= 80) return 'text-[#F59E0B]';
+    if (score >= 80) return 'text-[#10B981]';
+    if (score >= 60) return 'text-[#F59E0B]';
     return 'text-[#EF4444]';
   };
 

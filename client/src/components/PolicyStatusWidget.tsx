@@ -16,8 +16,8 @@ interface PolicyStatusWidgetProps {
 export default function PolicyStatusWidget({
   policyNumber,
   status = "Active",
-  premiumAmount = "1,840",
-  renewalDate = "Jul 01, 2026"
+  premiumAmount = "—",
+  renewalDate = "—"
 }: PolicyStatusWidgetProps) {
   const [isActive] = useState(status === "Active"); // Derive isActive from status prop
   const { toast } = useToast();

@@ -55,6 +55,7 @@ const admin = __importStar(require("firebase-admin"));
 const node_fetch_1 = __importDefault(require("node-fetch"));
 const auth_1 = require("./auth");
 const types_1 = require("../types");
+const region_1 = require("../lib/region");
 const db = admin.firestore();
 // Python classifier Cloud Function URL
 // Set via Firebase environment config: firebase functions:config:set classifier.url="https://..."
@@ -214,7 +215,9 @@ async function readTripPoints(tripId) {
  * @param data.tripId - The trip ID to classify
  * @returns Classification results
  */
-exports.classifyTrip = functions.https.onCall(async (data, context) => {
+exports.classifyTrip = functions
+    .region(region_1.EUROPE_LONDON)
+    .https.onCall(async (data, context) => {
     const userId = (0, auth_1.requireAuth)(context);
     // TODO: Rate limiting – e.g. max N classifyTrip calls per user per minute
     // Example: Firestore/Redis counter keyed by userId, reject if over threshold
@@ -271,7 +274,9 @@ exports.classifyTrip = functions.https.onCall(async (data, context) => {
  *
  * Admin-only. Reject unauthenticated with 401, non-admin with 403.
  */
-exports.batchClassifyTrips = functions.https.onCall(async (data, context) => {
+exports.batchClassifyTrips = functions
+    .region(region_1.EUROPE_LONDON)
+    .https.onCall(async (data, context) => {
     (0, auth_1.requireAuth)(context);
     (0, auth_1.requireAdmin)(context);
     // TODO: Rate limiting – e.g. max 1 batch job per admin per 5 minutes

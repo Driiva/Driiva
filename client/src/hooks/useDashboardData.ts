@@ -54,10 +54,21 @@ export interface DashboardTrip {
   duration: number; // minutes
 }
 
+export interface DashboardVehicle {
+  make: string;
+  model: string;
+  year: number;
+  color: string | null;
+  vin: string | null;
+}
+
 export interface DashboardData {
   // User Profile
   displayName: string;
   photoURL: string | null;
+  phoneNumber: string | null;
+  vehicle: DashboardVehicle | null;
+  email: string | null;
   
   // Driving Stats
   drivingScore: number;
@@ -114,6 +125,9 @@ export interface UseDashboardDataResult {
 const DEFAULT_DASHBOARD_DATA: DashboardData = {
   displayName: 'Driver',
   photoURL: null,
+  phoneNumber: null,
+  vehicle: null,
+  email: null,
   drivingScore: 100,
   scoreBreakdown: {
     speed: 100,
@@ -412,6 +426,9 @@ export function useDashboardData(userId: string | null): UseDashboardDataResult 
       // User Profile — prefer displayName, fall back to fullName (set by signup before Cloud Function runs)
       displayName: userDoc?.displayName || (userDoc as any)?.fullName || 'Driver',
       photoURL: userDoc?.photoURL || null,
+      phoneNumber: userDoc?.phoneNumber || null,
+      vehicle: (userDoc as any)?.vehicle ?? null,
+      email: userDoc?.email || null,
       
       // Driving Stats
       drivingScore: Math.round(profile.currentScore),

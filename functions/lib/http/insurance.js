@@ -55,6 +55,7 @@ exports.syncInsurancePolicy = exports.acceptInsuranceQuote = exports.getInsuranc
 const functions = __importStar(require("firebase-functions"));
 const admin = __importStar(require("firebase-admin"));
 const types_1 = require("../types");
+const region_1 = require("../lib/region");
 function getRootConfig() {
     const apiKey = process.env.ROOT_API_KEY;
     const apiUrl = process.env.ROOT_API_URL || 'https://api.rootplatform.com/v1/insurance';
@@ -112,7 +113,9 @@ const db = admin.firestore();
  * Input: { coverageType: 'basic' | 'standard' | 'premium' }
  * Output: { quoteId, premiumCents, billingAmountCents, expiresAt, coverageType }
  */
-exports.getInsuranceQuote = functions.https.onCall(async (data, context) => {
+exports.getInsuranceQuote = functions
+    .region(region_1.EUROPE_LONDON)
+    .https.onCall(async (data, context) => {
     // Auth check
     if (!context.auth) {
         throw new functions.https.HttpsError('unauthenticated', 'Must be signed in');
@@ -168,7 +171,9 @@ exports.getInsuranceQuote = functions.https.onCall(async (data, context) => {
  * Input: { quoteId: string }
  * Output: { policyId, policyNumber, status, monthlyPremiumCents }
  */
-exports.acceptInsuranceQuote = functions.https.onCall(async (data, context) => {
+exports.acceptInsuranceQuote = functions
+    .region(region_1.EUROPE_LONDON)
+    .https.onCall(async (data, context) => {
     if (!context.auth) {
         throw new functions.https.HttpsError('unauthenticated', 'Must be signed in');
     }
@@ -247,7 +252,9 @@ exports.acceptInsuranceQuote = functions.https.onCall(async (data, context) => {
  * Input: { policyId: string }
  * Output: Root policy details synced with local Firestore
  */
-exports.syncInsurancePolicy = functions.https.onCall(async (data, context) => {
+exports.syncInsurancePolicy = functions
+    .region(region_1.EUROPE_LONDON)
+    .https.onCall(async (data, context) => {
     if (!context.auth) {
         throw new functions.https.HttpsError('unauthenticated', 'Must be signed in');
     }

@@ -233,6 +233,12 @@ export function useTripLocationTracker(
       return;
     }
 
+    // Reject inaccurate readings (urban canyons, indoor, weak signal)
+    if (point.accuracy > 25) {
+      setState(prev => ({ ...prev, currentPosition: point }));
+      return;
+    }
+
     // Throttle by distance (if we have a previous point)
     if (lastPointRef.current) {
       const distance = calculateDistanceMeters(
@@ -241,6 +247,12 @@ export function useTripLocationTracker(
         point.latitude,
         point.longitude
       );
+
+      // Reject GPS spikes: derived speed > 80 m/s (~180 mph) is physically implausible
+      const dt = (point.timestamp - lastPointRef.current.timestamp) / 1000;
+      if (dt > 0 && distance / dt > 80) {
+        return;
+      }
 
       // Only record if moved enough
       if (distance < mergedOptions.minDistance) {

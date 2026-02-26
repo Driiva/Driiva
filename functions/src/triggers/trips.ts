@@ -28,6 +28,9 @@ import {
   getShareId,
   computeTripMetrics,
 } from '../utils/helpers';
+import { getWeatherForTrip } from '../utils/weather';
+import { checkAndUnlockAchievements, ACHIEVEMENT_DEFINITIONS } from '../utils/achievements';
+import { notifyTripComplete, notifyAchievementsUnlocked } from '../utils/notifications';
 import { classifyCompletedTrip } from '../http/classifier';
 import { analyzeTrip } from '../ai/tripAnalysis';
 import { EUROPE_LONDON } from '../lib/region';
@@ -91,6 +94,39 @@ function analyzeCompletedTripAsync(
 }
 
 /**
+ * Async wrapper for achievement checking + push notifications.
+ * Non-blocking: these are enhancements, not critical to trip completion.
+ */
+function checkAchievementsAsync(userId: string, trip: TripDocument, tripId: string): void {
+  (async () => {
+    try {
+      // Send trip-complete push notification
+      notifyTripComplete(userId, tripId, trip.score).catch(err =>
+        functions.logger.warn(`[Push] Trip-complete notification error:`, err),
+      );
+
+      // Check & unlock achievements
+      const userDoc = await db.collection(COLLECTION_NAMES.USERS).doc(userId).get();
+      if (!userDoc.exists) return;
+      const profile = (userDoc.data() as UserDocument).drivingProfile;
+      const unlocked = await checkAndUnlockAchievements(userId, profile, trip, tripId);
+
+      if (unlocked.length > 0) {
+        functions.logger.info(`[Achievements] Unlocked ${unlocked.length} for user ${userId}: ${unlocked.join(', ')}`);
+        const names = unlocked
+          .map(id => ACHIEVEMENT_DEFINITIONS.find(d => d.id === id)?.name)
+          .filter(Boolean) as string[];
+        notifyAchievementsUnlocked(userId, names).catch(err =>
+          functions.logger.warn(`[Push] Achievement notification error:`, err),
+        );
+      }
+    } catch (err) {
+      functions.logger.warn(`[Achievements] Non-blocking error for user ${userId}:`, err);
+    }
+  })();
+}
+
+/**
  * Triggered when a new trip is created
  * - Detects anomalies
  * - Enriches with context (night driving, rush hour)
@@ -98,6 +134,7 @@ function analyzeCompletedTripAsync(
  */
 export const onTripCreate = functions
   .region(EUROPE_LONDON)
+  .runWith({ minInstances: 1 })
   .firestore
   .document(`${COLLECTION_NAMES.TRIPS}/{tripId}`)
   .onCreate(async (snap, context) => {
@@ -125,9 +162,14 @@ export const onTripCreate = functions
         endLocation: trip.endLocation,
       });
 
-      // 2. Calculate context
+      // 2. Calculate context (weather fetch is best-effort, 3s timeout)
+      const weatherCondition = await getWeatherForTrip(
+        trip.startLocation.lat,
+        trip.startLocation.lng,
+        trip.startedAt.toDate(),
+      );
       const tripContext = {
-        weatherCondition: null, // TODO: Integrate weather API
+        weatherCondition,
         isNightDriving: isNightTime(trip.startedAt) || isNightTime(trip.endedAt),
         isRushHour: isRushHour(trip.startedAt),
       };
@@ -148,9 +190,10 @@ export const onTripCreate = functions
         flagged: anomalies.flaggedForReview
       });
 
-      // 5. If trip is completed (no anomalies), trigger profile update
+      // 5. If trip is completed (no anomalies), trigger profile update + achievements
       if (newStatus === 'completed') {
         await updateDriverProfileAndPoolShare(trip, tripId);
+        checkAchievementsAsync(trip.userId, trip, tripId);
       }
 
     } catch (error) {
@@ -174,6 +217,7 @@ export const onTripCreate = functions
  */
 export const onTripStatusChange = functions
   .region(EUROPE_LONDON)
+  .runWith({ minInstances: 1 })
   .firestore
   .document(`${COLLECTION_NAMES.TRIPS}/{tripId}`)
   .onUpdate(async (change, context) => {
@@ -215,6 +259,7 @@ export const onTripStatusChange = functions
       }
       
       await updateDriverProfileAndPoolShare(after, tripId);
+      checkAchievementsAsync(after.userId, after, tripId);
       
       // Trigger intelligent trip segmentation (async, non-blocking)
       classifyCompletedTripAsync(tripId, after);
@@ -285,9 +330,14 @@ async function finalizeTripFromPoints(
       endLocation: tripData.endLocation,
     });
     
-    // 4. Calculate context
+    // 4. Calculate context (weather fetch is best-effort, 3s timeout)
+    const weatherCondition = await getWeatherForTrip(
+      tripData.startLocation.lat,
+      tripData.startLocation.lng,
+      tripData.startedAt.toDate(),
+    );
     const tripContext = {
-      weatherCondition: null,
+      weatherCondition,
       isNightDriving: isNightTime(tripData.startedAt) || isNightTime(tripData.endedAt),
       isRushHour: isRushHour(tripData.startedAt),
     };
@@ -323,6 +373,7 @@ async function finalizeTripFromPoints(
       // Re-fetch the updated trip data
       const updatedTrip = (await tripRef.get()).data() as TripDocument;
       await updateDriverProfileAndPoolShare(updatedTrip, tripId);
+      checkAchievementsAsync(updatedTrip.userId, updatedTrip, tripId);
       
       // 8. Trigger intelligent trip segmentation (async, non-blocking)
       // This calls the Python Stop-Go-Classifier to detect stops and trip segments

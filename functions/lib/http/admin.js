@@ -48,12 +48,15 @@ const admin = __importStar(require("firebase-admin"));
 const types_1 = require("../types");
 const helpers_1 = require("../utils/helpers");
 const auth_1 = require("./auth");
+const region_1 = require("../lib/region");
 const db = admin.firestore();
 /**
  * Initialize community pool (admin only)
  * Call this once to set up the pool document
  */
-exports.initializePool = functions.https.onCall(async (data, context) => {
+exports.initializePool = functions
+    .region(region_1.EUROPE_LONDON)
+    .https.onCall(async (data, context) => {
     (0, auth_1.requireAuth)(context);
     (0, auth_1.requireAdmin)(context);
     // TODO: Rate limiting – e.g. allow at most 1 initializePool per project per hour
@@ -129,7 +132,9 @@ function getPoolPeriodDates(periodType) {
  * - Trip documents cannot be updated by clients (security rules: allow update: if false)
  * - Only the admin SDK can update trip status
  */
-exports.cancelTrip = functions.https.onCall(async (data, context) => {
+exports.cancelTrip = functions
+    .region(region_1.EUROPE_LONDON)
+    .https.onCall(async (data, context) => {
     const userId = (0, auth_1.requireAuth)(context);
     // TODO: Rate limiting – e.g. max N cancelTrip calls per user per minute
     // Example: increment counter in Firestore/Redis keyed by userId, reject if over threshold
@@ -194,7 +199,9 @@ exports.cancelTrip = functions.https.onCall(async (data, context) => {
  *
  * Authorization: userId is always context.auth.uid (no client-supplied userId).
  */
-exports.addPoolContribution = functions.https.onCall(async (data, context) => {
+exports.addPoolContribution = functions
+    .region(region_1.EUROPE_LONDON)
+    .https.onCall(async (data, context) => {
     const userId = (0, auth_1.requireAuth)(context);
     // TODO: Rate limiting – e.g. max N contributions per user per day, or per amount
     // Example: check Firestore/Redis for count in current period for userId

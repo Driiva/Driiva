@@ -27,7 +27,7 @@
 
 import { initializeApp, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth, GoogleAuthProvider, connectAuthEmulator } from 'firebase/auth';
-import { getFirestore, Firestore, enableIndexedDbPersistence, connectFirestoreEmulator } from 'firebase/firestore';
+import { getFirestore, Firestore, enableMultiTabIndexedDbPersistence, connectFirestoreEmulator } from 'firebase/firestore';
 import { getAnalytics, Analytics } from 'firebase/analytics';
 
 // ---------------------------------------------------------------------------
@@ -159,12 +159,10 @@ if (isFirebaseConfigured) {
       }
     }
 
-    // Offline persistence: queue writes when offline and sync when back online
-    enableIndexedDbPersistence(db).catch((err) => {
-      if (err.code === 'failed-precondition') {
-        console.warn('Firestore persistence: multiple tabs open, using cache in this tab only.');
-      } else if (err.code === 'unimplemented') {
-        console.warn('Firestore persistence not supported in this browser.');
+    // Multi-tab offline persistence: coordinates cache across browser tabs
+    enableMultiTabIndexedDbPersistence(db).catch((err) => {
+      if (err.code === 'unimplemented') {
+        console.warn('Firestore multi-tab persistence not supported in this browser.');
       } else {
         console.warn('Firestore persistence error:', err);
       }

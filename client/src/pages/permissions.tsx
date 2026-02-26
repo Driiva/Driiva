@@ -56,9 +56,14 @@ export default function Permissions() {
             description="Better data = fairer refund calculations"
           />
           <PermissionCard
+            icon="🔔"
+            title="Notifications"
+            description="So we can tell you when your trip is scored and when your refund is ready"
+          />
+          <PermissionCard
             icon="🔒"
             title="Your Privacy Protected"
-            description="Location data is encrypted and never sold"
+            description="Location data is encrypted and never sold. We don't track you 24/7."
           />
         </div>
       </motion.div>

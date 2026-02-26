@@ -14,6 +14,8 @@
 import { useState, lazy, Suspense, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'wouter';
+import { collection, doc, getDoc } from 'firebase/firestore';
+import { db, isFirebaseConfigured } from '@/lib/firebase';
 import { 
   Car, FileText, AlertCircle, TrendingUp, ChevronRight, 
   Bell, ChevronDown, MapPin, Users, Trophy, Target, 
@@ -26,6 +28,8 @@ import MapLoader from '../components/MapLoader';
 import { useDashboardData, DashboardData } from '@/hooks/useDashboardData';
 import { useCommunityData } from '@/hooks/useCommunityData';
 import { useBetaEstimate } from '@/hooks/useBetaEstimate';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { useToast } from '@/hooks/use-toast';
 import { BetaEstimateCard } from '@/components/BetaEstimateCard';
 import ScoreRing from '@/components/ScoreRing';
 import { container, item } from '@/lib/animations';
@@ -201,6 +205,15 @@ export default function Dashboard() {
   // Beta estimate (premium + refund)
   const { estimate: betaEstimate, loading: betaEstimateLoading, error: betaEstimateError, refresh: refreshBetaEstimate } = useBetaEstimate(firebaseUserId);
 
+  // Push notifications — opt-in prompt and foreground message handling
+  const { toast } = useToast();
+  const { permission: notificationPermission, requestPermission: requestNotificationPermission, loading: notificationLoading } = usePushNotifications({
+    userId: firebaseUserId,
+    onForegroundMessage: (payload: { title: string; body: string }) => {
+      toast({ title: payload.title, description: payload.body });
+    },
+  });
+
   // Handle logout — navigate FIRST to prevent ProtectedRoute from intercepting
   const handleLogout = () => {
     setShowDropdown(false);
@@ -268,6 +281,31 @@ export default function Dashboard() {
     ? demoUser.projectedRefund 
     : (dashboardData?.projectedRefund || calculateSurplus(drivingScore, premiumAmount));
 
+  // Fetch last trip's GPS points for the map polyline
+  const [lastTripRoutePoints, setLastTripRoutePoints] = useState<Array<{ lat: number; lng: number }>>([]);
+  useEffect(() => {
+    if (isDemoMode || !firebaseUserId || !isFirebaseConfigured || !db) return;
+    const lastTrip = dashboardData?.trips?.[0];
+    if (!lastTrip?.id) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const pointsDoc = await getDoc(doc(db, 'tripPoints', lastTrip.id));
+        if (cancelled || !pointsDoc.exists()) return;
+        const data = pointsDoc.data();
+        const points = (data?.points ?? []) as Array<{ lat: number; lng: number; t: number }>;
+        if (points.length >= 2) {
+          const sorted = [...points].sort((a, b) => a.t - b.t);
+          setLastTripRoutePoints(sorted.map((p) => ({ lat: p.lat, lng: p.lng })));
+        }
+      } catch (err) {
+        console.warn('[Dashboard] Failed to fetch last trip points for map:', err);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isDemoMode, firebaseUserId, dashboardData?.trips]);
+
   // Loading state — rely on AuthContext loading, not a separate check
   const isLoading = (!isDemoMode && !user) || (!isDemoMode && dataLoading && !dashboardData);
 
@@ -304,6 +342,27 @@ export default function Dashboard() {
   return (
     <PageWrapper>
       <div className="pb-24 text-white">
+        {/* Push notification opt-in — only when permission not yet asked/granted */}
+        {!isDemoMode && firebaseUserId && notificationPermission === 'default' && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-4 flex items-center justify-between gap-3 px-4 py-3 rounded-xl bg-white/5 border border-white/10"
+          >
+            <div className="flex items-center gap-2">
+              <Bell className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+              <span className="text-white/80 text-sm">Get notified when trips are scored and refunds are ready</span>
+            </div>
+            <button
+              onClick={() => requestNotificationPermission()}
+              disabled={notificationLoading}
+              className="shrink-0 px-3 py-1.5 rounded-lg bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-sm font-medium hover:bg-emerald-500/30 disabled:opacity-50"
+            >
+              {notificationLoading ? '…' : 'Enable'}
+            </button>
+          </motion.div>
+        )}
+
         {/* Email verification banner — soft prompt, not a hard block */}
         {user && user.emailVerified === false && (
           <motion.div
@@ -502,11 +561,15 @@ export default function Dashboard() {
             <MapPin className="w-5 h-5 text-emerald-400" />
           </div>
           <Suspense fallback={<MapLoader />}>
-            {/* No location prop — LeafletMap requests device GPS automatically */}
-            <LeafletMap className="border border-white/10" />
+            <LeafletMap
+              className="border border-white/10"
+              routePoints={lastTripRoutePoints.length >= 2 ? lastTripRoutePoints : undefined}
+            />
           </Suspense>
           <p className="text-white/40 text-xs mt-3 text-center">
-            Showing your current location
+            {lastTripRoutePoints.length >= 2
+              ? 'Toggle between your live location and last trip route'
+              : 'Showing your current location'}
           </p>
         </motion.div>
 
@@ -527,7 +590,7 @@ export default function Dashboard() {
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-white font-medium">{trip.from} → {trip.to}</span>
-                    <span className={`text-sm font-bold ${trip.score >= 90 ? 'text-emerald-400' : trip.score >= 80 ? 'text-blue-400' : 'text-amber-400'}`}>
+                    <span className={`text-sm font-bold ${trip.score >= 80 ? 'text-emerald-400' : trip.score >= 60 ? 'text-amber-400' : 'text-red-400'}`}>
                       {trip.score}
                     </span>
                   </div>
@@ -665,11 +728,19 @@ export default function Dashboard() {
                 className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 rounded-full"
               />
             </div>
-            {isNewUser && (
+            {isNewUser ? (
               <p className="text-white/50 text-xs text-center mt-2">
                 Drive safely to unlock refunds up to 15% of your premium!
               </p>
-            )}
+            ) : surplusProjection > 0 ? (
+              <p className="text-emerald-300/70 text-xs text-center mt-2">
+                You're on track for £{surplusProjection} back this period. Refunds are calculated at the end of each period.
+              </p>
+            ) : drivingScore < 70 ? (
+              <p className="text-amber-300/70 text-xs text-center mt-2">
+                Score 70+ to qualify for a refund. Keep driving safely!
+              </p>
+            ) : null}
           </div>
         </motion.div>
 

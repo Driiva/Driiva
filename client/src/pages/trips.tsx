@@ -15,7 +15,7 @@ import { motion } from "framer-motion";
 import { useLocation } from "wouter";
 import { PageWrapper } from '../components/PageWrapper';
 import { BottomNav } from '../components/BottomNav';
-import { Map, Car, AlertCircle, Loader2, Play, Navigation, RefreshCw, ChevronLeft } from "lucide-react";
+import { Map, Car, AlertCircle, Play, Navigation, RefreshCw, ChevronLeft } from "lucide-react";
 import { useAuth } from '../contexts/AuthContext';
 import { getUserTrips } from '@/lib/firestore';
 import type { TripDocument } from '../../../shared/firestore-types';
@@ -93,9 +93,9 @@ function locationLabel(loc: TripDocument['startLocation']): string {
 }
 
 function getScoreColor(score: number): string {
-  if (score >= 90) return 'text-emerald-400';
-  if (score >= 80) return 'text-blue-400';
-  return 'text-amber-400';
+  if (score >= 80) return 'text-emerald-400';
+  if (score >= 60) return 'text-amber-400';
+  return 'text-red-400';
 }
 
 // ============================================================================
@@ -220,11 +220,34 @@ export default function Trips() {
           </motion.div>
         )}
 
-        {/* Loading state */}
+        {/* Loading skeleton */}
         {loading && (
-          <div className="dashboard-glass-card flex flex-col items-center justify-center py-16">
-            <Loader2 className="w-8 h-8 text-white/40 animate-spin mb-4" />
-            <p className="text-white/50 text-sm">Loading your trips...</p>
+          <div className="space-y-3">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="dashboard-glass-card p-5 animate-pulse">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 bg-white/10 rounded-xl" />
+                    <div>
+                      <div className="h-4 w-32 bg-white/10 rounded mb-2" />
+                      <div className="h-3 w-24 bg-white/10 rounded" />
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="h-6 w-8 bg-white/10 rounded mb-1" />
+                    <div className="h-3 w-12 bg-white/10 rounded" />
+                  </div>
+                </div>
+                <div className="mt-4 pt-3 border-t border-white/5 grid grid-cols-3 gap-3">
+                  {[1, 2, 3].map(j => (
+                    <div key={j} className="text-center">
+                      <div className="h-3 w-12 bg-white/10 rounded mx-auto mb-1" />
+                      <div className="h-4 w-6 bg-white/10 rounded mx-auto" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
@@ -351,7 +374,8 @@ export default function Trips() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.05 * index, duration: 0.4 }}
-                  className="dashboard-glass-card p-5"
+                  className="dashboard-glass-card p-5 cursor-pointer active:scale-[0.98] transition-transform"
+                  onClick={() => setLocation(`/trips/${trip.tripId}`)}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center space-x-3">

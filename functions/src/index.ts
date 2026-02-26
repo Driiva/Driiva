@@ -53,6 +53,7 @@ export { syncTripOnComplete } from './triggers/syncTripOnComplete';
 
 export { updateLeaderboards } from './scheduled/leaderboard';
 export { finalizePoolPeriod, recalculatePoolShares } from './scheduled/pool';
+export { sendWeeklySummary } from './scheduled/notifications';
 
 // ============================================================================
 // HTTP CALLABLE FUNCTIONS
@@ -81,6 +82,9 @@ export {
   calculateBetaEstimateForUser,
   onUserUpdateRecalcBetaEstimate,
 } from './http/betaEstimate';
+
+// Achievements: seed definitions (admin)
+export { seedAchievements } from './http/achievements';
 
 // ============================================================================
 // HTTP REQUEST (PUBLIC) — Uptime monitoring

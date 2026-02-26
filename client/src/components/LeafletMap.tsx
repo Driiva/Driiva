@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { useState, useEffect, useMemo } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -16,13 +16,45 @@ interface LocationData {
   label?: string;
 }
 
+interface RoutePoint {
+  lat: number;
+  lng: number;
+}
+
 interface LeafletMapProps {
-  /** If provided, the map centres on this fixed location (e.g. trip start point).
-   *  If omitted the map will request and track the device's real GPS position. */
   location?: LocationData;
+  routePoints?: RoutePoint[];
   onLocationChange?: (lat: number, lng: number) => void;
   className?: string;
 }
+
+const customIcon = new L.Icon({
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
+const startIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
+const endIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
 
 function MapUpdater({ location }: { location: LocationData }) {
   const map = useMap();
@@ -36,31 +68,33 @@ function MapUpdater({ location }: { location: LocationData }) {
   return null;
 }
 
-const customIcon = new L.Icon({
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
+function FitBounds({ positions }: { positions: L.LatLngExpression[] }) {
+  const map = useMap();
 
-const LeafletMap = ({ location, onLocationChange, className }: LeafletMapProps) => {
-  // Resolved location shown on the map
+  useMemo(() => {
+    if (positions.length < 2) return;
+    const bounds = L.latLngBounds(positions);
+    map.fitBounds(bounds, { padding: [40, 40], maxZoom: 16 });
+  }, [positions, map]);
+
+  return null;
+}
+
+const LeafletMap = ({ location, routePoints, onLocationChange, className }: LeafletMapProps) => {
+  const hasRoute = routePoints && routePoints.length >= 2;
+  const [mode, setMode] = useState<'live' | 'lastTrip'>(hasRoute ? 'live' : 'live');
+
   const [currentLocation, setCurrentLocation] = useState<LocationData | null>(location ?? null);
   const [geoStatus, setGeoStatus] = useState<'idle' | 'loading' | 'granted' | 'denied' | 'unavailable'>('idle');
 
-  // If a fixed location prop was passed, always use it
   useEffect(() => {
     if (location) {
       setCurrentLocation(location);
     }
   }, [location]);
 
-  // If no fixed location prop, request the device's real GPS position
   useEffect(() => {
-    if (location) return; // Prop takes priority
+    if (location) return;
 
     if (!navigator.geolocation) {
       setGeoStatus('unavailable');
@@ -93,8 +127,20 @@ const LeafletMap = ({ location, onLocationChange, className }: LeafletMapProps) 
     return () => navigator.geolocation.clearWatch(watchId);
   }, [location, onLocationChange]);
 
-  // Still waiting for first GPS fix
-  if (!currentLocation) {
+  const routePositions: L.LatLngExpression[] = useMemo(
+    () => (routePoints ?? []).map((p) => [p.lat, p.lng] as [number, number]),
+    [routePoints],
+  );
+
+  const showRoute = mode === 'lastTrip' && routePositions.length >= 2;
+
+  const mapCenter: [number, number] = showRoute
+    ? (routePositions[0] as [number, number])
+    : currentLocation
+      ? [currentLocation.lat, currentLocation.lng]
+      : [51.505, -0.09];
+
+  if (!showRoute && !currentLocation) {
     return (
       <div
         className={`flex items-center justify-center bg-[#1a1a2e]/50 rounded-xl ${className}`}
@@ -126,8 +172,33 @@ const LeafletMap = ({ location, onLocationChange, className }: LeafletMapProps) 
 
   return (
     <div className={`rounded-xl overflow-hidden ${className}`}>
+      {hasRoute && (
+        <div className="flex bg-[#1a1a2e]/80 border-b border-white/10">
+          <button
+            onClick={() => setMode('live')}
+            className={`flex-1 py-2 text-xs font-medium transition-colors min-h-[36px] ${
+              mode === 'live'
+                ? 'text-emerald-400 bg-emerald-500/10 border-b-2 border-emerald-400'
+                : 'text-white/50 hover:text-white/70'
+            }`}
+          >
+            Live
+          </button>
+          <button
+            onClick={() => setMode('lastTrip')}
+            className={`flex-1 py-2 text-xs font-medium transition-colors min-h-[36px] ${
+              mode === 'lastTrip'
+                ? 'text-emerald-400 bg-emerald-500/10 border-b-2 border-emerald-400'
+                : 'text-white/50 hover:text-white/70'
+            }`}
+          >
+            Last Trip
+          </button>
+        </div>
+      )}
+
       <MapContainer
-        center={[currentLocation.lat, currentLocation.lng]}
+        center={mapCenter}
         zoom={14}
         style={{ height: '300px', width: '100%' }}
         scrollWheelZoom={false}
@@ -136,14 +207,33 @@ const LeafletMap = ({ location, onLocationChange, className }: LeafletMapProps) 
           url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         />
-        <MapUpdater location={currentLocation} />
-        <Marker position={[currentLocation.lat, currentLocation.lng]} icon={customIcon}>
-          <Popup>
-            <span className="text-sm font-bold text-gray-700">
-              {currentLocation.label || 'Your Location'}
-            </span>
-          </Popup>
-        </Marker>
+
+        {showRoute ? (
+          <>
+            <FitBounds positions={routePositions} />
+            <Polyline
+              positions={routePositions}
+              pathOptions={{ color: '#10b981', weight: 4, opacity: 0.85 }}
+            />
+            <Marker position={routePositions[0]} icon={startIcon}>
+              <Popup><span className="text-sm font-bold text-gray-700">Start</span></Popup>
+            </Marker>
+            <Marker position={routePositions[routePositions.length - 1]} icon={endIcon}>
+              <Popup><span className="text-sm font-bold text-gray-700">End</span></Popup>
+            </Marker>
+          </>
+        ) : currentLocation ? (
+          <>
+            <MapUpdater location={currentLocation} />
+            <Marker position={[currentLocation.lat, currentLocation.lng]} icon={customIcon}>
+              <Popup>
+                <span className="text-sm font-bold text-gray-700">
+                  {currentLocation.label || 'Your Location'}
+                </span>
+              </Popup>
+            </Marker>
+          </>
+        ) : null}
       </MapContainer>
     </div>
   );

@@ -42,12 +42,15 @@ exports.onPoolShareWrite = void 0;
 const functions = __importStar(require("firebase-functions"));
 const admin = __importStar(require("firebase-admin"));
 const types_1 = require("../types");
+const region_1 = require("../lib/region");
 const db = admin.firestore();
 /**
  * Triggered when a pool share is created or updated
  * Syncs pool share summary to user document
  */
-exports.onPoolShareWrite = functions.firestore
+exports.onPoolShareWrite = functions
+    .region(region_1.EUROPE_LONDON)
+    .firestore
     .document(`${types_1.COLLECTION_NAMES.POOL_SHARES}/{shareId}`)
     .onWrite(async (change, context) => {
     const shareId = context.params.shareId;

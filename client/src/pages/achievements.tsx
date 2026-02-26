@@ -11,17 +11,31 @@ import {
   Zap, 
   Star,
   Lock,
-  CheckCircle2
+  CheckCircle2,
+  Flame,
+  Route,
+  Moon,
+  Gauge,
+  Award,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { PageWrapper } from "../components/PageWrapper";
 import { BottomNav } from "../components/BottomNav";
+import { useAuth } from "@/contexts/AuthContext";
+import { getAchievementDefinitions, getUserAchievements } from "@/lib/firestore";
+import type { AchievementDef, UserAchievementRecord } from "@/lib/firestore";
+import { isFirebaseConfigured } from "@/lib/firebase";
 
 /**
  * ACHIEVEMENTS PAGE
  * -----------------
- * Displays user achievements for both real users and demo mode.
- * Demo mode shows mock achievements; real users fetch from backend.
+ * Displays user achievements. Reads definitions + user unlock records from
+ * Firestore for authenticated users; falls back to demo data.
  */
+
+const ICON_MAP: Record<string, LucideIcon> = {
+  Car, Shield, Target, Users, Zap, Star, Flame, Route, Moon, Gauge, Award, Trophy,
+};
 
 interface Achievement {
   id: string;
@@ -36,6 +50,31 @@ interface Achievement {
   progress?: number;
   maxProgress?: number;
   category: 'safety' | 'community' | 'refund' | 'milestone';
+}
+
+const CATEGORY_STYLES: Record<string, { color: string; bgColor: string; borderColor: string }> = {
+  safety:    { color: 'text-blue-400',    bgColor: 'from-blue-500/20 to-blue-600/20',    borderColor: 'border-blue-500/30' },
+  community: { color: 'text-pink-400',    bgColor: 'from-pink-500/20 to-pink-600/20',    borderColor: 'border-pink-500/30' },
+  refund:    { color: 'text-cyan-400',    bgColor: 'from-cyan-500/20 to-cyan-600/20',    borderColor: 'border-cyan-500/30' },
+  milestone: { color: 'text-emerald-400', bgColor: 'from-emerald-500/20 to-emerald-600/20', borderColor: 'border-emerald-500/30' },
+};
+
+function defToAchievement(
+  def: AchievementDef,
+  unlockRecord: UserAchievementRecord | undefined,
+): Achievement {
+  const style = CATEGORY_STYLES[def.category] ?? CATEGORY_STYLES.milestone;
+  return {
+    id: def.id,
+    title: def.name,
+    description: def.description,
+    icon: ICON_MAP[def.icon] ?? Trophy,
+    ...style,
+    unlocked: !!unlockRecord,
+    unlockedDate: unlockRecord?.unlockedAt?.toDate?.()?.toISOString(),
+    maxProgress: def.maxProgress ?? undefined,
+    category: def.category,
+  };
 }
 
 // Demo achievements data
@@ -169,6 +208,7 @@ const categoryColors: Record<string, string> = {
 
 export default function Achievements() {
   const [, setLocation] = useLocation();
+  const { user } = useAuth();
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -178,17 +218,47 @@ export default function Achievements() {
     const demoModeActive = localStorage.getItem('driiva-demo-mode') === 'true';
     
     if (demoModeActive) {
-      // Demo mode: use mock achievements
       setIsDemoMode(true);
       setAchievements(DEMO_ACHIEVEMENTS);
       setLoading(false);
-    } else {
-      // Real user: would fetch from backend
-      // For now, show empty achievements (can be enhanced with real API)
+      return;
+    }
+
+    if (!user?.id || !isFirebaseConfigured) {
       setAchievements(EMPTY_ACHIEVEMENTS);
       setLoading(false);
+      return;
     }
-  }, []);
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const [defs, userRecords] = await Promise.all([
+          getAchievementDefinitions(),
+          getUserAchievements(user.id),
+        ]);
+
+        if (cancelled) return;
+
+        const unlockMap = new Map(userRecords.map(r => [r.achievementId, r]));
+
+        if (defs.length > 0) {
+          setAchievements(defs.map(d => defToAchievement(d, unlockMap.get(d.id))));
+        } else {
+          // Definitions not yet seeded — fall back to empty demo-shaped list
+          setAchievements(EMPTY_ACHIEVEMENTS);
+        }
+      } catch (err) {
+        console.error('[Achievements] Failed to load:', err);
+        setAchievements(EMPTY_ACHIEVEMENTS);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [user?.id]);
 
   const filteredAchievements = selectedCategory
     ? achievements.filter(a => a.category === selectedCategory)
@@ -200,9 +270,31 @@ export default function Achievements() {
   if (loading) {
     return (
       <PageWrapper>
-        <div className="flex items-center justify-center min-h-[80vh]">
-          <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin" />
+        <div className="pb-24 text-white animate-pulse">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-8 h-8 bg-white/10 rounded-full" />
+            <div className="h-7 w-40 bg-white/10 rounded" />
+          </div>
+          <div className="grid grid-cols-4 gap-3 mb-6">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="h-10 bg-white/10 rounded-xl" />
+            ))}
+          </div>
+          <div className="space-y-4">
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} className="dashboard-glass-card p-5">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-white/10 rounded-xl" />
+                  <div className="flex-1">
+                    <div className="h-4 w-32 bg-white/10 rounded mb-2" />
+                    <div className="h-3 w-48 bg-white/10 rounded" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
+        <BottomNav />
       </PageWrapper>
     );
   }

@@ -28,6 +28,7 @@ const PolicyPage = lazy(() => import('./pages/policy'));
 const Terms = lazy(() => import('./pages/terms'));
 const Privacy = lazy(() => import('./pages/privacy'));
 const Achievements = lazy(() => import('./pages/achievements'));
+const TripDetail = lazy(() => import('./pages/trip-detail'));
 const ForgotPassword = lazy(() => import('./pages/forgot-password'));
 const VerifyEmail = lazy(() => import('./pages/verify-email'));
 
@@ -123,6 +124,9 @@ function AppContent() {
           {/* Protected routes - require authentication */}
           <Route path="/dashboard">
             <ProtectedRoute><Dashboard /></ProtectedRoute>
+          </Route>
+          <Route path="/trips/:tripId">
+            <ProtectedRoute><TripDetail /></ProtectedRoute>
           </Route>
           <Route path="/trips">
             <ProtectedRoute><Trips /></ProtectedRoute>

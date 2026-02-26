@@ -1,30 +1,51 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
+import { doc, updateDoc, Timestamp } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { PageWrapper } from '../components/PageWrapper';
 import { BottomNav } from '../components/BottomNav';
 import PolicyDownload from "@/components/PolicyDownload";
 import ExportDataButton from "@/components/ExportDataButton";
 import DeleteAccount from "@/components/DeleteAccount";
-import { ChevronDown, Bell } from "lucide-react";
+import { ChevronDown, Bell, Pencil, Check, X, Loader2 } from "lucide-react";
 import { timing, easing } from "@/lib/animations";
 import { useAuth } from '../contexts/AuthContext';
 import { useDashboardData } from '@/hooks/useDashboardData';
 
-function DetailRow({ label, value }: { label: string; value: string }) {
+function Skeleton({ className = "" }: { className?: string }) {
+  return (
+    <div className={`animate-pulse bg-white/[0.08] rounded ${className}`} />
+  );
+}
+
+function DetailRow({ label, value, loading }: { label: string; value: string; loading?: boolean }) {
   return (
     <div className="flex items-center justify-between py-2">
       <span className="text-sm text-white/60">{label}</span>
-      <span className="text-sm font-medium text-white text-right">{value}</span>
+      {loading ? (
+        <Skeleton className="h-4 w-28" />
+      ) : (
+        <span className="text-sm font-medium text-white text-right">{value}</span>
+      )}
     </div>
   );
 }
 
-function StatCard({ value, label }: { value: string | number; label: string }) {
+function StatCard({ value, label, loading }: { value: string | number; label: string; loading?: boolean }) {
   return (
     <div className="backdrop-blur-xl bg-white/[0.03] border border-white/[0.05] rounded-xl p-4 text-center">
-      <p className="text-2xl font-bold text-white mb-1">{value}</p>
-      <p className="text-xs text-white/50">{label}</p>
+      {loading ? (
+        <>
+          <Skeleton className="h-7 w-12 mx-auto mb-2" />
+          <Skeleton className="h-3 w-16 mx-auto" />
+        </>
+      ) : (
+        <>
+          <p className="text-2xl font-bold text-white mb-1">{value}</p>
+          <p className="text-xs text-white/50">{label}</p>
+        </>
+      )}
     </div>
   );
 }
@@ -41,9 +62,19 @@ function PolicyFeature({ icon, title, description }: { icon: string; title: stri
   );
 }
 
-function CoverageTypeSection({ currentScore }: { currentScore: number }) {
+function CoverageTypeSection({ currentScore, coverageType, premiumAmount, loading }: { currentScore: number; coverageType: string | null; premiumAmount: number; loading?: boolean }) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const projectedRefund = ((currentScore - 70) / 30 * 10 + 5) / 100 * 1840;
+  const projectedRefund = currentScore >= 70 && premiumAmount > 0
+    ? ((currentScore - 70) / 30 * 10 + 5) / 100 * premiumAmount
+    : 0;
+
+  if (loading) {
+    return (
+      <div className="backdrop-blur-xl bg-white/[0.04] border border-white/[0.08] rounded-2xl p-4">
+        <Skeleton className="h-5 w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="backdrop-blur-xl bg-white/[0.04] border border-white/[0.08] rounded-2xl overflow-hidden">
@@ -53,7 +84,7 @@ function CoverageTypeSection({ currentScore }: { currentScore: number }) {
       >
         <span className="text-sm text-white/60">Coverage Type</span>
         <div className="flex items-center gap-2">
-          <span className="text-emerald-400 font-medium">Comprehensive Plus</span>
+          <span className="text-emerald-400 font-medium">{coverageType ?? 'Not active'}</span>
           <motion.div
             animate={{ rotate: isExpanded ? 180 : 0 }}
             transition={{ duration: 0.2 }}
@@ -104,15 +135,17 @@ function CoverageTypeSection({ currentScore }: { currentScore: number }) {
                 </div>
               </div>
 
-              <div className="mt-4 flex items-start gap-2 p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
-                <span className="text-base">ℹ️</span>
-                <div>
-                  <p className="text-xs text-emerald-300 font-medium mb-1">Policy Benefits</p>
-                  <p className="text-xs text-emerald-200/70">
-                    Your safe driving score of {currentScore} could reduce your premium by up to £{projectedRefund.toFixed(2)} at renewal.
-                  </p>
+              {currentScore >= 70 && (
+                <div className="mt-4 flex items-start gap-2 p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
+                  <span className="text-base">ℹ️</span>
+                  <div>
+                    <p className="text-xs text-emerald-300 font-medium mb-1">Policy Benefits</p>
+                    <p className="text-xs text-emerald-200/70">
+                      Your safe driving score of {currentScore} could reduce your premium by up to £{projectedRefund.toFixed(2)} at renewal.
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </motion.div>
         )}
@@ -121,15 +154,90 @@ function CoverageTypeSection({ currentScore }: { currentScore: number }) {
   );
 }
 
+interface EditableFields {
+  displayName: string;
+  phoneNumber: string;
+  vehicleMake: string;
+  vehicleModel: string;
+  vehicleYear: string;
+}
+
 export default function Profile() {
   const [, setLocation] = useLocation();
   const { user, logout } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
   const [locationTracking, setLocationTracking] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
-  // Real-time Firestore data (same hook as dashboard)
-  const { data: dashboardData } = useDashboardData(user?.id ?? null);
+  const { data: dashboardData, loading, error, refresh } = useDashboardData(user?.id ?? null);
+
+  const [editFields, setEditFields] = useState<EditableFields>({
+    displayName: '',
+    phoneNumber: '',
+    vehicleMake: '',
+    vehicleModel: '',
+    vehicleYear: '',
+  });
+
+  const startEditing = useCallback(() => {
+    setEditFields({
+      displayName: dashboardData?.displayName || user?.name || '',
+      phoneNumber: dashboardData?.phoneNumber || '',
+      vehicleMake: dashboardData?.vehicle?.make || '',
+      vehicleModel: dashboardData?.vehicle?.model || '',
+      vehicleYear: dashboardData?.vehicle?.year ? String(dashboardData.vehicle.year) : '',
+    });
+    setSaveError(null);
+    setIsEditing(true);
+  }, [dashboardData, user]);
+
+  const cancelEditing = useCallback(() => {
+    setIsEditing(false);
+    setSaveError(null);
+  }, []);
+
+  const saveChanges = useCallback(async () => {
+    if (!user?.id || !db) return;
+    setSaving(true);
+    setSaveError(null);
+
+    try {
+      const userRef = doc(db, 'users', user.id);
+      const updates: Record<string, any> = {
+        updatedAt: Timestamp.now(),
+        updatedBy: user.id,
+      };
+
+      if (editFields.displayName.trim()) {
+        updates.displayName = editFields.displayName.trim();
+      }
+      if (editFields.phoneNumber.trim()) {
+        updates.phoneNumber = editFields.phoneNumber.trim();
+      }
+      if (editFields.vehicleMake.trim() || editFields.vehicleModel.trim() || editFields.vehicleYear.trim()) {
+        const yearNum = parseInt(editFields.vehicleYear, 10);
+        updates.vehicle = {
+          make: editFields.vehicleMake.trim() || null,
+          model: editFields.vehicleModel.trim() || null,
+          year: !isNaN(yearNum) && yearNum > 1900 && yearNum <= new Date().getFullYear() + 1 ? yearNum : null,
+          color: null,
+          vin: null,
+        };
+      }
+
+      await updateDoc(userRef, updates);
+      setIsEditing(false);
+      refresh();
+    } catch (err) {
+      console.error('[Profile] Save error:', err);
+      setSaveError('Failed to save changes. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  }, [user, editFields, refresh]);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -144,7 +252,6 @@ export default function Profile() {
     logout();
   };
 
-  // Derive display values from real data
   const firstName = user?.name?.split(' ')[0] ?? '';
   const lastName = user?.name?.split(' ').slice(1).join(' ') ?? '';
   const initials = firstName && lastName
@@ -159,11 +266,27 @@ export default function Profile() {
   const premiumAmount = dashboardData?.premiumAmount
     ? dashboardData.premiumAmount.toFixed(2)
     : '—';
-  // Only show a real policy number — never show a hardcoded placeholder
   const policyNumber = dashboardData?.policyNumber ?? '—';
   const scoreBreakdown = dashboardData?.scoreBreakdown;
-  // Real account creation date from Firestore (e.g. "January 2025")
   const memberSince = dashboardData?.memberSince ?? '—';
+
+  if (error && !dashboardData) {
+    return (
+      <PageWrapper>
+        <div className="pb-24 text-white flex flex-col items-center justify-center min-h-[60vh] gap-4">
+          <span className="text-4xl">⚠️</span>
+          <p className="text-white/70 text-sm font-medium">Something went wrong loading your profile.</p>
+          <button
+            onClick={refresh}
+            className="px-4 py-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-xl text-sm font-medium hover:bg-emerald-500/30 transition-colors min-h-[44px]"
+          >
+            Try Again
+          </button>
+        </div>
+        <BottomNav />
+      </PageWrapper>
+    );
+  }
 
   return (
     <PageWrapper>
@@ -175,7 +298,6 @@ export default function Profile() {
           transition={{ duration: 0.5 }}
           className="flex items-start justify-between"
         >
-          {/* Left side - Logo and greeting */}
           <div className="flex items-start gap-3">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/30 to-purple-700/30 border border-white/10 flex items-center justify-center overflow-hidden">
               <img src="/logo.png" alt="Driiva" className="w-full h-full object-cover" />
@@ -186,7 +308,6 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Right side - Bell and avatar with dropdown */}
           <div className="flex items-center gap-3 relative">
             <button className="p-2 rounded-full hover:bg-white/5 transition-colors">
               <Bell className="w-5 h-5 text-white/60" />
@@ -202,7 +323,6 @@ export default function Profile() {
               <ChevronDown className={`w-4 h-4 text-white/50 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
             </button>
 
-            {/* Dropdown Menu */}
             <AnimatePresence>
               {showDropdown && (
                 <>
@@ -239,7 +359,47 @@ export default function Profile() {
           </div>
         </motion.div>
 
-        <h2 className="text-2xl font-bold text-white">Profile</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-white">Profile</h2>
+          {!isEditing ? (
+            <button
+              onClick={startEditing}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white/60 hover:text-white hover:bg-white/5 rounded-lg transition-colors min-h-[44px]"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+              Edit
+            </button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={cancelEditing}
+                disabled={saving}
+                className="flex items-center gap-1 px-3 py-1.5 text-sm text-white/50 hover:text-white rounded-lg transition-colors min-h-[44px]"
+              >
+                <X className="w-3.5 h-3.5" />
+                Cancel
+              </button>
+              <button
+                onClick={saveChanges}
+                disabled={saving}
+                className="flex items-center gap-1 px-3 py-1.5 text-sm text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg hover:bg-emerald-500/20 transition-colors min-h-[44px] disabled:opacity-50"
+              >
+                {saving ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Check className="w-3.5 h-3.5" />
+                )}
+                Save
+              </button>
+            </div>
+          )}
+        </div>
+
+        {saveError && (
+          <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-sm text-red-300">
+            {saveError}
+          </div>
+        )}
 
         <div className="backdrop-blur-xl bg-white/[0.04] border border-white/[0.08] rounded-2xl p-6">
           <div className="flex flex-col items-center text-center mb-6">
@@ -250,17 +410,41 @@ export default function Profile() {
                 boxShadow: '0 0 20px rgba(16, 185, 129, 0.15), inset 0 0 20px rgba(16, 185, 129, 0.1)'
               }}
             >
-              <span className="text-2xl font-semibold text-white/80">{initials.toUpperCase()}</span>
+              {loading ? (
+                <Skeleton className="w-10 h-6 rounded" />
+              ) : (
+                <span className="text-2xl font-semibold text-white/80">{initials.toUpperCase()}</span>
+              )}
             </div>
-            <h2 className="text-xl font-semibold text-white mb-1">
-              {user?.name || user?.email?.split('@')[0] || 'Driver'}
-            </h2>
-            <p className="text-sm text-white/50">{user?.email || '—'}</p>
+            {loading ? (
+              <>
+                <Skeleton className="h-6 w-36 mb-2" />
+                <Skeleton className="h-4 w-48" />
+              </>
+            ) : isEditing ? (
+              <>
+                <input
+                  type="text"
+                  value={editFields.displayName}
+                  onChange={(e) => setEditFields(f => ({ ...f, displayName: e.target.value }))}
+                  className="text-xl font-semibold text-white mb-1 bg-white/[0.06] border border-white/10 rounded-lg px-3 py-1.5 text-center w-48 focus:outline-none focus:border-emerald-500/50"
+                  placeholder="Your name"
+                />
+                <p className="text-sm text-white/50">{user?.email || '—'}</p>
+              </>
+            ) : (
+              <>
+                <h2 className="text-xl font-semibold text-white mb-1">
+                  {dashboardData?.displayName || user?.name || user?.email?.split('@')[0] || 'Driver'}
+                </h2>
+                <p className="text-sm text-white/50">{user?.email || '—'}</p>
+              </>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <StatCard value={totalTrips === 0 ? '—' : currentScore} label="Current Score" />
-            <StatCard value={totalTrips} label="Total Trips" />
+            <StatCard value={totalTrips === 0 ? '—' : currentScore} label="Current Score" loading={loading} />
+            <StatCard value={totalTrips} label="Total Trips" loading={loading} />
           </div>
         </div>
 
@@ -271,27 +455,107 @@ export default function Profile() {
           </h3>
 
           <div className="space-y-1">
-            <DetailRow label="Email" value={user?.email || '—'} />
-            <DetailRow label="Phone" value="—" />
-            <DetailRow label="Premium" value={premiumAmount !== '—' ? `£${premiumAmount}` : '—'} />
-            <DetailRow label="Policy Number" value={policyNumber} />
-            <DetailRow label="Member since" value={memberSince} />
+            <DetailRow label="Email" value={user?.email || '—'} loading={loading} />
+
+            {isEditing ? (
+              <div className="flex items-center justify-between py-2">
+                <span className="text-sm text-white/60">Phone</span>
+                <input
+                  type="tel"
+                  value={editFields.phoneNumber}
+                  onChange={(e) => setEditFields(f => ({ ...f, phoneNumber: e.target.value }))}
+                  className="text-sm font-medium text-white text-right bg-white/[0.06] border border-white/10 rounded-lg px-2 py-1 w-40 focus:outline-none focus:border-emerald-500/50"
+                  placeholder="+44 7..."
+                />
+              </div>
+            ) : (
+              <DetailRow label="Phone" value={dashboardData?.phoneNumber || '—'} loading={loading} />
+            )}
+
+            <DetailRow label="Premium" value={premiumAmount !== '—' ? `£${premiumAmount}` : '—'} loading={loading} />
+            <DetailRow label="Policy Number" value={policyNumber} loading={loading} />
+            <DetailRow label="Member since" value={memberSince} loading={loading} />
           </div>
         </div>
 
-        <CoverageTypeSection currentScore={currentScore} />
-
+        {/* Vehicle Information */}
         <div className="backdrop-blur-xl bg-white/[0.04] border border-white/[0.08] rounded-2xl p-4">
           <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
             <span>🚗</span>
+            Vehicle
+          </h3>
+
+          {isEditing ? (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-white/60">Make</span>
+                <input
+                  type="text"
+                  value={editFields.vehicleMake}
+                  onChange={(e) => setEditFields(f => ({ ...f, vehicleMake: e.target.value }))}
+                  className="text-sm font-medium text-white text-right bg-white/[0.06] border border-white/10 rounded-lg px-2 py-1 w-40 focus:outline-none focus:border-emerald-500/50"
+                  placeholder="e.g. Toyota"
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-white/60">Model</span>
+                <input
+                  type="text"
+                  value={editFields.vehicleModel}
+                  onChange={(e) => setEditFields(f => ({ ...f, vehicleModel: e.target.value }))}
+                  className="text-sm font-medium text-white text-right bg-white/[0.06] border border-white/10 rounded-lg px-2 py-1 w-40 focus:outline-none focus:border-emerald-500/50"
+                  placeholder="e.g. Corolla"
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-white/60">Year</span>
+                <input
+                  type="number"
+                  value={editFields.vehicleYear}
+                  onChange={(e) => setEditFields(f => ({ ...f, vehicleYear: e.target.value }))}
+                  className="text-sm font-medium text-white text-right bg-white/[0.06] border border-white/10 rounded-lg px-2 py-1 w-24 focus:outline-none focus:border-emerald-500/50"
+                  placeholder="2024"
+                  min="1980"
+                  max={new Date().getFullYear() + 1}
+                />
+              </div>
+            </div>
+          ) : loading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+            </div>
+          ) : dashboardData?.vehicle?.make ? (
+            <div className="space-y-1">
+              <DetailRow label="Make" value={dashboardData.vehicle.make} />
+              <DetailRow label="Model" value={dashboardData.vehicle.model || '--'} />
+              <DetailRow label="Year" value={dashboardData.vehicle.year ? String(dashboardData.vehicle.year) : '--'} />
+            </div>
+          ) : (
+            <p className="text-sm text-white/50">
+              No vehicle added yet. Tap Edit to add your car details.
+            </p>
+          )}
+        </div>
+
+        <CoverageTypeSection
+          currentScore={currentScore}
+          coverageType={dashboardData?.coverageType ?? null}
+          premiumAmount={dashboardData?.premiumAmount ?? 0}
+          loading={loading}
+        />
+
+        <div className="backdrop-blur-xl bg-white/[0.04] border border-white/[0.08] rounded-2xl p-4">
+          <h3 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
+            <span>📊</span>
             Driving Statistics
           </h3>
 
           <div className="grid grid-cols-2 gap-3">
-            <StatCard value={totalMiles > 0 ? totalMiles.toFixed(1) : '—'} label="Total Miles" />
-            <StatCard value={totalTrips} label="Total Trips" />
-            <StatCard value={scoreBreakdown ? scoreBreakdown.braking : '—'} label="Braking Score" />
-            <StatCard value={scoreBreakdown ? scoreBreakdown.speed : '—'} label="Speed Score" />
+            <StatCard value={totalMiles > 0 ? totalMiles.toFixed(1) : '—'} label="Total Miles" loading={loading} />
+            <StatCard value={totalTrips} label="Total Trips" loading={loading} />
+            <StatCard value={scoreBreakdown ? scoreBreakdown.braking : '—'} label="Braking Score" loading={loading} />
+            <StatCard value={scoreBreakdown ? scoreBreakdown.speed : '—'} label="Speed Score" loading={loading} />
           </div>
         </div>
 
@@ -346,6 +610,10 @@ export default function Profile() {
             <span>🔒</span>
             Privacy & Data
           </h3>
+
+          <p className="text-xs text-white/40 mb-3">
+            Your data is used only for your score and refund. We don't sell it. Trip data is encrypted in transit and at rest.
+          </p>
 
           <div className="space-y-3">
             <PolicyDownload
