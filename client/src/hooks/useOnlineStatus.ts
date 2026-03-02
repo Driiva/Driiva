@@ -54,8 +54,30 @@ export function useOnlineStatus(): OnlineStatusResult {
     };
   }, []);
 
+  /**
+   * Called when a Firestore operation fails due to a suspected network issue.
+   * Fires a GET /api/health ping to confirm we are truly offline before showing
+   * the banner — a transient Firestore error while the browser is actually online
+   * should not lock the UI in offline mode.
+   */
   const reportFirestoreError = useCallback(() => {
-    setFirestoreError(true);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+    fetch('/api/health', { method: 'GET', cache: 'no-store', signal: controller.signal })
+      .then((res) => {
+        clearTimeout(timeoutId);
+        if (!res.ok) {
+          // Server responded but with an error — treat as offline
+          setFirestoreError(true);
+        }
+        // Server responded OK → browser is online; Firestore error is transient, do not show banner
+      })
+      .catch(() => {
+        clearTimeout(timeoutId);
+        // Fetch itself failed (network down or timeout) → genuinely offline
+        setFirestoreError(true);
+      });
   }, []);
 
   const isOnline = browserOnline && !firestoreError;

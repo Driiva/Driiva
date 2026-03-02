@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
 import { BarChart3, Wallet, Trophy, ChevronRight } from "lucide-react";
 import driivaLogo from '@/assets/driiva-logo-CLEAR-FINAL.png';
+import { useAuth } from '@/contexts/AuthContext';
 
 const features = [
   { icon: BarChart3, title: "Track Your Driving", description: "Real-time feedback on every trip" },
@@ -12,6 +13,7 @@ const features = [
 
 export default function Welcome() {
   const [, setLocation] = useLocation();
+  const { user, loading: authLoading } = useAuth();
   const [currentCard, setCurrentCard] = useState(0);
   const [touchStart, setTouchStart] = useState<number | null>(null);
 
@@ -22,9 +24,24 @@ export default function Welcome() {
     } catch { return null; }
   });
 
+  // Auto-redirect authenticated users who have completed onboarding
+  useEffect(() => {
+    if (!authLoading && user?.onboardingComplete) {
+      setLocation('/dashboard');
+    }
+  }, [authLoading, user, setLocation]);
+
   // Navigate to the demo page - demo mode is activated there, NOT here
   const goToDemo = () => {
     setLocation('/demo');
+  };
+
+  const handleContinueAs = () => {
+    if (user?.onboardingComplete) {
+      setLocation('/dashboard');
+    } else {
+      setLocation('/signin');
+    }
   };
 
   const handleNext = useCallback(() => {
@@ -173,7 +190,7 @@ export default function Welcome() {
         >
           {returningUser && (
             <button
-              onClick={() => setLocation('/signin')}
+              onClick={handleContinueAs}
               className="w-full max-w-[280px] flex items-center justify-between gap-3 px-5 py-3 rounded-2xl text-sm font-medium transition-all duration-200 mb-1"
               style={{
                 background: 'rgba(16, 185, 129, 0.12)',

@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useLocation } from 'wouter';
-import { ArrowLeft, Bell, Shield, HelpCircle, ChevronRight, Moon, Globe, LogOut } from 'lucide-react';
+import { ArrowLeft, Bell, Shield, HelpCircle, ChevronRight, Moon, Globe, LogOut, Lock, MessageSquare } from 'lucide-react';
 import { PageWrapper } from '../components/PageWrapper';
 import { useAuth } from '../contexts/AuthContext';
+import FeedbackModal from '../components/FeedbackModal';
 
 type NotificationsLevel = 'all' | 'important' | 'off';
 type ThemeMode = 'dark' | 'light';
@@ -56,6 +57,7 @@ export default function Settings() {
   });
 
   const [language] = useState<string>('English');
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('driiva-notifications-level', notificationsLevel);
@@ -159,6 +161,19 @@ export default function Settings() {
                 <div className="flex items-center gap-3">
                   <Shield className="w-5 h-5 text-white/60" />
                   <span className="text-white">Privacy & Security</span>
+                </div>
+                <ChevronRight className="w-4 h-4 text-white/40" />
+              </button>
+              <button
+                onClick={() => setLocation('/trust')}
+                className="w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <Lock className="w-5 h-5 text-indigo-400" />
+                  <div className="text-left">
+                    <span className="text-white block">Trust & Legal</span>
+                    <span className="text-white/40 text-xs">FCA, GDPR, your rights</span>
+                  </div>
                 </div>
                 <ChevronRight className="w-4 h-4 text-white/40" />
               </button>

@@ -23,9 +23,9 @@ const mockNavigate = vi.fn();
 
 // Critical fix: mock useAuth with loading: false so tests don't get spinner
 const mockUseAuth = vi.fn(() => ({
-  user: null,
+  user: null as Record<string, unknown> | null,
   loading: false,
-  error: null,
+  error: null as string | null,
 }));
 
 vi.mock('@/hooks/useAuth', () => ({

@@ -95,8 +95,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getOrCreateUserByFirebase(firebaseUid: string, email: string, displayName?: string | null): Promise<User> {
+    // 1. Try by Firebase UID first (fastest path for returning users)
     const existing = await this.getUserByFirebaseUid(firebaseUid);
     if (existing) return existing;
+
+    // 2. Try by email — the same person may have a row without the UID set yet
+    const [byEmail] = await db.select().from(users).where(eq(users.email, email));
+    if (byEmail) {
+      // Backfill the Firebase UID so future lookups use the fast path
+      const [updated] = await db.update(users)
+        .set({ firebaseUid, updatedBy: "firebase-auth" })
+        .where(eq(users.id, byEmail.id))
+        .returning();
+      return updated ?? byEmail;
+    }
+
+    // 3. Brand-new user — insert
     const [user] = await db.insert(users).values({
       firebaseUid,
       email,

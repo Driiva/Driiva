@@ -37,6 +37,57 @@ import { EUROPE_LONDON } from '../lib/region';
 
 const db = admin.firestore();
 
+// ─── DPIA SAFEGUARD ─────────────────────────────────────────────────────────
+// Approved data fields for trip point processing. Any new field types added to
+// tripPoints documents that aren't in this list will trigger a warning log and
+// a Firestore flag at admin/dpiaAlerts. This is an architectural safeguard for
+// future GDPR compliance — trips still process normally.
+//
+// Before adding new sensor types to trip collection, a Data Protection Impact
+// Assessment (DPIA) must be completed per UK GDPR Art. 35 for high-risk
+// processing of location/behavioural data at scale.
+const DPIA_REVIEWED_DATA_TYPES = new Set([
+  't', 'lat', 'lng', 'spd', 'hdg', 'acc',   // Core GPS fields
+  'ax', 'ay', 'az',                           // Accelerometer
+  'gx', 'gy', 'gz',                           // Gyroscope
+]);
+
+/**
+ * Non-blocking check: flag any unreviewed data types in trip points.
+ * Writes an alert to admin/dpiaAlerts if new fields are detected.
+ */
+async function checkDpiaCompliance(tripId: string, points: unknown[]): Promise<void> {
+  if (!points.length) return;
+  const sample = points[0] as Record<string, unknown>;
+  const unreviewedFields = Object.keys(sample).filter(
+    (key) => !DPIA_REVIEWED_DATA_TYPES.has(key),
+  );
+
+  if (unreviewedFields.length > 0) {
+    functions.logger.warn('DPIA REVIEW REQUIRED: new data type detected in trip points', {
+      tripId,
+      fields: unreviewedFields,
+    });
+
+    try {
+      const alertRef = db.collection('admin').doc('dpiaAlerts');
+      await alertRef.set(
+        {
+          lastAlertAt: admin.firestore.FieldValue.serverTimestamp(),
+          unreviewedFields: admin.firestore.FieldValue.arrayUnion(...unreviewedFields),
+          [`alerts.${tripId}`]: {
+            fields: unreviewedFields,
+            detectedAt: new Date().toISOString(),
+          },
+        },
+        { merge: true },
+      );
+    } catch (err) {
+      functions.logger.error('Failed to write DPIA alert', { tripId, err });
+    }
+  }
+}
+
 /**
  * Async wrapper for trip classification
  * 
@@ -310,6 +361,11 @@ async function finalizeTripFromPoints(
     }
     
     functions.logger.info(`Processing ${points.length} GPS points for trip ${tripId}`);
+
+    // 1b. DPIA compliance check (non-blocking)
+    checkDpiaCompliance(tripId, points).catch((err) =>
+      functions.logger.warn('DPIA check failed (non-blocking)', { tripId, err }),
+    );
     
     // 2. Compute metrics from points
     const startTimestampMs = tripData.startedAt.toMillis();

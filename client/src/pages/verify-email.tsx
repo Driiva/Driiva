@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { Mail, CheckCircle2, RefreshCw, LogOut } from "lucide-react";
@@ -6,21 +6,24 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import signinLogo from "@/assets/driiva-logo-CLEAR-FINAL.png";
 import { useParallax } from "@/hooks/useParallax";
-import { auth } from "@/lib/firebase";
-import { sendEmailVerification, reload } from "firebase/auth";
+import { auth, isFirebaseConfigured } from "@/lib/firebase";
+import { sendEmailVerification, reload, applyActionCode } from "firebase/auth";
 import { useAuth } from "@/contexts/AuthContext";
 
 /**
  * VERIFY EMAIL PAGE
  * -----------------
- * Shown when a user has signed up with email/password but hasn't verified yet.
- * Google accounts are always pre-verified and never land here.
- *
- * Actions:
- *   - Resend verification email
- *   - Check if verification is done (reload Firebase user and redirect)
- *   - Sign out
+ * 1) If opened with ?mode=verifyEmail&oobCode=XXX (link from email), we apply the
+ *    code here using OUR auth/key so verification works even when Firebase's
+ *    default link uses an expired key. Set "Action URL" in Firebase Console →
+ *    Authentication → Templates → Email address verification to this page URL.
+ * 2) Otherwise: resend verification, check status, sign out.
  */
+
+function getQueryParam(name: string): string | null {
+  if (typeof window === "undefined") return null;
+  return new URLSearchParams(window.location.search).get(name);
+}
 
 export default function VerifyEmail() {
   const [, setLocation] = useLocation();
@@ -31,6 +34,30 @@ export default function VerifyEmail() {
   const [isSending, setIsSending] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
   const [resentAt, setResentAt] = useState<Date | null>(null);
+  const [linkState, setLinkState] = useState<"idle" | "applying" | "success" | "error">("idle");
+  const linkHandled = useRef(false);
+
+  // Handle email link: ?mode=verifyEmail&oobCode=XXX — apply with our key so we never hit Firebase's broken link
+  useEffect(() => {
+    const mode = getQueryParam("mode");
+    const oobCode = getQueryParam("oobCode");
+    if (mode !== "verifyEmail" || !oobCode || !auth || !isFirebaseConfigured || linkHandled.current) return;
+    linkHandled.current = true;
+    const localAuth = auth;
+
+    setLinkState("applying");
+    applyActionCode(localAuth, oobCode)
+      .then(() => {
+        setLinkState("success");
+        toast({ title: "Email verified!", description: "Taking you to the app." });
+        if (localAuth.currentUser) reload(localAuth.currentUser).finally(() => setLocation("/dashboard"));
+        else setLocation("/dashboard");
+      })
+      .catch(() => {
+        setLinkState("error");
+        toast({ title: "Link expired or invalid", description: "Request a new verification email below.", variant: "destructive" });
+      });
+  }, [setLocation, toast]);
 
   const handleResend = async () => {
     if (!auth?.currentUser) {
@@ -71,7 +98,14 @@ export default function VerifyEmail() {
   };
 
   const handleCheckVerification = async () => {
-    if (!auth?.currentUser) return;
+    if (!auth?.currentUser) {
+      toast({
+        title: "Not signed in",
+        description: "Please sign in again, then tap this button.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsChecking(true);
     try {
@@ -100,6 +134,29 @@ export default function VerifyEmail() {
     setLocation("/signin");
   };
 
+  // Processing link from email
+  if (linkState === "applying") {
+    return (
+      <div className="min-h-screen text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-3 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-white/80">Verifying your email…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (linkState === "success") {
+    return (
+      <div className="min-h-screen text-white flex items-center justify-center">
+        <div className="text-center">
+          <CheckCircle2 className="w-14 h-14 text-emerald-400 mx-auto mb-4" />
+          <p className="text-white font-medium">Email verified. Redirecting…</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen text-white relative overflow-hidden">
       <div className="relative z-10 min-h-screen flex items-center justify-center px-5 py-12">
@@ -109,6 +166,9 @@ export default function VerifyEmail() {
           transition={{ type: "spring", stiffness: 300, damping: 30, delay: 0.1 }}
           className="w-full max-w-sm"
         >
+          {linkState === "error" && (
+            <p className="text-center text-amber-400 text-sm mb-4">That link didn’t work. Request a new one below.</p>
+          )}
           <Card
             ref={cardRef}
             className="w-full parallax-content"

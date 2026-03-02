@@ -16,6 +16,7 @@ import {
   CoverageType,
 } from '../types';
 import { EUROPE_LONDON } from '../lib/region';
+import { createDamoovUser } from '../lib/damoov';
 
 const db = admin.firestore();
 
@@ -33,6 +34,7 @@ const db = admin.firestore();
  *   - Uses integer cents for all financial fields (never floats)
  */
 export const onUserCreate = functions
+  .runWith({ secrets: ['DAMOOV_INSTANCE_ID', 'DAMOOV_INSTANCE_KEY'] })
   .region(EUROPE_LONDON)
   .firestore
   .document(`${COLLECTION_NAMES.USERS}/{userId}`)
@@ -155,6 +157,17 @@ export const onUserCreate = functions
       });
 
       functions.logger.info(`Initialized driving profile for user ${userId}`);
+
+      // 6. Silently register user with Damoov for telematics data collection.
+      // Non-blocking: failure does not affect user creation or policy setup.
+      const email = userData?.email;
+      if (email) {
+        const deviceToken = await createDamoovUser(userId, email);
+        if (deviceToken) {
+          await snap.ref.update({ damoovDeviceToken: deviceToken });
+          functions.logger.info(`Stored Damoov deviceToken for user ${userId}`);
+        }
+      }
 
     } catch (error) {
       functions.logger.error(`Error creating policy for user ${userId}:`, error);

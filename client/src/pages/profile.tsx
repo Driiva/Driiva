@@ -8,7 +8,7 @@ import { BottomNav } from '../components/BottomNav';
 import PolicyDownload from "@/components/PolicyDownload";
 import ExportDataButton from "@/components/ExportDataButton";
 import DeleteAccount from "@/components/DeleteAccount";
-import { ChevronDown, Bell, Pencil, Check, X, Loader2 } from "lucide-react";
+import { ChevronDown, Bell, Pencil, Check, X, Loader2, Shield } from "lucide-react";
 import { timing, easing } from "@/lib/animations";
 import { useAuth } from '../contexts/AuthContext';
 import { useDashboardData } from '@/hooks/useDashboardData';
@@ -266,7 +266,9 @@ export default function Profile() {
   const premiumAmount = dashboardData?.premiumAmount
     ? dashboardData.premiumAmount.toFixed(2)
     : '—';
-  const policyNumber = dashboardData?.policyNumber ?? '—';
+  const policyNumber = dashboardData?.policyNumber ?? null;
+  const memberId = user?.id ? `DRV-${user.id.slice(0, 8).toUpperCase()}` : '—';
+  const displayPolicyNumber = policyNumber ?? memberId;
   const scoreBreakdown = dashboardData?.scoreBreakdown;
   const memberSince = dashboardData?.memberSince ?? '—';
 
@@ -341,8 +343,8 @@ export default function Profile() {
                     className="absolute top-12 right-0 w-56 z-50 backdrop-blur-2xl bg-[#1a1a2e]/95 border border-white/10 rounded-xl shadow-2xl overflow-hidden"
                   >
                     <div className="p-4">
-                      <p className="text-xs text-white/50 mb-1">Policy No:</p>
-                      <p className="text-sm font-medium text-white">{policyNumber}</p>
+                      <p className="text-xs text-white/50 mb-1">Member ID</p>
+                      <p className="text-sm font-medium text-white">{displayPolicyNumber}</p>
                     </div>
                     <div className="border-t border-white/10">
                       <button
@@ -442,9 +444,23 @@ export default function Profile() {
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <StatCard value={totalTrips === 0 ? '—' : currentScore} label="Current Score" loading={loading} />
-            <StatCard value={totalTrips} label="Total Trips" loading={loading} />
+          <div className="flex gap-2 mt-2">
+            <div className="flex-1 flex items-center justify-between px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.06]">
+              <span className="text-xs text-white/50">Score</span>
+              {loading ? (
+                <Skeleton className="h-4 w-8" />
+              ) : (
+                <span className="text-sm font-semibold text-white">{totalTrips === 0 ? '—' : currentScore}</span>
+              )}
+            </div>
+            <div className="flex-1 flex items-center justify-between px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.06]">
+              <span className="text-xs text-white/50">Trips</span>
+              {loading ? (
+                <Skeleton className="h-4 w-8" />
+              ) : (
+                <span className="text-sm font-semibold text-white">{totalTrips}</span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -473,8 +489,20 @@ export default function Profile() {
             )}
 
             <DetailRow label="Premium" value={premiumAmount !== '—' ? `£${premiumAmount}` : '—'} loading={loading} />
-            <DetailRow label="Policy Number" value={policyNumber} loading={loading} />
+            <DetailRow label="Member ID" value={displayPolicyNumber} loading={loading} />
             <DetailRow label="Member since" value={memberSince} loading={loading} />
+            {(loading || dashboardData?.age) && (
+              <DetailRow label="Age" value={dashboardData?.age ? String(dashboardData.age) : '—'} loading={loading} />
+            )}
+            {(loading || dashboardData?.postcode) && (
+              <DetailRow label="Postcode" value={dashboardData?.postcode ?? '—'} loading={loading} />
+            )}
+            {(loading || dashboardData?.annualMileage) && (
+              <DetailRow label="Annual Mileage" value={dashboardData?.annualMileage ?? '—'} loading={loading} />
+            )}
+            {(loading || dashboardData?.currentInsurer) && (
+              <DetailRow label="Current Insurer" value={dashboardData?.currentInsurer ?? '—'} loading={loading} />
+            )}
           </div>
         </div>
 
@@ -615,6 +643,20 @@ export default function Profile() {
             Your data is used only for your score and refund. We don't sell it. Trip data is encrypted in transit and at rest.
           </p>
 
+          <button
+            onClick={() => setLocation('/trust')}
+            className="w-full flex items-center justify-between p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/20 transition-colors mb-3"
+          >
+            <div className="flex items-center gap-2">
+              <Shield className="w-4 h-4 text-indigo-400" />
+              <div className="text-left">
+                <p className="text-sm font-medium text-white">Trust Centre</p>
+                <p className="text-xs text-white/50">FCA · GDPR · Your Rights</p>
+              </div>
+            </div>
+            <ChevronDown className="w-4 h-4 text-indigo-300 -rotate-90" />
+          </button>
+
           <div className="space-y-3">
             <PolicyDownload
               userId={user?.id ? parseInt(user.id, 10) || 0 : 0}
@@ -623,9 +665,9 @@ export default function Profile() {
                 email: user?.email || '',
                 username: user?.name || '',
                 premiumAmount: premiumAmount,
-                policyNumber: policyNumber
+                policyNumber: displayPolicyNumber
               } as any}
-              policyNumber={policyNumber}
+              policyNumber={displayPolicyNumber}
             />
             <ExportDataButton userId={user?.id ?? ''} />
             <div className="border-t border-white/5 pt-3">

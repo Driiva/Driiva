@@ -1241,19 +1241,22 @@ body:has(.welcome-page-container) .animated-bg-container {
 }
 
 /* ============================================
-   DASHBOARD - Glass Card Styling
+   Card/Default — unified card spec
+   All cards (Policy Status, Driving Score,
+   Your Trips, etc.) MUST use this class.
    ============================================ */
 
 .dashboard-glass-card {
   backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
-  background: rgba(30, 41, 59, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 24px;
-  padding: 20px;
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.3),
-    0 2px 8px rgba(255, 255, 255, 0.05) inset;
+  background: rgba(30, 41, 59, 0.40);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: var(--radius-2xl);       /* 20px */
+  padding: var(--card-padding-lg);         /* 20px */
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.30),
+    inset 0 2px 8px rgba(255, 255, 255, 0.05);
+  transition: all var(--duration-base) var(--ease-smooth);
 }
 
 /* ============================================
@@ -1384,4 +1387,85 @@ body:has(.welcome-page-container) .animated-bg-container {
     animation: none !important;
     will-change: auto;
   }
+}
+
+/* ============================================
+   AI COACH ORB - Pulsing indigo/purple orb
+   ============================================ */
+
+.ai-orb {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%,
+    rgba(129, 140, 248, 0.9) 0%,
+    rgba(139, 92, 246, 0.7) 40%,
+    rgba(88, 28, 135, 0.5) 70%,
+    transparent 100%
+  );
+  box-shadow:
+    0 0 16px rgba(129, 140, 248, 0.4),
+    0 0 32px rgba(139, 92, 246, 0.2);
+  animation: aiOrbPulse 3s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+@keyframes aiOrbPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow:
+      0 0 16px rgba(129, 140, 248, 0.4),
+      0 0 32px rgba(139, 92, 246, 0.2);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow:
+      0 0 24px rgba(129, 140, 248, 0.6),
+      0 0 48px rgba(139, 92, 246, 0.35);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-orb {
+    animation: none !important;
+  }
+}
+
+/* AI Feedback skeleton shimmer */
+.ai-feedback-skeleton .animate-shimmer {
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.12) 50%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s infinite;
+}
+
+/* Utility: line-clamp-3 */
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ============================================
+   REWARDS TIMELINE
+   ============================================ */
+
+.reward-glow-unlocked {
+  box-shadow:
+    0 0 0 1px rgba(16, 185, 129, 0.6),
+    0 0 20px rgba(16, 185, 129, 0.15),
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 2px 8px rgba(255, 255, 255, 0.05);
+}
+
+.reward-glow-claimed {
+  box-shadow:
+    0 0 0 1px rgba(139, 92, 246, 0.5),
+    0 0 16px rgba(139, 92, 246, 0.12),
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 2px 8px rgba(255, 255, 255, 0.05);
 }

@@ -1,4 +1,4 @@
-import driivaLogoPath from '@assets/driiva_logo_CLEAR_FINAL_1769213316951.png';
+import driivaLogoPath from '@/assets/driiva-logo-CLEAR-FINAL.png';
 
 interface DriivaLogoProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';

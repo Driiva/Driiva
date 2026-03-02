@@ -27,7 +27,7 @@
 
 import { initializeApp, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth, GoogleAuthProvider, connectAuthEmulator } from 'firebase/auth';
-import { getFirestore, Firestore, enableMultiTabIndexedDbPersistence, connectFirestoreEmulator } from 'firebase/firestore';
+import { initializeFirestore, Firestore, persistentLocalCache, persistentMultipleTabManager, connectFirestoreEmulator } from 'firebase/firestore';
 import { getAnalytics, Analytics } from 'firebase/analytics';
 
 // ---------------------------------------------------------------------------
@@ -138,35 +138,20 @@ if (isFirebaseConfigured) {
     // SINGLE initializeApp call — all imports should use this module
     app = initializeApp(firebaseConfig);
     auth = getAuth(app);
-    db = getFirestore(app);
-
-    // Connect to emulators in development mode
-    /*
-    if (import.meta.env.DEV) {
-      connectAuthEmulator(auth, 'http://localhost:9099');
-      connectFirestoreEmulator(db, 'localhost', 8080);
-      console.log('✓ Connected to Firebase Emulators (Auth: 9099, Firestore: 8080)');
-    }
-    */
+    db = initializeFirestore(app, {
+      localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager(),
+      }),
+    });
 
     // Analytics: initialize when measurementId is available (throws in some environments)
     if (envMeasurementId) {
       try {
         analytics = getAnalytics(app);
       } catch (analyticsErr) {
-        // Analytics can fail in environments with ad-blockers or restricted APIs
         console.warn('Firebase Analytics could not be initialized:', analyticsErr);
       }
     }
-
-    // Multi-tab offline persistence: coordinates cache across browser tabs
-    enableMultiTabIndexedDbPersistence(db).catch((err) => {
-      if (err.code === 'unimplemented') {
-        console.warn('Firestore multi-tab persistence not supported in this browser.');
-      } else {
-        console.warn('Firestore persistence error:', err);
-      }
-    });
 
     console.log(`✓ Firebase initialized — project="${projectId}"`);
   } catch (error) {

@@ -106,6 +106,12 @@ export interface DashboardData {
   // Computed
   projectedRefund: number;
 
+  // Onboarding-collected profile fields
+  age: number | null;
+  postcode: string | null;
+  annualMileage: string | null;
+  currentInsurer: string | null;
+
   // Meta
   /** Formatted account creation date e.g. "January 2025", null if unavailable */
   memberSince: string | null;
@@ -154,6 +160,10 @@ const DEFAULT_DASHBOARD_DATA: DashboardData = {
   safetyFactor: 1.0,
   activeParticipants: 0,
   projectedRefund: 0,
+  age: null,
+  postcode: null,
+  annualMileage: null,
+  currentInsurer: null,
   memberSince: null,
 };
 
@@ -259,6 +269,8 @@ export function useDashboardData(userId: string | null): UseDashboardDataResult 
 
   // Internal state for combining multiple subscriptions
   const [userDoc, setUserDoc] = useState<UserDocument | null>(null);
+  // Tracks whether the FIRST userDoc snapshot has fired (even if doc doesn't exist)
+  const [userDocLoaded, setUserDocLoaded] = useState(false);
   const [trips, setTrips] = useState<TripDocument[]>([]);
   const [policy, setPolicy] = useState<PolicyDocument | null>(null);
   const [pool, setPool] = useState<CommunityPoolDocument | null>(null);
@@ -269,6 +281,9 @@ export function useDashboardData(userId: string | null): UseDashboardDataResult 
 
   // Subscribe to all data sources
   useEffect(() => {
+    // #region agent log
+    fetch('/api/debug/log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'2f3dd3',hypothesisId:'H-B/H-C',location:'useDashboardData.ts:subscribe-effect',message:'subscribe effect entry',data:{userId,isFirebaseConfigured,dbIsNull:!db},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     if (!userId || !isFirebaseConfigured || !db) {
       setLoading(false);
       setData(DEFAULT_DASHBOARD_DATA);
@@ -277,6 +292,7 @@ export function useDashboardData(userId: string | null): UseDashboardDataResult 
 
     setLoading(true);
     setError(null);
+    setUserDocLoaded(false);
 
     const unsubscribes: Unsubscribe[] = [];
 
@@ -287,13 +303,21 @@ export function useDashboardData(userId: string | null): UseDashboardDataResult 
         onSnapshot(
           userRef,
           (snapshot) => {
+            // #region agent log
+            fetch('/api/debug/log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'2f3dd3',hypothesisId:'H-A/H-D',location:'useDashboardData.ts:userDoc-snapshot',message:'userDoc snapshot fired',data:{exists:snapshot.exists(),uid:userId},timestamp:Date.now()})}).catch(()=>{});
+            // #endregion
             if (snapshot.exists()) {
               setUserDoc(snapshot.data() as UserDocument);
             } else {
               setUserDoc(null);
             }
+            // Signal that the first snapshot has resolved (doc exists or not)
+            setUserDocLoaded(true);
           },
           (err) => {
+            // #region agent log
+            fetch('/api/debug/log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'2f3dd3',hypothesisId:'H-D',location:'useDashboardData.ts:userDoc-error',message:'userDoc snapshot ERROR',data:{code:(err as any)?.code,msg:err?.message},timestamp:Date.now()})}).catch(()=>{});
+            // #endregion
             console.error('[useDashboardData] User subscription error:', err);
             reportFirestoreError();
             setError(err);
@@ -382,8 +406,15 @@ export function useDashboardData(userId: string | null): UseDashboardDataResult 
 
   // Combine all data sources into dashboard data
   useEffect(() => {
-    // Wait for initial user doc load
-    if (loading && !userDoc && userId && isFirebaseConfigured) {
+    // #region agent log
+    fetch('/api/debug/log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'2f3dd3',hypothesisId:'H-A/H-E',location:'useDashboardData.ts:combine-effect',message:'combine effect entry',data:{loading,userDocLoaded,userDocIsNull:!userDoc,userId,isFirebaseConfigured},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
+    // Wait for the first userDoc snapshot to resolve before assembling data.
+    // Using userDocLoaded (not !userDoc) so we don't wait forever when the doc doesn't exist.
+    if (!userDocLoaded && userId && isFirebaseConfigured) {
+      // #region agent log
+      fetch('/api/debug/log',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({sessionId:'2f3dd3',hypothesisId:'H-A/H-E',location:'useDashboardData.ts:combine-effect-bailed',message:'BAILED early - waiting for first snapshot',data:{userDocLoaded,userId},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       return;
     }
 
@@ -466,13 +497,19 @@ export function useDashboardData(userId: string | null): UseDashboardDataResult 
       // Computed
       projectedRefund,
 
+      // Onboarding-collected profile fields
+      age: (userDoc as any)?.age ?? null,
+      postcode: (userDoc as any)?.postcode ?? null,
+      annualMileage: (userDoc as any)?.annualMileage ?? null,
+      currentInsurer: (userDoc as any)?.currentInsurer ?? null,
+
       // Meta
       memberSince,
     };
 
     setData(dashboardData);
     setLoading(false);
-  }, [userDoc, trips, policy, pool, userId, loading]);
+  }, [userDoc, userDocLoaded, trips, policy, pool, userId, loading]);
 
   return { data, loading, error, refresh };
 }

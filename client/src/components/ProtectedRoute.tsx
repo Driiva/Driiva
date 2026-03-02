@@ -19,15 +19,14 @@ interface ProtectedRouteProps {
  *   1. AuthContext loading → spinner
  *   2. Demo mode → allow immediately
  *   3. No user → redirect to /signin
- *   4. Onboarding not complete → redirect to /quick-onboarding
- *   5. All checks pass → render children
- *      (Email verification is a soft requirement — shown as a banner on the dashboard,
- *       not a hard redirect. This avoids blocking users when email delivery is unreliable.)
+ *   4. Email not verified (unless skipEmailVerificationCheck) → redirect to /verify-email
+ *   5. Onboarding not complete (unless skipOnboardingCheck) → redirect to /quick-onboarding
+ *   6. All checks pass → render children
  */
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   skipOnboardingCheck = false,
-  skipEmailVerificationCheck: _skipEmailVerificationCheck = false, // kept for API compat; no longer used
+  skipEmailVerificationCheck = false,
 }) => {
   const [, setLocation] = useLocation();
   const { user, loading } = useAuth();
@@ -46,11 +45,17 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       return;
     }
 
+    if (!skipEmailVerificationCheck && user.emailVerified === false) {
+      hasRedirected.current = true;
+      setLocation('/verify-email');
+      return;
+    }
+
     if (!skipOnboardingCheck && user.onboardingComplete !== true) {
       hasRedirected.current = true;
       setLocation('/quick-onboarding');
     }
-  }, [loading, user, isDemoMode, skipOnboardingCheck, setLocation]);
+  }, [loading, user, isDemoMode, skipOnboardingCheck, skipEmailVerificationCheck, setLocation]);
 
   // AuthProvider still bootstrapping
   if (loading) {
@@ -65,6 +70,15 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // Not authenticated → spinner while redirect fires
   if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-10 h-10 border-3 border-white/20 border-t-white rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // Email not verified → spinner while redirect fires
+  if (!skipEmailVerificationCheck && user.emailVerified === false) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="w-10 h-10 border-3 border-white/20 border-t-white rounded-full animate-spin" />

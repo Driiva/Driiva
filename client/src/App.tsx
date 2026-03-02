@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from './lib/queryClient';
 import { Router, Route, Switch, Redirect } from 'wouter';
 import gradientBackground from './assets/gradient-background.png';
 import { ProtectedRoute, PublicOnlyRoute } from './components/ProtectedRoute';
@@ -27,6 +28,7 @@ const LeaderboardPage = lazy(() => import('./pages/leaderboard'));
 const PolicyPage = lazy(() => import('./pages/policy'));
 const Terms = lazy(() => import('./pages/terms'));
 const Privacy = lazy(() => import('./pages/privacy'));
+const TrustPage = lazy(() => import('./pages/trust'));
 const Achievements = lazy(() => import('./pages/achievements'));
 const TripDetail = lazy(() => import('./pages/trip-detail'));
 const ForgotPassword = lazy(() => import('./pages/forgot-password'));
@@ -44,16 +46,6 @@ function PageFallback() {
     </div>
   );
 }
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      staleTime: 5 * 60 * 1000,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
 
 export default function App() {
   return (
@@ -91,6 +83,7 @@ function AppContent() {
           <Route path="/welcome" component={Welcome} />
           <Route path="/terms" component={Terms} />
           <Route path="/privacy" component={Privacy} />
+          <Route path="/trust" component={TrustPage} />
 
           {/* Auth routes - redirect to dashboard if already logged in */}
           <Route path="/signin">

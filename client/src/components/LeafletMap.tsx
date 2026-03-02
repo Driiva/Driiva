@@ -3,13 +3,6 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
-
 interface LocationData {
   lat: number;
   lng: number;
@@ -28,32 +21,36 @@ interface LeafletMapProps {
   className?: string;
 }
 
-const customIcon = new L.Icon({
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
+const liveIcon = L.divIcon({
+  className: '',
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
+  popupAnchor: [0, -14],
+  html: `<div style="width:24px;height:24px;position:relative">
+    <div style="position:absolute;inset:0;border-radius:50%;background:rgba(16,185,129,0.3);animation:livePulse 2s ease-in-out infinite"></div>
+    <div style="position:absolute;inset:4px;border-radius:50%;background:#10b981;border:2px solid #fff;box-shadow:0 0 6px rgba(16,185,129,0.6)"></div>
+    <style>@keyframes livePulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.8);opacity:0}}</style>
+  </div>`,
 });
 
-const startIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
+const startIcon = L.divIcon({
+  className: '',
+  iconSize: [22, 22],
+  iconAnchor: [11, 11],
+  popupAnchor: [0, -13],
+  html: `<div style="width:22px;height:22px;border-radius:50%;background:#22c55e;border:2px solid #fff;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.35)">
+    <span style="color:#fff;font-size:10px;font-weight:700;line-height:1">S</span>
+  </div>`,
 });
 
-const endIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
+const endIcon = L.divIcon({
+  className: '',
+  iconSize: [22, 22],
+  iconAnchor: [11, 11],
+  popupAnchor: [0, -13],
+  html: `<div style="width:22px;height:22px;border-radius:50%;background:#ef4444;border:2px solid #fff;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,0.35)">
+    <span style="color:#fff;font-size:10px;font-weight:700;line-height:1">E</span>
+  </div>`,
 });
 
 function MapUpdater({ location }: { location: LocationData }) {
@@ -225,7 +222,7 @@ const LeafletMap = ({ location, routePoints, onLocationChange, className }: Leaf
         ) : currentLocation ? (
           <>
             <MapUpdater location={currentLocation} />
-            <Marker position={[currentLocation.lat, currentLocation.lng]} icon={customIcon}>
+            <Marker position={[currentLocation.lat, currentLocation.lng]} icon={liveIcon}>
               <Popup>
                 <span className="text-sm font-bold text-gray-700">
                   {currentLocation.label || 'Your Location'}

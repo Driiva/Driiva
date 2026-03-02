@@ -48,6 +48,7 @@ All of these are read from the **repo root** `.env` (Vite loads it for `VITE_*`;
 |----------|-----------|------------------|----------|
 | **DATABASE_URL** | ✅ Yes | Neon dashboard → connection string (see above) | Server DB; reject SQLite |
 | **VITE_FIREBASE_API_KEY** | ✅ Yes (for real auth) | Firebase Console → **Project settings** (gear) → **General** → **Your apps** → Web app → **API Key** | Client Firebase Auth/Firestore |
+| *(Email verification link)* | One-time | Firebase Console → **Authentication** → **Templates** → **Email address verification** → **Customize action URL** → set to your app’s verify page (e.g. `http://localhost:3001/verify-email` for dev, `https://yourdomain.com/verify-email` for prod). Then verification links use your app and your API key instead of Firebase’s default (avoids “API key expired” on the link). | So the link in the email opens your app and verification succeeds. |
 | **VITE_FIREBASE_PROJECT_ID** | ✅ Yes (for real auth) | Same page: **Project ID** at top (e.g. `driiva`) | Client Firebase |
 | **VITE_FIREBASE_APP_ID** | ✅ Yes (for real auth) | Same page: Web app → **App ID** (e.g. `1:894211619782:web:...`) | Client Firebase |
 | **VITE_FIREBASE_AUTH_DOMAIN** | Optional | Defaults to `PROJECT_ID.firebaseapp.com` | Auth domain (only if different) |

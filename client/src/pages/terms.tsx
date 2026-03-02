@@ -8,6 +8,7 @@
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
 import { ArrowLeft } from "lucide-react";
+import { FinancialPromotionDisclaimer } from "@/components/FinancialPromotionDisclaimer";
 
 export default function Terms() {
   const [, setLocation] = useLocation();
@@ -36,7 +37,7 @@ export default function Terms() {
           className="backdrop-blur-xl bg-[#1a1a2e]/80 border border-white/10 rounded-2xl p-6 text-left"
         >
           <p className="text-white/90 text-sm leading-relaxed mb-6">
-            Welcome to Driiva. We're the intelligent car insurance where safe driving can earn you up to 15% back – year after year. By using our app, you agree to these terms. Please read them.
+            Welcome to Driiva. We're the intelligent car insurance where safe driving can earn you back a portion of your premium – year after year. By using our app, you agree to these terms. Please read them.
           </p>
 
           <section className="mb-5">
@@ -57,8 +58,9 @@ export default function Terms() {
               <li>Your personal efforts drive most of your refund.</li>
             </ul>
             <p className="text-white/80 text-sm leading-relaxed">
-              Our community score averages only drivers who qualify (score 70+). High-risk drivers pay premiums that reflect their risk and help balance the pool. Refunds are capped (e.g. up to ~15%) to ensure sustainability.
+              Our community score averages only drivers who qualify (score 70+). High-risk drivers pay premiums that reflect their risk and help balance the pool. Refunds are capped to ensure sustainability.
             </p>
+            <FinancialPromotionDisclaimer className="mt-3" />
           </section>
 
           <section className="mb-5">

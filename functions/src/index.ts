@@ -14,6 +14,7 @@
  * Scheduled:
  *   - updateLeaderboards: Every 15 minutes
  *   - finalizePoolPeriod: 1st of each month
+ *   - syncDamoovTrips: Daily 00:30 UK (Damoov DataHub → Firestore trips + profiles)
  * 
  * HTTP Callable:
  *   - initializePool: Admin-only pool setup
@@ -54,6 +55,7 @@ export { syncTripOnComplete } from './triggers/syncTripOnComplete';
 export { updateLeaderboards } from './scheduled/leaderboard';
 export { finalizePoolPeriod, recalculatePoolShares } from './scheduled/pool';
 export { sendWeeklySummary } from './scheduled/notifications';
+export { syncDamoovTrips } from './scheduled/damoovSync';
 
 // ============================================================================
 // HTTP CALLABLE FUNCTIONS

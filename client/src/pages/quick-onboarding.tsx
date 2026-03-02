@@ -1,12 +1,20 @@
 /**
  * QUICK ONBOARDING PAGE
  * =====================
- * A 3-step onboarding flow that must be completed before accessing the dashboard.
+ * A multi-step onboarding flow that must be completed before accessing the dashboard.
  * 
  * Steps:
- *   1. Welcome - Explain what Driiva does
- *   2. Location - Request GPS permission and test a single read
- *   3. Confirm - User acknowledges "drive to earn rewards" concept
+ *   1.  Welcome — Explain what Driiva does
+ *   2.  Data Consent — GDPR-compliant explicit opt-in for telematics data
+ *   3.  Location — Request GPS permission and test a single read
+ *   4.  Annual Mileage
+ *   5.  Age + Postcode
+ *   6.  Vehicle Details (make, model, year)
+ *   7.  Referral Source
+ *   8.  Current Insurer
+ *   9.  Current Premium
+ *   10. Confirm — User acknowledges "drive to earn rewards" concept
+ *   11. Celebration
  * 
  * On completion, sets `onboardingCompleted: true` in Firestore.
  */
@@ -25,14 +33,16 @@ import {
   Users,
   Navigation,
   AlertCircle,
-  Sparkles
+  Sparkles,
+  UserRound
 } from 'lucide-react';
 import { auth, db, isFirebaseConfigured } from '../lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import driivaLogo from '@/assets/driiva-logo-CLEAR-FINAL.png';
+import { FinancialPromotionDisclaimer } from '@/components/FinancialPromotionDisclaimer';
 
-const TOTAL_STEPS = 8;
+const TOTAL_STEPS = 11;
 
 interface GpsTestResult {
   success: boolean;
@@ -53,8 +63,16 @@ export default function QuickOnboarding() {
   const [gpsStatus, setGpsStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [gpsResult, setGpsResult] = useState<GpsTestResult | null>(null);
 
-  // Soft onboarding data (steps 3–6)
+  // Data consent (GDPR explicit opt-in — step 2)
+  const [dataConsentGiven, setDataConsentGiven] = useState(false);
+
+  // Soft onboarding data
   const [annualMileage, setAnnualMileage] = useState<string>('');
+  const [age, setAge] = useState<string>('');
+  const [postcode, setPostcode] = useState<string>('');
+  const [vehicleMake, setVehicleMake] = useState<string>('');
+  const [vehicleModel, setVehicleModel] = useState<string>('');
+  const [vehicleYear, setVehicleYear] = useState<string>('');
   const [referralSource, setReferralSource] = useState<string>('');
   const [currentInsurer, setCurrentInsurer] = useState<string>('');
   const [currentPremiumPounds, setCurrentPremiumPounds] = useState<string>('');
@@ -85,6 +103,24 @@ export default function QuickOnboarding() {
     }
     // Otherwise, user needs onboarding — let them through
   }, [user, authLoading, setLocation]);
+
+  /**
+   * Persist GDPR data consent to Firestore when user grants it.
+   */
+  const persistDataConsent = async () => {
+    const firebaseUser = auth?.currentUser;
+    if (firebaseUser && isFirebaseConfigured && db) {
+      try {
+        await setDoc(doc(db, 'users', firebaseUser.uid), {
+          dataConsentGiven: true,
+          dataConsentTimestamp: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }, { merge: true });
+      } catch (err) {
+        console.error('[QuickOnboarding] Failed to persist data consent:', err);
+      }
+    }
+  };
 
   /**
    * Test GPS by requesting a single position read
@@ -171,7 +207,16 @@ export default function QuickOnboarding() {
           onboardingCompleted: true,
           onboardingComplete: true,
           gpsPermissionGranted: gpsStatus === 'success',
+          dataConsentGiven: dataConsentGiven,
+          dataConsentTimestamp: dataConsentGiven ? new Date().toISOString() : null,
           annualMileage: annualMileage || null,
+          age: age ? Number(age) : null,
+          postcode: postcode ? postcode.trim().toUpperCase() : null,
+          vehicle: (vehicleMake || vehicleModel || vehicleYear) ? {
+            make: vehicleMake || null,
+            model: vehicleModel || null,
+            year: vehicleYear ? Number(vehicleYear) : null,
+          } : null,
           referralSource: referralSource || null,
           currentInsurer: currentInsurer || null,
           currentPremiumPounds: currentPremiumPounds ? Number(currentPremiumPounds) : null,
@@ -224,21 +269,21 @@ export default function QuickOnboarding() {
 
       <div className="relative z-10 flex-1 flex flex-col p-6 max-w-lg mx-auto w-full">
         {/* Progress indicator (hidden on celebration step) */}
-        {currentStep < 8 && (
+        {currentStep < 11 && (
           <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-2">
-              {Array.from({ length: 7 }, (_, i) => (
+            <div className="flex items-center gap-1.5">
+              {Array.from({ length: 10 }, (_, i) => (
                 <div
                   key={i}
                   className={`h-1.5 rounded-full transition-all duration-300 ${
                     i + 1 <= currentStep 
-                      ? 'bg-emerald-500 w-10' 
-                      : 'bg-white/20 w-6'
+                      ? 'bg-emerald-500 w-6' 
+                      : 'bg-white/20 w-4'
                   }`}
                 />
               ))}
             </div>
-            <span className="text-sm text-white/50">Step {currentStep} of 7</span>
+            <span className="text-sm text-white/50 flex-shrink-0 ml-3">Step {currentStep} of 10</span>
           </div>
         )}
 
@@ -287,7 +332,8 @@ export default function QuickOnboarding() {
                     </div>
                     <div>
                       <h3 className="text-white font-medium">Earn Refunds</h3>
-                      <p className="text-white/50 text-sm">Safe drivers get up to 15% back at renewal</p>
+                      <p className="text-white/50 text-sm">Safe drivers can earn back a portion of their premium at renewal</p>
+                      <FinancialPromotionDisclaimer className="mt-1" />
                     </div>
                   </div>
 
@@ -312,10 +358,113 @@ export default function QuickOnboarding() {
               </motion.div>
             )}
 
-            {/* STEP 2: GPS Permission Test */}
+            {/* STEP 2: Data Consent (GDPR explicit opt-in) */}
             {currentStep === 2 && (
               <motion.div
                 key="step2"
+                initial={{ opacity: 0, x: 30 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -30 }}
+                transition={{ duration: 0.3 }}
+                className="text-center"
+              >
+                <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center">
+                  <Shield className="w-12 h-12 text-indigo-400" />
+                </div>
+
+                <h1 className="text-2xl font-bold text-white mb-3">Your Data, Your Control</h1>
+                <p className="text-white/60 mb-6 max-w-sm mx-auto">
+                  Before we begin, here's exactly what Driiva collects and why.
+                </p>
+
+                <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-5 mb-5 text-left">
+                  <h3 className="text-white font-medium mb-3 text-sm">What we collect</h3>
+                  <ul className="space-y-2.5">
+                    {[
+                      { label: 'GPS location', detail: 'During active trips only' },
+                      { label: 'Accelerometer & gyroscope', detail: 'Braking, acceleration, cornering' },
+                      { label: 'Speed & heading', detail: 'Safety scoring & route context' },
+                      { label: 'Trip metadata', detail: 'Start/end time, duration, distance' },
+                    ].map((item) => (
+                      <li key={item.label} className="flex items-start gap-2.5">
+                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-1.5 flex-shrink-0" />
+                        <div>
+                          <span className="text-white text-sm">{item.label}</span>
+                          <span className="text-white/40 text-sm"> — {item.detail}</span>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="mt-4 pt-3 border-t border-white/10 grid grid-cols-2 gap-3">
+                    <div>
+                      <div className="text-xs text-indigo-300 font-medium">Retention</div>
+                      <div className="text-white/60 text-xs">Raw GPS: 90 days rolling</div>
+                      <div className="text-white/60 text-xs">Scores: policy lifetime</div>
+                    </div>
+                    <div>
+                      <div className="text-xs text-indigo-300 font-medium">Who sees it</div>
+                      <div className="text-white/60 text-xs">Driiva + underwriting partner</div>
+                      <div className="text-white/60 text-xs">Never sold to third parties</div>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setLocation('/trust')}
+                  className="text-indigo-400 hover:text-indigo-300 text-xs font-medium mb-5 block mx-auto"
+                >
+                  Read full Trust Centre →
+                </button>
+
+                <label className="flex items-start gap-3 cursor-pointer mb-6 text-left bg-white/5 border border-white/10 rounded-xl p-4">
+                  <div className="relative mt-0.5">
+                    <input
+                      type="checkbox"
+                      checked={dataConsentGiven}
+                      onChange={(e) => setDataConsentGiven(e.target.checked)}
+                      className="sr-only"
+                    />
+                    <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
+                      dataConsentGiven
+                        ? 'bg-indigo-500 border-indigo-500'
+                        : 'border-white/30 bg-transparent hover:border-white/50'
+                    }`}>
+                      {dataConsentGiven && <Check className="w-4 h-4 text-white" />}
+                    </div>
+                  </div>
+                  <span className="text-white/80 text-sm">
+                    I consent to Driiva collecting my driving data as described above for the purpose of calculating my driving score and insurance pricing.
+                  </span>
+                </label>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={prevStep}
+                    className="flex-1 bg-white/10 hover:bg-white/15 text-white font-semibold py-4 rounded-xl transition-colors"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={() => { persistDataConsent(); nextStep(); }}
+                    disabled={!dataConsentGiven}
+                    className={`flex-1 font-semibold py-4 rounded-xl transition-colors flex items-center justify-center gap-2 ${
+                      dataConsentGiven
+                        ? 'bg-indigo-500 hover:bg-indigo-600 text-white'
+                        : 'bg-white/10 text-white/40 cursor-not-allowed'
+                    }`}
+                  >
+                    Continue
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* STEP 3: GPS Permission Test */}
+            {currentStep === 3 && (
+              <motion.div
+                key="step3"
                 initial={{ opacity: 0, x: 30 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -30 }}
@@ -405,10 +554,10 @@ export default function QuickOnboarding() {
               </motion.div>
             )}
 
-            {/* STEP 3: Annual Mileage */}
-            {currentStep === 3 && (
+            {/* STEP 4: Annual Mileage */}
+            {currentStep === 4 && (
               <motion.div
-                key="step3"
+                key="step4"
                 initial={{ opacity: 0, x: 30 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -30 }}
@@ -458,10 +607,145 @@ export default function QuickOnboarding() {
               </motion.div>
             )}
 
-            {/* STEP 4: Referral Source */}
-            {currentStep === 4 && (
+            {/* STEP 5: Age + Postcode */}
+            {currentStep === 5 && (
               <motion.div
-                key="step4"
+                key="step5"
+                initial={{ opacity: 0, x: 30 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -30 }}
+                transition={{ duration: 0.3 }}
+                className="text-center"
+              >
+                <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center">
+                  <UserRound className="w-12 h-12 text-cyan-400" />
+                </div>
+
+                <h1 className="text-2xl font-bold text-white mb-3">About You</h1>
+                <p className="text-white/60 mb-8 max-w-sm mx-auto">
+                  Your age and postcode help us tailor your premium estimate.
+                </p>
+
+                <div className="space-y-4 mb-6">
+                  <div>
+                    <label className="text-white/60 text-xs font-medium text-left block mb-1.5 pl-1">Age</label>
+                    <input
+                      type="number"
+                      value={age}
+                      onChange={(e) => setAge(e.target.value)}
+                      placeholder="e.g. 25"
+                      min="17"
+                      max="99"
+                      className="w-full px-4 py-4 rounded-xl bg-white/5 border border-white/20 text-white placeholder-white/30 focus:outline-none focus:border-cyan-400/60 focus:bg-white/10 transition-all text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-white/60 text-xs font-medium text-left block mb-1.5 pl-1">Postcode</label>
+                    <input
+                      type="text"
+                      value={postcode}
+                      onChange={(e) => setPostcode(e.target.value)}
+                      placeholder="e.g. SW1A 1AA"
+                      maxLength={8}
+                      className="w-full px-4 py-4 rounded-xl bg-white/5 border border-white/20 text-white placeholder-white/30 focus:outline-none focus:border-cyan-400/60 focus:bg-white/10 transition-all text-sm uppercase"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={prevStep}
+                    className="flex-1 bg-white/10 hover:bg-white/15 text-white font-semibold py-4 rounded-xl transition-colors"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={nextStep}
+                    className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-4 rounded-xl transition-colors flex items-center justify-center gap-2"
+                  >
+                    {age || postcode ? 'Continue' : 'Skip'}
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* STEP 6: Vehicle Details */}
+            {currentStep === 6 && (
+              <motion.div
+                key="step6"
+                initial={{ opacity: 0, x: 30 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -30 }}
+                transition={{ duration: 0.3 }}
+                className="text-center"
+              >
+                <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-orange-500/20 to-amber-500/20 flex items-center justify-center">
+                  <Car className="w-12 h-12 text-orange-400" />
+                </div>
+
+                <h1 className="text-2xl font-bold text-white mb-3">Your Vehicle</h1>
+                <p className="text-white/60 mb-8 max-w-sm mx-auto">
+                  Vehicle details help us give you a more accurate quote.
+                </p>
+
+                <div className="space-y-4 mb-6">
+                  <div>
+                    <label className="text-white/60 text-xs font-medium text-left block mb-1.5 pl-1">Make</label>
+                    <input
+                      type="text"
+                      value={vehicleMake}
+                      onChange={(e) => setVehicleMake(e.target.value)}
+                      placeholder="e.g. Volkswagen"
+                      className="w-full px-4 py-4 rounded-xl bg-white/5 border border-white/20 text-white placeholder-white/30 focus:outline-none focus:border-orange-400/60 focus:bg-white/10 transition-all text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-white/60 text-xs font-medium text-left block mb-1.5 pl-1">Model</label>
+                    <input
+                      type="text"
+                      value={vehicleModel}
+                      onChange={(e) => setVehicleModel(e.target.value)}
+                      placeholder="e.g. Golf"
+                      className="w-full px-4 py-4 rounded-xl bg-white/5 border border-white/20 text-white placeholder-white/30 focus:outline-none focus:border-orange-400/60 focus:bg-white/10 transition-all text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-white/60 text-xs font-medium text-left block mb-1.5 pl-1">Year</label>
+                    <input
+                      type="number"
+                      value={vehicleYear}
+                      onChange={(e) => setVehicleYear(e.target.value)}
+                      placeholder="e.g. 2021"
+                      min="1990"
+                      max="2027"
+                      className="w-full px-4 py-4 rounded-xl bg-white/5 border border-white/20 text-white placeholder-white/30 focus:outline-none focus:border-orange-400/60 focus:bg-white/10 transition-all text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={prevStep}
+                    className="flex-1 bg-white/10 hover:bg-white/15 text-white font-semibold py-4 rounded-xl transition-colors"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={nextStep}
+                    className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-4 rounded-xl transition-colors flex items-center justify-center gap-2"
+                  >
+                    {vehicleMake || vehicleModel || vehicleYear ? 'Continue' : 'Skip'}
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* STEP 7: Referral Source */}
+            {currentStep === 7 && (
+              <motion.div
+                key="step7"
                 initial={{ opacity: 0, x: 30 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -30 }}
@@ -511,10 +795,10 @@ export default function QuickOnboarding() {
               </motion.div>
             )}
 
-            {/* STEP 5: Current Insurer */}
-            {currentStep === 5 && (
+            {/* STEP 8: Current Insurer */}
+            {currentStep === 8 && (
               <motion.div
-                key="step5"
+                key="step8"
                 initial={{ opacity: 0, x: 30 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -30 }}
@@ -565,10 +849,10 @@ export default function QuickOnboarding() {
               </motion.div>
             )}
 
-            {/* STEP 6: Current Premium */}
-            {currentStep === 6 && (
+            {/* STEP 9: Current Premium */}
+            {currentStep === 9 && (
               <motion.div
-                key="step6"
+                key="step9"
                 initial={{ opacity: 0, x: 30 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -30 }}
@@ -621,10 +905,10 @@ export default function QuickOnboarding() {
               </motion.div>
             )}
 
-            {/* STEP 7: Confirm Understanding */}
-            {currentStep === 7 && (
+            {/* STEP 10: Confirm Understanding */}
+            {currentStep === 10 && (
               <motion.div
-                key="step7"
+                key="step10"
                 initial={{ opacity: 0, x: 30 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -30 }}
@@ -722,8 +1006,8 @@ export default function QuickOnboarding() {
                 </div>
               </motion.div>
             )}
-            {/* STEP 8: Celebration — You're all set! */}
-            {currentStep === 8 && (
+            {/* STEP 11: Celebration — You're all set! */}
+            {currentStep === 11 && (
               <CelebrationStep onContinue={goToDashboard} userName={user?.name} />
             )}
           </AnimatePresence>
@@ -744,7 +1028,7 @@ function CelebrationStep({ onContinue, userName }: { onContinue: () => void; use
 
   return (
     <motion.div
-      key="step8"
+      key="step11"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}

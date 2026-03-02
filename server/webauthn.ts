@@ -24,8 +24,8 @@ import crypto from 'crypto';
 
 // WebAuthn configuration
 const RP_NAME = 'Driiva - Smart Insurance';
-const RP_ID = process.env.NODE_ENV === 'production' ? 'driiva.replit.app' : 'localhost';
-const ORIGIN = process.env.NODE_ENV === 'production' ? 'https://driiva.replit.app' : 'http://localhost:5000';
+const RP_ID = process.env.WEBAUTHN_RP_ID ?? 'localhost';
+const ORIGIN = process.env.WEBAUTHN_ORIGIN ?? 'http://localhost:5000';
 
 // In-memory challenge storage (use Redis in production)
 const challengeStore = new Map<string, string>();

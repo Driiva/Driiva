@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
 import { PageWrapper } from '../components/PageWrapper';
 import { BottomNav } from '../components/BottomNav';
 import { GlassCard } from "@/components/GlassCard";
+import RewardsTimeline from "@/components/RewardsTimeline";
+import type { RewardState } from "@/components/RewardsTimeline";
 import { Gift, TrendingUp, Check, Bell, ChevronDown, Loader2 } from "lucide-react";
 import { container, item, timing, easing, microInteractions } from "@/lib/animations";
 import { useAuth } from '../contexts/AuthContext';
@@ -11,6 +13,7 @@ import { useDashboardData } from "../hooks/useDashboardData";
 import { getAchievementDefinitions, getUserAchievements } from "@/lib/firestore";
 import type { AchievementDef, UserAchievementRecord } from "@/lib/firestore";
 import { isFirebaseConfigured } from "@/lib/firebase";
+import { useToast } from "@/hooks/use-toast";
 
 function Skeleton({ className = "" }: { className?: string }) {
   return <div className={`animate-pulse bg-white/[0.08] rounded ${className}`} />;
@@ -42,6 +45,44 @@ export default function Rewards() {
 
   const [achievements, setAchievements] = useState<DisplayAchievement[]>([]);
   const [achievementsLoading, setAchievementsLoading] = useState(true);
+  const { toast } = useToast();
+
+  // Reward milestone states — derive from streakDays + drivingScore
+  const rewardStates: RewardState[] = (() => {
+    const score = dashboardData?.drivingScore ?? 0;
+    const days = dashboardData?.streakDays ?? 0;
+    const states: RewardState[] = [];
+
+    states.push({
+      rewardId: 'day5',
+      status: days >= 5 && score >= 60 ? 'unlocked' : 'locked',
+    });
+    states.push({
+      rewardId: 'day10',
+      status: days >= 10 && score >= 65 ? 'unlocked' : 'locked',
+    });
+    states.push({
+      rewardId: 'team_driiva',
+      status: days >= 30 ? 'unlocked' : 'locked',
+    });
+    states.push({
+      rewardId: 'month3',
+      status: days >= 90 && score >= 70 ? 'unlocked' : 'locked',
+    });
+    states.push({
+      rewardId: 'anniversary',
+      status: days >= 365 && score >= 70 ? 'unlocked' : 'locked',
+    });
+
+    return states;
+  })();
+
+  const handleRewardRedeem = useCallback((rewardId: string) => {
+    toast({
+      title: 'Redemption Coming Soon',
+      description: 'Reward redemption will be available when partnerships go live. Your milestone is saved.',
+    });
+  }, [toast]);
 
   useEffect(() => {
     if (!user?.id || !isFirebaseConfigured) {
@@ -345,62 +386,13 @@ export default function Rewards() {
               </motion.div>
             )}
 
-            {/* Rewards Tab */}
+            {/* Rewards Tab — 5-Tier Milestone Timeline */}
             {activeTab === "rewards" && (
-              <motion.div
-                className="space-y-3"
-                variants={container}
-                initial="hidden"
-                animate="show"
-              >
-                <motion.div variants={item}>
-                  <GlassCard className="p-6 text-center">
-                    <Gift className="w-10 h-10 text-emerald-400/60 mx-auto mb-3" />
-                    <h3 className="text-white font-semibold mb-2">Refund Rewards</h3>
-                    {projectedRefund > 0 ? (
-                      <>
-                        <p className="text-3xl font-bold text-emerald-400 mb-2">£{projectedRefund}</p>
-                        <p className="text-sm text-white/50">
-                          Projected refund based on your {drivingScore} score
-                        </p>
-                      </>
-                    ) : (
-                      <p className="text-sm text-white/50">
-                        {drivingScore >= 70
-                          ? 'Your refund will be calculated at the end of the period.'
-                          : 'Score 70+ to qualify for premium refunds.'}
-                      </p>
-                    )}
-                  </GlassCard>
-                </motion.div>
-
-                <motion.div variants={item}>
-                  <GlassCard className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm text-white/60">Pool Share</span>
-                      <span className="text-sm font-semibold text-white">
-                        {poolShare > 0 ? `£${poolShare.toFixed(2)}` : '—'}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-white/60">Share %</span>
-                      <span className="text-sm font-semibold text-white">
-                        {dashboardData?.sharePercentage
-                          ? `${dashboardData.sharePercentage.toFixed(2)}%`
-                          : '—'}
-                      </span>
-                    </div>
-                  </GlassCard>
-                </motion.div>
-
-                <motion.div variants={item}>
-                  <div className="p-3 bg-emerald-500/[0.06] border border-emerald-500/[0.15] rounded-xl">
-                    <p className="text-xs text-emerald-200/80 text-center">
-                      Refunds are calculated at the end of each period and paid out within 14 days.
-                    </p>
-                  </div>
-                </motion.div>
-              </motion.div>
+              <RewardsTimeline
+                daysActive={streakDays}
+                rewardStates={rewardStates}
+                onRedeem={handleRewardRedeem}
+              />
             )}
 
             {/* Progress Tab */}

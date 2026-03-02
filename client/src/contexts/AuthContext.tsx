@@ -60,8 +60,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 name: parsedUser.name || parsedUser.first_name || 'Demo User',
                 onboardingComplete: true,
               });
-              setLoading(false);
-              return;
             } catch (e) {
               console.error('[AuthContext] Failed to parse demo user:', e);
             }
@@ -75,8 +73,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.error('[AuthContext] Init error:', error);
-        setLoading(false);
       }
+      setLoading(false);
     }
 
     initAuth();
@@ -90,6 +88,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
+        // Real Firebase user: always clear demo mode so real account and onboarding flow take over
+        localStorage.removeItem('driiva-demo-mode');
+        localStorage.removeItem('driiva-demo-user');
         try {
           const token = await firebaseUser.getIdToken();
           const res = await fetch("/api/profile/me", {

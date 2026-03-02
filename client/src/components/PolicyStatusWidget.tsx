@@ -34,7 +34,7 @@ export default function PolicyStatusWidget({
 
   return (
     <section>
-      <GlassCard className="p-6">
+      <GlassCard className="">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-base font-semibold text-white">Policy Status</h3>
           <motion.button

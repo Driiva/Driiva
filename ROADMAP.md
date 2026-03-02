@@ -22,10 +22,10 @@
 - [x] Set up Sentry for error monitoring (frontend + Cloud Functions) — *done: client/src/lib/sentry.ts + functions/src/lib/sentry.ts; SentryErrorBoundary in main.tsx; wrapFunction/wrapTrigger helpers*
 - [x] Add Content Security Policy headers — *done: added to server/middleware/security.ts securityHeaders; 'unsafe-inline' for style-src documented (required by Tailwind/Leaflet)*
 - [x] Set up GitHub Actions CI/CD pipeline — *done: .github/workflows/ci.yml; jobs: lint-and-typecheck, build (client+server), functions-build, test; triggers on push/PR to main*
-- [x] Write first batch of tests (auth flow, scoring algorithm, trip processing) — *done: 103 tests passing across 5 files; auth-flow.test.tsx covers email/password validation, domain blocklist, ProtectedRoute guards, demo mode, username resolution*
+- [x] Write first batch of tests (auth flow, scoring algorithm, trip processing) — *done: 197 tests passing across 12 files; covers auth-flow, scoring, trip-metrics, insurance, feature-flags, GDPR, AI analysis, leaderboard, pool scheduling, trip triggers, policy triggers, server API routes*
 - [ ] Set up staging Firebase project
 - [x] Add Firebase Analytics initialisation — *done: getAnalytics() in client/src/lib/firebase.ts; guarded by VITE_FIREBASE_MEASUREMENT_ID; try/catch for ad-blocker safety*
-- [x] Implement email verification — *done: sendEmailVerification() in signup.tsx; emailVerified field on User type in AuthContext; ProtectedRoute redirects unverified users to /verify-email; verify-email.tsx page with resend + check flow; /quick-onboarding skips check*
+- [x] Implement email verification — *done: sendEmailVerification() in signup.tsx; emailVerified field on User type in AuthContext; ProtectedRoute hard-redirects unverified users to /verify-email (skipEmailVerificationCheck=true on /quick-onboarding and /verify-email routes); verify-email.tsx page with resend + check flow*
 - [x] Backend & database security audit — *done: 12 issues found and fixed across Firestore rules, PostgreSQL, Cloud Functions, and API routes. See DRIIVA_CHANGELOG.md for full details.*
 
 ## Sprint: "Make It Payable" (Week 5–6)
@@ -45,6 +45,9 @@
 - [x] Wire up profile page to real data — *done: Member since reads from Firestore createdAt; policyNumber never hardcoded; displayName falls back to fullName field; memberSince added to DashboardData*
 - [x] Tier 3 animation polish (Revolut-level) — *done: ScoreRing radial gauge replaces flat bar; dashboard cards use container/item stagger variants; BottomNav has whileTap spring scale + layoutId sliding indicator; trip cards have whileHover lift; onboarding steps use scaleIn with elastic easing*
 - [x] Implement trip route visualisation on map (show the actual driven path, not just current position) — *done: TripRouteMap component with Polyline + start/end markers; TripDetail page at /trips/:tripId; trip cards clickable in trips list*
+- [x] AI Driving Coach feedback widget — *done: AIFeedbackWidget component with round-robin engagement comments, Perplexity API integration (8s timeout, 1 retry, silent fallback), Firebase ai_feedback_events logging, glassmorphic UI with pulsing AI orb; wired into trip-detail page*
+- [x] Rewards Programme redesign — *done: 5-tier RewardsTimeline component (#Day5 Tesco £5, #Day10 RAC trial, #TeamDriiva Halfords £10, #Month3 500 Nectar pts, #Anniversary Amazon £25); vertical mobile / horizontal desktop; lock/unlock/claimed states; FCA-compliant framing; Web Share API; wired into rewards page*
+- [x] Card/Default unification — *done: GlassCard component now uses dashboard-glass-card spec; unified bg/border/radius/padding/shadow across all card instances*
 - [ ] Phone usage detection for scoring
 - [x] Build achievements backend — *done: 8 achievement definitions in functions/src/utils/achievements.ts; checkAndUnlockAchievements called after trip completion; Firestore collections (achievements/{id}, users/{uid}/achievements/{achId}); seedAchievements admin callable; frontend wired to real data*
 - [x] Weather API integration — *done: Open-Meteo archive API in functions/src/utils/weather.ts; maps WMO codes to clear/cloudy/rain/snow/fog/storm; 3s timeout + graceful null fallback; wired into both trip triggers in trips.ts*

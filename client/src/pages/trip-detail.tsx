@@ -13,6 +13,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db, isFirebaseConfigured } from '@/lib/firebase';
 import { PageWrapper } from '../components/PageWrapper';
 import { BottomNav } from '../components/BottomNav';
+import DrivingAIFeedbackWidget from '../components/DrivingAIFeedbackWidget';
 import { useAuth } from '@/contexts/AuthContext';
 import type { TripDocument, TripPoint } from '../../../shared/firestore-types';
 
@@ -274,6 +275,25 @@ export default function TripDetail() {
           </div>
         </motion.div>
 
+        {/* AI Coach */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.25 }}
+        >
+          <DrivingAIFeedbackWidget
+            data={{
+              tripId,
+              score: trip.score,
+              scoreBreakdown: trip.scoreBreakdown,
+              events: trip.events,
+              distanceMeters: trip.distanceMeters,
+              durationSeconds: trip.durationSeconds,
+              context: trip.context,
+            }}
+          />
+        </motion.div>
+
         {/* Driving events */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -321,6 +341,7 @@ export default function TripDetail() {
             </div>
           </motion.div>
         )}
+
       </div>
 
       <BottomNav />

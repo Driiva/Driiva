@@ -107,7 +107,7 @@ export default function PolicyDownload({ userId, userData, policyNumber }: Polic
             <ul>
                 <li>Real-time driving behavior monitoring</li>
                 <li>AI-powered risk assessment</li>
-                <li>Performance-based premium refunds (up to 15%)</li>
+                <li>Performance-based premium refunds (up to 15%)*</li>
                 <li>Community safety pool participation</li>
                 <li>24/7 emergency assistance</li>
                 <li>Gamified safe driving rewards</li>
@@ -137,7 +137,8 @@ export default function PolicyDownload({ userId, userData, policyNumber }: Polic
 
     <div class="terms">
         <p><strong>Important:</strong> This policy is subject to terms and conditions. Please refer to your full policy documentation for complete details. Generated on ${new Date().toLocaleDateString()}.</p>
-        <p>Driiva Ltd. Authorized and regulated by the Financial Conduct Authority. Registration number: DRV123456.</p>
+        <p>*Refund projections are illustrative. Actual amounts depend on pool performance, claims experience, and underwriting criteria. Past performance is not a guarantee of future refunds.</p>
+        <p>Driiva Ltd. Authorised and regulated by the Financial Conduct Authority. Registration number: DRV123456.</p>
     </div>
 </body>
 </html>`;

@@ -3,6 +3,7 @@ import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { Calculator, Info } from "lucide-react";
 import { GlassCard } from './GlassCard';
+import { FinancialPromotionDisclaimer } from './FinancialPromotionDisclaimer';
 
 interface RefundSimulatorProps {
   currentScore: number;
@@ -153,6 +154,7 @@ export default function RefundSimulator({
             </div>
           )}
         </div>
+        <FinancialPromotionDisclaimer className="mt-4" />
       </GlassCard>
     </section>
   );

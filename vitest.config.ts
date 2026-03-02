@@ -9,6 +9,7 @@ export default defineConfig({
     include: [
       'client/src/**/*.test.{ts,tsx}',
       'functions/src/**/*.test.ts',
+      'server/**/*.test.ts',
       'shared/**/*.test.ts',
     ],
     coverage: {
