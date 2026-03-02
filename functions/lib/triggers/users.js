@@ -46,6 +46,7 @@ const functions = __importStar(require("firebase-functions"));
 const admin = __importStar(require("firebase-admin"));
 const types_1 = require("../types");
 const region_1 = require("../lib/region");
+const damoov_1 = require("../lib/damoov");
 const db = admin.firestore();
 /**
  * Triggered when a new user document is created in Firestore.
@@ -61,6 +62,7 @@ const db = admin.firestore();
  *   - Uses integer cents for all financial fields (never floats)
  */
 exports.onUserCreate = functions
+    .runWith({ secrets: ['DAMOOV_INSTANCE_ID', 'DAMOOV_INSTANCE_KEY'] })
     .region(region_1.EUROPE_LONDON)
     .firestore
     .document(`${types_1.COLLECTION_NAMES.USERS}/{userId}`)
@@ -171,6 +173,16 @@ exports.onUserCreate = functions
             updatedBy: 'cloud-function',
         });
         functions.logger.info(`Initialized driving profile for user ${userId}`);
+        // 6. Silently register user with Damoov for telematics data collection.
+        // Non-blocking: failure does not affect user creation or policy setup.
+        const email = userData?.email;
+        if (email) {
+            const deviceToken = await (0, damoov_1.createDamoovUser)(userId, email);
+            if (deviceToken) {
+                await snap.ref.update({ damoovDeviceToken: deviceToken });
+                functions.logger.info(`Stored Damoov deviceToken for user ${userId}`);
+            }
+        }
     }
     catch (error) {
         functions.logger.error(`Error creating policy for user ${userId}:`, error);

@@ -75,6 +75,7 @@ function serializeForExport(obj) {
  */
 exports.exportUserData = functions
     .region(region_1.EUROPE_LONDON)
+    .runWith({ timeoutSeconds: 300, memory: '512MB' })
     .https.onCall(async (data, context) => {
     (0, auth_1.requireAuth)(context);
     const requestedUserId = data?.userId;
@@ -91,16 +92,20 @@ exports.exportUserData = functions
         .get();
     const trips = tripsSnap.docs.map((d) => serializeForExport({ id: d.id, ...d.data() }));
     const tripIds = tripsSnap.docs.map((d) => d.id);
+    const PARALLEL_BATCH = 10;
     const tripPointsList = [];
-    for (const tripId of tripIds) {
-        const pointsRef = db.collection(types_1.COLLECTION_NAMES.TRIP_POINTS).doc(tripId);
-        const pointsSnap = await pointsRef.get();
-        if (pointsSnap.exists) {
-            const data = pointsSnap.data();
+    for (let i = 0; i < tripIds.length; i += PARALLEL_BATCH) {
+        const chunk = tripIds.slice(i, i + PARALLEL_BATCH);
+        const results = await Promise.all(chunk.map(async (tripId) => {
+            const pointsRef = db.collection(types_1.COLLECTION_NAMES.TRIP_POINTS).doc(tripId);
+            const pointsSnap = await pointsRef.get();
+            if (!pointsSnap.exists)
+                return null;
+            const pointsData = pointsSnap.data();
             const batchesSnap = await pointsRef.collection('batches').orderBy('batchIndex').get();
             let points = [];
-            if (data.points && Array.isArray(data.points)) {
-                points = data.points;
+            if (pointsData.points && Array.isArray(pointsData.points)) {
+                points = pointsData.points;
             }
             else if (!batchesSnap.empty) {
                 for (const b of batchesSnap.docs) {
@@ -109,14 +114,18 @@ exports.exportUserData = functions
                         points = points.concat(batchPoints);
                 }
             }
-            tripPointsList.push(serializeForExport({
+            return serializeForExport({
                 tripId,
-                userId: data.userId,
+                userId: pointsData.userId,
                 points,
-                samplingRateHz: data.samplingRateHz,
-                totalPoints: data.totalPoints ?? points.length,
-                createdAt: data.createdAt,
-            }));
+                samplingRateHz: pointsData.samplingRateHz,
+                totalPoints: pointsData.totalPoints ?? points.length,
+                createdAt: pointsData.createdAt,
+            });
+        }));
+        for (const r of results) {
+            if (r)
+                tripPointsList.push(r);
         }
     }
     const segmentsSnap = await db

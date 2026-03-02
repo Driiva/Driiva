@@ -15,6 +15,7 @@
  * Scheduled:
  *   - updateLeaderboards: Every 15 minutes
  *   - finalizePoolPeriod: 1st of each month
+ *   - syncDamoovTrips: Daily 00:30 UK (Damoov DataHub → Firestore trips + profiles)
  *
  * HTTP Callable:
  *   - initializePool: Admin-only pool setup
@@ -62,7 +63,7 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.health = exports.seedAchievements = exports.onUserUpdateRecalcBetaEstimate = exports.calculateBetaEstimateForUser = exports.syncInsurancePolicy = exports.acceptInsuranceQuote = exports.getInsuranceQuote = exports.getAIInsights = exports.analyzeTripAI = exports.deleteUserAccount = exports.exportUserData = exports.batchClassifyTrips = exports.classifyTrip = exports.cancelTrip = exports.addPoolContribution = exports.initializePool = exports.sendWeeklySummary = exports.recalculatePoolShares = exports.finalizePoolPeriod = exports.updateLeaderboards = exports.syncTripOnComplete = exports.syncUserOnSignup = exports.onUserCreate = exports.onPoolShareWrite = exports.onPolicyWrite = exports.onTripStatusChange = exports.onTripCreate = exports.db = void 0;
+exports.health = exports.seedAchievements = exports.onUserUpdateRecalcBetaEstimate = exports.calculateBetaEstimateForUser = exports.syncInsurancePolicy = exports.acceptInsuranceQuote = exports.getInsuranceQuote = exports.getAIInsights = exports.analyzeTripAI = exports.deleteUserAccount = exports.exportUserData = exports.batchClassifyTrips = exports.classifyTrip = exports.cancelTrip = exports.addPoolContribution = exports.initializePool = exports.syncDamoovTrips = exports.sendWeeklySummary = exports.recalculatePoolShares = exports.finalizePoolPeriod = exports.updateLeaderboards = exports.syncTripOnComplete = exports.syncUserOnSignup = exports.onUserCreate = exports.onPoolShareWrite = exports.onPolicyWrite = exports.onTripStatusChange = exports.onTripCreate = exports.db = void 0;
 const admin = __importStar(require("firebase-admin"));
 // Initialize Firebase Admin
 admin.initializeApp();
@@ -94,6 +95,8 @@ Object.defineProperty(exports, "finalizePoolPeriod", { enumerable: true, get: fu
 Object.defineProperty(exports, "recalculatePoolShares", { enumerable: true, get: function () { return pool_2.recalculatePoolShares; } });
 var notifications_1 = require("./scheduled/notifications");
 Object.defineProperty(exports, "sendWeeklySummary", { enumerable: true, get: function () { return notifications_1.sendWeeklySummary; } });
+var damoovSync_1 = require("./scheduled/damoovSync");
+Object.defineProperty(exports, "syncDamoovTrips", { enumerable: true, get: function () { return damoovSync_1.syncDamoovTrips; } });
 // ============================================================================
 // HTTP CALLABLE FUNCTIONS
 // ============================================================================

@@ -62,6 +62,16 @@
 - [x] Build achievements backend — *done: 8 achievement definitions in functions/src/utils/achievements.ts; checkAndUnlockAchievements called after trip completion; Firestore collections (achievements/{id}, users/{uid}/achievements/{achId}); seedAchievements admin callable; frontend wired to real data*
 - [x] Weather API integration — *done: Open-Meteo archive API in functions/src/utils/weather.ts; maps WMO codes to clear/cloudy/rain/snow/fog/storm; 3s timeout + graceful null fallback; wired into both trip triggers in trips.ts*
 
+## Sprint: "Observation Mode" (Live Monitoring)
+
+*Transition from build to observe. Wire up monitoring, metrics, and alerting across the full stack. Implementation guide: `docs/MONITORING_PROMPT.md`.*
+
+- [ ] Complete Sentry wiring — `wrapFunction`/`wrapTrigger` on all 27 Cloud Functions; `setSentryUser` in AuthContext
+- [ ] Add Firebase Performance Monitoring — client SDK + custom trace utility (`performanceTraces.ts`)
+- [ ] Add structured metrics logging — trip pipeline, classifier, AI analysis with `[metric]` tags for Cloud Monitoring
+- [ ] Add Vercel Analytics + Speed Insights — Web Vitals (LCP, INP, CLS), page latency, geographic distribution
+- [ ] Configure alerting — Cloud Monitoring policies (error rate >5%, cold start >3s, Firestore write failures), Sentry alert rules, watchdog function (`monitorTripHealth`: failed trips, GPS drop-off, stuck trips)
+
 ## Remaining features not yet in any sprint
 
 These are known gaps that don't have tickets yet:

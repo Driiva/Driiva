@@ -43,12 +43,57 @@ const functions = __importStar(require("firebase-functions"));
 const admin = __importStar(require("firebase-admin"));
 const types_1 = require("../types");
 const helpers_1 = require("../utils/helpers");
+const weather_1 = require("../utils/weather");
 const achievements_1 = require("../utils/achievements");
 const notifications_1 = require("../utils/notifications");
 const classifier_1 = require("../http/classifier");
 const tripAnalysis_1 = require("../ai/tripAnalysis");
 const region_1 = require("../lib/region");
 const db = admin.firestore();
+// ─── DPIA SAFEGUARD ─────────────────────────────────────────────────────────
+// Approved data fields for trip point processing. Any new field types added to
+// tripPoints documents that aren't in this list will trigger a warning log and
+// a Firestore flag at admin/dpiaAlerts. This is an architectural safeguard for
+// future GDPR compliance — trips still process normally.
+//
+// Before adding new sensor types to trip collection, a Data Protection Impact
+// Assessment (DPIA) must be completed per UK GDPR Art. 35 for high-risk
+// processing of location/behavioural data at scale.
+const DPIA_REVIEWED_DATA_TYPES = new Set([
+    't', 'lat', 'lng', 'spd', 'hdg', 'acc', // Core GPS fields
+    'ax', 'ay', 'az', // Accelerometer
+    'gx', 'gy', 'gz', // Gyroscope
+]);
+/**
+ * Non-blocking check: flag any unreviewed data types in trip points.
+ * Writes an alert to admin/dpiaAlerts if new fields are detected.
+ */
+async function checkDpiaCompliance(tripId, points) {
+    if (!points.length)
+        return;
+    const sample = points[0];
+    const unreviewedFields = Object.keys(sample).filter((key) => !DPIA_REVIEWED_DATA_TYPES.has(key));
+    if (unreviewedFields.length > 0) {
+        functions.logger.warn('DPIA REVIEW REQUIRED: new data type detected in trip points', {
+            tripId,
+            fields: unreviewedFields,
+        });
+        try {
+            const alertRef = db.collection('admin').doc('dpiaAlerts');
+            await alertRef.set({
+                lastAlertAt: admin.firestore.FieldValue.serverTimestamp(),
+                unreviewedFields: admin.firestore.FieldValue.arrayUnion(...unreviewedFields),
+                [`alerts.${tripId}`]: {
+                    fields: unreviewedFields,
+                    detectedAt: new Date().toISOString(),
+                },
+            }, { merge: true });
+        }
+        catch (err) {
+            functions.logger.error('Failed to write DPIA alert', { tripId, err });
+        }
+    }
+}
 /**
  * Async wrapper for trip classification
  *
@@ -132,6 +177,7 @@ function checkAchievementsAsync(userId, trip, tripId) {
  */
 exports.onTripCreate = functions
     .region(region_1.EUROPE_LONDON)
+    .runWith({ minInstances: 1 })
     .firestore
     .document(`${types_1.COLLECTION_NAMES.TRIPS}/{tripId}`)
     .onCreate(async (snap, context) => {
@@ -155,9 +201,10 @@ exports.onTripCreate = functions
             startLocation: trip.startLocation,
             endLocation: trip.endLocation,
         });
-        // 2. Calculate context
+        // 2. Calculate context (weather fetch is best-effort, 3s timeout)
+        const weatherCondition = await (0, weather_1.getWeatherForTrip)(trip.startLocation.lat, trip.startLocation.lng, trip.startedAt.toDate());
         const tripContext = {
-            weatherCondition: null, // TODO: Integrate weather API
+            weatherCondition,
             isNightDriving: (0, helpers_1.isNightTime)(trip.startedAt) || (0, helpers_1.isNightTime)(trip.endedAt),
             isRushHour: (0, helpers_1.isRushHour)(trip.startedAt),
         };
@@ -198,6 +245,7 @@ exports.onTripCreate = functions
  */
 exports.onTripStatusChange = functions
     .region(region_1.EUROPE_LONDON)
+    .runWith({ minInstances: 1 })
     .firestore
     .document(`${types_1.COLLECTION_NAMES.TRIPS}/{tripId}`)
     .onUpdate(async (change, context) => {
@@ -277,6 +325,8 @@ async function finalizeTripFromPoints(tripId, tripData) {
             return;
         }
         functions.logger.info(`Processing ${points.length} GPS points for trip ${tripId}`);
+        // 1b. DPIA compliance check (non-blocking)
+        checkDpiaCompliance(tripId, points).catch((err) => functions.logger.warn('DPIA check failed (non-blocking)', { tripId, err }));
         // 2. Compute metrics from points
         const startTimestampMs = tripData.startedAt.toMillis();
         const metrics = (0, helpers_1.computeTripMetrics)(points, startTimestampMs);
@@ -293,9 +343,10 @@ async function finalizeTripFromPoints(tripId, tripData) {
             startLocation: tripData.startLocation,
             endLocation: tripData.endLocation,
         });
-        // 4. Calculate context
+        // 4. Calculate context (weather fetch is best-effort, 3s timeout)
+        const weatherCondition = await (0, weather_1.getWeatherForTrip)(tripData.startLocation.lat, tripData.startLocation.lng, tripData.startedAt.toDate());
         const tripContext = {
-            weatherCondition: null,
+            weatherCondition,
             isNightDriving: (0, helpers_1.isNightTime)(tripData.startedAt) || (0, helpers_1.isNightTime)(tripData.endedAt),
             isRushHour: (0, helpers_1.isRushHour)(tripData.startedAt),
         };
