@@ -111,7 +111,10 @@ jobs:
         run: npm run build
         working-directory: functions
 
-      - name: Deploy Firestore rules, indexes, and Functions to staging
-        run: npx firebase deploy --only firestore:rules,firestore:indexes,functions --project staging
+      - name: Deploy Firestore rules and indexes to staging
+        run: npx firebase deploy --only firestore:rules,firestore:indexes --project staging
+        # Note: Cloud Functions deploy requires Blaze plan on driiva-staging.
+        # Upgrade at: https://console.firebase.google.com/project/driiva-staging/usage/details
+        # Then change the above to: --only firestore:rules,firestore:indexes,functions
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
