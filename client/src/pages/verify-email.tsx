@@ -134,6 +134,13 @@ export default function VerifyEmail() {
     setLocation("/signin");
   };
 
+  // Temporary session-level bypass — lets the user access the app without verifying.
+  // ProtectedRoute respects this flag so it won't redirect back here.
+  const handleSkipForNow = () => {
+    sessionStorage.setItem('driiva-skip-email-verification', 'true');
+    setLocation('/dashboard');
+  };
+
   // Processing link from email
   if (linkState === "applying") {
     return (
@@ -256,11 +263,18 @@ export default function VerifyEmail() {
                   <span>{isSending ? "Sending..." : "Resend verification email"}</span>
                 </button>
 
-                <div className="text-center pt-1">
+                <div className="text-center pt-1 space-y-2">
+                  <button
+                    type="button"
+                    onClick={handleSkipForNow}
+                    className="flex items-center gap-1.5 mx-auto text-xs text-white/40 hover:text-white/60 transition-colors"
+                  >
+                    Skip for now — verify later
+                  </button>
                   <button
                     type="button"
                     onClick={handleSignOut}
-                    className="flex items-center gap-1.5 mx-auto text-xs text-white/40 hover:text-white/60 transition-colors"
+                    className="flex items-center gap-1.5 mx-auto text-xs text-white/30 hover:text-white/50 transition-colors"
                   >
                     <LogOut className="w-3 h-3" />
                     Sign out and use a different account

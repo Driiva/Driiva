@@ -21,6 +21,7 @@ import Settings from './pages/settings';
 // ─── Lazy-loaded: secondary pages (split into separate chunks) ───────────
 const Permissions = lazy(() => import('./pages/permissions'));
 const Onboarding = lazy(() => import('./pages/onboarding'));
+const CheckoutPage = lazy(() => import('./pages/checkout'));
 const Rewards = lazy(() => import('./pages/rewards'));
 const Support = lazy(() => import('./pages/support'));
 const TripRecording = lazy(() => import('./pages/trip-recording'));
@@ -38,6 +39,7 @@ const AdminOverview = lazy(() => import('./pages/admin/index'));
 const AdminUsers = lazy(() => import('./pages/admin/users'));
 const AdminTrips = lazy(() => import('./pages/admin/trips'));
 const AdminSystem = lazy(() => import('./pages/admin/system'));
+const AdminMonitoring = lazy(() => import('./pages/admin/monitoring'));
 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { OnlineStatusProvider, useOnlineStatusContext } from './contexts/OnlineStatusContext';
@@ -47,7 +49,17 @@ import SplashScreen from './components/SplashScreen';
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
-  if (loading) {
+  const [timedOut, setTimedOut] = React.useState(false);
+
+  // Give Firestore an extra 3s to resolve isAdmin before deciding access is denied.
+  // This prevents a race where loading=false but isAdmin hasn't been fetched yet.
+  React.useEffect(() => {
+    if (loading || user?.isAdmin) return;
+    const t = setTimeout(() => setTimedOut(true), 3000);
+    return () => clearTimeout(t);
+  }, [loading, user?.isAdmin]);
+
+  if (loading || (!user?.isAdmin && !timedOut)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="w-10 h-10 border-3 border-white/20 border-t-white rounded-full animate-spin" />
@@ -55,7 +67,14 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
     );
   }
   if (!user?.isAdmin) {
-    return <Redirect to="/dashboard" />;
+    return (
+      <div className="min-h-screen flex items-center justify-center text-center px-6">
+        <div>
+          <p className="text-white/60 text-lg mb-2">Access denied</p>
+          <p className="text-white/40 text-sm">Your account does not have admin privileges.</p>
+        </div>
+      </div>
+    );
   }
   return <>{children}</>;
 }
@@ -165,6 +184,9 @@ function AppContent() {
           <Route path="/policy">
             <ProtectedRoute><PolicyPage /></ProtectedRoute>
           </Route>
+          <Route path="/checkout">
+            <ProtectedRoute><CheckoutPage /></ProtectedRoute>
+          </Route>
           <Route path="/demo" component={Demo} />
           <Route path="/quick-onboarding">
             {/* Skip both checks: new users verify email after onboarding, not before */}
@@ -182,6 +204,11 @@ function AppContent() {
           </Route>
 
           {/* Admin routes */}
+          <Route path="/admin/monitoring">
+            <ProtectedRoute>
+              <AdminRoute><AdminMonitoring /></AdminRoute>
+            </ProtectedRoute>
+          </Route>
           <Route path="/admin/users">
             <ProtectedRoute>
               <AdminRoute><AdminUsers /></AdminRoute>

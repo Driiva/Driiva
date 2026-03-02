@@ -34,6 +34,17 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   const isDemoMode = typeof window !== 'undefined' && sessionStorage.getItem('driiva-demo-mode') === 'true';
 
+  // Admin users and users who clicked "Skip for now" bypass email verification.
+  const skipEmailTemp =
+    typeof window !== 'undefined' &&
+    sessionStorage.getItem('driiva-skip-email-verification') === 'true';
+
+  // Admins are internal users — they skip both email verification AND onboarding.
+  const isAdmin = user?.isAdmin === true;
+  const shouldEnforceEmailVerification =
+    !skipEmailVerificationCheck && !skipEmailTemp && !isAdmin;
+  const shouldEnforceOnboarding = !skipOnboardingCheck && !isAdmin;
+
   useLayoutEffect(() => {
     if (loading) return;
     if (hasRedirected.current) return;
@@ -45,17 +56,17 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       return;
     }
 
-    if (!skipEmailVerificationCheck && user.emailVerified === false) {
+    if (shouldEnforceEmailVerification && user.emailVerified === false) {
       hasRedirected.current = true;
       setLocation('/verify-email');
       return;
     }
 
-    if (!skipOnboardingCheck && user.onboardingComplete !== true) {
+    if (shouldEnforceOnboarding && user.onboardingComplete !== true) {
       hasRedirected.current = true;
       setLocation('/quick-onboarding');
     }
-  }, [loading, user, isDemoMode, skipOnboardingCheck, skipEmailVerificationCheck, setLocation]);
+  }, [loading, user, isDemoMode, shouldEnforceOnboarding, shouldEnforceEmailVerification, setLocation]);
 
   // AuthProvider still bootstrapping
   if (loading) {
@@ -78,7 +89,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // Email not verified → spinner while redirect fires
-  if (!skipEmailVerificationCheck && user.emailVerified === false) {
+  if (shouldEnforceEmailVerification && user.emailVerified === false) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="w-10 h-10 border-3 border-white/20 border-t-white rounded-full animate-spin" />
@@ -87,7 +98,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // Onboarding not completed → spinner while redirect fires
-  if (!skipOnboardingCheck && user.onboardingComplete !== true) {
+  if (shouldEnforceOnboarding && user.onboardingComplete !== true) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="w-10 h-10 border-3 border-white/20 border-t-white rounded-full animate-spin" />
