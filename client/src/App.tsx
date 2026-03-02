@@ -38,6 +38,7 @@ const AdminFeedback = lazy(() => import('./pages/admin/feedback'));
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { OnlineStatusProvider, useOnlineStatusContext } from './contexts/OnlineStatusContext';
 import OfflineBanner from './components/OfflineBanner';
+import InstallPrompt from './components/InstallPrompt';
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -83,6 +84,7 @@ function AppContent() {
   return (
     <div className={`App ${!isOnline ? 'pt-[52px]' : ''}`}>
       <OfflineBanner />
+      <InstallPrompt />
       <div
         className="driiva-gradient-bg"
         style={{
