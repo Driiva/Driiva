@@ -39,6 +39,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { OnlineStatusProvider, useOnlineStatusContext } from './contexts/OnlineStatusContext';
 import OfflineBanner from './components/OfflineBanner';
 import InstallPrompt from './components/InstallPrompt';
+import SplashScreen from './components/SplashScreen';
 
 function AdminRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -67,13 +68,15 @@ function PageFallback() {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router>
-        <AuthProvider>
-          <OnlineStatusProvider>
-            <AppContent />
-          </OnlineStatusProvider>
-        </AuthProvider>
-      </Router>
+      <SplashScreen>
+        <Router>
+          <AuthProvider>
+            <OnlineStatusProvider>
+              <AppContent />
+            </OnlineStatusProvider>
+          </AuthProvider>
+        </Router>
+      </SplashScreen>
     </QueryClientProvider>
   );
 }
