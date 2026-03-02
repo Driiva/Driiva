@@ -1,0 +1,13 @@
+node_modules
+dist
+.cursor
+attached_assets
+functions
+functions-python
+api/main.py
+api/__init__.py
+server
+scripts
+docs
+*.zip
+*.log
