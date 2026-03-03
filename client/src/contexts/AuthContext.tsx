@@ -21,6 +21,7 @@ interface AuthContextType {
   setIsAuthenticated: (value: boolean) => void;
   setUser: (user: User | null) => void;
   checkOnboardingStatus: () => Promise<boolean>;
+  markEmailVerified: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -108,13 +109,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         sessionStorage.removeItem('driiva-demo-user');
         try {
           const token = await firebaseUser.getIdToken();
-          const res = await fetch("/api/profile/me", {
-            headers: { Authorization: `Bearer ${token}` },
-            credentials: "include",
-          });
+          const [res, adminFlag] = await Promise.all([
+            fetch("/api/profile/me", {
+              headers: { Authorization: `Bearer ${token}` },
+              credentials: "include",
+            }),
+            readAdminFlagFromFirestore(firebaseUser.uid),
+          ]);
           if (res.ok) {
             const profile = await res.json();
-            const adminFlag = await readAdminFlagFromFirestore(firebaseUser.uid);
             setUser({
               id: firebaseUser.uid,
               email: profile.email ?? firebaseUser.email ?? "",
@@ -193,6 +196,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const markEmailVerified = () => {
+    setUser(u => u ? { ...u, emailVerified: true } : null);
+  };
+
   const checkOnboardingStatus = async (): Promise<boolean> => {
     if (!user || !auth?.currentUser) return false;
     try {
@@ -219,6 +226,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsAuthenticated: () => {},
         setUser,
         checkOnboardingStatus,
+        markEmailVerified,
       }}
     >
       {children}

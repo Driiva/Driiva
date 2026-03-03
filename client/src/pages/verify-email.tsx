@@ -27,7 +27,7 @@ function getQueryParam(name: string): string | null {
 
 export default function VerifyEmail() {
   const [, setLocation] = useLocation();
-  const { user, logout } = useAuth();
+  const { user, logout, markEmailVerified } = useAuth();
   const { toast } = useToast();
   const { ref: cardRef, style: cardParallaxStyle } = useParallax({ speed: 0.3 });
 
@@ -50,6 +50,7 @@ export default function VerifyEmail() {
       .then(() => {
         setLinkState("success");
         toast({ title: "Email verified!", description: "Taking you to the app." });
+        markEmailVerified();
         if (localAuth.currentUser) reload(localAuth.currentUser).finally(() => setLocation("/dashboard"));
         else setLocation("/dashboard");
       })
@@ -112,9 +113,8 @@ export default function VerifyEmail() {
       // Reload the Firebase user to pick up email verification status
       await reload(auth.currentUser);
       if (auth.currentUser.emailVerified) {
+        markEmailVerified();
         toast({ title: "Email verified!", description: "Welcome to Driiva." });
-        // Navigate to dashboard — ProtectedRoute will re-evaluate now that emailVerified=true
-        // (onAuthStateChanged will fire and update AuthContext automatically)
         setLocation("/dashboard");
       } else {
         toast({
