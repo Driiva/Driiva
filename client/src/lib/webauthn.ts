@@ -1,219 +1,251 @@
 /**
- * WebAuthn utilities for Face ID, Touch ID, and biometric authentication
- * Provides secure passwordless authentication using device biometrics
+ * WebAuthn utilities for Face ID, Touch ID, and biometric authentication.
+ *
+ * All API calls use EMAIL (not username) — the backend looks up users by email
+ * because Firebase-created accounts have email but nullable username.
+ *
+ * After successful authentication the server returns a Firebase custom token.
+ * The caller is responsible for calling signInWithCustomToken(auth, customToken)
+ * to establish a real Firebase session before any protected route is accessed.
  */
 
-// Utility functions for base64url encoding/decoding
+// ---------------------------------------------------------------------------
+// Encoding helpers
+// ---------------------------------------------------------------------------
+
 export function arrayBufferToBase64Url(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
-  const base64 = btoa(String.fromCharCode(...Array.from(bytes)));
+  let binary = '';
+  bytes.forEach(b => { binary += String.fromCharCode(b); });
+  const base64 = btoa(binary);
   return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 }
 
 export function base64UrlToArrayBuffer(base64url: string): ArrayBuffer {
-  const padding = '='.repeat((4 - base64url.length % 4) % 4);
+  const padding = '='.repeat((4 - (base64url.length % 4)) % 4);
   const base64 = (base64url + padding).replace(/-/g, '+').replace(/_/g, '/');
   const rawData = atob(base64);
-  return new Uint8Array(Array.from(rawData).map(char => char.charCodeAt(0))).buffer;
+  return new Uint8Array(Array.from(rawData, c => c.charCodeAt(0))).buffer;
 }
 
-// Check if WebAuthn and biometric authentication is supported
+// ---------------------------------------------------------------------------
+// Device support check
+// ---------------------------------------------------------------------------
+
 export async function checkBiometricSupport(): Promise<{
   supported: boolean;
   platformAuthenticator: boolean;
   error?: string;
 }> {
   if (!window.PublicKeyCredential) {
-    return {
-      supported: false,
-      platformAuthenticator: false,
-      error: 'WebAuthn not supported by this browser'
-    };
+    return { supported: false, platformAuthenticator: false, error: 'WebAuthn not supported by this browser' };
   }
-
   try {
     const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
     return {
       supported: true,
       platformAuthenticator: available,
-      error: available ? undefined : 'Face ID/Touch ID not available on this device'
+      error: available ? undefined : 'Face ID/Touch ID not available on this device',
     };
-  } catch (error) {
-    return {
-      supported: true,
-      platformAuthenticator: false,
-      error: 'Could not verify biometric support'
-    };
+  } catch {
+    return { supported: true, platformAuthenticator: false, error: 'Could not verify biometric support' };
   }
 }
 
-// Register a new WebAuthn credential (Face ID/Touch ID)
-export async function registerBiometricCredential(username: string): Promise<{
+// ---------------------------------------------------------------------------
+// Pre-login passkey check (public — no auth required)
+// ---------------------------------------------------------------------------
+
+export async function checkHasPasskey(email: string): Promise<boolean> {
+  try {
+    const res = await fetch('/api/auth/webauthn/check', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    if (!res.ok) return false;
+    const data = await res.json();
+    return !!data.hasPasskey;
+  } catch {
+    return false;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Registration (requires existing Firebase session)
+// ---------------------------------------------------------------------------
+
+export async function registerBiometricCredential(email: string): Promise<{
   success: boolean;
-  credential?: any;
   error?: string;
 }> {
   try {
-    // Get registration options from server
-    const response = await fetch('/api/auth/webauthn/register/start', {
+    const startRes = await fetch('/api/auth/webauthn/register/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username })
+      body: JSON.stringify({ email }),
     });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to start registration');
+    if (!startRes.ok) {
+      const err = await startRes.json();
+      throw new Error(err.message || 'Failed to start registration');
     }
 
-    const options = await response.json();
-
-    // Convert base64 strings to ArrayBuffer
+    const options = await startRes.json();
     options.publicKey.challenge = base64UrlToArrayBuffer(options.publicKey.challenge);
     options.publicKey.user.id = base64UrlToArrayBuffer(options.publicKey.user.id);
-
-    // Create credential with biometric authentication
-    const credential = await navigator.credentials.create(options);
-
-    if (!credential) {
-      throw new Error('Failed to create credential');
+    if (options.publicKey.excludeCredentials) {
+      options.publicKey.excludeCredentials = options.publicKey.excludeCredentials.map((c: any) => ({
+        ...c,
+        id: base64UrlToArrayBuffer(c.id),
+      }));
     }
 
-    // Send credential to server for verification
-    const verificationResponse = await fetch('/api/auth/webauthn/register/complete', {
+    const credential = await navigator.credentials.create(options);
+    if (!credential) throw new Error('Failed to create credential');
+
+    const pk = credential as PublicKeyCredential;
+    const attestation = pk.response as AuthenticatorAttestationResponse;
+
+    const verifyRes = await fetch('/api/auth/webauthn/register/complete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        username,
+        email,
         credential: {
-          id: credential.id,
-          rawId: arrayBufferToBase64Url((credential as any).rawId),
+          id: pk.id,
+          rawId: arrayBufferToBase64Url(pk.rawId),
           response: {
-            clientDataJSON: arrayBufferToBase64Url((credential as any).response.clientDataJSON),
-            attestationObject: arrayBufferToBase64Url((credential as any).response.attestationObject)
+            clientDataJSON: arrayBufferToBase64Url(attestation.clientDataJSON),
+            attestationObject: arrayBufferToBase64Url(attestation.attestationObject),
           },
-          type: credential.type
-        }
-      })
+          type: pk.type,
+        },
+      }),
     });
 
-    if (!verificationResponse.ok) {
-      const error = await verificationResponse.json();
-      throw new Error(error.message || 'Failed to verify credential');
+    if (!verifyRes.ok) {
+      const err = await verifyRes.json();
+      throw new Error(err.message || 'Failed to verify credential');
     }
 
-    return { success: true, credential };
-
+    return { success: true };
   } catch (error: any) {
     console.error('Biometric registration error:', error);
-    return {
-      success: false,
-      error: error.message || 'Failed to register biometric authentication'
-    };
+    return { success: false, error: error.message || 'Failed to register biometric authentication' };
   }
 }
 
-// Authenticate using WebAuthn (Face ID/Touch ID)
-export async function authenticateWithBiometrics(username: string): Promise<{
+// ---------------------------------------------------------------------------
+// Authentication — returns customToken for signInWithCustomToken()
+// ---------------------------------------------------------------------------
+
+export async function authenticateWithBiometrics(email: string): Promise<{
   success: boolean;
   user?: any;
+  customToken?: string;
   error?: string;
 }> {
   try {
-    // Get authentication options from server
-    const response = await fetch('/api/auth/webauthn/authenticate/start', {
+    const startRes = await fetch('/api/auth/webauthn/authenticate/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username })
+      body: JSON.stringify({ email }),
     });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to start authentication');
+    if (!startRes.ok) {
+      const err = await startRes.json();
+      throw new Error(err.message || 'Failed to start authentication');
     }
 
-    const options = await response.json();
-
-    // Convert challenge and credential IDs
+    const options = await startRes.json();
     options.publicKey.challenge = base64UrlToArrayBuffer(options.publicKey.challenge);
-    options.publicKey.allowCredentials = options.publicKey.allowCredentials.map((cred: any) => ({
-      ...cred,
-      id: base64UrlToArrayBuffer(cred.id)
-    }));
-
-    // Get assertion using biometric authentication
-    const assertion = await navigator.credentials.get(options);
-
-    if (!assertion) {
-      throw new Error('Failed to get assertion');
+    if (options.publicKey.allowCredentials) {
+      options.publicKey.allowCredentials = options.publicKey.allowCredentials.map((c: any) => ({
+        ...c,
+        id: base64UrlToArrayBuffer(c.id),
+      }));
     }
 
-    // Send assertion to server for verification
-    const verificationResponse = await fetch('/api/auth/webauthn/authenticate/complete', {
+    const assertion = await navigator.credentials.get(options);
+    if (!assertion) throw new Error('Failed to get assertion');
+
+    const pk = assertion as PublicKeyCredential;
+    const assertionResponse = pk.response as AuthenticatorAssertionResponse;
+
+    const verifyRes = await fetch('/api/auth/webauthn/authenticate/complete', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        username,
+        email,
         assertion: {
-          id: assertion.id,
-          rawId: arrayBufferToBase64Url((assertion as any).rawId),
+          id: pk.id,
+          rawId: arrayBufferToBase64Url(pk.rawId),
           response: {
-            authenticatorData: arrayBufferToBase64Url((assertion as any).response.authenticatorData),
-            clientDataJSON: arrayBufferToBase64Url((assertion as any).response.clientDataJSON),
-            signature: arrayBufferToBase64Url((assertion as any).response.signature),
-            userHandle: (assertion as any).response.userHandle ? 
-              arrayBufferToBase64Url((assertion as any).response.userHandle) : null
+            authenticatorData: arrayBufferToBase64Url(assertionResponse.authenticatorData),
+            clientDataJSON: arrayBufferToBase64Url(assertionResponse.clientDataJSON),
+            signature: arrayBufferToBase64Url(assertionResponse.signature),
+            userHandle: assertionResponse.userHandle
+              ? arrayBufferToBase64Url(assertionResponse.userHandle)
+              : null,
           },
-          type: assertion.type
-        }
-      })
+          type: pk.type,
+        },
+      }),
     });
 
-    if (!verificationResponse.ok) {
-      const error = await verificationResponse.json();
-      throw new Error(error.message || 'Failed to verify assertion');
+    if (!verifyRes.ok) {
+      const err = await verifyRes.json();
+      throw new Error(err.message || 'Failed to verify assertion');
     }
 
-    const result = await verificationResponse.json();
-    return { success: true, user: result.user };
-
+    const result = await verifyRes.json();
+    return { success: true, user: result.user, customToken: result.customToken ?? undefined };
   } catch (error: any) {
     console.error('Biometric authentication error:', error);
-    return {
-      success: false,
-      error: error.message || 'Failed to authenticate with biometrics'
-    };
+    return { success: false, error: error.message || 'Failed to authenticate with biometrics' };
   }
 }
 
-// Get user's registered credentials
-export async function getUserCredentials(username: string): Promise<{
+// ---------------------------------------------------------------------------
+// Credential management (requires Firebase session)
+// ---------------------------------------------------------------------------
+
+export async function getUserCredentials(idToken: string): Promise<{
   hasCredentials: boolean;
-  credentials?: Array<{
-    id: string;
-    createdAt: string;
-  }>;
+  credentials?: Array<{ id: string; deviceName: string | null; createdAt: string; lastUsed: string | null }>;
   error?: string;
 }> {
   try {
-    const response = await fetch(`/api/auth/webauthn/credentials/${username}`);
-    
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to fetch credentials');
+    const res = await fetch('/api/auth/webauthn/credentials/me', {
+      headers: { Authorization: `Bearer ${idToken}` },
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || 'Failed to fetch credentials');
     }
-
-    const data = await response.json();
-    return {
-      hasCredentials: data.credentials.length > 0,
-      credentials: data.credentials
-    };
-
+    const data = await res.json();
+    return { hasCredentials: data.credentials.length > 0, credentials: data.credentials };
   } catch (error: any) {
     console.error('Error fetching credentials:', error);
-    return {
-      hasCredentials: false,
-      error: error.message || 'Failed to fetch credentials'
-    };
+    return { hasCredentials: false, error: error.message || 'Failed to fetch credentials' };
+  }
+}
+
+export async function deleteCredential(credentialId: string, idToken: string): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    const res = await fetch(`/api/auth/webauthn/credentials/${credentialId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${idToken}` },
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.message || 'Failed to delete credential');
+    }
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error deleting credential:', error);
+    return { success: false, error: error.message || 'Failed to delete credential' };
   }
 }

@@ -10,16 +10,25 @@ interface CommunityPoolProps {
     safetyFactor: number;
     participantCount: number;
     safeDriverCount: number;
+    userShare?: number;
   };
+  /** Annual premium in GBP — used to compute illustrative pool share (4.2% of premium). */
+  premiumAmount?: number;
 }
 
-export default function CommunityPool({ pool }: CommunityPoolProps) {
+export default function CommunityPool({ pool, premiumAmount }: CommunityPoolProps) {
   const { toast } = useToast();
   const [showPopup, setShowPopup] = useState(false);
   const safetyPercentage = pool ? (Number(pool.safetyFactor) * 100).toFixed(0) : '80';
   const poolAmount = pool ? Number(pool.poolAmount).toFixed(0) : '105,000';
   const participantCount = pool?.participantCount || 1000;
   const safeDriverCount = pool?.safeDriverCount || 800;
+  // Pool share: use real value if provided, otherwise derive from premium (4.2% illustrative rate)
+  const userShare = pool?.userShare != null
+    ? Number(pool.userShare).toFixed(2)
+    : premiumAmount
+      ? (premiumAmount * 0.042).toFixed(2)
+      : '0.00';
 
   const handlePoolInfoClick = () => {
     setShowPopup(true);
@@ -74,7 +83,7 @@ export default function CommunityPool({ pool }: CommunityPoolProps) {
             })}
             className="text-center p-3 min-h-[44px] hover:bg-white/5 rounded-xl transition-all duration-200 ease-out active:scale-95"
           >
-            <div className="text-lg font-semibold text-emerald-400/80">£62.50</div>
+            <div className="text-lg font-semibold text-emerald-400/80">£{userShare}</div>
             <div className="text-[10px] text-white/40 mt-0.5">Your Share</div>
           </button>
         </div>

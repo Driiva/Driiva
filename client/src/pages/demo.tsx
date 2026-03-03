@@ -4,6 +4,7 @@ import { useLocation } from "wouter";
 import { ArrowLeft, Car, TrendingUp, Users, Trophy, Play, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import signinLogo from "@/assets/driiva-logo-CLEAR-FINAL.png";
+import { calculateAnnualPremium, DEMO_PRICING_INPUTS } from "@/lib/pricingEngine";
 
 /**
  * DEMO PAGE
@@ -14,23 +15,31 @@ import signinLogo from "@/assets/driiva-logo-CLEAR-FINAL.png";
  * UI matches the signin/signup design system with glassmorphic cards.
  */
 
-// Demo user data - completely separate from real Firebase users
+// Demo user data — premium is computed deterministically from the pricing engine.
+// Same inputs always produce the same price (age 28, 2022 VW Golf, 2yr NCB, London E1, score 82).
+const DEMO_ANNUAL_PREMIUM = calculateAnnualPremium(DEMO_PRICING_INPUTS);
+
 const DEMO_USER_DATA = {
   id: 'demo-user-1',
   email: 'demo@driiva.co.uk',
   name: 'Demo Driver',
   drivingScore: 82,
-  premiumAmount: 1500,
+  premiumAmount: DEMO_ANNUAL_PREMIUM,
   totalMiles: 1247,
-  projectedRefund: 62.50,
+  projectedRefund: Math.round(DEMO_ANNUAL_PREMIUM * 0.042 * 100) / 100,
   trips: [
     { id: 1, from: 'Home', to: 'Office', score: 92, distance: 12.4, date: '2026-02-04' },
     { id: 2, from: 'Office', to: 'Grocery', score: 88, distance: 3.2, date: '2026-02-03' },
     { id: 3, from: 'Grocery', to: 'Home', score: 95, distance: 4.1, date: '2026-02-02' }
   ],
   poolTotal: 105000,
-  poolShare: 62.50,
+  poolShare: Math.round(DEMO_ANNUAL_PREMIUM * 0.042 * 100) / 100,
   safetyFactor: 0.85,
+  // Profile inputs for pricing engine (stored in sessionStorage for checkout preview)
+  vehicle: { make: 'Volkswagen', model: 'Golf', year: DEMO_PRICING_INPUTS.vehicleYear },
+  age: DEMO_PRICING_INPUTS.age,
+  noClaimsYears: DEMO_PRICING_INPUTS.noClaimsYears,
+  postcode: DEMO_PRICING_INPUTS.postcode,
 };
 
 const features = [

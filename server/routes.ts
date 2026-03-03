@@ -21,7 +21,7 @@ import { insertTripSchema, insertIncidentSchema } from "@shared/schema";
 import { z } from "zod";
 import { authService } from "./auth";
 import { webauthnService } from "./webauthn";
-import { authLimiter, tripDataLimiter } from "./middleware/security";
+import { authLimiter, tripDataLimiter, webhookLimiter } from "./middleware/security";
 import { gdprDeleteLimiter, poolModificationLimiter } from "./middleware/rateLimiter";
 import {
   verifyFirebaseAuth,
@@ -30,6 +30,7 @@ import {
   requireAdmin,
   type AuthRequest,
 } from "./middleware/auth";
+import { getStripe, getStripeWebhookSecret, stripeIdempotencyKey } from "./lib/stripe";
 
 export async function registerRoutes(app: Express): Promise<void> {
   // Verify Firebase JWT on all requests; sets req.auth { uid, email, userId } from token only (never from headers)
@@ -152,16 +153,31 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
-  // WebAuthn (Face ID/Touch ID) Authentication Endpoints
+  // -------------------------------------------------------------------------
+  // WebAuthn (Face ID / Touch ID) — all lookups use email, not username
+  // -------------------------------------------------------------------------
+
+  // Public: check whether a passkey exists for an email (pre-login, no auth required)
+  app.post("/api/auth/webauthn/check", authLimiter, async (req, res) => {
+    try {
+      const { email } = req.body;
+      if (!email || typeof email !== 'string') {
+        return res.status(400).json({ message: "email required" });
+      }
+      const hasPasskey = await webauthnService.hasCredentials(email);
+      res.json({ hasPasskey });
+    } catch (error: any) {
+      console.error("WebAuthn check error:", error);
+      res.json({ hasPasskey: false });
+    }
+  });
+
   app.post("/api/auth/webauthn/register/start", authLimiter, async (req, res) => {
     try {
-      const { username } = req.body;
-      
-      if (!username) {
-        return res.status(400).json({ message: "Username required" });
-      }
-
-      const options = await webauthnService.generateRegistrationOptions(username);
+      const { email } = req.body;
+      if (!email) return res.status(400).json({ message: "email required" });
+      const userAgent = req.headers['user-agent'];
+      const options = await webauthnService.generateRegistrationOptions(email, userAgent);
       res.json(options);
     } catch (error: any) {
       console.error("WebAuthn registration start error:", error);
@@ -171,14 +187,10 @@ export async function registerRoutes(app: Express): Promise<void> {
 
   app.post("/api/auth/webauthn/register/complete", authLimiter, async (req, res) => {
     try {
-      const { username, credential } = req.body;
-      
-      if (!username || !credential) {
-        return res.status(400).json({ message: "Username and credential required" });
-      }
-
-      const result = await webauthnService.verifyRegistration(username, credential);
-      
+      const { email, credential } = req.body;
+      if (!email || !credential) return res.status(400).json({ message: "email and credential required" });
+      const userAgent = req.headers['user-agent'];
+      const result = await webauthnService.verifyRegistration(email, credential, userAgent);
       if (result.verified) {
         res.json({ success: true, message: "Biometric authentication registered successfully" });
       } else {
@@ -192,13 +204,9 @@ export async function registerRoutes(app: Express): Promise<void> {
 
   app.post("/api/auth/webauthn/authenticate/start", authLimiter, async (req, res) => {
     try {
-      const { username } = req.body;
-      
-      if (!username) {
-        return res.status(400).json({ message: "Username required" });
-      }
-
-      const options = await webauthnService.generateAuthenticationOptions(username);
+      const { email } = req.body;
+      if (!email) return res.status(400).json({ message: "email required" });
+      const options = await webauthnService.generateAuthenticationOptions(email);
       res.json(options);
     } catch (error: any) {
       console.error("WebAuthn authentication start error:", error);
@@ -206,18 +214,14 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
+  // Returns customToken — client must call signInWithCustomToken() to create Firebase session
   app.post("/api/auth/webauthn/authenticate/complete", authLimiter, async (req, res) => {
     try {
-      const { username, assertion } = req.body;
-      
-      if (!username || !assertion) {
-        return res.status(400).json({ message: "Username and assertion required" });
-      }
-
-      const result = await webauthnService.verifyAuthentication(username, assertion);
-      
+      const { email, assertion } = req.body;
+      if (!email || !assertion) return res.status(400).json({ message: "email and assertion required" });
+      const result = await webauthnService.verifyAuthentication(email, assertion);
       if (result.verified && result.user) {
-        res.json({ success: true, user: result.user });
+        res.json({ success: true, user: result.user, customToken: result.customToken ?? null });
       } else {
         res.status(401).json({ message: result.error || "Authentication failed" });
       }
@@ -227,26 +231,40 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
-  // List WebAuthn credentials (protected: only own user's credentials)
-  app.get("/api/auth/webauthn/credentials/:username", requireAuth, async (req: AuthRequest, res) => {
+  // List own passkeys (protected: Firebase session required)
+  app.get("/api/auth/webauthn/credentials/me", requireAuth, async (req: AuthRequest, res) => {
     try {
-      const user = await storage.getUser(req.auth!.userId);
-      if (!user || user.username !== req.params.username) {
-        return res.status(403).json({ message: "Forbidden", code: "RESOURCE_OWNER_REQUIRED" });
-      }
-      const credentials = await webauthnService.getUserCredentials(req.params.username);
+      const user = await storage.getUserByFirebaseUid(req.auth!.uid);
+      if (!user?.email) return res.status(404).json({ message: "User not found" });
+      const credentials = await webauthnService.getUserCredentials(user.email);
       res.json({
         credentials: credentials.map((cred: any) => ({
           id: cred.credentialId,
           deviceType: cred.deviceType,
           deviceName: cred.deviceName,
           createdAt: cred.createdAt,
-          lastUsed: cred.lastUsed
-        }))
+          lastUsed: cred.lastUsed,
+        })),
       });
     } catch (error: any) {
       console.error("Get credentials error:", error);
       res.status(500).json({ message: "Failed to fetch credentials" });
+    }
+  });
+
+  // Remove a specific passkey (soft-delete, protected)
+  app.delete("/api/auth/webauthn/credentials/:credentialId", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const { credentialId } = req.params;
+      const deleted = await webauthnService.deleteCredential(credentialId, req.auth!.uid);
+      if (deleted) {
+        res.json({ success: true });
+      } else {
+        res.status(404).json({ message: "Credential not found or already removed" });
+      }
+    } catch (error: any) {
+      console.error("Delete credential error:", error);
+      res.status(500).json({ message: "Failed to delete credential" });
     }
   });
 
@@ -818,4 +836,338 @@ export async function registerRoutes(app: Express): Promise<void> {
     }
   });
 
+  // -------------------------------------------------------------------------
+  // STRIPE PAYMENT ROUTES
+  // -------------------------------------------------------------------------
+
+  /**
+   * Create (or retrieve) a Stripe Customer + Subscription.
+   * Uses inline price_data so each user pays their individually-computed premium.
+   *
+   * Body:
+   *   annualPremiumCents  — annual premium in pence (from client pricingEngine × 100)
+   *   billingPeriod       — 'monthly' | 'annual'
+   *   quoteId?            — Root Platform quoteId stored in subscription metadata
+   *
+   * If annualPremiumCents is missing, falls back to STRIPE_MONTHLY_PRICE_ID for
+   * backwards compatibility with older clients.
+   */
+  app.post("/api/payments/create-subscription", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const stripe = getStripe();
+      const uid = req.auth!.uid;
+      const user = await storage.getUserByFirebaseUid(uid);
+      if (!user) return res.status(404).json({ message: "User not found" });
+
+      const quoteId: string | undefined = req.body.quoteId;
+      const billingPeriod: 'monthly' | 'annual' = req.body.billingPeriod === 'annual' ? 'annual' : 'monthly';
+      const annualPremiumCents: number | undefined = req.body.annualPremiumCents
+        ? Number(req.body.annualPremiumCents)
+        : undefined;
+
+      // Validate annualPremiumCents when provided
+      if (annualPremiumCents !== undefined) {
+        if (!Number.isFinite(annualPremiumCents) || annualPremiumCents < 10000 || annualPremiumCents > 500000) {
+          return res.status(400).json({ message: "annualPremiumCents must be between 10000 and 500000" });
+        }
+      }
+
+      // Upsert Stripe customer
+      let customerId = user.stripeCustomerId ?? undefined;
+      if (!customerId) {
+        const customer = await stripe.customers.create({
+          email: user.email,
+          name: user.displayName || `${user.firstName || ''} ${user.lastName || ''}`.trim() || undefined,
+          metadata: { firebaseUid: uid, driivUserId: String(user.id) },
+        }, { idempotencyKey: stripeIdempotencyKey(uid, 'customer-create') });
+        customerId = customer.id;
+        await storage.updateStripeCustomerId(user.id, customerId);
+      }
+
+      // Build subscription metadata
+      const subscriptionMeta: Record<string, string> = { firebaseUid: uid, billingPeriod };
+      if (quoteId) subscriptionMeta.quoteId = quoteId;
+
+      // Build subscription item: use price_data if we have a computed premium,
+      // otherwise fall back to the pre-created monthly Price ID.
+      let subscriptionItem: any;
+      const productId = process.env.STRIPE_PRODUCT_ID;
+
+      if (annualPremiumCents !== undefined && productId) {
+        const unitAmount = billingPeriod === 'annual'
+          ? annualPremiumCents
+          : Math.round(annualPremiumCents / 12 * 1.07);
+
+        subscriptionItem = {
+          price_data: {
+            currency: 'gbp',
+            product: productId,
+            recurring: { interval: billingPeriod === 'annual' ? 'year' : 'month' },
+            unit_amount: unitAmount,
+          },
+        };
+        subscriptionMeta.annualPremiumCents = String(annualPremiumCents);
+      } else {
+        // Legacy fallback: use the pre-created monthly Price ID
+        const priceId = req.body.priceId || process.env.STRIPE_MONTHLY_PRICE_ID;
+        if (!priceId) {
+          return res.status(400).json({ message: "STRIPE_PRODUCT_ID or STRIPE_MONTHLY_PRICE_ID is required" });
+        }
+        subscriptionItem = { price: priceId };
+      }
+
+      const idempotencyKey = stripeIdempotencyKey(
+        uid,
+        `subscription-${billingPeriod}-${annualPremiumCents ?? 'fixed'}-${quoteId ?? 'none'}`,
+      );
+
+      const subscription = await stripe.subscriptions.create({
+        customer: customerId,
+        items: [subscriptionItem],
+        payment_behavior: 'default_incomplete',
+        payment_settings: { save_default_payment_method: 'on_subscription' },
+        expand: ['latest_invoice.payment_intent'],
+        metadata: subscriptionMeta,
+      }, { idempotencyKey });
+
+      const invoice = subscription.latest_invoice as any;
+      const paymentIntent = invoice?.payment_intent;
+
+      res.json({
+        subscriptionId: subscription.id,
+        clientSecret: paymentIntent?.client_secret ?? null,
+        status: subscription.status,
+      });
+    } catch (error: any) {
+      if (error.message?.includes('STRIPE_SECRET_KEY')) {
+        return res.status(503).json({ message: "Stripe is not configured on this environment" });
+      }
+      console.error("[Stripe] create-subscription error:", error);
+      res.status(500).json({ message: error.message || "Failed to create subscription" });
+    }
+  });
+
+  /**
+   * Create a one-time Stripe Checkout Session (for add-ons / one-off payments).
+   * Body: { priceId: string, successUrl?: string, cancelUrl?: string }
+   */
+  app.post("/api/payments/create-checkout", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const stripe = getStripe();
+      const uid = req.auth!.uid;
+      const { priceId, successUrl, cancelUrl } = req.body;
+      if (!priceId) return res.status(400).json({ message: "priceId is required" });
+
+      const user = await storage.getUserByFirebaseUid(uid);
+      if (!user) return res.status(404).json({ message: "User not found" });
+
+      let customerId = user.stripeCustomerId ?? undefined;
+      if (!customerId) {
+        const customer = await stripe.customers.create({
+          email: user.email,
+          metadata: { firebaseUid: uid },
+        });
+        customerId = customer.id;
+        await storage.updateStripeCustomerId(user.id, customerId);
+      }
+
+      const origin = req.headers.origin || process.env.WEBAUTHN_ORIGIN || 'http://localhost:5000';
+      const session = await stripe.checkout.sessions.create({
+        customer: customerId,
+        mode: 'payment',
+        line_items: [{ price: priceId, quantity: 1 }],
+        success_url: successUrl || `${origin}/dashboard?checkout=success`,
+        cancel_url: cancelUrl || `${origin}/checkout?checkout=cancelled`,
+        metadata: { firebaseUid: uid },
+      });
+
+      res.json({ url: session.url, sessionId: session.id });
+    } catch (error: any) {
+      if (error.message?.includes('STRIPE_SECRET_KEY')) {
+        return res.status(503).json({ message: "Stripe is not configured on this environment" });
+      }
+      console.error("[Stripe] create-checkout error:", error);
+      res.status(500).json({ message: error.message || "Failed to create checkout session" });
+    }
+  });
+
+  /**
+   * Return a Stripe Customer Portal link so users can manage their subscription.
+   */
+  app.get("/api/payments/billing-portal", requireAuth, async (req: AuthRequest, res) => {
+    try {
+      const stripe = getStripe();
+      const uid = req.auth!.uid;
+      const user = await storage.getUserByFirebaseUid(uid);
+      if (!user?.stripeCustomerId) {
+        return res.status(404).json({ message: "No billing account found" });
+      }
+
+      const origin = req.headers.origin || process.env.WEBAUTHN_ORIGIN || 'http://localhost:5000';
+      const session = await stripe.billingPortal.sessions.create({
+        customer: user.stripeCustomerId,
+        return_url: `${origin}/settings`,
+      });
+
+      res.json({ url: session.url });
+    } catch (error: any) {
+      if (error.message?.includes('STRIPE_SECRET_KEY')) {
+        return res.status(503).json({ message: "Stripe is not configured on this environment" });
+      }
+      console.error("[Stripe] billing-portal error:", error);
+      res.status(500).json({ message: error.message || "Failed to create billing portal session" });
+    }
+  });
+
+  /**
+   * Stripe webhook endpoint.
+   * Raw body is required for signature verification (app.ts registers express.raw for this path).
+   * Events handled:
+   *   invoice.payment_succeeded  → trigger Root policy bind if no active policy
+   *   invoice.payment_failed     → log + notify user
+   *   customer.subscription.deleted → mark policy cancelled
+   *   checkout.session.completed → handle one-time purchases
+   */
+  app.post("/api/webhooks/stripe", webhookLimiter, async (req, res) => {
+    let event: any;
+    try {
+      const stripe = getStripe();
+      const sig = req.headers['stripe-signature'] as string;
+      const webhookSecret = getStripeWebhookSecret();
+      event = stripe.webhooks.constructEvent(req.body as Buffer, sig, webhookSecret);
+    } catch (err: any) {
+      console.error("[Stripe webhook] Signature verification failed:", err.message);
+      return res.status(400).json({ message: `Webhook Error: ${err.message}` });
+    }
+
+    // Acknowledge immediately — process asynchronously
+    res.json({ received: true });
+
+    try {
+      switch (event.type) {
+        case 'invoice.payment_succeeded': {
+          const invoice = event.data.object;
+          const customerId = invoice.customer as string;
+          const subscriptionId = invoice.subscription as string;
+          console.log(`[Stripe webhook] Payment succeeded for customer ${customerId}`);
+
+          // Retrieve subscription to get quoteId from metadata
+          let quoteId: string | undefined;
+          try {
+            const stripe = getStripe();
+            const sub = await stripe.subscriptions.retrieve(subscriptionId);
+            quoteId = sub.metadata?.quoteId;
+          } catch (subErr) {
+            console.warn('[Stripe webhook] Could not retrieve subscription metadata:', subErr);
+          }
+
+          await handleStripePaymentSucceeded(customerId, subscriptionId, quoteId);
+          break;
+        }
+        case 'invoice.payment_failed': {
+          const invoice = event.data.object;
+          console.warn(`[Stripe webhook] Payment FAILED for customer ${invoice.customer}`, {
+            invoiceId: invoice.id,
+            attemptCount: invoice.attempt_count,
+          });
+          break;
+        }
+        case 'customer.subscription.deleted': {
+          const sub = event.data.object;
+          console.log(`[Stripe webhook] Subscription deleted: ${sub.id}`);
+          break;
+        }
+        case 'checkout.session.completed': {
+          const session = event.data.object;
+          console.log(`[Stripe webhook] Checkout completed: ${session.id}`);
+          break;
+        }
+        default:
+          // Unhandled event type — ignore silently
+      }
+    } catch (err) {
+      console.error("[Stripe webhook] Handler error:", err);
+    }
+  });
+
+  // -------------------------------------------------------------------------
+  // ROOT PLATFORM WEBHOOK
+  // Root pushes async policy status updates here.
+  // -------------------------------------------------------------------------
+  app.post("/api/webhooks/root", webhookLimiter, async (req, res) => {
+    // Root signs webhooks with HMAC-SHA256; verify if ROOT_WEBHOOK_SECRET is set.
+    const rootSecret = process.env.ROOT_WEBHOOK_SECRET;
+    if (rootSecret) {
+      const crypto = await import('crypto');
+      const sig = req.headers['x-root-signature'] as string | undefined;
+      if (!sig) return res.status(400).json({ message: "Missing Root webhook signature" });
+      const expected = crypto.default
+        .createHmac('sha256', rootSecret)
+        .update(req.body as Buffer)
+        .digest('hex');
+      if (sig !== expected) return res.status(400).json({ message: "Invalid Root webhook signature" });
+    }
+
+    res.json({ received: true });
+
+    try {
+      const body = JSON.parse((req.body as Buffer).toString('utf8'));
+      const eventType: string = body.event_type || body.type || '';
+      const policyId: string = body.policy_id || body.data?.policy_id || '';
+      console.log(`[Root webhook] Event: ${eventType}, policy: ${policyId}`);
+
+      // Additional Root webhook handling would be wired here when Root sandbox creds
+      // are available to confirm the exact payload shape.
+    } catch (err) {
+      console.error("[Root webhook] Handler error:", err);
+    }
+  });
+
+}
+
+// ---------------------------------------------------------------------------
+// Stripe → Root integration glue (called from webhook handler above)
+// ---------------------------------------------------------------------------
+
+async function handleStripePaymentSucceeded(
+  stripeCustomerId: string,
+  stripeSubscriptionId: string,
+  quoteId?: string,
+): Promise<void> {
+  try {
+    const user = await storage.getUserByStripeCustomerId(stripeCustomerId);
+    if (!user?.firebaseUid) {
+      console.warn(`[Integration] No user found for Stripe customer ${stripeCustomerId}`);
+      return;
+    }
+
+    console.log(`[Integration] Payment succeeded for ${user.firebaseUid} — writing pendingPayment`, { quoteId });
+
+    const adminLib = await import('./lib/firebase-admin');
+    const adminApp = adminLib.getFirebaseAdmin();
+    if (!adminApp) {
+      console.warn('[Integration] Firebase Admin not initialised — cannot write pendingPayment');
+      return;
+    }
+
+    const { firestore: fsAdmin } = await import('firebase-admin');
+    const doc: Record<string, unknown> = {
+      stripeSubscriptionId,
+      stripeCustomerId,
+      status: 'pending',
+      createdAt: fsAdmin.FieldValue.serverTimestamp(),
+    };
+    if (quoteId) doc.quoteId = quoteId;
+
+    await adminApp.firestore()
+      .collection('users')
+      .doc(user.firebaseUid)
+      .collection('pendingPayments')
+      .doc(stripeSubscriptionId)
+      .set(doc);
+
+    console.log(`[Integration] pendingPayment written for ${user.firebaseUid}`);
+  } catch (err) {
+    console.error("[Integration] handleStripePaymentSucceeded error:", err);
+  }
 }

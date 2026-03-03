@@ -8,11 +8,13 @@ import {
   ArrowLeft,
   Menu,
   X,
+  BarChart3,
 } from 'lucide-react';
 import driivaLogoPath from '@/assets/driiva-logo-CLEAR-FINAL.png';
 
 const navItems = [
   { path: '/admin', label: 'Overview', icon: LayoutDashboard, exact: true },
+  { path: '/admin/monitoring', label: 'Monitoring', icon: BarChart3 },
   { path: '/admin/users', label: 'Users', icon: Users },
   { path: '/admin/trips', label: 'Trips', icon: Navigation },
   { path: '/admin/feedback', label: 'Feedback', icon: MessageSquare },

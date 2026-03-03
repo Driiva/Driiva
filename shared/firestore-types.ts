@@ -163,6 +163,8 @@ export interface UserDocument {
   currentInsurer?: string | null;
   /** Soft onboarding: current annual premium in pounds */
   currentPremiumPounds?: number | null;
+  /** No-claims bonus years (0–5+). Collected at onboarding step 7. */
+  noClaimsYears?: number | null;
   /** Vehicle info collected during onboarding (make/model/year) */
   vehicle?: VehicleInfo | null;
   createdAt: Timestamp;

@@ -34,15 +34,18 @@ import {
   Navigation,
   AlertCircle,
   Sparkles,
-  UserRound
+  UserRound,
+  ShieldCheck,
+  X,
 } from 'lucide-react';
 import { auth, db, isFirebaseConfigured } from '../lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { useAuth } from '../contexts/AuthContext';
 import driivaLogo from '@/assets/driiva-logo-CLEAR-FINAL.png';
 import { FinancialPromotionDisclaimer } from '@/components/FinancialPromotionDisclaimer';
+import { checkBiometricSupport, checkHasPasskey, registerBiometricCredential } from '@/lib/webauthn';
 
-const TOTAL_STEPS = 11;
+const TOTAL_STEPS = 12;
 
 interface GpsTestResult {
   success: boolean;
@@ -73,6 +76,7 @@ export default function QuickOnboarding() {
   const [vehicleMake, setVehicleMake] = useState<string>('');
   const [vehicleModel, setVehicleModel] = useState<string>('');
   const [vehicleYear, setVehicleYear] = useState<string>('');
+  const [noClaimsYears, setNoClaimsYears] = useState<number | null>(null);
   const [referralSource, setReferralSource] = useState<string>('');
   const [currentInsurer, setCurrentInsurer] = useState<string>('');
   const [currentPremiumPounds, setCurrentPremiumPounds] = useState<string>('');
@@ -217,6 +221,7 @@ export default function QuickOnboarding() {
             model: vehicleModel || null,
             year: vehicleYear ? Number(vehicleYear) : null,
           } : null,
+          noClaimsYears: noClaimsYears !== null ? noClaimsYears : null,
           referralSource: referralSource || null,
           currentInsurer: currentInsurer || null,
           currentPremiumPounds: currentPremiumPounds ? Number(currentPremiumPounds) : null,
@@ -269,21 +274,21 @@ export default function QuickOnboarding() {
 
       <div className="relative z-10 flex-1 flex flex-col p-6 max-w-lg mx-auto w-full">
         {/* Progress indicator (hidden on celebration step) */}
-        {currentStep < 11 && (
+        {currentStep < 12 && (
           <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-1.5">
-              {Array.from({ length: 10 }, (_, i) => (
+            <div className="flex items-center gap-1">
+              {Array.from({ length: 11 }, (_, i) => (
                 <div
                   key={i}
                   className={`h-1.5 rounded-full transition-all duration-300 ${
                     i + 1 <= currentStep 
-                      ? 'bg-emerald-500 w-6' 
-                      : 'bg-white/20 w-4'
+                      ? 'bg-emerald-500 w-5' 
+                      : 'bg-white/20 w-3.5'
                   }`}
                 />
               ))}
             </div>
-            <span className="text-sm text-white/50 flex-shrink-0 ml-3">Step {currentStep} of 10</span>
+            <span className="text-sm text-white/50 flex-shrink-0 ml-3">Step {currentStep} of 11</span>
           </div>
         )}
 
@@ -742,8 +747,68 @@ export default function QuickOnboarding() {
               </motion.div>
             )}
 
-            {/* STEP 7: Referral Source */}
+            {/* STEP 7: No-Claims Bonus */}
             {currentStep === 7 && (
+              <motion.div
+                key="step7-ncb"
+                initial={{ opacity: 0, x: 30 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -30 }}
+                transition={{ duration: 0.3 }}
+                className="text-center"
+              >
+                <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-blue-500/20 to-indigo-500/20 flex items-center justify-center">
+                  <Shield className="w-12 h-12 text-blue-400" />
+                </div>
+
+                <h1 className="text-2xl font-bold text-white mb-3">No-Claims Bonus</h1>
+                <p className="text-white/60 mb-8 max-w-sm mx-auto">
+                  How many years of no-claims bonus do you have? Each year reduces your premium.
+                </p>
+
+                <div className="grid grid-cols-3 gap-3 mb-8">
+                  {[0, 1, 2, 3, 4, 5].map((years) => (
+                    <button
+                      key={years}
+                      onClick={() => setNoClaimsYears(years)}
+                      className={`py-4 rounded-xl text-sm font-semibold transition-all border ${
+                        noClaimsYears === years
+                          ? 'bg-blue-500/20 border-blue-400/60 text-blue-300'
+                          : 'bg-white/5 border-white/15 text-white/70 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      <span className="block text-xl font-bold mb-0.5">{years === 5 ? '5+' : years}</span>
+                      <span className="text-xs opacity-70">{years === 0 ? 'none' : years === 1 ? 'year' : 'years'}</span>
+                    </button>
+                  ))}
+                </div>
+
+                {noClaimsYears !== null && noClaimsYears > 0 && (
+                  <p className="text-emerald-400 text-sm mb-6">
+                    {Math.min(noClaimsYears * 10, 50)}% NCB discount applied to your quote
+                  </p>
+                )}
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={prevStep}
+                    className="flex-1 bg-white/10 hover:bg-white/15 text-white font-semibold py-4 rounded-xl transition-colors"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={nextStep}
+                    className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-4 rounded-xl transition-colors flex items-center justify-center gap-2"
+                  >
+                    {noClaimsYears !== null ? 'Continue' : 'Skip'}
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
+            {/* STEP 8: Referral Source */}
+            {currentStep === 8 && (
               <motion.div
                 key="step7"
                 initial={{ opacity: 0, x: 30 }}
@@ -795,8 +860,8 @@ export default function QuickOnboarding() {
               </motion.div>
             )}
 
-            {/* STEP 8: Current Insurer */}
-            {currentStep === 8 && (
+            {/* STEP 9: Current Insurer */}
+            {currentStep === 9 && (
               <motion.div
                 key="step8"
                 initial={{ opacity: 0, x: 30 }}
@@ -849,8 +914,8 @@ export default function QuickOnboarding() {
               </motion.div>
             )}
 
-            {/* STEP 9: Current Premium */}
-            {currentStep === 9 && (
+            {/* STEP 10: Current Premium */}
+            {currentStep === 10 && (
               <motion.div
                 key="step9"
                 initial={{ opacity: 0, x: 30 }}
@@ -905,8 +970,8 @@ export default function QuickOnboarding() {
               </motion.div>
             )}
 
-            {/* STEP 10: Confirm Understanding */}
-            {currentStep === 10 && (
+            {/* STEP 11: Confirm Understanding */}
+            {currentStep === 11 && (
               <motion.div
                 key="step10"
                 initial={{ opacity: 0, x: 30 }}
@@ -1006,9 +1071,9 @@ export default function QuickOnboarding() {
                 </div>
               </motion.div>
             )}
-            {/* STEP 11: Celebration — You're all set! */}
-            {currentStep === 11 && (
-              <CelebrationStep onContinue={goToDashboard} userName={user?.name} />
+            {/* STEP 12: Celebration — You're all set! */}
+            {currentStep === 12 && (
+              <CelebrationStep onContinue={goToDashboard} userName={user?.name} userEmail={user?.email} />
             )}
           </AnimatePresence>
         </div>
@@ -1017,14 +1082,50 @@ export default function QuickOnboarding() {
   );
 }
 
-function CelebrationStep({ onContinue, userName }: { onContinue: () => void; userName?: string }) {
+function CelebrationStep({ onContinue, userName, userEmail }: {
+  onContinue: () => void;
+  userName?: string;
+  userEmail?: string;
+}) {
   const [showContent, setShowContent] = useState(false);
+  const [showPasskeyPrompt, setShowPasskeyPrompt] = useState(false);
+  const [passkeySupported, setPasskeySupported] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [passkeyDone, setPasskeyDone] = useState(false);
 
   useEffect(() => {
     const t1 = setTimeout(() => setShowContent(true), 200);
-    const t2 = setTimeout(onContinue, 3200);
+    const t2 = setTimeout(async () => {
+      if (!userEmail) { onContinue(); return; }
+      const support = await checkBiometricSupport();
+      if (support.supported && support.platformAuthenticator) {
+        const already = await checkHasPasskey(userEmail);
+        if (!already) {
+          setPasskeySupported(true);
+          setShowPasskeyPrompt(true);
+          return;
+        }
+      }
+      onContinue();
+    }, 3000);
     return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, [onContinue]);
+  }, [onContinue, userEmail]);
+
+  const handleSetupPasskey = async () => {
+    if (!userEmail || isRegistering) return;
+    setIsRegistering(true);
+    try {
+      const result = await registerBiometricCredential(userEmail);
+      if (result.success) {
+        setPasskeyDone(true);
+        setTimeout(onContinue, 1500);
+      } else {
+        onContinue();
+      }
+    } catch {
+      onContinue();
+    }
+  };
 
   return (
     <motion.div
@@ -1073,7 +1174,7 @@ function CelebrationStep({ onContinue, userName }: { onContinue: () => void; use
         </motion.div>
       </motion.div>
 
-      {showContent && (
+      {showContent && !showPasskeyPrompt && (
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
@@ -1095,6 +1196,65 @@ function CelebrationStep({ onContinue, userName }: { onContinue: () => void; use
             <Sparkles className="w-5 h-5" />
             <span className="text-sm font-medium">Loading your dashboard...</span>
           </motion.div>
+        </motion.div>
+      )}
+
+      {/* Optional passkey enrollment prompt */}
+      {showPasskeyPrompt && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ type: 'spring', stiffness: 260, damping: 22 }}
+          className="w-full max-w-xs space-y-4 text-center"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex flex-col items-center gap-2">
+            <div className="w-14 h-14 rounded-2xl bg-blue-500/15 border border-blue-400/30 flex items-center justify-center mb-1">
+              <ShieldCheck className="w-7 h-7 text-blue-400" />
+            </div>
+            <h2 className="text-xl font-bold text-white">
+              {passkeyDone ? 'Passkey enabled!' : 'Enable Face ID / Touch ID?'}
+            </h2>
+            <p className="text-white/60 text-sm max-w-[240px]">
+              {passkeyDone
+                ? 'Next time you sign in, use your face or fingerprint — no password needed.'
+                : 'Sign in instantly next time with your face or fingerprint. You can skip this and set it up later in Settings.'}
+            </p>
+          </div>
+
+          {!passkeyDone && (
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={handleSetupPasskey}
+                disabled={isRegistering}
+                className="w-full py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white font-semibold flex items-center justify-center gap-2 transition-colors"
+              >
+                {isRegistering ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <ShieldCheck className="w-5 h-5" />
+                )}
+                {isRegistering ? 'Setting up…' : 'Enable passkey'}
+              </button>
+              <button
+                onClick={onContinue}
+                className="w-full py-3 rounded-xl text-white/50 hover:text-white/70 text-sm transition-colors"
+              >
+                Skip for now
+              </button>
+            </div>
+          )}
+
+          {passkeyDone && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex items-center justify-center gap-2 text-emerald-400"
+            >
+              <Check className="w-5 h-5" />
+              <span className="text-sm font-medium">Taking you to your dashboard…</span>
+            </motion.div>
+          )}
         </motion.div>
       )}
     </motion.div>

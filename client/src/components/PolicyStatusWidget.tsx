@@ -101,7 +101,7 @@ export default function PolicyStatusWidget({
               </div>
               <div>
                 <div className="text-sm font-medium text-white">Annual Premium</div>
-                <div className="text-xs text-white/50">£{Number(policyData.premiumAmount || 1840).toLocaleString()}</div>
+                <div className="text-xs text-white/50">£{Number(policyData.premiumAmount).toLocaleString('en-GB')}</div>
               </div>
             </div>
             <motion.button

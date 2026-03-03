@@ -1,22 +1,37 @@
 /**
- * Biometric Authentication Component
- * Provides Face ID/Touch ID authentication interface
+ * BiometricAuth — Face ID / Touch ID authentication component.
+ *
+ * Changes from original:
+ *   - Accepts `email` instead of `username` (matches backend lookup)
+ *   - Uses checkHasPasskey() (public endpoint) instead of the protected
+ *     credentials list endpoint — no 401 before login
+ *   - After authenticateWithBiometrics() returns a customToken, calls
+ *     signInWithCustomToken() to establish a real Firebase session
+ *   - Graceful fallback amber banner for unsupported devices (unchanged)
  */
 
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { checkBiometricSupport, authenticateWithBiometrics, registerBiometricCredential } from "@/lib/webauthn";
-import { Smartphone, ShieldCheck, AlertCircle } from "lucide-react";
-import { motion } from "framer-motion";
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import {
+  checkBiometricSupport,
+  checkHasPasskey,
+  authenticateWithBiometrics,
+  registerBiometricCredential,
+} from '@/lib/webauthn';
+import { auth } from '@/lib/firebase';
+import { signInWithCustomToken } from 'firebase/auth';
+import { Smartphone, ShieldCheck, AlertCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface BiometricAuthProps {
-  username: string;
+  /** Email of the user trying to sign in (used for server lookup). */
+  email: string;
   onSuccess: (userData: any) => void;
   onRegister?: () => void;
 }
 
-export default function BiometricAuth({ username, onSuccess, onRegister }: BiometricAuthProps) {
+export default function BiometricAuth({ email, onSuccess, onRegister }: BiometricAuthProps) {
   const [isSupported, setIsSupported] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
@@ -30,10 +45,14 @@ export default function BiometricAuth({ username, onSuccess, onRegister }: Biome
 
   useEffect(() => {
     checkSupport();
-    if (username) {
-      checkUserCredentials();
+  }, []);
+
+  // Use public /check endpoint — safe to call before login
+  useEffect(() => {
+    if (email) {
+      checkHasPasskey(email).then(setHasCredentials).catch(() => setHasCredentials(false));
     }
-  }, [username]);
+  }, [email]);
 
   const checkSupport = async () => {
     const support = await checkBiometricSupport();
@@ -41,48 +60,29 @@ export default function BiometricAuth({ username, onSuccess, onRegister }: Biome
     setIsSupported(support.supported && support.platformAuthenticator);
   };
 
-  const checkUserCredentials = async () => {
-    try {
-      const response = await fetch(`/api/auth/webauthn/credentials/${username}`);
-      if (response.ok) {
-        const data = await response.json();
-        setHasCredentials(data.credentials.length > 0);
-      }
-    } catch (error) {
-      console.error('Error checking credentials:', error);
-    }
-  };
-
   const handleBiometricAuth = async () => {
-    if (!username) {
-      toast({
-        title: "Username Required",
-        description: "Please enter your username first",
-        variant: "destructive",
-      });
+    if (!email) {
+      toast({ title: 'Email required', description: 'Please enter your email first', variant: 'destructive' });
       return;
     }
-
     setIsAuthenticating(true);
-    
     try {
-      const result = await authenticateWithBiometrics(username);
-      
-      if (result.success && result.user) {
-        onSuccess(result.user);
-        toast({
-          title: "Welcome back!",
-          description: "Authenticated with biometrics",
-        });
-      } else {
-        throw new Error(result.error || "Authentication failed");
+      const result = await authenticateWithBiometrics(email);
+      if (!result.success) throw new Error(result.error || 'Authentication failed');
+
+      // Bridge to Firebase session via custom token
+      if (result.customToken && auth) {
+        await signInWithCustomToken(auth, result.customToken);
       }
+
+      onSuccess(result.user);
+      toast({ title: 'Welcome back!', description: `Authenticated with ${getDeviceLabel()}` });
     } catch (error: any) {
       console.error('Biometric authentication error:', error);
       toast({
-        title: "Authentication Failed",
-        description: error.message || "Could not authenticate with biometrics",
-        variant: "destructive",
+        title: 'Authentication Failed',
+        description: error.message || 'Could not authenticate with biometrics',
+        variant: 'destructive',
       });
     } finally {
       setIsAuthenticating(false);
@@ -90,55 +90,36 @@ export default function BiometricAuth({ username, onSuccess, onRegister }: Biome
   };
 
   const handleBiometricRegistration = async () => {
-    if (!username) {
-      toast({
-        title: "Username Required", 
-        description: "Please enter your username first",
-        variant: "destructive",
-      });
+    if (!email) {
+      toast({ title: 'Email required', description: 'Please enter your email first', variant: 'destructive' });
       return;
     }
-
     setIsRegistering(true);
-    
     try {
-      const result = await registerBiometricCredential(username);
-      
-      if (result.success) {
-        setHasCredentials(true);
-        toast({
-          title: "Registration Successful!",
-          description: "Face ID/Touch ID has been enabled for your account",
-        });
-        if (onRegister) onRegister();
-      } else {
-        throw new Error(result.error || "Registration failed");
-      }
+      const result = await registerBiometricCredential(email);
+      if (!result.success) throw new Error(result.error || 'Registration failed');
+      setHasCredentials(true);
+      toast({ title: 'Passkey enabled!', description: `${getDeviceLabel()} has been enabled for your account` });
+      if (onRegister) onRegister();
     } catch (error: any) {
       console.error('Biometric registration error:', error);
       toast({
-        title: "Registration Failed",
-        description: error.message || "Could not register biometric authentication",
-        variant: "destructive",
+        title: 'Setup Failed',
+        description: error.message || 'Could not set up biometric authentication',
+        variant: 'destructive',
       });
     } finally {
       setIsRegistering(false);
     }
   };
 
-  const getDeviceIcon = () => {
-    return <ShieldCheck className="w-6 h-6" />;
-  };
-
   const getDeviceLabel = () => {
-    const userAgent = navigator.userAgent;
-    if (userAgent.includes('iPhone') || userAgent.includes('iPad')) {
-      return 'Face ID';
-    } else if (userAgent.includes('Mac')) {
-      return 'Touch ID';
-    } else {
-      return 'Biometric';
-    }
+    const ua = navigator.userAgent;
+    if (/iPhone|iPad/i.test(ua)) return 'Face ID';
+    if (/Macintosh/i.test(ua)) return 'Touch ID';
+    if (/Android/i.test(ua)) return 'Fingerprint';
+    if (/Windows/i.test(ua)) return 'Windows Hello';
+    return 'Biometric';
   };
 
   if (!isSupported || !supportDetails?.platformAuthenticator) {
@@ -149,9 +130,9 @@ export default function BiometricAuth({ username, onSuccess, onRegister }: Biome
           animate={{ opacity: 1, y: 0 }}
           className="flex items-center gap-3 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20"
         >
-          <AlertCircle className="w-5 h-5 text-amber-400" />
+          <AlertCircle className="w-5 h-5 text-amber-400 shrink-0" />
           <div className="text-sm text-amber-200">
-            {supportDetails?.error || "Biometric authentication not available on this device"}
+            {supportDetails?.error || 'Biometric authentication not available on this device'}
           </div>
         </motion.div>
       </div>
@@ -160,16 +141,11 @@ export default function BiometricAuth({ username, onSuccess, onRegister }: Biome
 
   return (
     <div className="w-full space-y-4">
-      {/* Biometric Authentication Button */}
       {hasCredentials ? (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-        >
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
           <Button
             onClick={handleBiometricAuth}
-            disabled={isAuthenticating || !username}
+            disabled={isAuthenticating || !email}
             className="w-full h-14 bg-gradient-to-r from-blue-600/80 to-purple-600/80 hover:from-blue-600 hover:to-purple-600 border-0 text-white font-medium transition-all duration-300"
             data-testid="button-biometric-auth"
           >
@@ -177,7 +153,7 @@ export default function BiometricAuth({ username, onSuccess, onRegister }: Biome
               {isAuthenticating ? (
                 <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
-                getDeviceIcon()
+                <ShieldCheck className="w-6 h-6" />
               )}
               <span>{isAuthenticating ? 'Authenticating...' : `Sign in with ${getDeviceLabel()}`}</span>
             </div>
@@ -192,7 +168,7 @@ export default function BiometricAuth({ username, onSuccess, onRegister }: Biome
         >
           <Button
             onClick={handleBiometricRegistration}
-            disabled={isRegistering || !username}
+            disabled={isRegistering || !email}
             variant="outline"
             className="w-full h-14 bg-white/5 border-white/20 hover:bg-white/10 text-white font-medium transition-all duration-300"
             data-testid="button-biometric-register"
@@ -201,19 +177,17 @@ export default function BiometricAuth({ username, onSuccess, onRegister }: Biome
               {isRegistering ? (
                 <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
-                getDeviceIcon()
+                <ShieldCheck className="w-6 h-6" />
               )}
               <span>{isRegistering ? 'Setting up...' : `Set up ${getDeviceLabel()}`}</span>
             </div>
           </Button>
-          
           <p className="text-xs text-white/60 text-center">
             Enable biometric authentication for faster, more secure login
           </p>
         </motion.div>
       )}
 
-      {/* Divider */}
       <div className="flex items-center gap-4 my-6">
         <div className="flex-1 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
         <span className="text-xs text-white/50 font-medium">OR</span>

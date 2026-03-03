@@ -46,12 +46,12 @@ export const securityHeaders = (req: express.Request, res: express.Response, nex
   // Content Security Policy
   const csp = [
     "default-src 'self'",
-    `script-src 'self' ${isDev ? "'unsafe-inline' 'unsafe-eval'" : ""} https://*.firebaseapp.com https://*.firebase.com https://*.googletagmanager.com`,
-    `connect-src 'self' ${isDev ? "ws: wss:" : ""} https://*.googleapis.com https://*.firebaseio.com https://api.anthropic.com wss://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com`,
+    `script-src 'self' ${isDev ? "'unsafe-inline' 'unsafe-eval'" : ""} https://*.firebaseapp.com https://*.firebase.com https://*.googletagmanager.com https://js.stripe.com`,
+    `connect-src 'self' ${isDev ? "ws: wss:" : ""} https://*.googleapis.com https://*.firebaseio.com https://api.anthropic.com wss://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://api.stripe.com`,
     "img-src 'self' data: https://*.openstreetmap.org https://*.googletagmanager.com https://*.google-analytics.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' data: https://fonts.gstatic.com",
-    "frame-src https://*.firebaseapp.com",
+    "frame-src https://*.firebaseapp.com https://js.stripe.com",
     "object-src 'none'",
     "base-uri 'self'",
   ];

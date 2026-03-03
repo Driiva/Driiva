@@ -57,7 +57,7 @@ export default function RefundSimulator({
             className="min-h-[44px] px-3 text-xs text-white/50 hover:text-white/70 hover:bg-white/5 rounded-xl transition-all duration-200 ease-out flex items-center gap-1"
           >
             <Info className="w-3.5 h-3.5" />
-            £{premiumAmount || 1840}
+            £{premiumAmount.toLocaleString('en-GB')}
           </button>
         </div>
 

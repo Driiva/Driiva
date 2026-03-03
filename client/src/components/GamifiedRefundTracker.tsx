@@ -39,21 +39,21 @@ export default function GamifiedRefundTracker({
   const goals = {
     silver: { 
       score: 75, 
-      refund: calculateRefundForScore(75, premiumAmount || 1840), 
+      refund: calculateRefundForScore(75, premiumAmount), 
       label: "Silver Tier", 
       color: "text-gray-400", 
       bg: "bg-gray-400/20" 
     },
     gold: { 
       score: 85, 
-      refund: calculateRefundForScore(85, premiumAmount || 1840), 
+      refund: calculateRefundForScore(85, premiumAmount), 
       label: "Gold Tier", 
       color: "text-yellow-400", 
       bg: "bg-yellow-400/20" 
     },
     platinum: { 
       score: 95, 
-      refund: calculateRefundForScore(95, premiumAmount || 1840), 
+      refund: calculateRefundForScore(95, premiumAmount), 
       label: "Platinum Tier", 
       color: "text-purple-400", 
       bg: "bg-purple-400/20" 

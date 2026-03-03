@@ -76,6 +76,10 @@ export interface IStorage {
   // GDPR operations
   exportUserData(userId: number): Promise<any>;
   deleteUserData(userId: number): Promise<void>;
+
+  // Stripe operations
+  updateStripeCustomerId(userId: number, stripeCustomerId: string): Promise<void>;
+  getUserByStripeCustomerId(stripeCustomerId: string): Promise<User | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -349,6 +353,15 @@ export class DatabaseStorage implements IStorage {
     await db.delete(trips).where(eq(trips.userId, userId));
     await db.delete(drivingProfiles).where(eq(drivingProfiles.userId, userId));
     await db.delete(users).where(eq(users.id, userId));
+  }
+
+  async updateStripeCustomerId(userId: number, stripeCustomerId: string): Promise<void> {
+    await db.update(users).set({ stripeCustomerId, updatedAt: new Date() }).where(eq(users.id, userId));
+  }
+
+  async getUserByStripeCustomerId(stripeCustomerId: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.stripeCustomerId, stripeCustomerId));
+    return user || undefined;
   }
 }
 

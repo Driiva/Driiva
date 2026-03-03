@@ -29,9 +29,9 @@ export default function Gamification({ achievements, leaderboard, currentUser, p
   ];
 
   const refundTiers = profile && premiumAmount ? {
-    silver: { score: 85, refund: (premiumAmount || 1840) * 0.10, label: "Silver" },
-    gold: { score: 90, refund: (premiumAmount || 1840) * 0.12, label: "Gold" },
-    platinum: { score: 95, refund: (premiumAmount || 1840) * 0.15, label: "Platinum" }
+    silver: { score: 85, refund: premiumAmount * 0.10, label: "Silver" },
+    gold: { score: 90, refund: premiumAmount * 0.12, label: "Gold" },
+    platinum: { score: 95, refund: premiumAmount * 0.15, label: "Platinum" }
   } : null;
 
   const topLeaderboard = [

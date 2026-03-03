@@ -13,7 +13,7 @@ import * as admin from "firebase-admin";
 
 let adminApp: admin.app.App | null = null;
 
-function getFirebaseAdmin(): admin.app.App | null {
+export function getFirebaseAdmin(): admin.app.App | null {
   if (adminApp) return adminApp;
   try {
     if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {

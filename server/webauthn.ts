@@ -1,13 +1,20 @@
 /**
  * WebAuthn server implementation for Face ID/Touch ID authentication
  * Uses @simplewebauthn/server for secure credential management
+ *
+ * Integration notes:
+ *   - Users are looked up by EMAIL (not username — username is nullable for Firebase users)
+ *   - After successful authentication, a Firebase custom token is issued so the
+ *     client can call signInWithCustomToken() to establish a real Firebase session.
+ *   - Challenge store uses a TTL map (5-minute expiry) to prevent memory leaks.
+ *   - detectDeviceType reads the HTTP User-Agent header, not clientDataJSON.origin.
  */
 
-import { 
+import {
   generateRegistrationOptions,
   verifyRegistrationResponse,
   generateAuthenticationOptions,
-  verifyAuthenticationResponse
+  verifyAuthenticationResponse,
 } from '@simplewebauthn/server';
 import type {
   GenerateRegistrationOptionsOpts,
@@ -20,48 +27,102 @@ import type {
 import { db } from './db';
 import { users, webauthnCredentials, type WebauthnCredential } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
-import crypto from 'crypto';
+import { getFirebaseAdmin } from './lib/firebase-admin';
 
-// WebAuthn configuration
+// ---------------------------------------------------------------------------
+// Config
+// ---------------------------------------------------------------------------
+
 const RP_NAME = 'Driiva - Smart Insurance';
 const RP_ID = process.env.WEBAUTHN_RP_ID ?? 'localhost';
 const ORIGIN = process.env.WEBAUTHN_ORIGIN ?? 'http://localhost:5000';
+const CHALLENGE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
-// In-memory challenge storage (use Redis in production)
-const challengeStore = new Map<string, string>();
+// ---------------------------------------------------------------------------
+// TTL challenge store — replaces plain Map to prevent leaks on abandoned flows
+// ---------------------------------------------------------------------------
 
-export interface WebAuthnService {
-  generateRegistrationOptions(username: string): Promise<any>;
-  verifyRegistration(username: string, response: RegistrationResponseJSON): Promise<{ verified: boolean; error?: string }>;
-  generateAuthenticationOptions(username: string): Promise<any>;
-  verifyAuthentication(username: string, response: AuthenticationResponseJSON): Promise<{ verified: boolean; user?: any; error?: string }>;
-  getUserCredentials(username: string): Promise<WebauthnCredential[]>;
+interface ChallengeEntry {
+  challenge: string;
+  expiresAt: number;
 }
 
-export class SimpleWebAuthnService implements WebAuthnService {
-  
-  async generateRegistrationOptions(username: string): Promise<any> {
-    // Get user from database
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    if (!user) {
-      throw new Error('User not found');
-    }
+class TtlChallengeStore {
+  private store = new Map<string, ChallengeEntry>();
 
-    // Get existing credentials for this user
+  set(key: string, challenge: string): void {
+    this.store.set(key, { challenge, expiresAt: Date.now() + CHALLENGE_TTL_MS });
+    this.sweep();
+  }
+
+  get(key: string): string | undefined {
+    const entry = this.store.get(key);
+    if (!entry) return undefined;
+    if (Date.now() > entry.expiresAt) {
+      this.store.delete(key);
+      return undefined;
+    }
+    return entry.challenge;
+  }
+
+  delete(key: string): void {
+    this.store.delete(key);
+  }
+
+  /** Remove expired entries — called on every set() to keep memory bounded. */
+  private sweep(): void {
+    const now = Date.now();
+    for (const [key, entry] of this.store) {
+      if (now > entry.expiresAt) this.store.delete(key);
+    }
+  }
+}
+
+const challengeStore = new TtlChallengeStore();
+
+// ---------------------------------------------------------------------------
+// Service interface
+// ---------------------------------------------------------------------------
+
+export interface WebAuthnService {
+  generateRegistrationOptions(email: string, userAgent?: string): Promise<any>;
+  verifyRegistration(email: string, response: RegistrationResponseJSON, userAgent?: string): Promise<{ verified: boolean; error?: string }>;
+  generateAuthenticationOptions(email: string): Promise<any>;
+  verifyAuthentication(email: string, response: AuthenticationResponseJSON): Promise<{
+    verified: boolean;
+    user?: any;
+    customToken?: string;
+    error?: string;
+  }>;
+  getUserCredentials(email: string): Promise<WebauthnCredential[]>;
+  hasCredentials(email: string): Promise<boolean>;
+  deleteCredential(credentialId: string, firebaseUid: string): Promise<boolean>;
+}
+
+// ---------------------------------------------------------------------------
+// Implementation
+// ---------------------------------------------------------------------------
+
+export class SimpleWebAuthnService implements WebAuthnService {
+
+  async generateRegistrationOptions(email: string, userAgent?: string): Promise<any> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    if (!user) throw new Error('User not found');
+
     const existingCredentials = await db
       .select()
       .from(webauthnCredentials)
       .where(and(
         eq(webauthnCredentials.userId, user.id),
-        eq(webauthnCredentials.isActive, true)
+        eq(webauthnCredentials.isActive, true),
       ));
 
     const opts: GenerateRegistrationOptionsOpts = {
       rpName: RP_NAME,
       rpID: RP_ID,
       userID: new TextEncoder().encode(user.id.toString()),
-      userName: username,
-      userDisplayName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || username,
+      userName: email,
+      userDisplayName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || email,
       timeout: 60000,
       attestationType: 'none',
       excludeCredentials: existingCredentials.map(cred => ({
@@ -69,33 +130,30 @@ export class SimpleWebAuthnService implements WebAuthnService {
         transports: ['internal' as const],
       })),
       authenticatorSelection: {
-        authenticatorAttachment: 'platform', // Force Face ID/Touch ID only
+        authenticatorAttachment: 'platform',
         userVerification: 'required',
         residentKey: 'preferred',
       },
-      supportedAlgorithmIDs: [-7, -257], // ES256, RS256
+      supportedAlgorithmIDs: [-7, -257],
     };
 
     const options = await generateRegistrationOptions(opts);
-    
-    // Store challenge for verification
-    challengeStore.set(`reg_${username}`, options.challenge);
-    
+    challengeStore.set(`reg_${email}`, options.challenge);
     return options;
   }
 
-  async verifyRegistration(username: string, response: RegistrationResponseJSON): Promise<{ verified: boolean; error?: string }> {
-    // Get stored challenge
-    const expectedChallenge = challengeStore.get(`reg_${username}`);
+  async verifyRegistration(
+    email: string,
+    response: RegistrationResponseJSON,
+    userAgent?: string,
+  ): Promise<{ verified: boolean; error?: string }> {
+    const expectedChallenge = challengeStore.get(`reg_${email}`);
     if (!expectedChallenge) {
-      return { verified: false, error: 'No challenge found for this registration' };
+      return { verified: false, error: 'Registration challenge expired or not found' };
     }
 
-    // Get user from database
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    if (!user) {
-      return { verified: false, error: 'User not found' };
-    }
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    if (!user) return { verified: false, error: 'User not found' };
 
     const opts: VerifyRegistrationResponseOpts = {
       response,
@@ -107,27 +165,24 @@ export class SimpleWebAuthnService implements WebAuthnService {
 
     try {
       const verification = await verifyRegistrationResponse(opts);
-      
+
       if (verification.verified && verification.registrationInfo) {
         const { credential } = verification.registrationInfo;
-        
-        // Store credential in database
+
         await db.insert(webauthnCredentials).values({
           userId: user.id,
           credentialId: Buffer.from(credential.id).toString('base64url'),
           publicKey: Buffer.from(credential.publicKey).toString('base64url'),
           counter: 0,
-          deviceType: 'platform', // Face ID/Touch ID
-          deviceName: this.detectDeviceType(response.response.clientDataJSON),
+          deviceType: 'platform',
+          deviceName: this.detectDeviceType(userAgent),
           isActive: true,
         });
 
-        // Clean up challenge
-        challengeStore.delete(`reg_${username}`);
-        
+        challengeStore.delete(`reg_${email}`);
         return { verified: true };
       }
-      
+
       return { verified: false, error: 'Registration verification failed' };
     } catch (error) {
       console.error('WebAuthn registration verification error:', error);
@@ -135,20 +190,16 @@ export class SimpleWebAuthnService implements WebAuthnService {
     }
   }
 
-  async generateAuthenticationOptions(username: string): Promise<any> {
-    // Get user from database
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    if (!user) {
-      throw new Error('User not found');
-    }
+  async generateAuthenticationOptions(email: string): Promise<any> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    if (!user) throw new Error('User not found');
 
-    // Get user's active credentials
     const userCredentials = await db
       .select()
       .from(webauthnCredentials)
       .where(and(
         eq(webauthnCredentials.userId, user.id),
-        eq(webauthnCredentials.isActive, true)
+        eq(webauthnCredentials.isActive, true),
       ));
 
     if (userCredentials.length === 0) {
@@ -166,39 +217,32 @@ export class SimpleWebAuthnService implements WebAuthnService {
     };
 
     const options = await generateAuthenticationOptions(opts);
-    
-    // Store challenge for verification
-    challengeStore.set(`auth_${username}`, options.challenge);
-    
+    challengeStore.set(`auth_${email}`, options.challenge);
     return options;
   }
 
-  async verifyAuthentication(username: string, response: AuthenticationResponseJSON): Promise<{ verified: boolean; user?: any; error?: string }> {
-    // Get stored challenge
-    const expectedChallenge = challengeStore.get(`auth_${username}`);
+  async verifyAuthentication(
+    email: string,
+    response: AuthenticationResponseJSON,
+  ): Promise<{ verified: boolean; user?: any; customToken?: string; error?: string }> {
+    const expectedChallenge = challengeStore.get(`auth_${email}`);
     if (!expectedChallenge) {
-      return { verified: false, error: 'No challenge found for this authentication' };
+      return { verified: false, error: 'Authentication challenge expired or not found' };
     }
 
-    // Get user from database
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    if (!user) {
-      return { verified: false, error: 'User not found' };
-    }
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    if (!user) return { verified: false, error: 'User not found' };
 
-    // Get the credential being used
     const [credential] = await db
       .select()
       .from(webauthnCredentials)
       .where(and(
         eq(webauthnCredentials.credentialId, response.id),
         eq(webauthnCredentials.userId, user.id),
-        eq(webauthnCredentials.isActive, true)
+        eq(webauthnCredentials.isActive, true),
       ));
 
-    if (!credential) {
-      return { verified: false, error: 'Credential not found' };
-    }
+    if (!credential) return { verified: false, error: 'Credential not found' };
 
     const opts: VerifyAuthenticationResponseOpts = {
       response,
@@ -215,25 +259,39 @@ export class SimpleWebAuthnService implements WebAuthnService {
 
     try {
       const verification = await verifyAuthenticationResponse(opts);
-      
+
       if (verification.verified) {
-        // Update counter and last used
         await db
           .update(webauthnCredentials)
-          .set({ 
+          .set({
             counter: verification.authenticationInfo.newCounter,
             lastUsed: new Date(),
           })
           .where(eq(webauthnCredentials.id, credential.id));
 
-        // Clean up challenge
-        challengeStore.delete(`auth_${username}`);
-        
-        // Return user data without password
+        challengeStore.delete(`auth_${email}`);
+
+        // Issue a Firebase custom token so the client can call signInWithCustomToken().
+        // This bridges WebAuthn auth into the Firebase session system without breaking
+        // existing Firebase-JWT-protected routes.
+        let customToken: string | undefined;
+        if (user.firebaseUid) {
+          const adminApp = getFirebaseAdmin();
+          if (adminApp) {
+            try {
+              customToken = await adminApp.auth().createCustomToken(user.firebaseUid);
+            } catch (err) {
+              console.error('[WebAuthn] createCustomToken failed — user will lack Firebase session:', err);
+            }
+          } else {
+            console.warn('[WebAuthn] Firebase Admin SDK not initialised; FIREBASE_SERVICE_ACCOUNT_KEY may be missing');
+          }
+        }
+
         const { password: _, ...userWithoutPassword } = user;
-        return { verified: true, user: userWithoutPassword };
+        return { verified: true, user: userWithoutPassword, customToken };
       }
-      
+
       return { verified: false, error: 'Authentication verification failed' };
     } catch (error) {
       console.error('WebAuthn authentication verification error:', error);
@@ -241,39 +299,65 @@ export class SimpleWebAuthnService implements WebAuthnService {
     }
   }
 
-  async getUserCredentials(username: string): Promise<WebauthnCredential[]> {
-    // Get user from database
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    if (!user) {
-      return [];
-    }
+  async getUserCredentials(email: string): Promise<WebauthnCredential[]> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    if (!user) return [];
 
-    return await db
+    return db
       .select()
       .from(webauthnCredentials)
       .where(and(
         eq(webauthnCredentials.userId, user.id),
-        eq(webauthnCredentials.isActive, true)
+        eq(webauthnCredentials.isActive, true),
       ));
   }
 
-  private detectDeviceType(clientDataJSON: string): string {
+  async hasCredentials(email: string): Promise<boolean> {
     try {
-      const clientData = JSON.parse(Buffer.from(clientDataJSON, 'base64url').toString());
-      const userAgent = clientData.origin || '';
-      
-      if (userAgent.includes('iPhone') || userAgent.includes('iPad')) {
-        return 'Face ID / Touch ID';
-      } else if (userAgent.includes('Mac')) {
-        return 'Touch ID';
-      } else if (userAgent.includes('Android')) {
-        return 'Fingerprint / Face Recognition';
-      } else {
-        return 'Biometric Authentication';
-      }
+      const [user] = await db.select().from(users).where(eq(users.email, email));
+      if (!user) return false;
+
+      const creds = await db
+        .select()
+        .from(webauthnCredentials)
+        .where(and(
+          eq(webauthnCredentials.userId, user.id),
+          eq(webauthnCredentials.isActive, true),
+        ));
+      return creds.length > 0;
     } catch {
-      return 'Unknown Device';
+      return false;
     }
+  }
+
+  async deleteCredential(credentialId: string, firebaseUid: string): Promise<boolean> {
+    try {
+      const [user] = await db.select().from(users).where(eq(users.firebaseUid, firebaseUid));
+      if (!user) return false;
+
+      const result = await db
+        .update(webauthnCredentials)
+        .set({ isActive: false })
+        .where(and(
+          eq(webauthnCredentials.credentialId, credentialId),
+          eq(webauthnCredentials.userId, user.id),
+        ));
+
+      return (result as any).rowCount > 0;
+    } catch (err) {
+      console.error('[WebAuthn] deleteCredential error:', err);
+      return false;
+    }
+  }
+
+  /** Detect device type from the HTTP User-Agent header (not clientDataJSON.origin). */
+  private detectDeviceType(userAgent?: string): string {
+    if (!userAgent) return 'Biometric Authentication';
+    if (/iPhone|iPad/i.test(userAgent)) return 'Face ID / Touch ID';
+    if (/Macintosh/i.test(userAgent)) return 'Touch ID';
+    if (/Android/i.test(userAgent)) return 'Fingerprint / Face Recognition';
+    if (/Windows/i.test(userAgent)) return 'Windows Hello';
+    return 'Biometric Authentication';
   }
 }
 

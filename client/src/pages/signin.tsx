@@ -580,17 +580,19 @@ export default function SignIn() {
                       <div className="flex-1 h-px bg-white/15" />
                     </div>
                     <BiometricAuth
-                      username={emailOrUsername || lastUser?.email || ''}
+                      email={emailOrUsername || lastUser?.email || ''}
                       onSuccess={(userData) => {
+                        // Firebase session is already established inside BiometricAuth
+                        // via signInWithCustomToken — we just need to update React state.
                         setUser({
-                          id: userData.id,
+                          id: userData.firebaseUid || userData.id,
                           email: userData.email,
-                          name: userData.name || 'User',
+                          name: userData.displayName || userData.firstName || 'User',
                           onboardingComplete: true,
                           emailVerified: true,
                         });
                         pendingDestination.current = '/dashboard';
-                        setWelcomeData({ name: userData.name || 'User' });
+                        setWelcomeData({ name: userData.displayName || userData.firstName || 'User' });
                         setShowWelcomeOverlay(true);
                       }}
                     />
