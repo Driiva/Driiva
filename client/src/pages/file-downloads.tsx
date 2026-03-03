@@ -32,7 +32,7 @@ export default function Dashboard() {
     username: "driiva1",
     firstName: "Test",
     lastName: "Driver",
-    email: "test@driiva.com",
+    email: "test@driiva.co.uk",
     premiumAmount: "1840.00"
   };
 

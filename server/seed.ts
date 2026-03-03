@@ -28,7 +28,7 @@ export async function seedDatabase() {
     const [testUser] = await db.insert(users)
       .values({
         username: 'driiva1',
-        email: 'test@driiva.com',
+        email: 'test@driiva.co.uk',
         password: hashedPassword,
         firstName: 'Test',
         lastName: 'Driver',
@@ -38,7 +38,7 @@ export async function seedDatabase() {
       .onConflictDoUpdate({
         target: users.username,
         set: {
-          email: 'test@driiva.com',
+          email: 'test@driiva.co.uk',
           firstName: 'Test',
           lastName: 'Driver',
           phoneNumber: '+44 7700 123456',

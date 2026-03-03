@@ -140,7 +140,7 @@ async function shareHashtag(hashtag: string, title: string): Promise<void> {
     await navigator.share({
       title: `Driiva ${title}`,
       text: `Just unlocked ${title} on Driiva! ${hashtag} 🚗`,
-      url: 'https://driiva.com',
+      url: 'https://app.driiva.co.uk',
     });
   } catch {
     // User cancelled or share failed — silently ignore

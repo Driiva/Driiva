@@ -60,7 +60,7 @@ export default function PolicyDownload({ userId, userData, policyNumber }: Polic
             </div>
             <div class="detail-row">
                 <span class="label">Email:</span>
-                <span class="value">${userData?.email || 'test@driiva.com'}</span>
+                <span class="value">${userData?.email || 'test@driiva.co.uk'}</span>
             </div>
             <div class="detail-row">
                 <span class="label">Policy Number:</span>
@@ -126,11 +126,11 @@ export default function PolicyDownload({ userId, userData, policyNumber }: Polic
             </div>
             <div class="detail-row">
                 <span class="label">Email Support:</span>
-                <span class="value">support@driiva.com</span>
+                <span class="value">support@driiva.co.uk</span>
             </div>
             <div class="detail-row">
                 <span class="label">Website:</span>
-                <span class="value">www.driiva.com</span>
+                <span class="value">app.driiva.co.uk</span>
             </div>
         </div>
     </div>

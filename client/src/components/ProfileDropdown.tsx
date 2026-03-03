@@ -29,7 +29,7 @@ export default function ProfileDropdown({ user, policyNumber, memberSince }: Pro
     name: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username : 'Driver',
     vehicle: "2023 Tesla Model 3",
     policyNumber: policyNumber || user?.policyNumber || '—',
-    email: user?.email || 'driver@driiva.com',
+    email: user?.email || 'driver@driiva.co.uk',
     memberSince: memberSince || "January 2024"
   };
 

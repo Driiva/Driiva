@@ -22,7 +22,7 @@ export default function SignIn() {
         username: "driiva1",
         firstName: "Test",
         lastName: "Driver",
-        email: "test@driiva.com",
+        email: "test@driiva.co.uk",
         premiumAmount: "1840.00"
       };
       localStorage.setItem("driiva_user", JSON.stringify(user));

@@ -35,7 +35,7 @@ export default function DashboardHeader({ user, policyNumber, memberSince }: Das
 
   const profileData = {
     name: user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username : 'Driver',
-    email: user?.email || 'driver@driiva.com',
+    email: user?.email || 'driver@driiva.co.uk',
     vehicle: "2023 Tesla Model 3",
     policyNumber: policyNumber || user?.policyNumber || '—',
     memberSince: memberSince || "January 2024"
