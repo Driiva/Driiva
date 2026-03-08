@@ -21,6 +21,7 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    chunkSizeWarningLimit: 500,
     rollupOptions: {
       output: {
         manualChunks: {
@@ -30,6 +31,8 @@ export default defineConfig({
             "firebase/auth",
             "firebase/firestore",
             "firebase/functions",
+            "firebase/performance",
+            "firebase/analytics",
           ],
           // React core
           vendor: ["react", "react-dom"],

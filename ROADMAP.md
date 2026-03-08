@@ -90,6 +90,14 @@ These are known gaps that don't have tickets yet:
 - [ ] **WebAuthn/Passkey login** — `server/webauthn.ts` is scaffolded but not exposed as a real login flow in the frontend.
 - [ ] **Staging environment** — no Firebase staging project exists yet. Recommended before any production payments go live.
 
+## Sprint: "Observation Mode" (Live Monitoring)
+
+- [x] Complete Sentry wiring — wrapFunction/wrapTrigger on all Cloud Functions; setSentryUser in AuthContext
+- [x] Add Firebase Performance Monitoring — client SDK + custom trace utility (`performanceTraces.ts`)
+- [x] Add structured metrics logging — trip pipeline, classifier, AI analysis with `[metric]` tags for Cloud Monitoring
+- [x] Add Vercel Analytics + Speed Insights — Web Vitals, page latency, geographic distribution
+- [x] Configure alerting — watchdog function (`monitorTripHealth`) for failed trips, GPS drop-off, stuck trips; health endpoint enhanced with version/checks
+
 ## Completed (reference)
 
 - [x] Cloud Functions build fixed

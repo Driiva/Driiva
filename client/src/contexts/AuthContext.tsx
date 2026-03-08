@@ -3,6 +3,7 @@ import { auth, db, isFirebaseConfigured } from "../lib/firebase";
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, User as FirebaseUser } from "firebase/auth";
 import { doc } from "firebase/firestore";
 import { getDocWithRetry } from "../lib/firestoreRetry";
+import { setSentryUser } from "../lib/sentry";
 
 interface User {
   id: string;
@@ -155,6 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               emailVerified,
               isAdmin: adminFlag,
             });
+            setSentryUser({ id: refreshedUser.uid, email: refreshedUser.email ?? undefined });
           } else {
             // API unreachable or timed out — fall back to Firestore.
             // Reuse adminFlag already fetched above (no duplicate Firestore read).
@@ -167,6 +169,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               emailVerified,
               isAdmin: adminFlag,
             });
+            setSentryUser({ id: refreshedUser.uid, email: refreshedUser.email ?? undefined });
           }
         } catch (error) {
           console.error("[AuthContext] Error fetching profile from API:", error);
@@ -192,11 +195,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             emailVerified: freshEmailVerified,
             isAdmin: adminFlag,
           });
+          setSentryUser({ id: firebaseUser.uid, email: firebaseUser.email ?? undefined });
         }
       } else {
         const demoModeActive = sessionStorage.getItem("driiva-demo-mode") === "true";
         if (!demoModeActive) {
           setUser(null);
+          setSentryUser(null);
         }
       }
       setLoading(false);
@@ -216,6 +221,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setLoading(true);
     // Clear user from state FIRST for instant UI feedback
     setUser(null);
+    setSentryUser(null);
 
     // Clear all localStorage flags
     sessionStorage.removeItem('driiva-demo-mode');

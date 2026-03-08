@@ -17,6 +17,7 @@ import {
 } from '../types';
 import { EUROPE_LONDON } from '../lib/region';
 import { createDamoovUser } from '../lib/damoov';
+import { wrapTrigger } from '../lib/sentry';
 
 const db = admin.firestore();
 
@@ -36,7 +37,6 @@ const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '')
  *   2. Creates a default 'pending' policy with standard coverage
  *   3. Links the policy reference back to the user document
  *   4. Auto-promotes to admin if email is in ADMIN_EMAILS env var
- *   5. Auto-promotes first ever user to admin (zero-config admin bootstrap)
  *
  * Notes:
  *   - Policy status starts as 'pending' (not 'active') until payment/quote is confirmed
@@ -48,7 +48,7 @@ export const onUserCreate = functions
   .region(EUROPE_LONDON)
   .firestore
   .document(`${COLLECTION_NAMES.USERS}/{userId}`)
-  .onCreate(async (snap, context) => {
+  .onCreate(wrapTrigger(async (snap, context) => {
     const userId = context.params.userId;
     const userData = snap.data();
     const email = (userData?.email as string | undefined) || '';
@@ -63,13 +63,8 @@ export const onUserCreate = functions
       // Priority 1: email is in the ADMIN_EMAILS allowlist
       const isAdminEmail = ADMIN_EMAILS.length > 0 && ADMIN_EMAILS.includes(email.toLowerCase());
 
-      // Priority 2: first user ever (bootstrap — no other users exist yet)
-      const usersSnapshot = await db.collection(COLLECTION_NAMES.USERS).limit(2).get();
-      const isFirstUser = usersSnapshot.size === 1;
-
-      if (isAdminEmail || isFirstUser) {
-        const reason = isAdminEmail ? 'ADMIN_EMAILS allowlist' : 'first user bootstrap';
-        functions.logger.info(`Auto-promoting ${userId} (${email}) to admin — reason: ${reason}`);
+      if (isAdminEmail) {
+        functions.logger.info(`Auto-promoting ${userId} (${email}) to admin — reason: ADMIN_EMAILS allowlist`);
         await snap.ref.update({
           isAdmin: true,
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -202,7 +197,7 @@ export const onUserCreate = functions
       // Don't throw - user creation should not fail because of policy creation
       // The policy can be created manually or on retry
     }
-  });
+  }));
 
 /**
  * Generate a unique policy number in format DRV-001, DRV-002, etc.
