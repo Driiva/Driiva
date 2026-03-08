@@ -219,11 +219,17 @@ export default function TripRecording() {
     wakeLockRef.current = null;
   }, []);
 
-  // Re-acquire wake lock when tab becomes visible again (browser releases it on hide)
+  // Track phone pickups + re-acquire wake lock on visibility changes
   useEffect(() => {
     const handler = async () => {
-      if (document.visibilityState === 'visible' && recordingState === 'recording') {
-        await acquireWakeLock();
+      if (recordingState === 'recording') {
+        if (document.visibilityState === 'hidden') {
+          // Driver switched away — count as a phone pickup
+          setTripEvents(prev => ({ ...prev, phonePickupCount: prev.phonePickupCount + 1 }));
+        } else {
+          // Tab visible again — re-acquire wake lock (browser releases it on hide)
+          await acquireWakeLock();
+        }
       }
     };
     document.addEventListener('visibilitychange', handler);
@@ -408,7 +414,9 @@ export default function TripRecording() {
         tripEvents.hardBrakingCount,
         tripEvents.hardAccelerationCount,
         tripEvents.speedingSeconds,
-        tripEvents.sharpTurnCount
+        tripEvents.sharpTurnCount,
+        tripEvents.phonePickupCount,
+        durationSeconds
       );
 
       // End trip in Firestore

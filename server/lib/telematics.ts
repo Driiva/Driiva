@@ -148,7 +148,7 @@ export class TelematicsProcessor {
     };
   }
 
-  async processTrip(telematicsData: TelematicsData | TripJSON, userId: number, existingTrips?: Array<{ startTime: Date; endTime: Date; distance: number }>): Promise<DrivingMetrics> {
+  async processTrip(telematicsData: TelematicsData | TripJSON, userId: number, existingTrips?: Array<{ startTime: Date; endTime: Date; distance: number }>, phonePickupCount?: number): Promise<DrivingMetrics> {
     // Parse if needed
     const parsedData = this.parseTripJSON(telematicsData);
     
@@ -180,7 +180,9 @@ export class TelematicsProcessor {
       speedViolations,
       nightDriving,
       sharpCorners,
-      ecoScore
+      ecoScore,
+      phonePickupCount,
+      durationSeconds: duration * 60,
     });
 
     // Apply anomaly penalty
@@ -414,6 +416,12 @@ export class TelematicsProcessor {
     return Math.max(0, Math.min(100, score));
   }
 
+  private computePhoneUsageScore(phonePickupCount: number, durationSeconds: number): number {
+    if (durationSeconds <= 0 || phonePickupCount <= 0) return 100;
+    const pickupsPerTenMin = (phonePickupCount / durationSeconds) * 600;
+    return Math.max(20, Math.round(100 - pickupsPerTenMin * 16));
+  }
+
   private calculateOverallScore(metrics: {
     hardBrakingEvents: number;
     harshAccelerationEvents: number;
@@ -421,13 +429,14 @@ export class TelematicsProcessor {
     nightDriving: boolean;
     sharpCorners: number;
     ecoScore: number;
+    phonePickupCount?: number;
+    durationSeconds?: number;
   }): number {
     const speedScore = Math.max(0, 100 - (metrics.speedViolations * 2));
     const hardBrakingScore = Math.max(0, 100 - (metrics.hardBrakingEvents * 5));
     const accelerationScore = Math.max(0, 100 - (metrics.harshAccelerationEvents * 3));
     const corneringScore = Math.max(0, 100 - (metrics.sharpCorners * 2));
-    // Phone usage: placeholder — always 100 until phone detection is implemented
-    const phoneUsageScore = 100;
+    const phoneUsageScore = this.computePhoneUsageScore(metrics.phonePickupCount ?? 0, metrics.durationSeconds ?? 0);
 
     const weightedScore = 
       speedScore * this.SCORING_WEIGHTS.speed +
