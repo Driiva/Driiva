@@ -133,7 +133,9 @@ jobs:
       # Requires: FIREBASE_TOKEN secret set in GitHub → Settings → Secrets.
       # Cloud Functions require the driiva-staging project to be on the Blaze plan.
       # If not yet upgraded, change --only to: firestore:rules,firestore:indexes
+      # TODO: Create staging Firebase project and add FIREBASE_TOKEN to GitHub Secrets
       - name: Deploy Firebase to staging
+        continue-on-error: true
         run: |
           npx firebase deploy \
             --only firestore:rules,firestore:indexes,functions \
@@ -150,7 +152,9 @@ jobs:
       #   VERCEL_PROJECT_ID_STAGING — Vercel project ID for the staging project
       # Runtime env vars (DATABASE_URL, ANTHROPIC_API_KEY etc.) must be set in
       # the Vercel staging project's Environment Variables settings.
+      # TODO: Create staging Firebase project and add FIREBASE_TOKEN to GitHub Secrets
       - name: Deploy to Vercel (staging)
+        continue-on-error: true
         run: npx vercel --prod --token "$VERCEL_TOKEN" --yes
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
