@@ -272,7 +272,7 @@ export async function registerRoutes(app: Express): Promise<void> {
   // Get user dashboard data (protected: token required; user can only access own dashboard)
   app.get("/api/dashboard/:userId", requireAuth, requireResourceOwner("userId"), async (req: AuthRequest, res) => {
     try {
-      const userId = req.auth!.userId;
+      const userId = req.auth!.userId!;
       console.log(`Fetching dashboard data for user ${userId}`);
 
       const user = await storage.getUser(userId);
@@ -324,7 +324,7 @@ export async function registerRoutes(app: Express): Promise<void> {
   // Submit trip data (protected: auth required; userId taken from token, not body)
   app.post("/api/trips", requireAuth, tripDataLimiter, async (req: AuthRequest, res) => {
     try {
-      const authenticatedUserId = req.auth!.userId;
+      const authenticatedUserId = req.auth!.userId!;
       const body = { ...req.body, userId: authenticatedUserId };
       const tripData = insertTripSchema.parse(body);
       const telematicsDataOrJSON: TelematicsData | TripJSON = req.body.telematicsData || req.body;
@@ -428,7 +428,7 @@ export async function registerRoutes(app: Express): Promise<void> {
   // Get user trips (protected: user can only access own trips)
   app.get("/api/trips/:userId", requireAuth, requireResourceOwner("userId"), async (req: AuthRequest, res) => {
     try {
-      const userId = req.auth!.userId;
+      const userId = req.auth!.userId!;
       const limit = parseInt(req.query.limit as string) || 20;
       const offset = parseInt(req.query.offset as string) || 0;
       
@@ -456,7 +456,7 @@ export async function registerRoutes(app: Express): Promise<void> {
   // Get aggregated weekly score (protected: own data only)
   app.get("/api/scores/weekly/:userId", requireAuth, requireResourceOwner("userId"), async (req: AuthRequest, res) => {
     try {
-      const userId = req.auth!.userId;
+      const userId = req.auth!.userId!;
       const weekStart = req.query.weekStart 
         ? new Date(req.query.weekStart as string)
         : undefined;
@@ -474,7 +474,7 @@ export async function registerRoutes(app: Express): Promise<void> {
   // Get aggregated monthly score (protected: own data only)
   app.get("/api/scores/monthly/:userId", requireAuth, requireResourceOwner("userId"), async (req: AuthRequest, res) => {
     try {
-      const userId = req.auth!.userId;
+      const userId = req.auth!.userId!;
       const monthStart = req.query.monthStart 
         ? new Date(req.query.monthStart as string)
         : undefined;
@@ -492,7 +492,7 @@ export async function registerRoutes(app: Express): Promise<void> {
   // Get time-series data (protected: own data only)
   app.get("/api/scores/timeseries/:userId", requireAuth, requireResourceOwner("userId"), async (req: AuthRequest, res) => {
     try {
-      const userId = req.auth!.userId;
+      const userId = req.auth!.userId!;
       const startDate = new Date(req.query.startDate as string || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
       const endDate = new Date(req.query.endDate as string || new Date().toISOString());
       const granularity = (req.query.granularity as 'daily' | 'weekly' | 'monthly') || 'daily';
@@ -507,7 +507,7 @@ export async function registerRoutes(app: Express): Promise<void> {
   // Get score trend (protected: own data only)
   app.get("/api/scores/trend/:userId", requireAuth, requireResourceOwner("userId"), async (req: AuthRequest, res) => {
     try {
-      const userId = req.auth!.userId;
+      const userId = req.auth!.userId!;
       const period = (req.query.period as 'weekly' | 'monthly') || 'weekly';
       
       const trend = await scoreAggregation.getScoreTrend(userId, period);
@@ -590,7 +590,7 @@ export async function registerRoutes(app: Express): Promise<void> {
   // Get user achievements (protected: own data only)
   app.get("/api/achievements/:userId", requireAuth, requireResourceOwner("userId"), async (req: AuthRequest, res) => {
     try {
-      const userId = req.auth!.userId;
+      const userId = req.auth!.userId!;
       const achievements = await storage.getUserAchievements(userId);
       res.json(achievements);
     } catch (error: any) {
@@ -612,7 +612,7 @@ export async function registerRoutes(app: Express): Promise<void> {
   // AI insights (protected: own data only)
   app.get("/api/insights/:userId", requireAuth, requireResourceOwner("userId"), async (req: AuthRequest, res) => {
     try {
-      const userId = req.auth!.userId;
+      const userId = req.auth!.userId!;
       
       // Get user profile and recent trips
       const profile = await storage.getDrivingProfile(userId);
@@ -639,7 +639,7 @@ export async function registerRoutes(app: Express): Promise<void> {
   // GDPR: Export user data (protected: own data only)
   app.get("/api/gdpr/export/:userId", requireAuth, requireResourceOwner("userId"), async (req: AuthRequest, res) => {
     try {
-      const userId = req.auth!.userId;
+      const userId = req.auth!.userId!;
       const userData = await storage.exportUserData(userId);
 
       res.setHeader("Content-Type", "application/json");
@@ -653,7 +653,7 @@ export async function registerRoutes(app: Express): Promise<void> {
   // GDPR: Delete user account (protected: own data only; strict rate limit)
   app.delete("/api/gdpr/delete/:userId", requireAuth, requireResourceOwner("userId"), gdprDeleteLimiter, async (req: AuthRequest, res) => {
     try {
-      const userId = req.auth!.userId;
+      const userId = req.auth!.userId!;
       await storage.deleteUserData(userId);
       res.json({ message: "User data deleted successfully" });
     } catch (error: any) {
