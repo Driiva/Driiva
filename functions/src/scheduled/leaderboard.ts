@@ -247,9 +247,10 @@ function getPreviousPeriod(periodType: LeaderboardPeriodType): string {
       // broken. One derivation, shared with the client.
       return getIsoWeekPeriod(new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000));
     
-    case 'monthly':
+    case 'monthly': {
       const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
       return `${prevMonth.getFullYear()}-${String(prevMonth.getMonth() + 1).padStart(2, '0')}`;
+    }
     
     case 'all_time':
       return 'all_time'; // Same document, compare to self

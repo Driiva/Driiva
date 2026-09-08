@@ -12,7 +12,10 @@
     "resolveJsonModule": true,
     "declaration": true,
     "declarationMap": true,
-    "rootDir": "src"
+    "rootDir": "src",
+    "lib": [
+      "ES2022"
+    ]
   },
   "compileOnSave": true,
   "include": [

@@ -80,7 +80,9 @@ export async function getWeatherForTrip(
       return null;
     }
 
-    const data = await response.json();
+    // @types/node 26.4 types response.json() as {} rather than any, so the
+    // shape this reads is declared here instead of being implicitly any.
+    const data = (await response.json()) as { hourly?: { weather_code?: number[] } } | null;
     const weatherCodes: number[] | undefined = data?.hourly?.weather_code;
 
     if (!weatherCodes || weatherCodes.length === 0) {

@@ -92,7 +92,7 @@ export async function callClaude(
     analysis = JSON.parse(jsonText);
   } catch (parseErr) {
     functions.logger.error('[AI] Failed to parse Claude response:', jsonText.slice(0, 500));
-    throw new Error(`Claude response is not valid JSON: ${parseErr}`);
+    throw new Error('Claude response is not valid JSON', { cause: parseErr });
   }
 
   return {
