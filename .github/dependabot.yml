@@ -40,6 +40,16 @@ updates:
       # typescript-eslint ships TS 7 support.
       - dependency-name: "typescript"
         update-types: ["version-update:semver-major"]
+      # firebase-admin 14 swaps jwks-rsa 3 (dual-build jose 4) for jwks-rsa 4
+      # (ESM-only jose 6), and firebase-functions require()s firebase-admin/auth
+      # on its own. The Cloud Functions runtime is Node 20, which cannot
+      # require() an ES module, so v14 cannot cold-start here at all: every
+      # exported function fails, not just the ones touching auth. tsc and the
+      # unit suite both stay green on it. Guarded by
+      # functions/src/__tests__/runtime-esm-safety.test.ts. Lift when the
+      # functions runtime moves to Node 22+.
+      - dependency-name: "firebase-admin"
+        update-types: ["version-update:semver-major"]
 
   # GitHub Actions
   - package-ecosystem: github-actions

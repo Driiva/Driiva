@@ -42,14 +42,12 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteUserAccount = exports.exportUserData = void 0;
 const functions = __importStar(require("firebase-functions"));
-const auth_1 = require("firebase-admin/auth");
 const firestore_1 = require("firebase-admin/firestore");
 const types_1 = require("../types");
-const auth_2 = require("./auth");
+const auth_1 = require("./auth");
 const region_1 = require("../lib/region");
 const sentry_1 = require("../lib/sentry");
 const db = (0, firestore_1.getFirestore)();
-const auth = (0, auth_1.getAuth)();
 const BATCH_SIZE = 500;
 /** Convert Firestore Timestamp to ISO string for JSON export */
 function serializeForExport(obj) {
@@ -79,9 +77,9 @@ exports.exportUserData = functions
     .region(region_1.EUROPE_LONDON)
     .runWith({ timeoutSeconds: 300, memory: '512MB' })
     .https.onCall((0, sentry_1.wrapFunction)(async (data, context) => {
-    (0, auth_2.requireAuth)(context);
+    (0, auth_1.requireAuth)(context);
     const requestedUserId = data?.userId;
-    (0, auth_2.requireSelf)(context, requestedUserId);
+    (0, auth_1.requireSelf)(context, requestedUserId);
     const userId = requestedUserId;
     // Not rate limited: ROADMAP.md TD-3. Suggested shape there: max 1 export per user per 24 hours.
     functions.logger.info('Exporting user data', { userId });
@@ -171,9 +169,9 @@ exports.exportUserData = functions
 exports.deleteUserAccount = functions
     .region(region_1.EUROPE_LONDON)
     .https.onCall((0, sentry_1.wrapFunction)(async (data, context) => {
-    (0, auth_2.requireAuth)(context);
+    (0, auth_1.requireAuth)(context);
     const requestedUserId = data?.userId;
-    (0, auth_2.requireSelf)(context, requestedUserId);
+    (0, auth_1.requireSelf)(context, requestedUserId);
     const userId = requestedUserId;
     // Not rate limited: ROADMAP.md TD-3. Suggested shape there: consider requiring re-auth or delay before delete.
     functions.logger.info('Deleting user account', { userId });
@@ -238,7 +236,13 @@ exports.deleteUserAccount = functions
         await batch.commit();
     }
     try {
-        await auth.deleteUser(userId);
+        // Imported here and never at module scope: firebase-admin/auth pulls
+        // jwks-rsa, which require()s jose v6 (ESM-only). The Cloud Functions
+        // runtime is Node 20, which cannot require() an ES module, so a
+        // top-level import fails lib/index.js at cold start and takes every
+        // exported function down with it, not just this one.
+        const { getAuth } = await Promise.resolve().then(() => __importStar(require('firebase-admin/auth')));
+        await getAuth().deleteUser(userId);
     }
     catch (err) {
         functions.logger.error('Failed to delete Firebase Auth user', { userId, err });
