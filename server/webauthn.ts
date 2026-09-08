@@ -29,7 +29,6 @@ import type {
 import { db } from './db';
 import { users, webauthnCredentials, webauthnChallenges, type User, type WebauthnCredential } from '@shared/schema';
 import { eq, and, lt } from 'drizzle-orm';
-import { getAuth } from 'firebase-admin/auth';
 import { getFirebaseAdmin } from './lib/firebase-admin';
 
 // ---------------------------------------------------------------------------
@@ -279,6 +278,11 @@ export class SimpleWebAuthnService implements WebAuthnService {
           const adminApp = getFirebaseAdmin();
           if (adminApp) {
             try {
+              // Lazy for the same reason as server/lib/firebase-admin.ts:
+              // firebase-admin/auth -> jwks-rsa -> jose (ESM) cannot be
+              // require()'d by Vercel's runtime, and a top-level import
+              // would fail the whole serverless init.
+              const { getAuth } = await import('firebase-admin/auth');
               customToken = await getAuth(adminApp).createCustomToken(user.firebaseUid);
             } catch (err) {
               console.error('[WebAuthn] createCustomToken failed — user will lack Firebase session:', err);
