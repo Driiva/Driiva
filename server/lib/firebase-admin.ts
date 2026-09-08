@@ -18,7 +18,6 @@ import {
   getApps,
   initializeApp,
 } from "firebase-admin/app";
-import { getAuth } from "firebase-admin/auth";
 
 let adminApp: App | null = null;
 
@@ -83,6 +82,11 @@ export async function verifyFirebaseToken(idToken: string): Promise<{ uid: strin
       // Admin SDK checks the token's issued-at time against the user's
       // tokensValidAfterTime) so a revoked-but-unexpired token is rejected
       // immediately instead of staying valid until natural expiry.
+      // Loaded lazily and never at module scope: firebase-admin/auth pulls
+      // jwks-rsa, which `require`s jose v6 (ESM-only). Vercel's serverless
+      // runtime cannot require() an ES module, so a top-level import here
+      // takes down the whole API at init, not just this call.
+      const { getAuth } = await import("firebase-admin/auth");
       const decoded = await getAuth(firebase).verifyIdToken(idToken, true);
       return { uid: decoded.uid, email: decoded.email };
     } catch {
