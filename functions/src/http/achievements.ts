@@ -5,12 +5,12 @@
  */
 
 import * as functions from 'firebase-functions';
-import * as admin from 'firebase-admin';
+import { getFirestore } from 'firebase-admin/firestore';
 import { ACHIEVEMENT_DEFINITIONS } from '../utils/achievements';
 import { EUROPE_LONDON } from '../lib/region';
 import { wrapFunction } from '../lib/sentry';
 
-const db = admin.firestore();
+const db = getFirestore();
 
 /**
  * Seed achievement definitions into the top-level `achievements` collection.

@@ -17,6 +17,7 @@
  * admin.apps.length > 0 and reuses the emulator-pointed default app instead
  * of trying (and failing on a duplicate-app error) to initialize its own.
  */
+import { deleteApp } from 'firebase-admin/app';
 import { afterAll, describe, expect, it } from 'vitest';
 import { adminApp, adminAuth, clientAuth } from './helpers';
 
@@ -32,7 +33,7 @@ function uniqueEmail(label: string): string {
 
 describe('M1 session revocation integration (Auth emulator)', () => {
   afterAll(async () => {
-    await adminApp.delete();
+    await deleteApp(adminApp);
   });
 
   it('accepts a valid token, rejects it once revoked, then accepts a fresh sign-in', async () => {

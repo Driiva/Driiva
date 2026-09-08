@@ -7,15 +7,16 @@
  */
 
 import * as functions from 'firebase-functions';
-import * as admin from 'firebase-admin';
+import { getAuth } from 'firebase-admin/auth';
+import { DocumentReference, QueryDocumentSnapshot, getFirestore } from 'firebase-admin/firestore';
 import { COLLECTION_NAMES } from '../types';
 import { requireAuth, requireSelf } from './auth';
 import type { CallableContext } from './auth';
 import { EUROPE_LONDON } from '../lib/region';
 import { wrapFunction } from '../lib/sentry';
 
-const db = admin.firestore();
-const auth = admin.auth();
+const db = getFirestore();
+const auth = getAuth();
 
 const BATCH_SIZE = 500;
 
@@ -62,7 +63,7 @@ export const exportUserData = functions
     .where('userId', '==', userId)
     .get();
 
-  const trips = tripsSnap.docs.map((d: admin.firestore.QueryDocumentSnapshot) => serializeForExport({ id: d.id, ...d.data() }));
+  const trips = tripsSnap.docs.map((d: QueryDocumentSnapshot) => serializeForExport({ id: d.id, ...d.data() }));
 
   const tripIds = tripsSnap.docs.map((d) => d.id);
 
@@ -104,19 +105,19 @@ export const exportUserData = functions
     .collection(COLLECTION_NAMES.TRIP_SEGMENTS)
     .where('userId', '==', userId)
     .get();
-  const tripSegments = segmentsSnap.docs.map((d: admin.firestore.QueryDocumentSnapshot) => serializeForExport({ id: d.id, ...d.data() }));
+  const tripSegments = segmentsSnap.docs.map((d: QueryDocumentSnapshot) => serializeForExport({ id: d.id, ...d.data() }));
 
   const policiesSnap = await db
     .collection(COLLECTION_NAMES.POLICIES)
     .where('userId', '==', userId)
     .get();
-  const policies = policiesSnap.docs.map((d: admin.firestore.QueryDocumentSnapshot) => serializeForExport({ id: d.id, ...d.data() }));
+  const policies = policiesSnap.docs.map((d: QueryDocumentSnapshot) => serializeForExport({ id: d.id, ...d.data() }));
 
   const poolSharesSnap = await db
     .collection(COLLECTION_NAMES.POOL_SHARES)
     .where('userId', '==', userId)
     .get();
-  const poolShares = poolSharesSnap.docs.map((d: admin.firestore.QueryDocumentSnapshot) => serializeForExport({ id: d.id, ...d.data() }));
+  const poolShares = poolSharesSnap.docs.map((d: QueryDocumentSnapshot) => serializeForExport({ id: d.id, ...d.data() }));
 
   let driverStats: unknown = null;
   const driverStatsRef = db.collection('driver_stats').doc(userId);
@@ -175,7 +176,7 @@ export const deleteUserAccount = functions
     }
   }
 
-  function addDelete(ref: admin.firestore.DocumentReference): void {
+  function addDelete(ref: DocumentReference): void {
     currentBatch.delete(ref);
     opCount++;
     if (opCount >= BATCH_SIZE) flushBatch();

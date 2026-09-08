@@ -60,7 +60,8 @@ const functions = __importStar(require("firebase-functions"));
 // CURRENCY SEAM
 // ============================================================================
 /**
- * TODO(ZAR-vs-GBP, pinned from insurance.ts:19 / m4-grounding.md section 2 & 4):
+ * PINNED DECISION (ZAR-vs-GBP, from insurance.ts / m4-grounding.md sections 2
+ * and 4; tracked as ROADMAP.md TD-4):
  * Root's sandbox models all monetary values in ZAR cents. Driiva is a UK GBP
  * product. There is currently NO conversion applied anywhere in this module -
  * `rootQuote.suggested_premium` / `monthly_premium` etc. are passed straight
@@ -73,8 +74,8 @@ const functions = __importStar(require("firebase-functions"));
  * unchanged from pre-seam code - it just makes the gap impossible to miss.
  */
 function resolveCurrency(amountMinorUnits) {
-    // TODO(ZAR-vs-GBP): identity pass-through. See comment above - do not guess
-    // a conversion rate here.
+    // Identity pass-through, deliberately. See the comment above and
+    // ROADMAP.md TD-4 - do not guess a conversion rate here.
     return amountMinorUnits;
 }
 function getRootConfig() {

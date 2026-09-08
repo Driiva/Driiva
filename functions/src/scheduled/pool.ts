@@ -5,7 +5,7 @@
  */
 
 import * as functions from 'firebase-functions';
-import * as admin from 'firebase-admin';
+import { FieldValue, Timestamp, getFirestore } from 'firebase-admin/firestore';
 import {
   COLLECTION_NAMES,
   CommunityPoolDocument,
@@ -19,7 +19,7 @@ import {
 import { EUROPE_LONDON } from '../lib/region';
 import { wrapTrigger } from '../lib/sentry';
 
-const db = admin.firestore();
+const db = getFirestore();
 
 /**
  * Finalize pool period on the 1st of each month
@@ -82,7 +82,7 @@ export const finalizePoolPeriod = functions
       
       // Batch update all shares
       const batch = db.batch();
-      const now = admin.firestore.Timestamp.now();
+      const now = Timestamp.now();
       
       for (const share of shares) {
         if (!share.eligibleForRefund) {
@@ -175,7 +175,7 @@ export const finalizePoolPeriod = functions
         periodEnd: end,
         claimsThisPeriod: 0,
         lastCalculatedAt: now,
-        version: admin.firestore.FieldValue.increment(1),
+        version: FieldValue.increment(1),
       });
       
       await batch.commit();
@@ -249,7 +249,7 @@ export const recalculatePoolShares = functions
       
       // Batch update all shares
       const batch = db.batch();
-      const now = admin.firestore.Timestamp.now();
+      const now = Timestamp.now();
       
       for (const share of shares) {
         // Recalculate share percentage
@@ -282,7 +282,7 @@ export const recalculatePoolShares = functions
         activeParticipants: shares.length,
         averagePoolScore: Math.round(avgScore * 100) / 100,
         lastCalculatedAt: now,
-        version: admin.firestore.FieldValue.increment(1),
+        version: FieldValue.increment(1),
       });
       
       await batch.commit();
@@ -303,8 +303,8 @@ export const recalculatePoolShares = functions
  * Get pool period date range
  */
 function getPoolPeriodDates(periodType: 'monthly' | 'quarterly'): {
-  start: admin.firestore.Timestamp;
-  end: admin.firestore.Timestamp;
+  start: Timestamp;
+  end: Timestamp;
 } {
   const now = new Date();
   const year = now.getFullYear();
@@ -323,7 +323,7 @@ function getPoolPeriodDates(periodType: 'monthly' | 'quarterly'): {
   }
   
   return {
-    start: admin.firestore.Timestamp.fromDate(startDate),
-    end: admin.firestore.Timestamp.fromDate(endDate),
+    start: Timestamp.fromDate(startDate),
+    end: Timestamp.fromDate(endDate),
   };
 }

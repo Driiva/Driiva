@@ -6,7 +6,7 @@
  * functions/src/triggers/trips.ts.
  */
 import * as functions from 'firebase-functions';
-import * as admin from 'firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 import {
   COLLECTION_NAMES,
   TripDocument,
@@ -56,8 +56,8 @@ export async function checkDpiaCompliance(tripId: string, points: unknown[]): Pr
       const alertRef = db.collection('admin').doc('dpiaAlerts');
       await alertRef.set(
         {
-          lastAlertAt: admin.firestore.FieldValue.serverTimestamp(),
-          unreviewedFields: admin.firestore.FieldValue.arrayUnion(...unreviewedFields),
+          lastAlertAt: FieldValue.serverTimestamp(),
+          unreviewedFields: FieldValue.arrayUnion(...unreviewedFields),
           [`alerts.${tripId}`]: {
             fields: unreviewedFields,
             detectedAt: new Date().toISOString(),

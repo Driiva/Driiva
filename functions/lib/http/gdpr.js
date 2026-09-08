@@ -42,13 +42,14 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deleteUserAccount = exports.exportUserData = void 0;
 const functions = __importStar(require("firebase-functions"));
-const admin = __importStar(require("firebase-admin"));
+const auth_1 = require("firebase-admin/auth");
+const firestore_1 = require("firebase-admin/firestore");
 const types_1 = require("../types");
-const auth_1 = require("./auth");
+const auth_2 = require("./auth");
 const region_1 = require("../lib/region");
 const sentry_1 = require("../lib/sentry");
-const db = admin.firestore();
-const auth = admin.auth();
+const db = (0, firestore_1.getFirestore)();
+const auth = (0, auth_1.getAuth)();
 const BATCH_SIZE = 500;
 /** Convert Firestore Timestamp to ISO string for JSON export */
 function serializeForExport(obj) {
@@ -78,11 +79,11 @@ exports.exportUserData = functions
     .region(region_1.EUROPE_LONDON)
     .runWith({ timeoutSeconds: 300, memory: '512MB' })
     .https.onCall((0, sentry_1.wrapFunction)(async (data, context) => {
-    (0, auth_1.requireAuth)(context);
+    (0, auth_2.requireAuth)(context);
     const requestedUserId = data?.userId;
-    (0, auth_1.requireSelf)(context, requestedUserId);
+    (0, auth_2.requireSelf)(context, requestedUserId);
     const userId = requestedUserId;
-    // TODO: Rate limiting - e.g. max 1 export per user per 24 hours
+    // Not rate limited: ROADMAP.md TD-3. Suggested shape there: max 1 export per user per 24 hours.
     functions.logger.info('Exporting user data', { userId });
     const userRef = db.collection(types_1.COLLECTION_NAMES.USERS).doc(userId);
     const userSnap = await userRef.get();
@@ -170,11 +171,11 @@ exports.exportUserData = functions
 exports.deleteUserAccount = functions
     .region(region_1.EUROPE_LONDON)
     .https.onCall((0, sentry_1.wrapFunction)(async (data, context) => {
-    (0, auth_1.requireAuth)(context);
+    (0, auth_2.requireAuth)(context);
     const requestedUserId = data?.userId;
-    (0, auth_1.requireSelf)(context, requestedUserId);
+    (0, auth_2.requireSelf)(context, requestedUserId);
     const userId = requestedUserId;
-    // TODO: Rate limiting - consider requiring re-auth or delay before delete
+    // Not rate limited: ROADMAP.md TD-3. Suggested shape there: consider requiring re-auth or delay before delete.
     functions.logger.info('Deleting user account', { userId });
     const tripSnap = await db
         .collection(types_1.COLLECTION_NAMES.TRIPS)

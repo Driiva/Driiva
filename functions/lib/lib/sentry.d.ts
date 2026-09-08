@@ -32,6 +32,17 @@ export declare function captureError(error: Error | string, context?: Record<str
  */
 export declare function setSentryUser(userId: string): void;
 /**
+ * Leave a structured breadcrumb on the current Sentry scope. Breadcrumbs
+ * build a trail of what ran before an error and are attached automatically
+ * to the next event captureError sends - unlike the browser SDK, @sentry/node
+ * does not add console/fetch/navigation breadcrumbs for us, so without this
+ * every Cloud Functions error arrived with no trail at all.
+ *
+ * No-ops when Sentry isn't configured or hasn't been initialised, same guard
+ * as captureError and setSentryUser.
+ */
+export declare function addBreadcrumb(category: string, message: string, data?: Record<string, unknown>): void;
+/**
  * Wrap a Cloud Function handler with Sentry error tracking.
  *
  * Automatically:
@@ -44,5 +55,5 @@ export declare function wrapFunction<TData, TResult>(handler: (data: TData, cont
 /**
  * Wrap a Firestore trigger handler with Sentry error tracking.
  */
-export declare function wrapTrigger<T extends (...args: any[]) => Promise<any>>(handler: T): T;
+export declare function wrapTrigger<T extends (...args: never[]) => Promise<unknown>>(handler: T): T;
 //# sourceMappingURL=sentry.d.ts.map

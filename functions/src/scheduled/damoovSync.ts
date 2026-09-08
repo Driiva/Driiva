@@ -9,13 +9,13 @@
  */
 
 import * as functions from 'firebase-functions';
-import * as admin from 'firebase-admin';
+import { FieldValue, Timestamp, getFirestore } from 'firebase-admin/firestore';
 import { EUROPE_LONDON } from '../lib/region';
 import { wrapTrigger } from '../lib/sentry';
 import { COLLECTION_NAMES } from '../types';
 import { fetchDamoovTrips, fetchDamoovDailyStats, DamoovTripData } from '../lib/damoov';
 
-const db = admin.firestore();
+const db = getFirestore();
 
 /**
  * Format a Date as YYYY-MM-DD.
@@ -29,9 +29,9 @@ function formatDate(d: Date): string {
  * Distances stored in meters (canonical), durations in seconds.
  */
 function damoovTripToFirestoreDoc(trip: DamoovTripData, userId: string) {
-  const startedAt = admin.firestore.Timestamp.fromDate(new Date(trip.StartDate));
-  const endedAt = admin.firestore.Timestamp.fromDate(new Date(trip.EndDate));
-  const now = admin.firestore.Timestamp.now();
+  const startedAt = Timestamp.fromDate(new Date(trip.StartDate));
+  const endedAt = Timestamp.fromDate(new Date(trip.EndDate));
+  const now = Timestamp.now();
 
   return {
     tripId: `damoov_${trip.Id}`,
@@ -123,14 +123,14 @@ async function syncUserTrips(
       .collection(COLLECTION_NAMES.TRIPS)
       .where('userId', '==', userId)
       .where('status', '==', 'completed')
-      .where('startedAt', '>=', admin.firestore.Timestamp.fromDate(thirtyDaysAgo))
+      .where('startedAt', '>=', Timestamp.fromDate(thirtyDaysAgo))
       .orderBy('startedAt', 'desc')
       .get();
 
     let totalScore = 0;
     let totalDistanceKm = 0;
     let tripCount = 0;
-    let lastTripDate: admin.firestore.Timestamp | null = null;
+    let lastTripDate: Timestamp | null = null;
 
     recentTripsSnap.forEach((doc) => {
       const data = doc.data();
@@ -155,9 +155,9 @@ async function syncUserTrips(
       'drivingProfile.currentScore': overallSafetyScore,
       'drivingProfile.totalTrips': totalTrips,
       'drivingProfile.lastTripAt': lastTripDate,
-      damoovLastSyncedAt: admin.firestore.FieldValue.serverTimestamp(),
+      damoovLastSyncedAt: FieldValue.serverTimestamp(),
       damoovWeeklyScoreTrend: weeklyScoreTrend,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
       updatedBy: 'cloud-function:damoovSync',
     });
 
@@ -229,7 +229,7 @@ export const syncDamoovTrips = functions
       .doc(dateKey)
       .collection('damoovSync')
       .add({
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        timestamp: FieldValue.serverTimestamp(),
         usersProcessed: activeUsers.length,
         successCount,
         failCount,

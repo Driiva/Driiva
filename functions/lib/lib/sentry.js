@@ -55,6 +55,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.initSentry = initSentry;
 exports.captureError = captureError;
 exports.setSentryUser = setSentryUser;
+exports.addBreadcrumb = addBreadcrumb;
 exports.wrapFunction = wrapFunction;
 exports.wrapTrigger = wrapTrigger;
 const Sentry = __importStar(require("@sentry/node"));
@@ -118,6 +119,27 @@ function setSentryUser(userId) {
     Sentry.setUser({ id: userId });
 }
 /**
+ * Leave a structured breadcrumb on the current Sentry scope. Breadcrumbs
+ * build a trail of what ran before an error and are attached automatically
+ * to the next event captureError sends - unlike the browser SDK, @sentry/node
+ * does not add console/fetch/navigation breadcrumbs for us, so without this
+ * every Cloud Functions error arrived with no trail at all.
+ *
+ * No-ops when Sentry isn't configured or hasn't been initialised, same guard
+ * as captureError and setSentryUser.
+ */
+function addBreadcrumb(category, message, data) {
+    if (!SENTRY_DSN || !initialized)
+        return;
+    Sentry.addBreadcrumb({
+        category,
+        message,
+        data,
+        level: 'info',
+        timestamp: Date.now() / 1000,
+    });
+}
+/**
  * Wrap a Cloud Function handler with Sentry error tracking.
  *
  * Automatically:
@@ -133,6 +155,9 @@ function wrapFunction(handler) {
         if (context.auth?.uid) {
             setSentryUser(context.auth.uid);
         }
+        addBreadcrumb('function', `${handler.name || 'anonymous'} invoked`, {
+            userId: context.auth?.uid,
+        });
         try {
             return await handler(data, context);
         }
@@ -156,6 +181,7 @@ function wrapFunction(handler) {
 function wrapTrigger(handler) {
     return (async (...args) => {
         initSentry();
+        addBreadcrumb('trigger', `${handler.name || 'anonymous'} invoked`);
         try {
             await handler(...args);
         }

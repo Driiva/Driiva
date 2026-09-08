@@ -6,7 +6,7 @@
  */
 
 import * as functions from 'firebase-functions';
-import * as admin from 'firebase-admin';
+import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { db } from '../index';
 import { COLLECTION_NAMES } from '../types';
 import type { UserDocument } from '../types';
@@ -17,8 +17,6 @@ import {
 import { EUROPE_LONDON } from '../lib/region';
 import { wrapFunction, wrapTrigger } from '../lib/sentry';
 
-const Timestamp = admin.firestore.Timestamp;
-const FieldValue = admin.firestore.FieldValue;
 
 const BETA_PRICING_SUBCOLLECTION = 'betaPricing';
 const BETA_ESTIMATE_DOC_ID = 'currentEstimate';

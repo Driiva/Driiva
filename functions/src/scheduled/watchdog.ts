@@ -9,12 +9,12 @@
  */
 
 import * as functions from 'firebase-functions';
-import * as admin from 'firebase-admin';
+import { Timestamp, getFirestore } from 'firebase-admin/firestore';
 import { COLLECTION_NAMES } from '../types';
 import { EUROPE_LONDON } from '../lib/region';
 import { wrapTrigger, captureError } from '../lib/sentry';
 
-const db = admin.firestore();
+const db = getFirestore();
 
 const FAILED_TRIP_THRESHOLD = 5;
 const STALE_HOURS = 24;
@@ -33,7 +33,7 @@ export const monitorTripHealth = functions
     const failedTripsSnap = await db
       .collection(COLLECTION_NAMES.TRIPS)
       .where('status', '==', 'failed')
-      .where('processedAt', '>=', admin.firestore.Timestamp.fromDate(oneHourAgo))
+      .where('processedAt', '>=', Timestamp.fromDate(oneHourAgo))
       .get();
 
     const failedCount = failedTripsSnap.size;
@@ -52,7 +52,7 @@ export const monitorTripHealth = functions
     // 2. Check for GPS upload drop-off (no new trips across all users for STALE_HOURS)
     const recentTripsSnap = await db
       .collection(COLLECTION_NAMES.TRIPS)
-      .where('startedAt', '>=', admin.firestore.Timestamp.fromDate(staleThreshold))
+      .where('startedAt', '>=', Timestamp.fromDate(staleThreshold))
       .limit(1)
       .get();
 
@@ -70,7 +70,7 @@ export const monitorTripHealth = functions
     const stuckTripsSnap = await db
       .collection(COLLECTION_NAMES.TRIPS)
       .where('status', '==', 'processing')
-      .where('startedAt', '<=', admin.firestore.Timestamp.fromDate(oneHourAgo))
+      .where('startedAt', '<=', Timestamp.fromDate(oneHourAgo))
       .limit(10)
       .get();
 

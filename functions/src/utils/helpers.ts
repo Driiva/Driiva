@@ -4,7 +4,7 @@
  * Shared helper functions for Cloud Functions.
  */
 
-import * as admin from 'firebase-admin';
+import { Timestamp } from 'firebase-admin/firestore';
 import { TripLocation } from '../types';
 import { haversineMeters } from '../shared/tripProcessor';
 import { calculateRefundCents } from '../scoring/refund';
@@ -132,7 +132,7 @@ export const calculateDistance = haversineMeters;
 /**
  * Check if timestamp is during night hours (10 PM - 6 AM)
  */
-export function isNightTime(timestamp: admin.firestore.Timestamp): boolean {
+export function isNightTime(timestamp: Timestamp): boolean {
   const date = timestamp.toDate();
   const hour = date.getHours();
   return hour >= 22 || hour < 6;
@@ -141,7 +141,7 @@ export function isNightTime(timestamp: admin.firestore.Timestamp): boolean {
 /**
  * Check if timestamp is during rush hour (7-9 AM or 4-7 PM on weekdays)
  */
-export function isRushHour(timestamp: admin.firestore.Timestamp): boolean {
+export function isRushHour(timestamp: Timestamp): boolean {
   const date = timestamp.toDate();
   const day = date.getDay();
   const hour = date.getHours();

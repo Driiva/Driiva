@@ -40,11 +40,11 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.seedAchievements = void 0;
 const functions = __importStar(require("firebase-functions"));
-const admin = __importStar(require("firebase-admin"));
+const firestore_1 = require("firebase-admin/firestore");
 const achievements_1 = require("../utils/achievements");
 const region_1 = require("../lib/region");
 const sentry_1 = require("../lib/sentry");
-const db = admin.firestore();
+const db = (0, firestore_1.getFirestore)();
 /**
  * Seed achievement definitions into the top-level `achievements` collection.
  * Callable by admin users only. Idempotent (overwrites existing docs by ID).

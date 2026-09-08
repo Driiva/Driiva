@@ -5,13 +5,13 @@
  */
 
 import * as functions from 'firebase-functions';
-import * as admin from 'firebase-admin';
+import { getFirestore } from 'firebase-admin/firestore';
 import { COLLECTION_NAMES, UserDocument } from '../types';
 import { sendWeeklySummaryToUser } from '../utils/notifications';
 import { EUROPE_LONDON } from '../lib/region';
 import { wrapTrigger } from '../lib/sentry';
 
-const db = admin.firestore();
+const db = getFirestore();
 
 /**
  * Send weekly driving summary to all active users.

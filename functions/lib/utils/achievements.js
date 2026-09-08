@@ -41,11 +41,11 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ACHIEVEMENT_DEFINITIONS = void 0;
 exports.checkAndUnlockAchievements = checkAndUnlockAchievements;
-const admin = __importStar(require("firebase-admin"));
+const firestore_1 = require("firebase-admin/firestore");
 const functions = __importStar(require("firebase-functions"));
 const contracts_1 = require("@driiva/contracts");
 const types_1 = require("../types");
-const db = admin.firestore();
+const db = (0, firestore_1.getFirestore)();
 /**
  * The unlock predicates. Metadata (name, description, icon, category,
  * maxProgress) lives in @driiva/contracts so the client can render the
@@ -102,7 +102,7 @@ async function checkAndUnlockAchievements(userId, profile, trip, tripId) {
             if (def.check(profile, trip)) {
                 await userAchRef.doc(def.id).set({
                     achievementId: def.id,
-                    unlockedAt: admin.firestore.FieldValue.serverTimestamp(),
+                    unlockedAt: firestore_1.FieldValue.serverTimestamp(),
                     tripId,
                 });
                 newlyUnlocked.push(def.id);

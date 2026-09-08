@@ -53,13 +53,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.provisionUserOnSignup = void 0;
 exports.provisionUser = provisionUser;
 const functions = __importStar(require("firebase-functions"));
-const admin = __importStar(require("firebase-admin"));
+const firestore_1 = require("firebase-admin/firestore");
 const types_1 = require("../types");
 const region_1 = require("../lib/region");
 const damoov_1 = require("../lib/damoov");
 const sentry_1 = require("../lib/sentry");
 const provisionUser_1 = require("../utils/provisionUser");
-const db = admin.firestore();
+const db = (0, firestore_1.getFirestore)();
 // Comma-separated list of emails that are automatically granted admin access.
 // Mirrors functions/src/triggers/users.ts's ADMIN_EMAILS - duplicated here
 // rather than imported so this module stays independent of the old trigger
@@ -115,7 +115,7 @@ async function provisionUser(user) {
         if (isAdmin) {
             functions.logger.info(`Auto-promoting ${uid} (${email}) to admin - reason: ADMIN_EMAILS allowlist`);
         }
-        const now = admin.firestore.Timestamp.now();
+        const now = firestore_1.Timestamp.now();
         const userDoc = (0, provisionUser_1.buildProvisionedUserDoc)({
             uid,
             email,

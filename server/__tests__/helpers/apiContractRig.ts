@@ -72,9 +72,14 @@ vi.mock("../../lib/firebase-admin", () => ({
   getFirebaseAdmin: vi.fn(() => null),
 }));
 
-// Dynamically imported by the Stripe webhook handler for FieldValue only.
-vi.mock("firebase-admin", () => ({
-  firestore: { FieldValue: { serverTimestamp: () => "SERVER_TIMESTAMP" } },
+// Dynamically imported by the Stripe webhook handler. firebase-admin 14
+// removed the `admin.firestore` namespace, so the handler pulls FieldValue and
+// getFirestore from the modular subpath; getFirestore(app) resolves the app's
+// Firestore, matching the real contract.
+export const TEST_DB = Symbol.for("driiva.test.adminDb");
+vi.mock("firebase-admin/firestore", () => ({
+  FieldValue: { serverTimestamp: () => "SERVER_TIMESTAMP" },
+  getFirestore: vi.fn((app: Record<symbol, unknown>) => app[Symbol.for("driiva.test.adminDb")]),
 }));
 
 vi.mock("../../lib/aiInsights", () => ({

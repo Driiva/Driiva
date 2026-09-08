@@ -3,7 +3,7 @@
  * insight document, with the validators that keep every enum inside its
  * declared union. Extracted verbatim from functions/src/ai/tripAnalysis.ts.
  */
-import * as admin from 'firebase-admin';
+import { Timestamp } from 'firebase-admin/firestore';
 import {
   TripDocument,
   TripAIInsightDocument,
@@ -31,7 +31,7 @@ export function buildInsightDocument(
   completionTokens: number,
   latencyMs: number,
 ): TripAIInsightDocument {
-  const now = admin.firestore.Timestamp.now();
+  const now = Timestamp.now();
 
   // Validate and clamp core fields
   const overallScore = clamp(analysis.overallScore ?? trip.score, 0, 100);

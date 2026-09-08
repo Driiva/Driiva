@@ -5,7 +5,7 @@
  */
 
 import * as functions from 'firebase-functions';
-import * as admin from 'firebase-admin';
+import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { getWeatherForTrip } from '../utils/weather';
 import {
   COLLECTION_NAMES,
@@ -91,7 +91,7 @@ export const onTripCreate = functions
         anomalies,
         context: tripContext,
         status: newStatus,
-        processedAt: newStatus === 'completed' ? admin.firestore.FieldValue.serverTimestamp() : null,
+        processedAt: newStatus === 'completed' ? FieldValue.serverTimestamp() : null,
       });
 
       functions.logger.info(`Trip ${tripId} processed`, {
@@ -111,7 +111,7 @@ export const onTripCreate = functions
       // Mark trip as failed
       await snap.ref.update({
         status: 'failed',
-        processedAt: admin.firestore.FieldValue.serverTimestamp(),
+        processedAt: FieldValue.serverTimestamp(),
       });
 
       throw error;
@@ -160,9 +160,9 @@ export const onTripStatusChange = functions
       
       // Set processedAt timestamp if not already set
       if (!after.processedAt) {
-        const tripRef = admin.firestore().collection(COLLECTION_NAMES.TRIPS).doc(tripId);
+        const tripRef = getFirestore().collection(COLLECTION_NAMES.TRIPS).doc(tripId);
         await tripRef.update({
-          processedAt: admin.firestore.FieldValue.serverTimestamp(),
+          processedAt: FieldValue.serverTimestamp(),
         });
         functions.logger.info(`Set processedAt timestamp for trip ${tripId}`);
       }

@@ -8,7 +8,7 @@
  */
 
 import * as functions from 'firebase-functions';
-import * as admin from 'firebase-admin';
+import { getFirestore } from 'firebase-admin/firestore';
 import {
   COLLECTION_NAMES,
   TripDocument,
@@ -21,7 +21,7 @@ import { analyzeTrip } from '../ai/tripAnalysis';
 import { EUROPE_LONDON } from '../lib/region';
 import { wrapFunction } from '../lib/sentry';
 
-const db = admin.firestore();
+const db = getFirestore();
 
 /**
  * Callable: Re-analyze a trip with Claude AI

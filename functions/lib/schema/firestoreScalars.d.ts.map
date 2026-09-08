@@ -1,0 +1,1 @@
+{"version":3,"file":"firestoreScalars.d.ts","sourceRoot":"","sources":["../../src/schema/firestoreScalars.ts"],"names":[],"mappings":"AAAA;;;GAGG;AACH,OAAO,EAAE,UAAU,IAAI,YAAY,EAAE,SAAS,IAAI,WAAW,EAAE,MAAM,0BAA0B,CAAC;AAChG,MAAM,MAAM,SAAS,GAAG,WAAW,CAAC;AACpC,MAAM,MAAM,UAAU,GAAG,YAAY,CAAC"}

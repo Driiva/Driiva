@@ -5,45 +5,12 @@
  *
  * Extracted here to avoid duplicating Root API logic across modules.
  */
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.mapRootPolicyStatus = mapRootPolicyStatus;
 exports.acceptInsuranceQuoteInternal = acceptInsuranceQuoteInternal;
-const admin = __importStar(require("firebase-admin"));
+const firestore_1 = require("firebase-admin/firestore");
 const types_1 = require("../types");
-const db = admin.firestore();
+const db = (0, firestore_1.getFirestore)();
 /**
  * Root's policy status, mapped onto ours. Only Root saying "active" makes a
  * policy active here.
@@ -111,7 +78,9 @@ async function acceptInsuranceQuoteInternal(userId, quoteId, stripeSubscriptionI
         throw new Error(`User ${userId} not found`);
     const user = userDoc.data();
     // Ensure Root policyholder
-    let policyholderPackageId = user.rootPolicyholderId;
+    // Written back onto the user document by the insurance callable; see there.
+    let policyholderPackageId = user
+        .rootPolicyholderId;
     if (!policyholderPackageId) {
         // The identity on an insurance record is the driver's or we do not create
         // it. The old fallback was first_name "Driver", last_name "Unknown" at
@@ -163,16 +132,16 @@ async function acceptInsuranceQuoteInternal(userId, quoteId, stripeSubscriptionI
         basePremiumCents: rootPolicy.monthly_premium,
         currentPremiumCents: rootPolicy.monthly_premium,
         discountPercentage: 0,
-        effectiveDate: admin.firestore.Timestamp.fromDate(new Date(rootPolicy.start_date)),
-        expirationDate: admin.firestore.Timestamp.fromDate(new Date(rootPolicy.end_date)),
+        effectiveDate: firestore_1.Timestamp.fromDate(new Date(rootPolicy.start_date)),
+        expirationDate: firestore_1.Timestamp.fromDate(new Date(rootPolicy.end_date)),
         renewalDate: null,
         vehicle: null,
         billingCycle: 'monthly',
         stripeSubscriptionId: stripeSubscriptionId || null,
         rootPolicyId: rootPolicy.policy_id,
         rootApplicationId: application.application_id,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: firestore_1.FieldValue.serverTimestamp(),
+        updatedAt: firestore_1.FieldValue.serverTimestamp(),
         createdBy: userId,
         updatedBy: 'cloud-function',
     });
@@ -186,7 +155,7 @@ async function acceptInsuranceQuoteInternal(userId, quoteId, stripeSubscriptionI
             status,
             startDate: rootPolicy.start_date,
         },
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: firestore_1.FieldValue.serverTimestamp(),
         updatedBy: 'cloud-function',
     });
     return { policyId: rootPolicy.policy_id, policyNumber, status };

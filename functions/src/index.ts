@@ -29,13 +29,13 @@
  *   - health: GET /health for uptime monitoring (200/503)
  */
 
-import * as admin from 'firebase-admin';
-
+import { initializeApp } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 // Initialize Firebase Admin
-admin.initializeApp();
+initializeApp();
 
 // Export Firestore instance for other modules
-export const db = admin.firestore();
+export const db = getFirestore();
 
 // ============================================================================
 // FIRESTORE TRIGGERS

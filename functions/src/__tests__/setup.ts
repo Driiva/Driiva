@@ -75,38 +75,49 @@ const mockDb = {
   getAll: mockGetAll,
 };
 
-vi.mock('firebase-admin', () => ({
-  default: {
-    initializeApp: vi.fn(),
-    firestore: vi.fn(() => mockDb),
-    auth: vi.fn(() => ({
-      getUser: vi.fn(),
-      deleteUser: vi.fn(),
-      revokeRefreshTokens: vi.fn(),
-    })),
-    apps: [{}],
-  },
-  initializeApp: vi.fn(),
-  firestore: Object.assign(vi.fn(() => mockDb), {
-    Timestamp: {
-      now: () => mockTimestamp,
-      fromDate: (d: Date) => ({
-        ...mockTimestamp,
-        seconds: Math.floor(d.getTime() / 1000),
-        toDate: () => d,
-      }),
-      fromMillis: (ms: number) => ({
-        ...mockTimestamp,
-        seconds: Math.floor(ms / 1000),
-        toDate: () => new Date(ms),
-      }),
-    },
-    FieldValue: mockFieldValue,
+const mockTimestampNs = {
+  now: () => mockTimestamp,
+  fromDate: (d: Date) => ({
+    ...mockTimestamp,
+    seconds: Math.floor(d.getTime() / 1000),
+    toDate: () => d,
   }),
-  auth: vi.fn(() => ({
+  fromMillis: (ms: number) => ({
+    ...mockTimestamp,
+    seconds: Math.floor(ms / 1000),
+    toDate: () => new Date(ms),
+  }),
+};
+
+// firebase-admin v14 removed the namespaced API (admin.firestore(), admin.auth(),
+// admin.apps). Production code imports the modular entry points, so the mocks
+// follow it entry point by entry point.
+vi.mock('firebase-admin/app', () => ({
+  initializeApp: vi.fn(),
+  getApps: vi.fn(() => [{}]),
+}));
+
+vi.mock('firebase-admin/firestore', () => ({
+  getFirestore: vi.fn(() => mockDb),
+  Timestamp: mockTimestampNs,
+  FieldValue: mockFieldValue,
+}));
+
+vi.mock('firebase-admin/auth', () => ({
+  getAuth: vi.fn(() => ({
     getUser: vi.fn(),
     deleteUser: vi.fn(),
     revokeRefreshTokens: vi.fn(),
+  })),
+}));
+
+vi.mock('firebase-admin/messaging', () => ({
+  getMessaging: vi.fn(() => ({
+    sendEachForMulticast: vi.fn().mockResolvedValue({
+      successCount: 0,
+      failureCount: 0,
+      responses: [],
+    }),
   })),
 }));
 

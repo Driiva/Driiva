@@ -61,12 +61,12 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.onPendingPaymentWrite = void 0;
 const functions = __importStar(require("firebase-functions"));
-const admin = __importStar(require("firebase-admin"));
+const firestore_1 = require("firebase-admin/firestore");
 const types_1 = require("../types");
 const notifications_1 = require("../utils/notifications");
 const region_1 = require("../lib/region");
 const sentry_1 = require("../lib/sentry");
-const db = admin.firestore();
+const db = (0, firestore_1.getFirestore)();
 /**
  * Trigger: fires when a pendingPayment document is created/updated.
  * Path: users/{userId}/pendingPayments/{subscriptionId}
@@ -102,14 +102,14 @@ exports.onPendingPaymentWrite = functions
             const existingPolicy = policiesSnap.docs[0];
             await existingPolicy.ref.update({
                 stripeSubscriptionId: subscriptionId,
-                updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firestore_1.FieldValue.serverTimestamp(),
                 updatedBy: 'cloud-function',
             });
             await snap.ref.update({
                 status: 'completed',
                 policyId: existingPolicy.id,
                 policyStatus: 'active',
-                processedAt: admin.firestore.FieldValue.serverTimestamp(),
+                processedAt: firestore_1.FieldValue.serverTimestamp(),
             });
             return;
         }
@@ -154,7 +154,7 @@ exports.onPendingPaymentWrite = functions
             status: 'completed',
             policyId: result.policyId,
             policyStatus: result.status,
-            processedAt: admin.firestore.FieldValue.serverTimestamp(),
+            processedAt: firestore_1.FieldValue.serverTimestamp(),
         });
     }
     catch (err) {
@@ -166,8 +166,8 @@ exports.onPendingPaymentWrite = functions
         await snap.ref.update({
             status: 'failed',
             policyStatus: 'none',
-            error: err.message || 'Unknown error',
-            processedAt: admin.firestore.FieldValue.serverTimestamp(),
+            error: err instanceof Error && err.message ? err.message : 'Unknown error',
+            processedAt: firestore_1.FieldValue.serverTimestamp(),
         });
         try {
             await (0, notifications_1.notifyPolicyNotConfirmed)(userId, 'failed');

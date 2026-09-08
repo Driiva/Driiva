@@ -29,6 +29,7 @@ import type {
 import { db } from './db';
 import { users, webauthnCredentials, webauthnChallenges, type User, type WebauthnCredential } from '@shared/schema';
 import { eq, and, lt } from 'drizzle-orm';
+import { getAuth } from 'firebase-admin/auth';
 import { getFirebaseAdmin } from './lib/firebase-admin';
 
 // ---------------------------------------------------------------------------
@@ -278,7 +279,7 @@ export class SimpleWebAuthnService implements WebAuthnService {
           const adminApp = getFirebaseAdmin();
           if (adminApp) {
             try {
-              customToken = await adminApp.auth().createCustomToken(user.firebaseUid);
+              customToken = await getAuth(adminApp).createCustomToken(user.firebaseUid);
             } catch (err) {
               console.error('[WebAuthn] createCustomToken failed — user will lack Firebase session:', err);
             }

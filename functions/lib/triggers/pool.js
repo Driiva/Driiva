@@ -40,11 +40,11 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.onPoolShareWrite = void 0;
 const functions = __importStar(require("firebase-functions"));
-const admin = __importStar(require("firebase-admin"));
+const firestore_1 = require("firebase-admin/firestore");
 const types_1 = require("../types");
 const region_1 = require("../lib/region");
 const sentry_1 = require("../lib/sentry");
-const db = admin.firestore();
+const db = (0, firestore_1.getFirestore)();
 /**
  * Triggered when a pool share is created or updated
  * Syncs pool share summary to user document
@@ -83,11 +83,11 @@ exports.onPoolShareWrite = functions
             currentShareCents: share.projectedRefundCents,
             contributionCents: share.contributionCents,
             sharePercentage: Math.round(share.sharePercentage * 100) / 100, // 2 decimal places
-            lastUpdatedAt: share.updatedAt ?? admin.firestore.Timestamp.now(),
+            lastUpdatedAt: share.updatedAt ?? firestore_1.Timestamp.now(),
         };
         await userRef.update({
             poolShare: poolShareSummary,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firestore_1.FieldValue.serverTimestamp(),
             updatedBy: 'cloud-function',
         });
         functions.logger.info(`Synced pool share to user ${share.userId}`, {

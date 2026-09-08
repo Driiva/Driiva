@@ -10,12 +10,12 @@
  */
 
 import * as functions from 'firebase-functions';
-import * as admin from 'firebase-admin';
+import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { PolicyDocument, ActivePolicySummary, COLLECTION_NAMES } from '../types';
 import { EUROPE_LONDON } from '../lib/region';
 import { wrapTrigger } from '../lib/sentry';
 
-const db = admin.firestore();
+const db = getFirestore();
 
 export const onPolicyWrite = functions
   .region(EUROPE_LONDON)
@@ -36,7 +36,7 @@ export const onPolicyWrite = functions
         .doc(before.userId)
         .update({
           activePolicy: null,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
           updatedBy: 'system:onPolicyWrite',
         });
 
@@ -61,7 +61,7 @@ export const onPolicyWrite = functions
         .doc(policy.userId)
         .update({
           activePolicy: null,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
           updatedBy: 'system:onPolicyWrite',
         });
 
@@ -87,7 +87,7 @@ export const onPolicyWrite = functions
       .doc(policy.userId)
       .update({
         activePolicy,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
         updatedBy: 'system:onPolicyWrite',
       });
 

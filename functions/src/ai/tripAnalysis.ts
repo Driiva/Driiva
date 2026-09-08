@@ -27,7 +27,7 @@
  *   - Per-call cost tracked in Firestore for monitoring
  */
 
-import * as admin from 'firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 import * as functions from 'firebase-functions';
 import {
   COLLECTION_NAMES,
@@ -136,7 +136,7 @@ export async function analyzeTrip(
       .doc(tripId)
       .update({
         aiAnalysis,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
         updatedBy: 'ai-analysis',
       });
 
