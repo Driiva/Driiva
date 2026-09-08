@@ -101,7 +101,9 @@ async function getWeatherForTrip(lat, lng, timestamp) {
             functions.logger.warn('[weather] Open-Meteo returned non-OK status:', response.status);
             return null;
         }
-        const data = await response.json();
+        // @types/node 26.4 types response.json() as {} rather than any, so the
+        // shape this reads is declared here instead of being implicitly any.
+        const data = (await response.json());
         const weatherCodes = data?.hourly?.weather_code;
         if (!weatherCodes || weatherCodes.length === 0) {
             return null;
