@@ -50,7 +50,6 @@ const LOCKFILE = path.join(FUNCTIONS_ROOT, 'package-lock.json');
 /** jose became ESM-only ("type": "module", no CJS build) at v6. */
 const FIRST_ESM_ONLY_JOSE_MAJOR = 6;
 
-const depsInstalled = existsSync(path.join(FUNCTIONS_ROOT, 'node_modules', 'firebase-admin'));
 const libBuilt = existsSync(ENTRY);
 
 /**
@@ -98,8 +97,17 @@ describe('Cloud Functions entry point loads on the Node 20 runtime', () => {
     ).toEqual([]);
   });
 
-  it.skipIf(!depsInstalled || !libBuilt)('loads the built lib/index.js without require(esm)', () => {
+  it.skipIf(!libBuilt)('loads the built lib/index.js without require(esm)', (ctx) => {
     const failure = loadWithoutRequireEsm(ENTRY);
+
+    // Only jobs that install functions/ can run this. Elsewhere the tree is
+    // partial and the child process cannot resolve firebase-admin at all,
+    // which says nothing about the ESM chain. Skip visibly rather than pass
+    // quietly, and let the lockfile check above carry the signal there.
+    if (failure === 'MODULE_NOT_FOUND') {
+      ctx.skip();
+      return;
+    }
 
     expect(
       failure,
@@ -110,7 +118,7 @@ describe('Cloud Functions entry point loads on the Node 20 runtime', () => {
     ).toBeNull();
   }, 60_000);
 
-  it.skipIf(!depsInstalled)('is a real check: the probe still catches a genuine ESM-only module', () => {
+  it('is a real check: the probe still catches a genuine ESM-only module', () => {
     // Negative control. Without it, the assertion above would keep passing if
     // the probe silently stopped detecting anything. A .mjs file is always an
     // ES module, so require()ing it here must raise ERR_REQUIRE_ESM.
