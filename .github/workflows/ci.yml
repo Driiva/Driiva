@@ -256,7 +256,8 @@ jobs:
       - name: Start dev server (staging mode, backgrounded)
         run: |
           nohup env PORT=4310 npm run dev:staging > dev-server.log 2>&1 &
-          echo "Dev server starting in background"
+          echo $! > dev-server.pid
+          echo "Dev server starting in background (pid $(cat dev-server.pid))"
 
       - name: Wait for dev server
         run: |
@@ -276,12 +277,28 @@ jobs:
       - name: Run Playwright tests
         run: npx playwright test
 
+      # The dev server has died mid-suite before, which turns one real failure
+      # into twenty ERR_CONNECTION_REFUSED cascades and hides the cause. This
+      # step is the only place that reason is ever visible, so it always runs.
+      - name: Dev server liveness and log
+        if: always()
+        run: |
+          if kill -0 "$(cat dev-server.pid)" 2>/dev/null; then
+            echo "dev server: ALIVE at end of suite"
+          else
+            echo "dev server: DEAD before the suite finished"
+          fi
+          echo "----- dev-server.log -----"
+          cat dev-server.log || echo "(no dev-server.log)"
+
       - name: Upload Playwright report
         if: failure()
         uses: actions/upload-artifact@v7
         with:
           name: playwright-report
-          path: playwright-report/
+          path: |
+            playwright-report/
+            dev-server.log
           retention-days: 7
 
   deploy-staging:
