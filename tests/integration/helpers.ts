@@ -16,19 +16,23 @@
  * `import * as admin from 'firebase-admin'` - resolved from
  * functions/node_modules (v12.7.0), not the root's firebase-admin (v13.7.0,
  * see package.json). Those are two independent module registries with their
- * own `admin.apps` list, so initializing the root-resolved admin would leave
- * provisionUserOnSignup.ts's own `admin.firestore()` call throwing "no
+ * own `getApps()` list, so initializing the root-resolved admin would leave
+ * provisionUserOnSignup.ts's own `getFirestore()` call throwing "no
  * default app". vitest.integration.config.ts aliases the bare `firebase-admin`
  * specifier to the functions/ copy for every file in this suite, so this
  * helper's `admin` import and the one inside provisionUserOnSignup.ts resolve
  * to the exact same module and share one initialized app - PROVIDED this
  * module is imported (and so runs its top-level initializeApp side effect)
  * before provisionUserOnSignup.ts. identity.test.ts imports this module
- * first for that reason; `admin.firestore()` runs at provisionUserOnSignup.ts's
+ * first for that reason; `getFirestore()` runs at provisionUserOnSignup.ts's
  * own module top level, so a lazily-deferred init here (e.g. inside a
  * beforeAll) would run too late.
  */
-import * as admin from 'firebase-admin';
+import { App, getApp, getApps, initializeApp } from 'firebase-admin/app';
+// Aliased: this module also pulls the CLIENT SDK's getFirestore/getAuth below,
+// and firebase-admin 14's modular subpaths export the same names.
+import { getFirestore as getAdminFirestore } from 'firebase-admin/firestore';
+import { getAuth as getAdminAuth } from 'firebase-admin/auth';
 import { initializeApp as initializeClientApp } from 'firebase/app';
 import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
@@ -75,13 +79,13 @@ const PROJECT_ID = process.env.GCLOUD_PROJECT || 'driiva';
 
 // Eager, module-load-time init (not a lazy getter) - see the module-instance
 // note above for why this must run before provisionUserOnSignup.ts's own
-// `admin.firestore()` call.
-export const adminApp: admin.app.App = admin.apps.length
-  ? (admin.app() as admin.app.App)
-  : admin.initializeApp({ projectId: PROJECT_ID });
+// `getFirestore()` call.
+export const adminApp: App = getApps().length
+  ? (getApp() as App)
+  : initializeApp({ projectId: PROJECT_ID });
 
-export const adminDb = adminApp.firestore();
-export const adminAuth = adminApp.auth();
+export const adminDb = getAdminFirestore(adminApp);
+export const adminAuth = getAdminAuth(adminApp);
 
 /**
  * Client SDK app + Auth/Firestore instances, connected to the same

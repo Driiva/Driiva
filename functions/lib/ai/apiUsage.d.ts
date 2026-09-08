@@ -1,0 +1,2 @@
+export declare function trackAPIUsage(tripId: string, userId: string, promptTokens: number, completionTokens: number, latencyMs: number, success: boolean, error: string | null): Promise<void>;
+//# sourceMappingURL=apiUsage.d.ts.map

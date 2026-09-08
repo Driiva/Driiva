@@ -169,8 +169,9 @@ export async function handleStripePaymentSucceeded(
     }
 
     // firebase-admin 14 dropped the `firestore` namespace re-export this line
-    // used to destructure; the modular subpath exposes the same FieldValue.
-    const { FieldValue } = await import('firebase-admin/firestore');
+    // used to destructure; the modular subpath exposes the same FieldValue,
+    // and getFirestore(app) replaces the removed app.firestore() method.
+    const { FieldValue, getFirestore } = await import('firebase-admin/firestore');
     const doc: Record<string, unknown> = {
       stripeSubscriptionId,
       stripeCustomerId,
@@ -179,7 +180,7 @@ export async function handleStripePaymentSucceeded(
     };
     if (quoteId) doc.quoteId = quoteId;
 
-    await adminApp.firestore()
+    await getFirestore(adminApp)
       .collection('users')
       .doc(user.firebaseUid)
       .collection('pendingPayments')
@@ -246,7 +247,8 @@ async function resolveCoverageTypeFromQuote(quoteId: string | undefined): Promis
     const adminLib = await import('../lib/firebase-admin');
     const adminApp = adminLib.getFirebaseAdmin();
     if (!adminApp) return 'standard';
-    const quoteSnap = await adminApp.firestore().collection('quotes').doc(quoteId).get();
+    const { getFirestore } = await import('firebase-admin/firestore');
+    const quoteSnap = await getFirestore(adminApp).collection('quotes').doc(quoteId).get();
     if (!quoteSnap.exists) return 'standard';
     const data = quoteSnap.data() as { coverageType?: string } | undefined;
     return data?.coverageType ?? 'standard';

@@ -9,28 +9,37 @@
  *   which is already in .env. Works even when org policy blocks service account key creation.
  */
 
-import * as admin from "firebase-admin";
+import {
+  type App,
+  type ServiceAccount,
+  applicationDefault,
+  cert,
+  getApp,
+  getApps,
+  initializeApp,
+} from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
 
-let adminApp: admin.app.App | null = null;
+let adminApp: App | null = null;
 
-export function getFirebaseAdmin(): admin.app.App | null {
+export function getFirebaseAdmin(): App | null {
   if (adminApp) return adminApp;
   try {
     // Reuse an already-initialized default app (e.g. a shared test/emulator
-    // harness that called admin.initializeApp() first) instead of throwing
+    // harness that called initializeApp() first) instead of throwing
     // on a duplicate-app error.
-    if (admin.apps.length > 0) {
-      adminApp = admin.app();
+    if (getApps().length > 0) {
+      adminApp = getApp();
       return adminApp;
     }
     if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-      adminApp = admin.initializeApp({ credential: admin.credential.applicationDefault() });
+      adminApp = initializeApp({ credential: applicationDefault() });
       return adminApp;
     }
     const key = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
     if (key) {
-      const parsed = JSON.parse(key) as admin.ServiceAccount;
-      adminApp = admin.initializeApp({ credential: admin.credential.cert(parsed) });
+      const parsed = JSON.parse(key) as ServiceAccount;
+      adminApp = initializeApp({ credential: cert(parsed) });
       return adminApp;
     }
   } catch (e) {
@@ -74,7 +83,7 @@ export async function verifyFirebaseToken(idToken: string): Promise<{ uid: strin
       // Admin SDK checks the token's issued-at time against the user's
       // tokensValidAfterTime) so a revoked-but-unexpired token is rejected
       // immediately instead of staying valid until natural expiry.
-      const decoded = await firebase.auth().verifyIdToken(idToken, true);
+      const decoded = await getAuth(firebase).verifyIdToken(idToken, true);
       return { uid: decoded.uid, email: decoded.email };
     } catch {
       return null;

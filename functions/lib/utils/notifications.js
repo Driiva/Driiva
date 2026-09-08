@@ -44,10 +44,11 @@ exports.notifyAchievementsUnlocked = notifyAchievementsUnlocked;
 exports.notifyPolicyConfirmed = notifyPolicyConfirmed;
 exports.notifyPolicyNotConfirmed = notifyPolicyNotConfirmed;
 exports.sendWeeklySummaryToUser = sendWeeklySummaryToUser;
-const admin = __importStar(require("firebase-admin"));
+const firestore_1 = require("firebase-admin/firestore");
+const messaging_1 = require("firebase-admin/messaging");
 const functions = __importStar(require("firebase-functions"));
 const types_1 = require("../types");
-const db = admin.firestore();
+const db = (0, firestore_1.getFirestore)();
 async function getUserTokens(userId) {
     const userSnap = await db.collection(types_1.COLLECTION_NAMES.USERS).doc(userId).get();
     if (!userSnap.exists)
@@ -80,7 +81,7 @@ async function sendToTokens(userId, tokens, notification, data) {
             type: data?.type ?? 'general',
             data: data ?? {},
             read: false,
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            createdAt: firestore_1.FieldValue.serverTimestamp(),
         });
     }
     catch (err) {
@@ -98,7 +99,7 @@ async function sendToTokens(userId, tokens, notification, data) {
         },
     };
     try {
-        const response = await admin.messaging().sendEachForMulticast(message);
+        const response = await (0, messaging_1.getMessaging)().sendEachForMulticast(message);
         if (response.failureCount > 0) {
             functions.logger.warn(`[Push] ${response.failureCount}/${tokens.length} deliveries failed`);
         }

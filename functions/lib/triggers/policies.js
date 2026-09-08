@@ -45,11 +45,11 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.onPolicyWrite = void 0;
 const functions = __importStar(require("firebase-functions"));
-const admin = __importStar(require("firebase-admin"));
+const firestore_1 = require("firebase-admin/firestore");
 const types_1 = require("../types");
 const region_1 = require("../lib/region");
 const sentry_1 = require("../lib/sentry");
-const db = admin.firestore();
+const db = (0, firestore_1.getFirestore)();
 exports.onPolicyWrite = functions
     .region(region_1.EUROPE_LONDON)
     .firestore
@@ -67,7 +67,7 @@ exports.onPolicyWrite = functions
             .doc(before.userId)
             .update({
             activePolicy: null,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firestore_1.FieldValue.serverTimestamp(),
             updatedBy: 'system:onPolicyWrite',
         });
         return null;
@@ -85,7 +85,7 @@ exports.onPolicyWrite = functions
             .doc(policy.userId)
             .update({
             activePolicy: null,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firestore_1.FieldValue.serverTimestamp(),
             updatedBy: 'system:onPolicyWrite',
         });
         return null;
@@ -105,7 +105,7 @@ exports.onPolicyWrite = functions
         .doc(policy.userId)
         .update({
         activePolicy,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: firestore_1.FieldValue.serverTimestamp(),
         updatedBy: 'system:onPolicyWrite',
     });
     return null;

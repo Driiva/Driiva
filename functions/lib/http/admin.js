@@ -44,13 +44,13 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.addPoolContribution = exports.cancelTrip = exports.initializePool = void 0;
 const functions = __importStar(require("firebase-functions"));
-const admin = __importStar(require("firebase-admin"));
+const firestore_1 = require("firebase-admin/firestore");
 const types_1 = require("../types");
 const helpers_1 = require("../utils/helpers");
 const auth_1 = require("./auth");
 const region_1 = require("../lib/region");
 const sentry_1 = require("../lib/sentry");
-const db = admin.firestore();
+const db = (0, firestore_1.getFirestore)();
 /**
  * Initialize community pool (admin only)
  * Call this once to set up the pool document
@@ -60,7 +60,7 @@ exports.initializePool = functions
     .https.onCall((0, sentry_1.wrapFunction)(async (data, context) => {
     (0, auth_1.requireAuth)(context);
     (0, auth_1.requireAdmin)(context);
-    // TODO: Rate limiting - e.g. allow at most 1 initializePool per project per hour
+    // Not rate limited: ROADMAP.md TD-3. Suggested shape there: allow at most 1 initializePool per project per hour.
     // Example: check Firestore or Redis for last call timestamp by context.auth.uid
     const poolRef = db.collection(types_1.COLLECTION_NAMES.COMMUNITY_POOL).doc('current');
     const existingPool = await poolRef.get();
@@ -69,7 +69,7 @@ exports.initializePool = functions
     }
     const periodType = data?.periodType || 'monthly';
     const { start, end } = getPoolPeriodDates(periodType);
-    const now = admin.firestore.Timestamp.now();
+    const now = firestore_1.Timestamp.now();
     const poolData = {
         poolId: 'current',
         totalPoolCents: 0,
@@ -119,8 +119,8 @@ function getPoolPeriodDates(periodType) {
         endDate = new Date(year, (quarter + 1) * 3, 0, 23, 59, 59, 999);
     }
     return {
-        start: admin.firestore.Timestamp.fromDate(startDate),
-        end: admin.firestore.Timestamp.fromDate(endDate),
+        start: firestore_1.Timestamp.fromDate(startDate),
+        end: firestore_1.Timestamp.fromDate(endDate),
     };
 }
 // ============================================================================
@@ -137,7 +137,7 @@ exports.cancelTrip = functions
     .region(region_1.EUROPE_LONDON)
     .https.onCall((0, sentry_1.wrapFunction)(async (data, context) => {
     const userId = (0, auth_1.requireAuth)(context);
-    // TODO: Rate limiting - e.g. max N cancelTrip calls per user per minute
+    // Not rate limited: ROADMAP.md TD-3. Suggested shape there: max N cancelTrip calls per user per minute.
     // Example: increment counter in Firestore/Redis keyed by userId, reject if over threshold
     const tripId = data?.tripId;
     // Validate input
@@ -166,7 +166,7 @@ exports.cancelTrip = functions
         // Update trip status to failed
         await tripRef.update({
             status: 'failed',
-            processedAt: admin.firestore.FieldValue.serverTimestamp(),
+            processedAt: firestore_1.FieldValue.serverTimestamp(),
         });
         functions.logger.info('Trip cancelled successfully', {
             userId,
@@ -204,7 +204,7 @@ exports.addPoolContribution = functions
     .region(region_1.EUROPE_LONDON)
     .https.onCall((0, sentry_1.wrapFunction)(async (data, context) => {
     const userId = (0, auth_1.requireAuth)(context);
-    // TODO: Rate limiting - e.g. max N contributions per user per day, or per amount
+    // Not rate limited: ROADMAP.md TD-3. Suggested shape there: max N contributions per user per day, or per amount.
     // Example: check Firestore/Redis for count in current period for userId
     const amountCents = data?.amountCents;
     // Validate input
@@ -243,15 +243,15 @@ exports.addPoolContribution = functions
             const poolShare = poolShareDoc.exists ? poolShareDoc.data() : null;
             // Calculate new values
             const newTotalPool = pool.totalPoolCents + amountCents;
-            const now = admin.firestore.Timestamp.now();
+            const now = firestore_1.Timestamp.now();
             let newContributionCents;
             let newSharePercentage;
             // Update pool totals
             transaction.update(poolRef, {
                 totalPoolCents: newTotalPool,
-                totalContributionsCents: admin.firestore.FieldValue.increment(amountCents),
+                totalContributionsCents: firestore_1.FieldValue.increment(amountCents),
                 lastCalculatedAt: now,
-                version: admin.firestore.FieldValue.increment(1),
+                version: firestore_1.FieldValue.increment(1),
             });
             // Update or create pool share
             if (poolShare) {
@@ -259,7 +259,7 @@ exports.addPoolContribution = functions
                 newSharePercentage = (newContributionCents / newTotalPool) * 100;
                 transaction.update(poolShareRef, {
                     contributionCents: newContributionCents,
-                    contributionCount: admin.firestore.FieldValue.increment(1),
+                    contributionCount: firestore_1.FieldValue.increment(1),
                     sharePercentage: Math.round(newSharePercentage * 10000) / 10000,
                     updatedAt: now,
                 });
@@ -291,8 +291,8 @@ exports.addPoolContribution = functions
                 transaction.set(poolShareRef, newShareData);
                 // Update pool participant count
                 transaction.update(poolRef, {
-                    activeParticipants: admin.firestore.FieldValue.increment(1),
-                    totalParticipantsEver: admin.firestore.FieldValue.increment(1),
+                    activeParticipants: firestore_1.FieldValue.increment(1),
+                    totalParticipantsEver: firestore_1.FieldValue.increment(1),
                 });
             }
             // Update user's denormalized pool share

@@ -26,7 +26,7 @@
  */
 
 import * as functions from 'firebase-functions';
-import * as admin from 'firebase-admin';
+import { FieldValue, Timestamp, getFirestore } from 'firebase-admin/firestore';
 import { COLLECTION_NAMES, UserDocument, PolicyDocument, CoverageType } from '../types';
 import { EUROPE_LONDON } from '../lib/region';
 import { mapRootPolicyStatus } from './insuranceInternal';
@@ -70,7 +70,7 @@ function mapCoverageToRootModule(
 // POLICYHOLDER HELPER
 // ============================================================================
 
-const db = admin.firestore();
+const db = getFirestore();
 
 /**
  * The name and email that go onto an insurance record must be the driver's
@@ -150,7 +150,7 @@ async function ensurePolicyholder(
   // Cache on Firestore user document (non-critical - if this fails we'll just re-create on next call)
   await db.collection(COLLECTION_NAMES.USERS).doc(userId).update({
     rootPolicyholderId: policyholder.policyholder_id,
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
   }).catch(e => functions.logger.warn('[Insurance] Failed to cache rootPolicyholderId:', e));
 
   return policyholder.policyholder_id;
@@ -222,7 +222,7 @@ export const getInsuranceQuote = functions
     coverageType,
     premiumCents: resolveCurrency(rootQuote.suggested_premium),
     expiresAt: rootQuote.expiry_date,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
 
   functions.logger.info(`[Insurance] Quote generated`, {
@@ -299,8 +299,8 @@ export const acceptInsuranceQuote = functions
 
   // Store in Firestore
   const policyData: Omit<PolicyDocument, 'createdAt' | 'updatedAt'> & {
-    createdAt: admin.firestore.FieldValue;
-    updatedAt: admin.firestore.FieldValue;
+    createdAt: FieldValue;
+    updatedAt: FieldValue;
     rootPolicyId: string;
     rootApplicationId: string;
   } = {
@@ -319,14 +319,14 @@ export const acceptInsuranceQuote = functions
     basePremiumCents: rootPolicy.monthly_premium,
     currentPremiumCents: rootPolicy.monthly_premium,
     discountPercentage: 0,
-    effectiveDate: admin.firestore.Timestamp.fromDate(new Date(rootPolicy.start_date)),
-    expirationDate: admin.firestore.Timestamp.fromDate(new Date(rootPolicy.end_date)),
+    effectiveDate: Timestamp.fromDate(new Date(rootPolicy.start_date)),
+    expirationDate: Timestamp.fromDate(new Date(rootPolicy.end_date)),
     renewalDate: null,
     vehicle: null,
     billingCycle: 'monthly',
     stripeSubscriptionId: data.stripeSubscriptionId || null,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
     createdBy: userId,
     updatedBy: 'cloud-function',
     rootPolicyId: rootPolicy.policy_id,
@@ -343,7 +343,7 @@ export const acceptInsuranceQuote = functions
       status: mapRootPolicyStatus(rootPolicy.status),
       startDate: rootPolicy.start_date,
     },
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
     updatedBy: 'cloud-function',
   });
 
@@ -403,7 +403,7 @@ export const syncInsurancePolicy = functions
   await db.collection(COLLECTION_NAMES.POLICIES).doc(policyId).update({
     status: rootStatus,
     currentPremiumCents: rootPolicy.monthly_premium,
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
     updatedBy: 'cloud-function',
   });
 

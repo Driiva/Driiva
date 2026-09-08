@@ -9,7 +9,7 @@
  */
 
 import * as functions from 'firebase-functions';
-import * as admin from 'firebase-admin';
+import { FieldValue, Timestamp, getFirestore } from 'firebase-admin/firestore';
 import { 
   COLLECTION_NAMES, 
   CommunityPoolDocument,
@@ -20,7 +20,7 @@ import { requireAuth, requireAdmin } from './auth';
 import { EUROPE_LONDON } from '../lib/region';
 import { wrapFunction } from '../lib/sentry';
 
-const db = admin.firestore();
+const db = getFirestore();
 
 /**
  * Initialize community pool (admin only)
@@ -47,7 +47,7 @@ export const initializePool = functions
   
   const periodType = data?.periodType || 'monthly';
   const { start, end } = getPoolPeriodDates(periodType);
-  const now = admin.firestore.Timestamp.now();
+  const now = Timestamp.now();
   
   const poolData: CommunityPoolDocument = {
     poolId: 'current',
@@ -87,8 +87,8 @@ export const initializePool = functions
  * Get pool period date range
  */
 function getPoolPeriodDates(periodType: 'monthly' | 'quarterly'): {
-  start: admin.firestore.Timestamp;
-  end: admin.firestore.Timestamp;
+  start: Timestamp;
+  end: Timestamp;
 } {
   const now = new Date();
   const year = now.getFullYear();
@@ -107,8 +107,8 @@ function getPoolPeriodDates(periodType: 'monthly' | 'quarterly'): {
   }
   
   return {
-    start: admin.firestore.Timestamp.fromDate(startDate),
-    end: admin.firestore.Timestamp.fromDate(endDate),
+    start: Timestamp.fromDate(startDate),
+    end: Timestamp.fromDate(endDate),
   };
 }
 
@@ -178,7 +178,7 @@ export const cancelTrip = functions
     // Update trip status to failed
     await tripRef.update({
       status: 'failed',
-      processedAt: admin.firestore.FieldValue.serverTimestamp(),
+      processedAt: FieldValue.serverTimestamp(),
     });
     
     functions.logger.info('Trip cancelled successfully', {
@@ -287,7 +287,7 @@ export const addPoolContribution = functions
       
       // Calculate new values
       const newTotalPool = pool.totalPoolCents + amountCents;
-      const now = admin.firestore.Timestamp.now();
+      const now = Timestamp.now();
       
       let newContributionCents: number;
       let newSharePercentage: number;
@@ -295,9 +295,9 @@ export const addPoolContribution = functions
       // Update pool totals
       transaction.update(poolRef, {
         totalPoolCents: newTotalPool,
-        totalContributionsCents: admin.firestore.FieldValue.increment(amountCents),
+        totalContributionsCents: FieldValue.increment(amountCents),
         lastCalculatedAt: now,
-        version: admin.firestore.FieldValue.increment(1),
+        version: FieldValue.increment(1),
       });
       
       // Update or create pool share
@@ -307,7 +307,7 @@ export const addPoolContribution = functions
         
         transaction.update(poolShareRef, {
           contributionCents: newContributionCents,
-          contributionCount: admin.firestore.FieldValue.increment(1),
+          contributionCount: FieldValue.increment(1),
           sharePercentage: Math.round(newSharePercentage * 10000) / 10000,
           updatedAt: now,
         });
@@ -341,8 +341,8 @@ export const addPoolContribution = functions
         
         // Update pool participant count
         transaction.update(poolRef, {
-          activeParticipants: admin.firestore.FieldValue.increment(1),
-          totalParticipantsEver: admin.firestore.FieldValue.increment(1),
+          activeParticipants: FieldValue.increment(1),
+          totalParticipantsEver: FieldValue.increment(1),
         });
       }
       

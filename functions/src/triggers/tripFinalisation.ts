@@ -4,7 +4,7 @@
  * functions/src/triggers/trips.ts.
  */
 import * as functions from 'firebase-functions';
-import * as admin from 'firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 import * as Sentry from '@sentry/node';
 import {
   COLLECTION_NAMES,
@@ -50,7 +50,7 @@ export async function finalizeTripFromPoints(
       functions.logger.warn(`Trip ${tripId} has insufficient points (${points.length}), marking as failed`);
       await db.collection(COLLECTION_NAMES.TRIPS).doc(tripId).update({
         status: 'failed',
-        processedAt: admin.firestore.FieldValue.serverTimestamp(),
+        processedAt: FieldValue.serverTimestamp(),
       });
       return;
     }
@@ -121,7 +121,7 @@ export async function finalizeTripFromPoints(
       
       // Status
       status: finalStatus,
-      processedAt: finalStatus === 'completed' ? admin.firestore.FieldValue.serverTimestamp() : null,
+      processedAt: finalStatus === 'completed' ? FieldValue.serverTimestamp() : null,
     });
     
     functions.logger.info(`Trip ${tripId} finalized with status: ${finalStatus}`, {
@@ -157,7 +157,7 @@ export async function finalizeTripFromPoints(
     // Mark trip as failed
     await db.collection(COLLECTION_NAMES.TRIPS).doc(tripId).update({
       status: 'failed',
-      processedAt: admin.firestore.FieldValue.serverTimestamp(),
+      processedAt: FieldValue.serverTimestamp(),
     });
     
     throw error;

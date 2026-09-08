@@ -19,7 +19,7 @@
  *
  * All monetary values use integer cents (Root sandbox uses ZAR cents against a
  * UK GBP product - no conversion exists yet, see resolveCurrency() in
- * rootAdapter.ts for the pinned TODO, do not guess a rate).
+ * rootAdapter.ts for the pinned decision, do not guess a rate).
  *
  * M4 Task 4: the Root HTTP transport (quote/bind/sync/cancel) now lives behind
  * the typed RootAdapter interface in ./rootAdapter - see that file for the
@@ -61,7 +61,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.syncInsurancePolicy = exports.acceptInsuranceQuote = exports.getInsuranceQuote = void 0;
 const functions = __importStar(require("firebase-functions"));
-const admin = __importStar(require("firebase-admin"));
+const firestore_1 = require("firebase-admin/firestore");
 const types_1 = require("../types");
 const region_1 = require("../lib/region");
 const insuranceInternal_1 = require("./insuranceInternal");
@@ -87,7 +87,7 @@ function mapCoverageToRootModule(coverageType, drivingScore, totalTrips, totalMi
 // ============================================================================
 // POLICYHOLDER HELPER
 // ============================================================================
-const db = admin.firestore();
+const db = (0, firestore_1.getFirestore)();
 /**
  * The name and email that go onto an insurance record must be the driver's
  * own, or we do not create the record.
@@ -130,9 +130,12 @@ function requirePolicyholderIdentity(userId, user) {
  * creating duplicates on subsequent calls.
  */
 async function ensurePolicyholder(userId, user) {
-    // Return cached ID if we already created one
-    if (user.rootPolicyholderId) {
-        return user.rootPolicyholderId;
+    // Return cached ID if we already created one. rootPolicyholderId is written
+    // back onto the user document by this function, so it is not part of the
+    // canonical UserDocument; named here rather than reached through `any`.
+    const cached = user.rootPolicyholderId;
+    if (cached) {
+        return cached;
     }
     const { firstName, lastName, email } = requirePolicyholderIdentity(userId, user);
     // `email` here is the value requirePolicyholderIdentity() already validated
@@ -149,7 +152,7 @@ async function ensurePolicyholder(userId, user) {
     // Cache on Firestore user document (non-critical - if this fails we'll just re-create on next call)
     await db.collection(types_1.COLLECTION_NAMES.USERS).doc(userId).update({
         rootPolicyholderId: policyholder.policyholder_id,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: firestore_1.FieldValue.serverTimestamp(),
     }).catch(e => functions.logger.warn('[Insurance] Failed to cache rootPolicyholderId:', e));
     return policyholder.policyholder_id;
 }
@@ -201,7 +204,7 @@ exports.getInsuranceQuote = functions
         coverageType,
         premiumCents: (0, rootAdapter_1.resolveCurrency)(rootQuote.suggested_premium),
         expiresAt: rootQuote.expiry_date,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: firestore_1.FieldValue.serverTimestamp(),
     });
     functions.logger.info(`[Insurance] Quote generated`, {
         quoteId: rootQuote.quote_package_id,
@@ -275,14 +278,14 @@ exports.acceptInsuranceQuote = functions
         basePremiumCents: rootPolicy.monthly_premium,
         currentPremiumCents: rootPolicy.monthly_premium,
         discountPercentage: 0,
-        effectiveDate: admin.firestore.Timestamp.fromDate(new Date(rootPolicy.start_date)),
-        expirationDate: admin.firestore.Timestamp.fromDate(new Date(rootPolicy.end_date)),
+        effectiveDate: firestore_1.Timestamp.fromDate(new Date(rootPolicy.start_date)),
+        expirationDate: firestore_1.Timestamp.fromDate(new Date(rootPolicy.end_date)),
         renewalDate: null,
         vehicle: null,
         billingCycle: 'monthly',
         stripeSubscriptionId: data.stripeSubscriptionId || null,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: firestore_1.FieldValue.serverTimestamp(),
+        updatedAt: firestore_1.FieldValue.serverTimestamp(),
         createdBy: userId,
         updatedBy: 'cloud-function',
         rootPolicyId: rootPolicy.policy_id,
@@ -297,7 +300,7 @@ exports.acceptInsuranceQuote = functions
             status: (0, insuranceInternal_1.mapRootPolicyStatus)(rootPolicy.status),
             startDate: rootPolicy.start_date,
         },
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: firestore_1.FieldValue.serverTimestamp(),
         updatedBy: 'cloud-function',
     });
     functions.logger.info(`[Insurance] Policy created`, {
@@ -348,7 +351,7 @@ exports.syncInsurancePolicy = functions
     await db.collection(types_1.COLLECTION_NAMES.POLICIES).doc(policyId).update({
         status: rootStatus,
         currentPremiumCents: rootPolicy.monthly_premium,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: firestore_1.FieldValue.serverTimestamp(),
         updatedBy: 'cloud-function',
     });
     functions.logger.info(`[Insurance] Policy ${policyId} synced`, { status: rootStatus });

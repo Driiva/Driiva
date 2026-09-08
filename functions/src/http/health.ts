@@ -6,11 +6,11 @@
  */
 
 import * as functions from 'firebase-functions';
-import * as admin from 'firebase-admin';
+import { getFirestore } from 'firebase-admin/firestore';
 import { COLLECTION_NAMES } from '../types';
 import { EUROPE_LONDON } from '../lib/region';
 
-const db = admin.firestore();
+const db = getFirestore();
 
 const FIRESTORE_CHECK_TIMEOUT_MS = 5000;
 

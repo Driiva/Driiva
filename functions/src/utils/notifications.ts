@@ -5,11 +5,12 @@
  * Each function fetches the user's FCM tokens from their Firestore document.
  */
 
-import * as admin from 'firebase-admin';
+import { FieldValue, getFirestore } from 'firebase-admin/firestore';
+import { MulticastMessage, getMessaging } from 'firebase-admin/messaging';
 import * as functions from 'firebase-functions';
 import { COLLECTION_NAMES, UserDocument } from '../types';
 
-const db = admin.firestore();
+const db = getFirestore();
 
 async function getUserTokens(userId: string): Promise<string[]> {
   const userSnap = await db.collection(COLLECTION_NAMES.USERS).doc(userId).get();
@@ -48,7 +49,7 @@ async function sendToTokens(
         type: data?.type ?? 'general',
         data: data ?? {},
         read: false,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
       });
   } catch (err) {
     // A failed record must not stop the push going out.
@@ -57,7 +58,7 @@ async function sendToTokens(
 
   if (tokens.length === 0) return;
 
-  const message: admin.messaging.MulticastMessage = {
+  const message: MulticastMessage = {
     tokens,
     notification,
     data,
@@ -67,7 +68,7 @@ async function sendToTokens(
   };
 
   try {
-    const response = await admin.messaging().sendEachForMulticast(message);
+    const response = await getMessaging().sendEachForMulticast(message);
     if (response.failureCount > 0) {
       functions.logger.warn(
         `[Push] ${response.failureCount}/${tokens.length} deliveries failed`,

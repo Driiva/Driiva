@@ -17,14 +17,14 @@
  */
 
 import * as functions from 'firebase-functions';
-import * as admin from 'firebase-admin';
+import { Timestamp, getFirestore } from 'firebase-admin/firestore';
 import { COLLECTION_NAMES } from '../types';
 import { EUROPE_LONDON } from '../lib/region';
 import { createDamoovUser } from '../lib/damoov';
 import { wrapTrigger } from '../lib/sentry';
 import { buildProvisionedUserDoc } from '../utils/provisionUser';
 
-const db = admin.firestore();
+const db = getFirestore();
 
 // Comma-separated list of emails that are automatically granted admin access.
 // Mirrors functions/src/triggers/users.ts's ADMIN_EMAILS - duplicated here
@@ -87,7 +87,7 @@ export async function provisionUser(user: functions.auth.UserRecord): Promise<vo
       functions.logger.info(`Auto-promoting ${uid} (${email}) to admin - reason: ADMIN_EMAILS allowlist`);
     }
 
-    const now = admin.firestore.Timestamp.now();
+    const now = Timestamp.now();
 
     const userDoc = buildProvisionedUserDoc({
       uid,

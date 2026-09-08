@@ -44,11 +44,11 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.monitorTripHealth = void 0;
 const functions = __importStar(require("firebase-functions"));
-const admin = __importStar(require("firebase-admin"));
+const firestore_1 = require("firebase-admin/firestore");
 const types_1 = require("../types");
 const region_1 = require("../lib/region");
 const sentry_1 = require("../lib/sentry");
-const db = admin.firestore();
+const db = (0, firestore_1.getFirestore)();
 const FAILED_TRIP_THRESHOLD = 5;
 const STALE_HOURS = 24;
 exports.monitorTripHealth = functions
@@ -64,7 +64,7 @@ exports.monitorTripHealth = functions
     const failedTripsSnap = await db
         .collection(types_1.COLLECTION_NAMES.TRIPS)
         .where('status', '==', 'failed')
-        .where('processedAt', '>=', admin.firestore.Timestamp.fromDate(oneHourAgo))
+        .where('processedAt', '>=', firestore_1.Timestamp.fromDate(oneHourAgo))
         .get();
     const failedCount = failedTripsSnap.size;
     if (failedCount >= FAILED_TRIP_THRESHOLD) {
@@ -80,7 +80,7 @@ exports.monitorTripHealth = functions
     // 2. Check for GPS upload drop-off (no new trips across all users for STALE_HOURS)
     const recentTripsSnap = await db
         .collection(types_1.COLLECTION_NAMES.TRIPS)
-        .where('startedAt', '>=', admin.firestore.Timestamp.fromDate(staleThreshold))
+        .where('startedAt', '>=', firestore_1.Timestamp.fromDate(staleThreshold))
         .limit(1)
         .get();
     if (recentTripsSnap.empty) {
@@ -96,7 +96,7 @@ exports.monitorTripHealth = functions
     const stuckTripsSnap = await db
         .collection(types_1.COLLECTION_NAMES.TRIPS)
         .where('status', '==', 'processing')
-        .where('startedAt', '<=', admin.firestore.Timestamp.fromDate(oneHourAgo))
+        .where('startedAt', '<=', firestore_1.Timestamp.fromDate(oneHourAgo))
         .limit(10)
         .get();
     if (!stuckTripsSnap.empty) {

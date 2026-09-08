@@ -17,7 +17,7 @@ interface FirestoreStub {
 
 /** The slice of the Admin app the integration glue calls. */
 export interface AdminAppStub {
-  firestore: () => FirestoreStub;
+  [TEST_DB]: FirestoreStub;
 }
 
 
@@ -76,6 +76,10 @@ const storageMock = vi.hoisted(() => ({
 
 vi.mock("../../storage", () => ({ storage: storageMock }));
 
+// The key an app stub carries its Firestore under, so the mocked
+// getFirestore(app) can resolve it the way the real SDK does.
+const { TEST_DB } = vi.hoisted(() => ({ TEST_DB: Symbol.for("driiva.test.adminDb") }));
+
 const { getFirebaseAdminMock } = vi.hoisted(() => ({
   getFirebaseAdminMock: vi.fn<() => AdminAppStub | null>(() => null),
 }));
@@ -84,8 +88,13 @@ vi.mock("../../lib/firebase-admin", () => ({
   getFirebaseAdmin: getFirebaseAdminMock,
 }));
 
-vi.mock("firebase-admin", () => ({
-  firestore: { FieldValue: { serverTimestamp: () => "SERVER_TIMESTAMP" } },
+// firebase-admin 14 removed the `admin.firestore` namespace. The webhook
+// handler now imports FieldValue and getFirestore from the modular subpath,
+// so the double mirrors the real contract: getFirestore(app) maps an app to
+// its Firestore, rather than the app carrying a .firestore() method.
+vi.mock("firebase-admin/firestore", () => ({
+  FieldValue: { serverTimestamp: () => "SERVER_TIMESTAMP" },
+  getFirestore: vi.fn((app: AdminAppStub) => app[TEST_DB]),
 }));
 
 vi.mock("../../lib/aiInsights", () => ({
@@ -167,7 +176,7 @@ export function makeAdminApp(opts: { quoteExists?: boolean; quoteData?: Record<s
     collection: vi.fn((name: string) => (name === "quotes" ? quotesChain : usersChain)),
   };
 
-  const adminApp: AdminAppStub = { firestore: () => firestoreRoot as unknown as FirestoreStub };
+  const adminApp: AdminAppStub = { [TEST_DB]: firestoreRoot as unknown as FirestoreStub };
   return { app: adminApp, getQuoteMock, setPendingPaymentMock };
 }
 

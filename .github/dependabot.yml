@@ -7,6 +7,15 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 5
+    ignore:
+      # typescript-eslint refuses to load against TS 7 (typescript-eslint#10940).
+      # A major TS bump therefore kills `npm run lint` outright, and because the
+      # Lint & Type Check job runs lint BEFORE tsc, the type check silently stops
+      # running too. This has landed twice via the dev-deps group and been
+      # reverted twice (#69, and again here). Lift this only when
+      # typescript-eslint ships TS 7 support.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
     groups:
       dev-deps:
         dependency-type: development
@@ -22,6 +31,15 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 3
+    ignore:
+      # typescript-eslint refuses to load against TS 7 (typescript-eslint#10940).
+      # A major TS bump therefore kills `npm run lint` outright, and because the
+      # Lint & Type Check job runs lint BEFORE tsc, the type check silently stops
+      # running too. This has landed twice via the dev-deps group and been
+      # reverted twice (#69, and again here). Lift this only when
+      # typescript-eslint ships TS 7 support.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
 
   # GitHub Actions
   - package-ecosystem: github-actions

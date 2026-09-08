@@ -41,14 +41,12 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.onUserUpdateRecalcBetaEstimate = exports.calculateBetaEstimateForUser = void 0;
 const functions = __importStar(require("firebase-functions"));
-const admin = __importStar(require("firebase-admin"));
+const firestore_1 = require("firebase-admin/firestore");
 const index_1 = require("../index");
 const types_1 = require("../types");
 const betaEstimateService_1 = require("../lib/betaEstimateService");
 const region_1 = require("../lib/region");
 const sentry_1 = require("../lib/sentry");
-const Timestamp = admin.firestore.Timestamp;
-const FieldValue = admin.firestore.FieldValue;
 const BETA_PRICING_SUBCOLLECTION = 'betaPricing';
 const BETA_ESTIMATE_DOC_ID = 'currentEstimate';
 const POOL_DOC_ID = 'current';
@@ -102,7 +100,7 @@ exports.calculateBetaEstimateForUser = functions
             message: 'Missing age or postcode. Add them in your profile to see a beta estimate.',
         };
     }
-    const now = Timestamp.now();
+    const now = firestore_1.Timestamp.now();
     const estimateData = {
         ...result,
         personalScore,
@@ -166,7 +164,7 @@ exports.onUserUpdateRecalcBetaEstimate = functions
         postcode: after.postcode ?? '',
         communityPoolSafety,
         version: betaEstimateService_1.BETA_ESTIMATE_VERSION,
-        updatedAt: FieldValue.serverTimestamp(),
+        updatedAt: firestore_1.FieldValue.serverTimestamp(),
     }, { merge: true });
     functions.logger.info('[BetaEstimate] Trigger updated estimate for user', {
         userId,

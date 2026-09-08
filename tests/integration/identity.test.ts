@@ -46,6 +46,7 @@
  * module's own top-level `admin.firestore()` call runs - see the
  * module-instance note in helpers.ts.
  */
+import { deleteApp } from 'firebase-admin/app';
 import { afterAll, describe, expect, it } from 'vitest';
 import { readFileSync } from 'fs';
 import path from 'path';
@@ -65,7 +66,7 @@ function uniqueEmail(label: string): string {
 
 describe('M1 identity integration (Auth + Firestore emulators)', () => {
   afterAll(async () => {
-    await adminApp.delete();
+    await deleteApp(adminApp);
   });
 
   it('provisions an email/password user into a UserDocumentSchema-valid, defaulted doc', async () => {

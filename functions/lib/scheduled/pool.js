@@ -40,12 +40,12 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.recalculatePoolShares = exports.finalizePoolPeriod = void 0;
 const functions = __importStar(require("firebase-functions"));
-const admin = __importStar(require("firebase-admin"));
+const firestore_1 = require("firebase-admin/firestore");
 const types_1 = require("../types");
 const helpers_1 = require("../utils/helpers");
 const region_1 = require("../lib/region");
 const sentry_1 = require("../lib/sentry");
-const db = admin.firestore();
+const db = (0, firestore_1.getFirestore)();
 /**
  * Finalize pool period on the 1st of each month
  * - Mark all shares as finalized
@@ -96,7 +96,7 @@ exports.finalizePoolPeriod = functions
         const refundPool = availablePool * pool.projectedRefundRate;
         // Batch update all shares
         const batch = db.batch();
-        const now = admin.firestore.Timestamp.now();
+        const now = firestore_1.Timestamp.now();
         for (const share of shares) {
             if (!share.eligibleForRefund) {
                 // Not eligible (filed claims)
@@ -168,7 +168,7 @@ exports.finalizePoolPeriod = functions
             periodEnd: end,
             claimsThisPeriod: 0,
             lastCalculatedAt: now,
-            version: admin.firestore.FieldValue.increment(1),
+            version: firestore_1.FieldValue.increment(1),
         });
         await batch.commit();
         functions.logger.info(`Pool period ${previousPeriod} finalized`, {
@@ -228,7 +228,7 @@ exports.recalculatePoolShares = functions
             : 100;
         // Batch update all shares
         const batch = db.batch();
-        const now = admin.firestore.Timestamp.now();
+        const now = firestore_1.Timestamp.now();
         for (const share of shares) {
             // Recalculate share percentage
             const sharePercentage = totalContributions > 0
@@ -249,7 +249,7 @@ exports.recalculatePoolShares = functions
             activeParticipants: shares.length,
             averagePoolScore: Math.round(avgScore * 100) / 100,
             lastCalculatedAt: now,
-            version: admin.firestore.FieldValue.increment(1),
+            version: firestore_1.FieldValue.increment(1),
         });
         await batch.commit();
         functions.logger.info(`Pool shares recalculated for period ${currentPeriod}`, {
@@ -282,8 +282,8 @@ function getPoolPeriodDates(periodType) {
         endDate = new Date(year, (quarter + 1) * 3, 0, 23, 59, 59, 999);
     }
     return {
-        start: admin.firestore.Timestamp.fromDate(startDate),
-        end: admin.firestore.Timestamp.fromDate(endDate),
+        start: firestore_1.Timestamp.fromDate(startDate),
+        end: firestore_1.Timestamp.fromDate(endDate),
     };
 }
 //# sourceMappingURL=pool.js.map

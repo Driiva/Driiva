@@ -22,8 +22,9 @@
  * IMPORT ORDER MATTERS: './helpers' before trips.ts, see that file's
  * module-instance note.
  */
+import { deleteApp } from 'firebase-admin/app';
 import { afterAll, describe, expect, it, vi } from 'vitest';
-import * as admin from 'firebase-admin';
+import { DocumentData, FieldValue, Timestamp } from 'firebase-admin/firestore';
 import { adminDb, adminApp } from './helpers';
 import { encodePoint, type SampledLocation } from '../../shared/trip-capture';
 
@@ -75,7 +76,7 @@ function drive(sampleCount: number, startMs: number): SampledLocation[] {
 
 /** The trip document mobile/lib/trips.ts startTrip commits, field for field. */
 function recordingTripDoc(tripId: string, userId: string, lat: number, lng: number) {
-  const now = admin.firestore.Timestamp.now();
+  const now = Timestamp.now();
   const location = { lat, lng, address: null, placeType: null };
   return {
     tripId,
@@ -117,7 +118,7 @@ function recordingTripDoc(tripId: string, userId: string, lat: number, lng: numb
 }
 
 function seedUserDoc(uid: string) {
-  const now = admin.firestore.Timestamp.now();
+  const now = Timestamp.now();
   return {
     uid,
     email: `${uid}@driiva.co.uk`,
@@ -185,7 +186,7 @@ async function captureTrip(
     samplingRateHz: 1,
     totalPoints: 0,
     compressedSize: 0,
-    createdAt: admin.firestore.Timestamp.now(),
+    createdAt: Timestamp.now(),
   });
   await start.commit();
 
@@ -204,7 +205,7 @@ async function captureTrip(
         startOffset: slice[0].t,
         endOffset: slice[slice.length - 1].t,
         points: slice,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
       });
     batchIndex++;
   }
@@ -220,7 +221,7 @@ async function submitForScoring(
   pointsCount: number,
 ): Promise<void> {
   await adminDb.collection('trips').doc(tripId).update({
-    endedAt: admin.firestore.Timestamp.now(),
+    endedAt: Timestamp.now(),
     endLocation: { lat: end.lat, lng: end.lng, address: null, placeType: null },
     distanceMeters: Math.round(distanceMeters),
     status: 'processing',
@@ -229,8 +230,8 @@ async function submitForScoring(
 }
 
 async function runOnUpdate(
-  beforeData: admin.firestore.DocumentData,
-  afterData: admin.firestore.DocumentData,
+  beforeData: DocumentData,
+  afterData: DocumentData,
   tripId: string,
 ): Promise<void> {
   await (onTripStatusChange as unknown as {
@@ -241,14 +242,14 @@ async function runOnUpdate(
   );
 }
 
-async function getTrip(tripId: string): Promise<admin.firestore.DocumentData> {
+async function getTrip(tripId: string): Promise<DocumentData> {
   const snap = await adminDb.collection('trips').doc(tripId).get();
-  return snap.data() as admin.firestore.DocumentData;
+  return snap.data() as DocumentData;
 }
 
 describe('Wave C: on-device capture through to a scored trip', () => {
   afterAll(async () => {
-    await adminApp.delete();
+    await deleteApp(adminApp);
   });
 
   it('scores a trip whose points exist only in the batches subcollection', async () => {

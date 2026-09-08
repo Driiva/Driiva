@@ -51,12 +51,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.batchClassifyTrips = exports.classifyTrip = void 0;
 exports.classifyCompletedTrip = classifyCompletedTrip;
 const functions = __importStar(require("firebase-functions"));
-const admin = __importStar(require("firebase-admin"));
+const firestore_1 = require("firebase-admin/firestore");
 const node_fetch_1 = __importDefault(require("node-fetch"));
 const auth_1 = require("./auth");
 const types_1 = require("../types");
 const region_1 = require("../lib/region");
-const db = admin.firestore();
+const db = (0, firestore_1.getFirestore)();
 // Python classifier Cloud Function URL
 // Set via Firebase environment config: firebase functions:config:set classifier.url="https://..."
 const CLASSIFIER_URL = functions.config().classifier?.url || process.env.CLASSIFIER_URL;
@@ -173,7 +173,7 @@ async function saveClassificationResults(tripId, userId, response) {
         stops,
         trips,
         summary,
-        classifiedAt: admin.firestore.FieldValue.serverTimestamp(),
+        classifiedAt: firestore_1.FieldValue.serverTimestamp(),
         classifierVersion: '1.0.0',
     };
     // Save to tripSegments collection
@@ -185,7 +185,7 @@ async function saveClassificationResults(tripId, userId, response) {
         segmentation: {
             totalStops: summary.totalStops,
             totalSegments: summary.totalTrips,
-            classifiedAt: admin.firestore.FieldValue.serverTimestamp(),
+            classifiedAt: firestore_1.FieldValue.serverTimestamp(),
             hasSignificantStops: summary.totalStops > 0,
         },
     });
@@ -240,7 +240,7 @@ exports.classifyTrip = functions
     .region(region_1.EUROPE_LONDON)
     .https.onCall(async (data, context) => {
     const userId = (0, auth_1.requireAuth)(context);
-    // TODO: Rate limiting - e.g. max N classifyTrip calls per user per minute
+    // Not rate limited: ROADMAP.md TD-3. Suggested shape there: max N classifyTrip calls per user per minute.
     // Example: Firestore/Redis counter keyed by userId, reject if over threshold
     const tripId = data?.tripId;
     if (typeof tripId !== 'string' || tripId.trim() === '') {
@@ -300,7 +300,7 @@ exports.batchClassifyTrips = functions
     .https.onCall(async (data, context) => {
     (0, auth_1.requireAuth)(context);
     (0, auth_1.requireAdmin)(context);
-    // TODO: Rate limiting - e.g. max 1 batch job per admin per 5 minutes
+    // Not rate limited: ROADMAP.md TD-3. Suggested shape there: max 1 batch job per admin per 5 minutes.
     // Example: check last batchClassifyTrips timestamp in Firestore/Redis for context.auth.uid
     const { tripIds, userId, limit = 10 } = data;
     let tripsToProcess = [];

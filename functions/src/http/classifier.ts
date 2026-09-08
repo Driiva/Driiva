@@ -12,7 +12,7 @@
  */
 
 import * as functions from 'firebase-functions';
-import * as admin from 'firebase-admin';
+import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import fetch from 'node-fetch';
 import { requireAuth, requireAdmin } from './auth';
 import {
@@ -27,7 +27,7 @@ import {
 } from '../types';
 import { EUROPE_LONDON } from '../lib/region';
 
-const db = admin.firestore();
+const db = getFirestore();
 
 // Python classifier Cloud Function URL
 // Set via Firebase environment config: firebase functions:config:set classifier.url="https://..."
@@ -207,7 +207,7 @@ async function saveClassificationResults(
     stops,
     trips,
     summary,
-    classifiedAt: admin.firestore.FieldValue.serverTimestamp(),
+    classifiedAt: FieldValue.serverTimestamp(),
     classifierVersion: '1.0.0',
   };
 
@@ -221,7 +221,7 @@ async function saveClassificationResults(
     segmentation: {
       totalStops: summary.totalStops,
       totalSegments: summary.totalTrips,
-      classifiedAt: admin.firestore.FieldValue.serverTimestamp(),
+      classifiedAt: FieldValue.serverTimestamp(),
       hasSignificantStops: summary.totalStops > 0,
     },
   });

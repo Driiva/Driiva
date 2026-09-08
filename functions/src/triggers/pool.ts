@@ -5,7 +5,7 @@
  */
 
 import * as functions from 'firebase-functions';
-import * as admin from 'firebase-admin';
+import { FieldValue, Timestamp, getFirestore } from 'firebase-admin/firestore';
 import {
   COLLECTION_NAMES,
   PoolShareDocument,
@@ -14,7 +14,7 @@ import {
 import { EUROPE_LONDON } from '../lib/region';
 import { wrapTrigger } from '../lib/sentry';
 
-const db = admin.firestore();
+const db = getFirestore();
 
 /**
  * Triggered when a pool share is created or updated
@@ -61,12 +61,12 @@ export const onPoolShareWrite = functions
         currentShareCents: share.projectedRefundCents,
         contributionCents: share.contributionCents,
         sharePercentage: Math.round(share.sharePercentage * 100) / 100, // 2 decimal places
-        lastUpdatedAt: share.updatedAt ?? admin.firestore.Timestamp.now(),
+        lastUpdatedAt: share.updatedAt ?? Timestamp.now(),
       };
       
       await userRef.update({
         poolShare: poolShareSummary,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
         updatedBy: 'cloud-function',
       });
       

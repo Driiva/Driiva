@@ -26,20 +26,20 @@
  */
 
 import * as functions from 'firebase-functions';
-import * as admin from 'firebase-admin';
+import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { COLLECTION_NAMES } from '../types';
 import { notifyPolicyConfirmed, notifyPolicyNotConfirmed } from '../utils/notifications';
 import { EUROPE_LONDON } from '../lib/region';
 import { wrapTrigger } from '../lib/sentry';
 
-const db = admin.firestore();
+const db = getFirestore();
 
 interface PendingPaymentDoc {
   stripeSubscriptionId: string;
   stripeCustomerId: string;
   quoteId?: string;
-  createdAt: admin.firestore.FieldValue;
-  processedAt?: admin.firestore.FieldValue;
+  createdAt: FieldValue;
+  processedAt?: FieldValue;
   status: 'pending' | 'processing' | 'completed' | 'failed';
   /**
    * What the INSURER says about cover, which is a different question from
@@ -90,14 +90,14 @@ export const onPendingPaymentWrite = functions
         const existingPolicy = policiesSnap.docs[0];
         await existingPolicy.ref.update({
           stripeSubscriptionId: subscriptionId,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
           updatedBy: 'cloud-function',
         });
         await snap.ref.update({
           status: 'completed',
           policyId: existingPolicy.id,
           policyStatus: 'active',
-          processedAt: admin.firestore.FieldValue.serverTimestamp(),
+          processedAt: FieldValue.serverTimestamp(),
         });
         return;
       }
@@ -148,7 +148,7 @@ export const onPendingPaymentWrite = functions
         status: 'completed',
         policyId: result.policyId,
         policyStatus: result.status,
-        processedAt: admin.firestore.FieldValue.serverTimestamp(),
+        processedAt: FieldValue.serverTimestamp(),
       });
 
     } catch (err) {
@@ -161,7 +161,7 @@ export const onPendingPaymentWrite = functions
         status: 'failed',
         policyStatus: 'none',
         error: err instanceof Error && err.message ? err.message : 'Unknown error',
-        processedAt: admin.firestore.FieldValue.serverTimestamp(),
+        processedAt: FieldValue.serverTimestamp(),
       });
 
       try {

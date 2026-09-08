@@ -4,7 +4,8 @@
  * Cloud Functions triggered by trip document changes.
  */
 import * as functions from 'firebase-functions';
-import { TripDocument } from '../types';
+export { finalizeTripFromPoints } from './tripFinalisation';
+export { updateDriverProfileAndPoolShare } from './driverProfile';
 /**
  * Triggered when a new trip is created
  * - Detects anomalies
@@ -19,21 +20,4 @@ export declare const onTripCreate: functions.CloudFunction<functions.firestore.Q
  * 2. Manual review completion (processing → completed): Update driver profile
  */
 export declare const onTripStatusChange: functions.CloudFunction<functions.Change<functions.firestore.QueryDocumentSnapshot>>;
-/**
- * Finalize trip by reading GPS points and computing metrics
- *
- * Steps:
- * 1. Read all points from tripPoints/{tripId}
- * 2. Compute duration, distance (Haversine), average speed
- * 3. Compute driving score from events
- * 4. Update trip document with computed metrics
- * 5. Detect anomalies and set final status
- * 6. Update driver stats transactionally
- */
-export declare function finalizeTripFromPoints(tripId: string, tripData: TripDocument): Promise<void>;
-/**
- * Update driver profile and pool share after trip completion
- * This is the main business logic for trip processing
- */
-export declare function updateDriverProfileAndPoolShare(trip: TripDocument, tripId: string): Promise<void>;
 //# sourceMappingURL=trips.d.ts.map

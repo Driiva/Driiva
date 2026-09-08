@@ -10,7 +10,7 @@ import request from "supertest";
 
 // The rig installs every module mock, so it must be imported before anything
 // below it pulls in server/app.ts.
-import { admin, asUser, NEON_USER, stripeMock, verify } from "./helpers/apiContractRig";
+import { admin, asUser, NEON_USER, stripeMock, TEST_DB, verify } from "./helpers/apiContractRig";
 import { app, ready } from "../app";
 import { storage } from "../storage";
 import { calculateRefundCents } from "../../packages/scoring/src/refund";
@@ -154,7 +154,7 @@ describe("API-35 Stripe webhook", () => {
       doc: vi.fn(() => chain),
       set,
     };
-    admin.mockReturnValue({ firestore: () => chain } as never);
+    admin.mockReturnValue({ [TEST_DB]: chain } as never);
 
     const res = await request(app)
       .post("/api/webhooks/stripe")

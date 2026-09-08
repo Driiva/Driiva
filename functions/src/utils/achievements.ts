@@ -5,12 +5,12 @@
  * Called after each trip completion in a non-blocking fire-and-forget manner.
  */
 
-import * as admin from 'firebase-admin';
+import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import * as functions from 'firebase-functions';
 import { ACHIEVEMENT_META } from '@driiva/contracts';
 import { DrivingProfileData, TripDocument, COLLECTION_NAMES } from '../types';
 
-const db = admin.firestore();
+const db = getFirestore();
 
 export interface AchievementDefinition {
   id: string;
@@ -89,7 +89,7 @@ export async function checkAndUnlockAchievements(
       if (def.check(profile, trip)) {
         await userAchRef.doc(def.id).set({
           achievementId: def.id,
-          unlockedAt: admin.firestore.FieldValue.serverTimestamp(),
+          unlockedAt: FieldValue.serverTimestamp(),
           tripId,
         });
         newlyUnlocked.push(def.id);

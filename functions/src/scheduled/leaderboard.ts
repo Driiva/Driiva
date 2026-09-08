@@ -5,7 +5,7 @@
  */
 
 import * as functions from 'firebase-functions';
-import * as admin from 'firebase-admin';
+import { Timestamp, getFirestore } from 'firebase-admin/firestore';
 import {
   COLLECTION_NAMES,
   UserDocument,
@@ -17,7 +17,7 @@ import { getCurrentPeriodForType, getIsoWeekPeriod } from '../utils/helpers';
 import { EUROPE_LONDON } from '../lib/region';
 import { wrapTrigger } from '../lib/sentry';
 
-const db = admin.firestore();
+const db = getFirestore();
 
 // Maximum rankings to store
 const MAX_RANKINGS = 100;
@@ -153,8 +153,8 @@ async function calculateLeaderboard(periodType: LeaderboardPeriodType): Promise<
     : 0;
   
   // Calculate next update time
-  const now = admin.firestore.Timestamp.now();
-  const nextUpdate = admin.firestore.Timestamp.fromMillis(
+  const now = Timestamp.now();
+  const nextUpdate = Timestamp.fromMillis(
     now.toMillis() + 15 * 60 * 1000 // 15 minutes
   );
   

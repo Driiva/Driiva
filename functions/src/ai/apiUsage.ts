@@ -2,7 +2,7 @@
  * Step 6 of the trip analyser: record token spend against the AI usage
  * collection. Extracted verbatim from functions/src/ai/tripAnalysis.ts.
  */
-import * as admin from 'firebase-admin';
+import { Timestamp } from 'firebase-admin/firestore';
 import * as functions from 'firebase-functions';
 import {
   COLLECTION_NAMES,
@@ -41,7 +41,7 @@ export async function trackAPIUsage(
       latencyMs,
       success,
       error,
-      calledAt: admin.firestore.Timestamp.now(),
+      calledAt: Timestamp.now(),
     };
 
     await db.collection(COLLECTION_NAMES.AI_USAGE_TRACKING).add(usageDoc);

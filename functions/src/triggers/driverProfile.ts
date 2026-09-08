@@ -3,7 +3,7 @@
  * transactionally. Extracted verbatim from functions/src/triggers/trips.ts.
  */
 import * as functions from 'firebase-functions';
-import * as admin from 'firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 import { scoreWeight } from '@driiva/contracts';
 import {
   COLLECTION_NAMES,
@@ -159,7 +159,7 @@ export async function updateDriverProfileAndPoolShare(
       'drivingProfile.riskTier': riskTier,
       'drivingProfile.streakDays': streakDays,
       recentTrips: newRecentTrips,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
       updatedBy: 'cloud-function',
     });
     
@@ -174,7 +174,7 @@ export async function updateDriverProfileAndPoolShare(
         milesIncluded: Math.round(newShareMiles * 100) / 100,
         averageScore: Math.round(newShareAvgScore * 100) / 100,
         weightedScore: Math.round(newShareAvgScore * poolShare.contributionCents / 100),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       });
     }
 

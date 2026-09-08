@@ -30,11 +30,12 @@
  *
  * IMPORT ORDER MATTERS: './helpers' must be imported before trips.ts so the
  * shared Admin app is initialised before trips.ts's top-level
- * `const db = admin.firestore()` runs - see the module-instance note in
+ * `const db = getFirestore()` runs - see the module-instance note in
  * tests/integration/helpers.ts.
  */
+import { deleteApp } from 'firebase-admin/app';
 import { afterAll, describe, expect, it, vi } from 'vitest';
-import * as admin from 'firebase-admin';
+import { DocumentData, Timestamp, getFirestore } from 'firebase-admin/firestore';
 import { adminDb, adminApp } from './helpers';
 
 // Mock the side-effect targets so we can count firings. Factories only need the
@@ -73,7 +74,7 @@ function location(lat: number, lng: number) {
 }
 
 function seedUserDoc(uid: string) {
-  const now = admin.firestore.Timestamp.now();
+  const now = Timestamp.now();
   return {
     uid,
     email: `${uid}@driiva.co.uk`,
@@ -129,8 +130,8 @@ function seedProcessingTripDoc(
   end: ReturnType<typeof location>,
   clientReportedPhonePickupCount?: number,
 ) {
-  const startedAt = admin.firestore.Timestamp.fromMillis(Date.now() - 60_000);
-  const endedAt = admin.firestore.Timestamp.fromMillis(Date.now());
+  const startedAt = Timestamp.fromMillis(Date.now() - 60_000);
+  const endedAt = Timestamp.fromMillis(Date.now());
   return {
     tripId,
     userId,
@@ -182,7 +183,7 @@ function seedTripPointsDoc(tripId: string, userId: string, points: unknown[]) {
     samplingRateHz: 1,
     totalPoints: points.length,
     compressedSize: 0,
-    createdAt: admin.firestore.Timestamp.now(),
+    createdAt: Timestamp.now(),
   };
 }
 
@@ -229,14 +230,14 @@ async function seedTrip(
   await adminDb.collection('tripPoints').doc(tripId).set(seedTripPointsDoc(tripId, userId, points));
 }
 
-async function getTrip(tripId: string): Promise<admin.firestore.DocumentData> {
+async function getTrip(tripId: string): Promise<DocumentData> {
   const snap = await adminDb.collection('trips').doc(tripId).get();
-  return snap.data() as admin.firestore.DocumentData;
+  return snap.data() as DocumentData;
 }
 
-async function getProfile(userId: string): Promise<admin.firestore.DocumentData> {
+async function getProfile(userId: string): Promise<DocumentData> {
   const snap = await adminDb.collection('users').doc(userId).get();
-  return (snap.data() as admin.firestore.DocumentData).drivingProfile;
+  return (snap.data() as DocumentData).drivingProfile;
 }
 
 /**
@@ -246,8 +247,8 @@ async function getProfile(userId: string): Promise<admin.firestore.DocumentData>
  * `context.params.tripId`, so a minimal snapshot stub is faithful.
  */
 async function runOnUpdate(
-  beforeData: admin.firestore.DocumentData,
-  afterData: admin.firestore.DocumentData,
+  beforeData: DocumentData,
+  afterData: DocumentData,
   tripId: string,
 ): Promise<void> {
   const change = {
@@ -267,7 +268,7 @@ async function settle(ms = 300): Promise<void> {
 
 describe('M2 T2 scoring double-fire (Firestore emulator, real onTripStatusChange)', () => {
   afterAll(async () => {
-    await adminApp.delete();
+    await deleteApp(adminApp);
   });
 
   it('applies a completed trip to the profile EXACTLY once and fires push/classification/AI once each', async () => {

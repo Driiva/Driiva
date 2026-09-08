@@ -31,6 +31,9 @@ export default tseslint.config(
       "scripts/**",
       "firestore-backup/**",
       "Driiva Marketing/**",
+      "Driiva Stages/**",
+      "Driiva HyperFrames/**",
+      "Marketing/**",
       "Workspaces/**",
       "client/public/**",
       "server/public/**",
@@ -43,7 +46,7 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    files: ["**/*.{ts,tsx,js,jsx}"],
+    files: ["**/*.{ts,tsx,js,jsx,mjs,cjs}"],
     languageOptions: {
       ecmaVersion: 2024,
       sourceType: "module",

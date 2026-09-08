@@ -28,8 +28,7 @@
  * HTTP Request (public, no auth):
  *   - health: GET /health for uptime monitoring (200/503)
  */
-import * as admin from 'firebase-admin';
-export declare const db: admin.firestore.Firestore;
+export declare const db: FirebaseFirestore.Firestore;
 export { onTripCreate, onTripStatusChange } from './triggers/trips';
 export { onPolicyWrite } from './triggers/policies';
 export { onPoolShareWrite } from './triggers/pool';

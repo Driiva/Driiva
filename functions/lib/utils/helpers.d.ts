@@ -3,7 +3,7 @@
  * ================
  * Shared helper functions for Cloud Functions.
  */
-import * as admin from 'firebase-admin';
+import { Timestamp } from 'firebase-admin/firestore';
 import { TripLocation } from '../types';
 import { haversineMeters } from '../shared/tripProcessor';
 /**
@@ -55,11 +55,11 @@ export declare const calculateDistance: typeof haversineMeters;
 /**
  * Check if timestamp is during night hours (10 PM - 6 AM)
  */
-export declare function isNightTime(timestamp: admin.firestore.Timestamp): boolean;
+export declare function isNightTime(timestamp: Timestamp): boolean;
 /**
  * Check if timestamp is during rush hour (7-9 AM or 4-7 PM on weekdays)
  */
-export declare function isRushHour(timestamp: admin.firestore.Timestamp): boolean;
+export declare function isRushHour(timestamp: Timestamp): boolean;
 /**
  * Detect anomalies in trip data
  */

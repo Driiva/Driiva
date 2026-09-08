@@ -9,7 +9,8 @@
  * - gcloud auth application-default login (then GCLOUD_PROJECT=driiva); if you see invalid_rapt, re-run gcloud login.
  */
 
-import * as admin from 'firebase-admin';
+import { getApps, initializeApp } from 'firebase-admin/app';
+import { Firestore, getFirestore } from 'firebase-admin/firestore';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -43,7 +44,7 @@ function serializeValue(value: unknown): unknown {
 }
 
 async function exportCollection(
-  db: admin.firestore.Firestore,
+  db: Firestore,
   name: string,
   outPath: string
 ): Promise<number> {
@@ -59,7 +60,7 @@ async function exportCollection(
 }
 
 async function exportSubcollection(
-  db: admin.firestore.Firestore,
+  db: Firestore,
   parentCollection: string,
   parentId: string,
   subName: string,
@@ -83,10 +84,10 @@ async function main(): Promise<void> {
   const outPath = path.join(OUT_DIR, stamp);
   fs.mkdirSync(outPath, { recursive: true });
 
-  if (!admin.apps.length) {
-    admin.initializeApp({ projectId: PROJECT_ID });
+  if (!getApps().length) {
+    initializeApp({ projectId: PROJECT_ID });
   }
-  const db = admin.firestore();
+  const db = getFirestore();
   db.settings({ ignoreUndefinedProperties: true });
 
   const collections = await db.listCollections();

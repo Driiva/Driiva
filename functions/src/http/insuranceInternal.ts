@@ -5,10 +5,10 @@
  * Extracted here to avoid duplicating Root API logic across modules.
  */
 
-import * as admin from 'firebase-admin';
+import { FieldValue, Timestamp, getFirestore } from 'firebase-admin/firestore';
 import { COLLECTION_NAMES, UserDocument, CoverageType, PolicyStatus } from '../types';
 
-const db = admin.firestore();
+const db = getFirestore();
 
 /**
  * Root's policy status, mapped onto ours. Only Root saying "active" makes a
@@ -164,16 +164,16 @@ export async function acceptInsuranceQuoteInternal(
     basePremiumCents: rootPolicy.monthly_premium,
     currentPremiumCents: rootPolicy.monthly_premium,
     discountPercentage: 0,
-    effectiveDate: admin.firestore.Timestamp.fromDate(new Date(rootPolicy.start_date)),
-    expirationDate: admin.firestore.Timestamp.fromDate(new Date(rootPolicy.end_date)),
+    effectiveDate: Timestamp.fromDate(new Date(rootPolicy.start_date)),
+    expirationDate: Timestamp.fromDate(new Date(rootPolicy.end_date)),
     renewalDate: null,
     vehicle: null,
     billingCycle: 'monthly',
     stripeSubscriptionId: stripeSubscriptionId || null,
     rootPolicyId: rootPolicy.policy_id,
     rootApplicationId: application.application_id,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
     createdBy: userId,
     updatedBy: 'cloud-function',
   });
@@ -188,7 +188,7 @@ export async function acceptInsuranceQuoteInternal(
       status,
       startDate: rootPolicy.start_date,
     },
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
     updatedBy: 'cloud-function',
   });
 

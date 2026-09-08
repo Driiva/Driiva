@@ -43,7 +43,8 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-const admin = __importStar(require("firebase-admin"));
+const app_1 = require("firebase-admin/app");
+const firestore_1 = require("firebase-admin/firestore");
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 const PROJECT_ID = process.env.GCLOUD_PROJECT || process.env.GOOGLE_CLOUD_PROJECT || 'driiva';
@@ -105,10 +106,10 @@ async function main() {
     const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
     const outPath = path.join(OUT_DIR, stamp);
     fs.mkdirSync(outPath, { recursive: true });
-    if (!admin.apps.length) {
-        admin.initializeApp({ projectId: PROJECT_ID });
+    if (!(0, app_1.getApps)().length) {
+        (0, app_1.initializeApp)({ projectId: PROJECT_ID });
     }
-    const db = admin.firestore();
+    const db = (0, firestore_1.getFirestore)();
     db.settings({ ignoreUndefinedProperties: true });
     const collections = await db.listCollections();
     const names = collections.map((c) => c.id);

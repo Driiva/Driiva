@@ -40,12 +40,12 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.updateLeaderboards = void 0;
 const functions = __importStar(require("firebase-functions"));
-const admin = __importStar(require("firebase-admin"));
+const firestore_1 = require("firebase-admin/firestore");
 const types_1 = require("../types");
 const helpers_1 = require("../utils/helpers");
 const region_1 = require("../lib/region");
 const sentry_1 = require("../lib/sentry");
-const db = admin.firestore();
+const db = (0, firestore_1.getFirestore)();
 // Maximum rankings to store
 const MAX_RANKINGS = 100;
 /**
@@ -157,8 +157,8 @@ async function calculateLeaderboard(periodType) {
         ? scores.sort((a, b) => a - b)[Math.floor(scores.length / 2)]
         : 0;
     // Calculate next update time
-    const now = admin.firestore.Timestamp.now();
-    const nextUpdate = admin.firestore.Timestamp.fromMillis(now.toMillis() + 15 * 60 * 1000 // 15 minutes
+    const now = firestore_1.Timestamp.now();
+    const nextUpdate = firestore_1.Timestamp.fromMillis(now.toMillis() + 15 * 60 * 1000 // 15 minutes
     );
     // Build leaderboard document
     const leaderboardData = {
