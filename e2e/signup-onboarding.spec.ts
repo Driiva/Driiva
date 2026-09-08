@@ -15,7 +15,7 @@ import { test, expect } from '@playwright/test';
  */
 
 test.describe('FLOW-01 signup → onboarding', () => {
-  test('STAGING REALITY: email/password signup is impossible — provider not enabled (auth/configuration-not-found shown RAW to the user)', async ({ page }) => {
+  test('STAGING REALITY: email/password signup is impossible, provider not enabled, and the raw Firebase code no longer leaks', async ({ page }) => {
     const email = `e2e-${Date.now()}@driiva.co.uk`;
     await page.goto('/signup');
     await page.getByPlaceholder(/name/i).first().fill('E2E Characterisation');
@@ -24,12 +24,16 @@ test.describe('FLOW-01 signup → onboarding', () => {
     await pw.nth(0).fill('Characterise123!');
     await pw.nth(1).fill('Characterise123!');
     await page.getByRole('button', { name: /create|sign up/i }).first().click();
-    // QUIRK: the error code is unmapped, so the raw Firebase error string leaks
-    // straight into the UI. And signup cannot proceed on staging at all until
-    // the Email/Password provider is enabled in the driiva-staging console.
-    await expect(page.getByText(/auth\/configuration-not-found/i)).toBeVisible({
-      timeout: 30_000,
-    });
+    // Re-pinned: signup still cannot proceed on staging until the
+    // Email/Password provider is enabled in the driiva-staging console, but the
+    // raw `auth/...` code no longer leaks. signup.tsx maps the Firebase code to
+    // a sentence, and every unmapped code falls to a generic line rather than
+    // err.message. The absence assertion is the regression guard: a raw code
+    // reaching the user is the thing that was fixed.
+    await expect(
+      page.getByText(/email\/password sign-up is not enabled/i),
+    ).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText(/auth\/[a-z-]+/i)).toHaveCount(0);
     await expect(page).toHaveURL(/\/signup/);
   });
 

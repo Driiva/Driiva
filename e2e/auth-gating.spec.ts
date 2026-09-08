@@ -22,9 +22,17 @@ test.describe('route guards', () => {
     await expect(page.getByRole('button', { name: /sign in/i }).first()).toBeVisible();
   });
 
-  test('unknown route falls through to the inline catch-all redirect to /', async ({ page }) => {
+  // Re-pinned: the catch-all used to redirect silently to /, which is a soft
+  // 404 (the URL survives, so a stale link looked like it worked). App.tsx now
+  // terminates the Switch with <NotFound />, so the bad URL stays put and the
+  // page says so.
+  test('unknown route renders the 404 page and keeps the URL', async ({ page }) => {
     await page.goto('/this-route-does-not-exist');
-    await expect(page).toHaveURL(/\/$|\/welcome/);
+    await expect(page.getByText(/error 404/i)).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: /this page is not here/i }),
+    ).toBeVisible();
+    await expect(page).toHaveURL(/\/this-route-does-not-exist$/);
   });
 });
 

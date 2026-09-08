@@ -30,10 +30,19 @@ test.describe('FLOW-08 demo mode', () => {
     await expect(page).toHaveURL(/\/trips$/); // navigation did not happen
   });
 
-  test('leaderboard renders the hardcoded demo dataset (1,247 participants)', async ({ page }) => {
+  // Re-pinned (Wave B): the demo leaderboard used to be fifteen invented
+  // drivers and an invented 1,247-participant count. That fabricated dataset
+  // was deleted, so demo mode now reads the same real board as everyone else,
+  // and a demo uid cannot read it. Same permission-denied asymmetry as /policy
+  // below. The absence assertion is the point: invented figures must not come
+  // back.
+  test('QUIRK: /leaderboard has no demo dataset any more, so a demo uid gets the read-failure card', async ({ page }) => {
     await enterDemo(page);
     await page.goto('/leaderboard');
-    await expect(page.getByText(/1,?247/).first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/the leaderboard did not load/i)).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(page.getByText(/1,?247/)).toHaveCount(0);
   });
 
   test('QUIRK: /policy has no demo handling — demo-uid Firestore subscriptions permission-deny and the page shows the error card', async ({ page }) => {
@@ -65,9 +74,16 @@ test.describe('FLOW-08 demo mode', () => {
     await expect(page.getByText(/£1,210/).first()).toBeVisible();
     // The real CTA is "Pay £N now" (a looser regex matches the billing toggle first).
     await page.getByRole('button', { name: /pay £.* now/i }).click();
+    // Re-pinned (Wave H): a cleared demo card used to render "Policy
+    // activated!", which told a demo user they were insured. The demo branch
+    // now lands on CoverOutcome kind:'demo', which says the opposite.
     await expect(
-      page.getByText(/activated|success|welcome|you're covered|congratulations/i).first()
+      page.getByRole('heading', { name: /demo complete/i })
     ).toBeVisible({ timeout: 10_000 });
+    await expect(
+      page.getByText(/no payment was taken and no policy exists/i)
+    ).toBeVisible();
+    await expect(page.getByText(/policy activated/i)).toHaveCount(0);
     expect(apiCalls).toEqual([]);
   });
 });
