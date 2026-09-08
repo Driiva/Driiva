@@ -459,15 +459,29 @@ jobs:
       - name: Build client (production)
         run: npm run build
 
-      # Deploy Firestore rules, indexes, and Cloud Functions to production
+      # Deploy Firestore rules, indexes, and Cloud Functions to production.
+      #
+      # Headless via the driiva service account, not FIREBASE_TOKEN. A CLI
+      # user login token expires and needs a human to re-mint it (this broke
+      # deploys four times); a service account key does not expire and needs
+      # nothing from anyone once its IAM roles are granted. The SA holds:
+      # cloudfunctions.developer, firebaserules.admin, datastore.indexAdmin,
+      # iam.serviceAccountUser, cloudbuild.builds.editor,
+      # artifactregistry.writer, run.developer, storage.admin,
+      # secretmanager.secretAccessor, secretmanager.viewer (versions.access
+      # AND versions.get are both required - secretAccessor alone 403s the
+      # predeploy secret validation step), cloudscheduler.admin (for the
+      # scheduled functions specifically, separate from the others).
       - name: Deploy Firebase to production
         run: |
-          npx firebase deploy \
+          echo "$FIREBASE_SA_KEY" > /tmp/driiva-sa.json
+          GOOGLE_APPLICATION_CREDENTIALS=/tmp/driiva-sa.json npx firebase deploy \
             --only firestore:rules,firestore:indexes,functions \
             --project default \
             --non-interactive
+          rm -f /tmp/driiva-sa.json
         env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          FIREBASE_SA_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_DRIIVA }}
 
       # Deploy client + Express server to production Vercel project
       - name: Deploy to Vercel (production)
