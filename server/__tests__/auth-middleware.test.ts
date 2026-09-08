@@ -96,6 +96,52 @@ describe("verifyFirebaseAuth", () => {
     expect(next).toHaveBeenCalled();
     expect(req.auth).toEqual({ uid: "fb-999", email: "ghost@driiva.com", userId: undefined });
   });
+
+  // This middleware is mounted globally and Express 4 does not catch
+  // rejections from async middleware, so a rejecting DB lookup used to escape
+  // as an unhandled rejection and exit the process. It killed the CI dev
+  // server mid-E2E-suite (Neon over WebSocket against an unreachable host),
+  // and in production one transient Neon blip would have done the same.
+  it("survives a DB failure instead of rejecting, and degrades to userId=undefined", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockedVerify.mockResolvedValue({ uid: "fb-db-down", email: "down@driiva.com" });
+    mockedGetUser.mockRejectedValue(new Error("Failed query: connection refused"));
+    const req = mockReq({ headers: { authorization: "Bearer valid-token" } });
+
+    await expect(
+      verifyFirebaseAuth(req, mockRes(), next),
+    ).resolves.toBeUndefined();
+
+    expect(next).toHaveBeenCalled();
+    expect(req.auth).toEqual({
+      uid: "fb-db-down",
+      email: "down@driiva.com",
+      userId: undefined,
+    });
+    expect(consoleError).toHaveBeenCalled();
+    consoleError.mockRestore();
+  });
+
+  // The degrade above must not open a door: requireResourceOwner has to still
+  // 403 when the lookup failed, or a DB outage would become an authz bypass.
+  it("a DB failure leaves :userId-scoped routes closed, not open", async () => {
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockedVerify.mockResolvedValue({ uid: "fb-db-down", email: "down@driiva.com" });
+    mockedGetUser.mockRejectedValue(new Error("Failed query: connection refused"));
+    const req = mockReq({
+      headers: { authorization: "Bearer valid-token" },
+      params: { userId: "42" },
+    });
+    await verifyFirebaseAuth(req, mockRes(), next);
+
+    const res = mockRes();
+    const ownerNext = vi.fn();
+    requireResourceOwner()(req, res, ownerNext);
+
+    expect(ownerNext).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(403);
+    consoleError.mockRestore();
+  });
 });
 
 describe("requireAuth", () => {

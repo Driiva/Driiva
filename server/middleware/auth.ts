@@ -61,11 +61,33 @@ export async function verifyFirebaseAuth(
     return;
   }
 
-  const user = await storage.getUserByFirebaseUid(decoded.uid);
+  // This middleware is mounted globally (routes.ts: app.use(verifyFirebaseAuth)),
+  // and Express 4 does not catch rejections from async middleware. An
+  // unguarded reject here therefore escapes as an unhandled rejection, which
+  // Node 15+ turns into a process exit: one transient Neon blip on one
+  // authenticated request takes the whole server down. That is exactly what
+  // killed the CI dev server part-way through the E2E suite.
+  //
+  // The Neon row is enrichment, not a gate (M1 T3), and `userId: undefined` is
+  // already a designed, handled state for a user with no row yet. A failed
+  // lookup degrades to that same state rather than crashing. It fails closed:
+  // requireResourceOwner 403s on `userId === undefined`, so no :userId-scoped
+  // route opens up. Logged loudly because a DB outage must not be silent.
+  let userId: number | undefined;
+  try {
+    const user = await storage.getUserByFirebaseUid(decoded.uid);
+    userId = user?.id;
+  } catch (err) {
+    console.error(
+      `[auth] user lookup failed for uid ${decoded.uid}; continuing with userId undefined:`,
+      err,
+    );
+  }
+
   req.auth = {
     uid: decoded.uid,
     email: decoded.email,
-    userId: user?.id,
+    userId,
   };
   next();
 }
