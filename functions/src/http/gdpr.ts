@@ -7,7 +7,6 @@
  */
 
 import * as functions from 'firebase-functions';
-import { getAuth } from 'firebase-admin/auth';
 import { DocumentReference, QueryDocumentSnapshot, getFirestore } from 'firebase-admin/firestore';
 import { COLLECTION_NAMES } from '../types';
 import { requireAuth, requireSelf } from './auth';
@@ -16,7 +15,6 @@ import { EUROPE_LONDON } from '../lib/region';
 import { wrapFunction } from '../lib/sentry';
 
 const db = getFirestore();
-const auth = getAuth();
 
 const BATCH_SIZE = 500;
 
@@ -226,7 +224,13 @@ export const deleteUserAccount = functions
   }
 
   try {
-    await auth.deleteUser(userId);
+    // Imported here and never at module scope: firebase-admin/auth pulls
+    // jwks-rsa, which require()s jose v6 (ESM-only). The Cloud Functions
+    // runtime is Node 20, which cannot require() an ES module, so a
+    // top-level import fails lib/index.js at cold start and takes every
+    // exported function down with it, not just this one.
+    const { getAuth } = await import('firebase-admin/auth');
+    await getAuth().deleteUser(userId);
   } catch (err) {
     functions.logger.error('Failed to delete Firebase Auth user', { userId, err });
     throw new functions.https.HttpsError(
